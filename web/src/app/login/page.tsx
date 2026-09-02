@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { beginLogin } from '@/lib/auth';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Null until mounted, so the misconfiguration hint does not cause a
+  // server/client markup mismatch.
+  const [isLocal, setIsLocal] = useState<boolean | null>(null);
+  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
 
   const clientId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
+
+  useEffect(() => {
+    const { hostname, origin } = window.location;
+    setIsLocal(hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '[::1]');
+    setCallbackUrl(`${origin}/callback`);
+  }, []);
 
   const handleLogin = async () => {
     setBusy(true);
@@ -33,11 +43,45 @@ export default function LoginPage() {
           <div className="mt-6 rounded-[8px] border border-app-error/40 bg-app-error/10 p-4">
             <p className="text-[13px] font-bold text-app-error">Not configured</p>
             <p className="mt-1 text-[13px] leading-relaxed text-white/70">
-              <code className="text-white">NEXT_PUBLIC_SPOTIFY_CLIENT_ID</code> is missing. Copy{' '}
-              <code className="text-white">web/.env.example</code> to{' '}
-              <code className="text-white">web/.env.local</code> and add your Client ID from the
-              Spotify developer dashboard, then restart the dev server.
+              <code className="text-white">NEXT_PUBLIC_SPOTIFY_CLIENT_ID</code> was not present when
+              this build was compiled.
             </p>
+
+            {isLocal === false ? (
+              <div className="mt-3 text-[13px] leading-relaxed text-white/70">
+                <p className="font-bold text-white/90">On a hosted deployment</p>
+                <ol className="mt-1 list-decimal space-y-1 pl-4">
+                  <li>
+                    Add <code className="text-white">NEXT_PUBLIC_SPOTIFY_CLIENT_ID</code> and{' '}
+                    <code className="text-white">NEXT_PUBLIC_REDIRECT_URI</code> to your project,
+                    with the <strong className="text-white/90">Production</strong> environment
+                    enabled.
+                  </li>
+                  <li>
+                    <strong className="text-white/90">Redeploy.</strong> Variables prefixed{' '}
+                    <code className="text-white">NEXT_PUBLIC_</code> are inlined at build time, so
+                    adding one does not affect a build that already happened — and clear the build
+                    cache so a stale bundle is not reused.
+                  </li>
+                </ol>
+                <p className="mt-2">
+                  Set <code className="text-white">NEXT_PUBLIC_REDIRECT_URI</code> to{' '}
+                  <code className="break-all text-white">{callbackUrl ?? '<origin>/callback'}</code>{' '}
+                  and register that exact URL in the Spotify dashboard.
+                </p>
+              </div>
+            ) : null}
+
+            {isLocal !== false ? (
+              <div className="mt-3 text-[13px] leading-relaxed text-white/70">
+                <p className="font-bold text-white/90">Locally</p>
+                <p className="mt-1">
+                  Copy <code className="text-white">web/.env.example</code> to{' '}
+                  <code className="text-white">web/.env.local</code>, add your Client ID from the
+                  Spotify developer dashboard, then restart the dev server.
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : (
           <button
