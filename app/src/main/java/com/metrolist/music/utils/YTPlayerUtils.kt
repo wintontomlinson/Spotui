@@ -501,26 +501,57 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
     ): PlayerResponse.StreamingData.Format? {
-        Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: ${connectivityManager.isActiveNetworkMetered}")
+        val metered = connectivityManager.isActiveNetworkMetered
+        Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: $metered")
 
-        val format = playerResponse.streamingData?.adaptiveFormats
-            ?.filter { it.isAudio && it.isOriginal }
-            ?.maxByOrNull {
-                it.bitrate * when (audioQuality) {
-                    AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                    AudioQuality.HIGH -> 1
-                    AudioQuality.LOW -> -1
-                } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-            }
-
-        if (format != null) {
-            Timber.tag(logTag).d("Selected format: ${format.mimeType}, bitrate: ${format.bitrate}")
-        } else {
+        val all = playerResponse.streamingData?.adaptiveFormats.orEmpty()
+        // Prefer the original audio track. Auto dubbed tracks are re-encoded and sound
+        // worse. If filtering leaves nothing, fall back to any audio format so we never
+        // end up with no stream at all.
+        var candidates = all.filter { it.isAudio && it.isOriginal }
+        if (candidates.isEmpty()) candidates = all.filter { it.isAudio }
+        if (candidates.isEmpty()) {
             Timber.tag(logTag).d("No suitable audio format found")
+            return null
         }
 
+        // Opus (served in a webm container) sounds better than AAC at the same bitrate,
+        // so it wins ties. Sample rate is the final tiebreaker.
+        val bestFirst = compareByDescending<PlayerResponse.StreamingData.Format> { it.bitrate }
+            .thenByDescending { if (it.mimeType.startsWith("audio/webm")) 1 else 0 }
+            .thenByDescending { it.audioSampleRate ?: 0 }
+
+        val format = when (audioQuality) {
+            // Always take the best available stream.
+            AudioQuality.HIGH -> candidates.sortedWith(bestFirst).first()
+
+            // Data saver: the smallest stream that is still listenable.
+            AudioQuality.LOW -> candidates
+                .sortedWith(
+                    compareBy<PlayerResponse.StreamingData.Format> { it.bitrate }
+                        .thenByDescending { if (it.mimeType.startsWith("audio/webm")) 1 else 0 }
+                )
+                .first()
+
+            // Automatic: full quality on unmetered networks. On mobile data pick the
+            // best stream up to a moderate ceiling rather than the worst one available,
+            // which is what the previous scoring did.
+            AudioQuality.AUTO -> if (!metered) {
+                candidates.sortedWith(bestFirst).first()
+            } else {
+                val capped = candidates.filter { it.bitrate <= METERED_BITRATE_CEILING }
+                (capped.ifEmpty { candidates }).sortedWith(bestFirst).first()
+            }
+        }
+
+        Timber.tag(logTag).d(
+            "Selected format: ${format.mimeType}, bitrate: ${format.bitrate}, sampleRate: ${format.audioSampleRate}"
+        )
         return format
     }
+
+    /** Upper bitrate bound used by automatic quality on a metered connection. */
+    private const val METERED_BITRATE_CEILING = 160_000
     /**
      * Checks if the stream url returns a successful status.
      *

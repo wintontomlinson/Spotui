@@ -54,7 +54,10 @@ fun setWifiQuality(c: Context, q: StreamQuality) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.NORMAL)
+// Default to High on cellular as well. The previous Normal default mapped to the
+// automatic selector, which on a metered network deliberately picked the LOWEST
+// bitrate stream and made playback sound poor on mobile data.
+fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.HIGH)
 fun setCellularQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_CELL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
