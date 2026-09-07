@@ -179,9 +179,9 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
             for (item in results) {
                 val model = SongsModel(
                     id = item.id.hashCode(),
-                    title = item.title,
+                    title = cleanTrackTitle(item.title),
                     album = item.album?.name.orEmpty(),
-                    singer = item.artists.joinToString(", ") { it.name }.ifBlank { "Unknown artist" },
+                    singer = resolveArtist(item.artists.map { it.name }, item.title),
                     coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(item.thumbnail),
                     url = item.id,
                     spotifyTrackId = "",

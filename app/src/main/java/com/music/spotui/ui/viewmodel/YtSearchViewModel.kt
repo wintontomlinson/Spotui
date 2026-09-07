@@ -164,15 +164,73 @@ class YtSearchViewModel @Inject constructor(
  */
 fun SongItem.toSongsModel(): SongsModel = SongsModel(
     id = id.hashCode(),
-    title = title,
+    title = cleanTrackTitle(title),
     album = album?.name.orEmpty(),
-    singer = artists.joinToString(", ") { it.name }.ifBlank { "Unknown artist" },
+    singer = resolveArtist(artists.map { it.name }, title),
     coverUri = hiResThumbnail(thumbnail),
     url = id,
     spotifyTrackId = "",
     explicit = explicit,
     durationMs = (duration ?: 0) * 1000,
 )
+
+// Values YouTube puts in the subtitle line that are not artists. The subtitle can
+// be "Song · Artist · Album · 3:45" or "Video · Channel · 1.2M views · 3:45", so
+// depending on the response shape the first entry is sometimes a type label, a
+// view count or a duration rather than the artist.
+private val NON_ARTIST_LABELS = setOf(
+    "song", "songs", "video", "videos", "episode", "album", "single", "ep",
+    "playlist", "artist", "podcast",
+)
+private val VIEW_COUNT = Regex("""^[\d.,]+\s*[kmb]?\s*(views|view|plays|play)$""", RegexOption.IGNORE_CASE)
+private val TIMESTAMP = Regex("""^\d{1,2}:\d{2}(:\d{2})?$""")
+
+private fun isUsableArtist(name: String): Boolean {
+    val n = name.trim()
+    if (n.isBlank()) return false
+    if (n.lowercase() in NON_ARTIST_LABELS) return false
+    if (VIEW_COUNT.matches(n)) return false
+    if (TIMESTAMP.matches(n)) return false
+    return true
+}
+
+/**
+ * Picks a sensible artist for a YouTube result.
+ *
+ * The subtitle line is not always the artist, so junk entries are dropped first.
+ * When nothing usable is left, a title in the common "Artist - Song" shape is used
+ * to recover the artist. As a last resort the field is left empty so the UI can
+ * simply omit it instead of printing a placeholder.
+ */
+internal fun resolveArtist(names: List<String>, title: String): String {
+    val usable = names.map { it.trim() }
+        .filter { isUsableArtist(it) }
+        .map { it.removeSuffix(" - Topic").trim() }
+        .distinct()
+    if (usable.isNotEmpty()) return usable.joinToString(", ")
+
+    // "Artist - Song Name" is the most common YouTube upload convention.
+    val dash = title.indexOf(" - ")
+    if (dash > 0) {
+        val candidate = title.substring(0, dash).trim()
+        if (isUsableArtist(candidate)) return candidate
+    }
+    return ""
+}
+
+/**
+ * Trims the promotional noise YouTube uploaders add to titles, and drops a leading
+ * "Artist - " prefix once the artist is shown separately.
+ */
+internal fun cleanTrackTitle(title: String): String {
+    var t = title
+        .replace(Regex("""\s*[(\[][^)\]]*(official|lyric|lyrics|audio|visualizer|video|hd|4k|hq|mv)[^)\]]*[)\]]""", RegexOption.IGNORE_CASE), "")
+        .replace(Regex("""\s*\|.*$"""), "")
+        .trim()
+    val dash = t.indexOf(" - ")
+    if (dash > 0) t = t.substring(dash + 3).trim()
+    return t.ifBlank { title }
+}
 
 /**
  * YouTube Music serves thumbnails at a small size baked into the URL, for example

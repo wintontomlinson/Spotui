@@ -259,13 +259,15 @@ private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = song.singer,
-                color = TextDim,
-                fontSize = 11.sp,
-                maxLines = 1,
-            )
+            if (song.singer.isNotBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = song.singer,
+                    color = TextDim,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
@@ -357,13 +359,15 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
             maxLines = 2,
             lineHeight = 17.sp,
         )
-        Spacer(Modifier.height(3.dp))
-        Text(
-            text = song.singer,
-            color = TextDim,
-            fontSize = 11.sp,
-            maxLines = 1,
-        )
+        if (song.singer.isNotBlank()) {
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = song.singer,
+                color = TextDim,
+                fontSize = 11.sp,
+                maxLines = 1,
+            )
+        }
     }
 }
 

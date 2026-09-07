@@ -415,9 +415,12 @@ private fun ResultRow(song: SongsModel, isVideo: Boolean, onClick: () -> Unit) {
                 maxLines = 1,
             )
             Spacer(Modifier.height(3.dp))
-            val meta = buildString {
-                append(if (isVideo) "Video" else "Song")
-                if (song.singer.isNotBlank()) append("  •  ").append(song.singer)
+            // Lead with the artist when it is known, since that is what people scan
+            // for. The type label is only useful on its own when there is no artist.
+            val meta = if (song.singer.isNotBlank()) {
+                song.singer
+            } else {
+                if (isVideo) "Video" else "Song"
             }
             Text(
                 text = meta,
