@@ -1,5 +1,10 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,8 +25,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,10 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,11 +59,15 @@ import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
+private val Accent = Color(0xFFFF0033)
+private val Surface = Color(0xFF17171C)
+private val SurfaceHigh = Color(0xFF20202A)
+private val TextDim = Color(0xFFB3B3B3)
+
 /**
- * Login free Home. No Spotify session needed. Content is a set of curated
- * sections populated from YouTube search, and tapping a track plays it through
- * the normal queue/player. Also hosts a recreated search bar that opens the
- * free search screen.
+ * Login free Home. No Spotify session needed. Content is a set of curated and
+ * personalised sections populated from YouTube search, and tapping a track plays
+ * it through the normal queue and player.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -64,6 +76,7 @@ fun FreeHomeScreen(navController: NavController) {
     val vm: FreeHomeViewModel = hiltViewModel()
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val rows by vm.rows
+    val recentlyPlayed by vm.recentlyPlayed
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -77,38 +90,43 @@ fun FreeHomeScreen(navController: NavController) {
         navController.navigate(Routes.Player.route)
     }
 
+    val openSearch: (String) -> Unit = { query ->
+        val route = if (query.isBlank()) {
+            Routes.YtSearch.route
+        } else {
+            "${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}"
+        }
+        navController.navigate(route) {
+            // Avoid piling identical destinations on the back stack.
+            launchSingleTop = true
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
             .statusBarsPadding(),
-        contentPadding = PaddingValues(bottom = 180.dp),
+        contentPadding = PaddingValues(bottom = 190.dp),
     ) {
+        item { HomeHeader(onSearch = { openSearch("") }) }
+
         item {
-            Column(modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 6.dp)) {
-                Text(
-                    text = greeting(),
-                    color = Color.White,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = greetingSubtitle(),
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-                Spacer(Modifier.height(16.dp))
-                // Search lives on the Explore tab, so Home only shows mood chips.
-                MoodChips(onPick = { query ->
-                    navController.navigate(
-                        "${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}"
-                    ) {
-                        // Avoid piling identical destinations on the back stack when
-                        // several chips are tapped in a row.
-                        launchSingleTop = true
+            MoodChips(onPick = openSearch)
+            Spacer(Modifier.height(4.dp))
+        }
+
+        if (recentlyPlayed.isNotEmpty()) {
+            item {
+                SectionHeader(title = "Recently played")
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    itemsIndexed(recentlyPlayed) { index, song ->
+                        RecentTile(song = song, onClick = { play(recentlyPlayed, index) })
                     }
-                })
+                }
             }
         }
 
@@ -116,8 +134,60 @@ fun FreeHomeScreen(navController: NavController) {
             HomeRowSection(row = row, onPlay = play)
         }
 
-        item { Spacer(Modifier.height(24.dp)) }
+        item { Spacer(Modifier.height(20.dp)) }
     }
+}
+
+/** Greeting block with a compact search affordance on the right. */
+@Composable
+private fun HomeHeader(onSearch: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 12.dp, top = 16.dp, bottom = 14.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = greeting(),
+                color = Color.White,
+                fontSize = 27.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(Modifier.height(5.dp))
+            Text(
+                text = greetingSubtitle(),
+                color = TextDim,
+                fontSize = 13.sp,
+            )
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(42.dp)
+                .clip(CircleShape)
+                .background(SurfaceHigh)
+                .clickable(onClick = onSearch),
+        ) {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Color.White,
+                modifier = Modifier.size(21.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        color = Color.White,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 13.dp),
+    )
 }
 
 private val MOODS = listOf(
@@ -133,8 +203,11 @@ private val MOODS = listOf(
 
 @Composable
 private fun MoodChips(onPick: (String) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(MOODS) { (label, query) ->
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(MOODS, key = { it.first }) { (label, query) ->
             Text(
                 text = label,
                 color = Color.White,
@@ -142,36 +215,68 @@ private fun MoodChips(onPick: (String) -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF1F1F24))
-                    .clickable { onPick(query) }
+                    .background(SurfaceHigh)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onPick(query) }
                     .padding(horizontal = 16.dp, vertical = 9.dp),
             )
         }
     }
 }
 
+/** Compact tile used by the Recently played row. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit) {
-    if (!row.loading && row.tracks.isEmpty()) return // skip empty sections silently
+private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .width(232.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Surface)
+            .clickable(onClick = onClick)
+            .padding(end = 12.dp),
+    ) {
+        GlideImage(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
+            model = song.coverUri,
+            contentScale = ContentScale.Crop,
+            failure = placeholder(R.drawable.placeholder),
+            loading = placeholder(R.drawable.placeholder),
+            contentDescription = null,
+        )
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text(
+                text = song.title,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = song.singer,
+                color = TextDim,
+                fontSize = 11.sp,
+                maxLines = 1,
+            )
+        }
+    }
+}
 
-    Text(
-        text = row.title,
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 12.dp),
-    )
+@Composable
+private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit) {
+    // Skip a section that finished loading with nothing to show.
+    if (!row.loading && row.tracks.isEmpty()) return
+
+    SectionHeader(title = row.title)
 
     if (row.loading) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(color = Color(0xFFFF0033), strokeWidth = 2.dp)
-        }
+        CardSkeletonRow()
         return
     }
 
@@ -185,40 +290,123 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
     }
 }
 
+/** Premium artwork card with a gradient scrim and a play badge. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(150.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .padding(6.dp),
+            .width(152.dp)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick,
+            ),
     ) {
-        GlideImage(
+        Box(
             modifier = Modifier
-                .size(138.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            model = song.coverUri,
-            contentScale = ContentScale.Crop,
-            failure = placeholder(R.drawable.placeholder),
-            loading = placeholder(R.drawable.placeholder),
-            contentDescription = "",
-        )
-        Spacer(Modifier.height(8.dp))
+                .size(152.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Surface),
+        ) {
+            GlideImage(
+                modifier = Modifier.fillMaxSize(),
+                model = song.coverUri,
+                contentScale = ContentScale.Crop,
+                failure = placeholder(R.drawable.placeholder),
+                loading = placeholder(R.drawable.placeholder),
+                contentDescription = null,
+            )
+            // Soft scrim so the play badge stays legible on bright artwork.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
+                            startY = 150f,
+                        )
+                    ),
+            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(8.dp)
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(Accent),
+            ) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(9.dp))
         Text(
             text = song.title,
             color = Color.White,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
+            maxLines = 2,
+            lineHeight = 17.sp,
         )
+        Spacer(Modifier.height(3.dp))
         Text(
             text = song.singer,
-            color = Color(0xFFB3B3B3),
-            fontSize = 12.sp,
+            color = TextDim,
+            fontSize = 11.sp,
             maxLines = 1,
         )
+    }
+}
+
+/** Pulsing placeholders shown while a section is still loading. */
+@Composable
+private fun CardSkeletonRow() {
+    val transition = rememberInfiniteTransition(label = "cardSkeleton")
+    val alpha by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(750),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "cardSkeletonAlpha",
+    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        modifier = Modifier.padding(horizontal = 16.dp),
+    ) {
+        repeat(3) {
+            Column(modifier = Modifier.width(152.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(152.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Surface.copy(alpha = alpha)),
+                )
+                Spacer(Modifier.height(9.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Surface.copy(alpha = alpha)),
+                )
+                Spacer(Modifier.height(7.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.55f)
+                        .height(10.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Surface.copy(alpha = alpha)),
+                )
+            }
+        }
     }
 }
 

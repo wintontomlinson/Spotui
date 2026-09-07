@@ -52,6 +52,13 @@ class FreeHomeViewModel @Inject constructor(
     private val _rows = mutableStateOf<List<HomeRow>>(emptyList())
     val rows: State<List<HomeRow>> get() = _rows
 
+    /**
+     * The last few tracks the user played, taken straight from local history so it
+     * renders instantly with no network call.
+     */
+    private val _recentlyPlayed = mutableStateOf<List<SongsModel>>(emptyList())
+    val recentlyPlayed: State<List<SongsModel>> get() = _recentlyPlayed
+
     private var loaded = false
     // Timestamp of the newest history entry the current Home was built from, so we
     // can rebuild only when the user has actually played something new.
@@ -85,6 +92,19 @@ class FreeHomeViewModel @Inject constructor(
     private fun rebuild() {
         val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
         builtFromHistoryTs = history.firstOrNull()?.ts ?: 0L
+        _recentlyPlayed.value = history
+            .distinctBy { it.songId }
+            .take(10)
+            .map { entry ->
+                SongsModel(
+                    id = entry.songId,
+                    title = entry.title,
+                    album = entry.album,
+                    singer = entry.singer,
+                    coverUri = entry.image,
+                    url = entry.url,
+                )
+            }
         val sections = buildSections(history)
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
