@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import com.music.spotui.data.api.SpotifySession
 import com.music.spotui.ui.screens.FreeHomeScreen
 import com.music.spotui.ui.screens.YtSearchScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,14 +54,9 @@ fun MyNavHost(
 //    player = ExoPlayer.Builder(context).build()
 
     val context = LocalContext.current
-    // Login-free by default: with no Spotify session, open the "Free" YouTube
-    // search screen so the app is usable immediately. Spotify login is optional
-    // (reachable from Settings) and, once set, the app opens on Home.
-    val startDestination = if (SpotifySession.spDc(context).isBlank()) {
-        Routes.YtSearch.route
-    } else {
-        Routes.Home.route
-    }
+    // The app always opens on Home, which is the login free YouTube powered screen.
+    // Explore is a tab the user chooses, not the landing screen.
+    val startDestination = Routes.Home.route
 
     // Restore the last session: put the track back into the mini player (paused)
     // and arm the player to resume from the saved position on the first play tap.

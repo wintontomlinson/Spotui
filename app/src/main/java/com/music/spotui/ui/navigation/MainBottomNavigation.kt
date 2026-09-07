@@ -98,7 +98,10 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
                     ) {
                         val navStack by navController.currentBackStackEntryAsState()
-                        val currentRoute = navStack?.destination?.route
+                        // Some destinations carry optional arguments, for example
+                        // "ytsearch?q={q}". Compare on the base route so the correct
+                        // tab stays highlighted regardless of arguments.
+                        val currentRoute = navStack?.destination?.route?.substringBefore("?")
 
                         val rootRoutes = listOf(Routes.Home.route, Routes.YtSearch.route, Routes.Library.route)
                         var currentTab by rememberSaveable { mutableStateOf(Routes.Home.route) }
