@@ -662,15 +662,15 @@ fun SumUpLibraryScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "No items found",
+                text = "Nothing else here yet",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Try clearing your active filters or adding more items to your library.",
+                text = "Songs you save and playlists you create will appear here.",
                 color = Color.Gray,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
@@ -685,7 +685,7 @@ fun SumUpLibraryScreen(
             ) {
                 Text(
                     text = "Clear filters",
-                    color = Color.Black,
+                    color = Color(0xFF1A1206),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -705,67 +705,8 @@ fun SumUpLibraryScreen(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         // Premium quick access grid for the destinations that always work.
         item { LibraryQuickAccess(navController) }
-        if (showHistoryTile) {
-            // Listening history & stats entry.
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp, 6.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { navController.navigate(Routes.History.route) }
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(55.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFF27856A)),
-                    ) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-                    }
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
-                        Text(text = "Listening history", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Your plays and stats", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    }
-                }
-            }
-        }
-        // Local files (imported device audio) entry.
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp, 6.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { navController.navigate(Routes.LocalFiles.route) }
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(55.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFF3B5BA5)),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_library_big),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp),
-                    )
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(text = "Local files", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "Music imported from this device", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
+        // Listening history and Local files are surfaced by the quick access grid
+        // above, so they are not repeated as flat rows here.
         items(entries) { entry ->
             Row(
                 horizontalArrangement = Arrangement.Start,
@@ -917,41 +858,51 @@ fun LibraryGridScreen(
     onClearFilters: () -> Unit = {}
 ) {
     if (entries.isEmpty() && followedArtists.isEmpty()) {
+        // Keep quick access reachable even with an empty library, otherwise the grid
+        // view becomes a dead end.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 60.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(padding)
+                .background(Color(0xFF0E0E13)),
         ) {
-            Text(
-                text = "No items found",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Try clearing your active filters or adding more items to your library.",
-                color = Color.Gray,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Box(
+            Spacer(modifier = Modifier.height(10.dp))
+            LibraryQuickAccess(navController)
+            Column(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFFF5A524))
-                    .clickable { onClearFilters() }
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp, vertical = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Clear filters",
-                    color = Color.Black,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Nothing else here yet",
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Songs you save and playlists you create will appear here.",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFFF5A524))
+                        .clickable { onClearFilters() }
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "Clear filters",
+                        color = Color(0xFF1A1206),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
         return
