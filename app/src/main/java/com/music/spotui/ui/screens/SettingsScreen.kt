@@ -103,7 +103,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.data.diagnostics.PlaybackLog
 import com.music.spotui.ui.theme.AppPalette
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.foundation.layout.heightIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +126,11 @@ fun SettingsScreen(navController: NavController) {
     var isAutoBackup by remember { mutableStateOf(BackupPref.isAutoBackupEnabled(context)) }
     var isRestoring by remember { mutableStateOf(false) }
     var isBackingUp by remember { mutableStateOf(false) }
+    var showPlaybackLog by remember { mutableStateOf(false) }
+
+    if (showPlaybackLog) {
+        PlaybackLogDialog(onDismiss = { showPlaybackLog = false })
+    }
     val scope = rememberCoroutineScope()
 
     val dirPickerLauncher = rememberLauncherForActivityResult(
@@ -372,6 +380,47 @@ fun SettingsScreen(navController: NavController) {
                     inactiveTrackColor = Color(0xFF333333),
                 ),
             )
+            Spacer(Modifier.height(12.dp))
+            SectionTitle("Playback diagnostics")
+            Text(
+                "If a song stops before it ends, open this straight afterwards. It records why " +
+                    "playback stopped and how much of the stream arrived.",
+                color = Color(0xFFB3B3B3),
+                fontSize = 13.sp,
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+            ) {
+                Text(
+                    "View playback log",
+                    color = AppPalette,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { showPlaybackLog = true }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Clear",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable {
+                            PlaybackLog.clear()
+                            android.widget.Toast
+                                .makeText(context, "Playback log cleared", android.widget.Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                )
+            }
+
             Spacer(Modifier.height(12.dp))
             SectionTitle("Backup & Restore")
 
@@ -725,4 +774,78 @@ private fun QualityPicker(
         }
     }
     Spacer(Modifier.height(8.dp))
+}
+
+
+/**
+ * Shows what playback recorded, newest first, with a copy button so the whole thing can be
+ * pasted into a bug report. Read this right after a song cuts out: the last few lines say
+ * whether the stream stopped short, the host refused a request, or the queue was advanced.
+ */
+@Composable
+private fun PlaybackLogDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val lines = remember { PlaybackLog.lines() }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF181818),
+        title = {
+            Text(
+                "Playback log",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        },
+        text = {
+            if (lines.isEmpty()) {
+                Text(
+                    "Nothing recorded yet. Play a song, and if it stops early come straight back here.",
+                    color = Color(0xFFB3B3B3),
+                    fontSize = 13.sp,
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    lines.forEach { line ->
+                        Text(
+                            line,
+                            color = Color(0xFFD6D6D6),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily.Monospace,
+                            modifier = Modifier.padding(vertical = 2.dp),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = AppPalette, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            if (lines.isNotEmpty()) {
+                TextButton(
+                    onClick = {
+                        val clipboard = context
+                            .getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                                as android.content.ClipboardManager
+                        clipboard.setPrimaryClip(
+                            android.content.ClipData.newPlainText("SOLO playback log", PlaybackLog.asText()),
+                        )
+                        android.widget.Toast
+                            .makeText(context, "Playback log copied", android.widget.Toast.LENGTH_SHORT)
+                            .show()
+                    },
+                ) {
+                    Text("Copy", color = Color(0xFFB3B3B3), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        },
+    )
 }

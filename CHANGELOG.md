@@ -31,6 +31,14 @@ the file, while the same bytes fetched as bounded range requests arrived complet
 * **Track length is sanity checked.** When the player reports a length well short of what the search
   result said, the catalogue duration wins, so a partial stream is not mistaken for a short song.
 
+### 🔍 Playback Diagnostics
+
+* **Playback log in Settings.** A song cutting out looks identical to the listener whether the stream
+  was truncated, a request was rejected, the reported length was wrong, or the queue was advanced on
+  purpose. Playback now records those events, with positions, durations, byte offsets and reconnects,
+  and Settings can show and copy the log. Kept in memory only, so nothing is written to storage from
+  the playback threads.
+
 ### 🎨 Identity
 
 * **New launcher icon:** an amber plate with a dark five bar waveform, replacing the previous dark

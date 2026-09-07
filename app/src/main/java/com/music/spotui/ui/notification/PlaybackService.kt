@@ -153,6 +153,10 @@ class PlaybackService : MediaLibraryService() {
             "Stream ended early at ${position}ms of ${duration}ms, " +
                 "re-resolving and resuming (attempt $truncationRecoveryAttempts)",
         )
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "recover",
+            "attempt $truncationRecoveryAttempts, resuming at ${position / 1000}s of ${duration / 1000}s",
+        )
         // Anything cached for this track came from the same cut short response, including
         // a possibly wrong content length, so start from a clean slate.
         player.currentMediaItem?.localConfiguration?.customCacheKey?.let { cacheKey ->
@@ -177,6 +181,14 @@ class PlaybackService : MediaLibraryService() {
                 }
             }
             if (playbackState == Player.STATE_ENDED) {
+                SongPlayer.exoPlayer?.let { p ->
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "ended",
+                        "at ${p.currentPosition / 1000}s, player says ${p.duration / 1000}s, " +
+                            "catalogue says ${trackDurationMs(0L) / 1000}s, " +
+                            "crossfading=${SongPlayer.isCrossfadeActive()}",
+                    )
+                }
                 if (SongPlayer.isCrossfadeActive()) {
                     // Ignore the old player's STATE_ENDED event during an active crossfade.
                     // The crossfade routine itself handles the transition and promotes the new player.
@@ -251,6 +263,11 @@ class PlaybackService : MediaLibraryService() {
                 "PlaybackService",
                 "Player error during playback: ${error.message}",
                 error
+            )
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "error",
+                "at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s, " +
+                    "${error.errorCodeName}: ${error.message}",
             )
             // A dropped connection surfaces here in the middle of a song. Skipping to the
             // next track throws away the rest of the song the user asked for, so try to
@@ -516,6 +533,11 @@ class PlaybackService : MediaLibraryService() {
 
     /** Advance the in-app queue one step in the given direction and start it. */
     private fun advance(forward: Boolean) {
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "queue",
+            (if (forward) "next" else "previous") +
+                " at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s",
+        )
         if (forward) SongPlayer.next(applicationContext) else SongPlayer.previous(applicationContext)
     }
 

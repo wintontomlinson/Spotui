@@ -577,6 +577,10 @@ object SongPlayer {
                         return@withContext
                     }
                     ensurePlayer(appContext)
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "track",
+                        "$metaTitle, source=$currentSource quality=$currentQuality",
+                    )
                     player!!.setMediaItem(buildMediaItem(streamUrl, streamMimeType(streamUrl), song))
                     player!!.prepare()
                     // Restored session: continue from where the last run stopped.

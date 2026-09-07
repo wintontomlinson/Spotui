@@ -90,6 +90,10 @@ class ResilientPlaybackDataSource(
 
         chunked = true
         declaredLength = available
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "stream",
+            "opened chunked, $available bytes from position ${dataSpec.position}",
+        )
         return available
     }
 
@@ -103,7 +107,14 @@ class ResilientPlaybackDataSource(
                 try {
                     upstream.read(buffer, offset, length)
                 } catch (error: IOException) {
-                    if (isFatal(error) || !continueFromCurrentOffset(afterError = true)) throw error
+                    if (isFatal(error) || !continueFromCurrentOffset(afterError = true)) {
+                        com.music.spotui.data.diagnostics.PlaybackLog.add(
+                            "stream",
+                            "gave up at $bytesReadFromBase of $declaredLength: " +
+                                "${error.javaClass.simpleName}: ${error.message}",
+                        )
+                        throw error
+                    }
                     continue
                 }
 
@@ -118,6 +129,11 @@ class ResilientPlaybackDataSource(
             if (missingBytes() <= 0L) return read
 
             if (!continueFromCurrentOffset(afterError = false)) {
+                com.music.spotui.data.diagnostics.PlaybackLog.add(
+                    "stream",
+                    "stopped ${missingBytes()} bytes early, " +
+                        "after $bytesReadFromBase of $declaredLength",
+                )
                 throw IOException(
                     "Stream stopped ${missingBytes()} bytes early, " +
                         "after $bytesReadFromBase of $declaredLength",
@@ -207,6 +223,12 @@ class ResilientPlaybackDataSource(
         reopensSinceProgress++
         bytesAtLastReopen = bytesReadFromBase
         runCatching { upstream.close() }
+
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "stream",
+            (if (afterError) "reconnect after error" else "next chunk") +
+                " at $bytesReadFromBase, $remaining of $declaredLength left",
+        )
 
         if (afterError) {
             // Give a flapping connection a moment rather than burning the budget at once.
