@@ -102,8 +102,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.music.spotui.ui.components.DefaultAppPrompt
-import com.music.spotui.util.DefaultLinkHelper
 import com.music.spotui.ui.theme.AppBackground
 import com.music.spotui.ui.theme.AppPalette
 
@@ -120,8 +118,6 @@ fun SettingsScreen(navController: NavController) {
     var autoPlay by remember { mutableStateOf(isAutoPlayEnabled(context)) }
     var batteryOptExempt by remember { mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimization(context)) }
     var updateRepoUrl by remember { mutableStateOf(getUpdateRepoUrl(context)) }
-    var isDefaultLinkHandler by remember { mutableStateOf(DefaultLinkHelper.isAppDefaultLinkHandler(context)) }
-    var showDefaultGuide by remember { mutableStateOf(false) }
     var showProviderStatusDialog by remember { mutableStateOf(false) }
     var providerStatuses by remember { mutableStateOf(emptyList<com.metrolist.spotify.SpotiFlac.ProviderStatus>()) }
     var isRefreshingStatuses by remember { mutableStateOf(false) }
@@ -174,17 +170,6 @@ fun SettingsScreen(navController: NavController) {
                 }
             }
         }
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isDefaultLinkHandler = DefaultLinkHelper.isAppDefaultLinkHandler(context)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val batteryOptLauncher = rememberLauncherForActivityResult(
@@ -302,47 +287,7 @@ fun SettingsScreen(navController: NavController) {
                 )
             }
 
-            Spacer(Modifier.height(12.dp))
-            SectionTitle("Link handling")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        if (isDefaultLinkHandler) {
-                            DefaultLinkHelper.openSpotuiDefaultSettings(context)
-                        } else {
-                            showDefaultGuide = true
-                        }
-                    }
-                    .background(Color(0xFF1A1A20))
-                    .padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Open Spotify links by default", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (isDefaultLinkHandler) "Spotui handles Spotify URLs by default" else "Not default — tap to open setup guide",
-                        color = if (isDefaultLinkHandler) Color(0xFF81C784) else Color(0xFFB3B3B3),
-                        fontSize = 12.sp,
-                    )
-                }
-                if (isDefaultLinkHandler) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = "Enabled",
-                        tint = AppPalette,
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.OpenInNew,
-                        contentDescription = "Open Settings",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
+
             SectionTitle("Audio quality")
             QualityPicker(
                 title = "Streaming over Wi-Fi",
@@ -451,96 +396,15 @@ fun SettingsScreen(navController: NavController) {
             }
 
             Spacer(Modifier.height(12.dp))
-            SectionTitle("Deezer (preferred source)")
-            var deezerEnabled by remember { mutableStateOf(com.music.spotui.data.preferences.isDeezerEnabled(context)) }
-            val deezerConnected = com.music.spotui.data.preferences.getDeezerArl(context) != null
-            val deezerTier = com.music.spotui.data.preferences.getDeezerTier(context)
-
-            SettingsSwitchRow(
-                title = "Use Deezer",
-                subtitle = "Stream from Deezer first, fall back to YouTube",
-                checked = deezerEnabled,
-            ) {
-                deezerEnabled = it
-                com.music.spotui.data.preferences.setDeezerEnabled(context, it)
-                com.music.spotui.di.SongPlayer.deezerEnabled = it
-            }
-            Text(
-                text = if (deezerConnected) {
-                    "Connected" + if (deezerTier.isNotBlank()) " — $deezerTier" else ""
-                } else "Not connected",
-                color = Color(0xFFB3B3B3),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-            )
-            Text(
-                text = if (deezerConnected) "Reconnect / switch account" else "Log in to Deezer",
-                color = AppPalette,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        navController.navigate(com.music.spotui.ui.navigation.Routes.DeezerLogin.route)
-                    }
-                    .padding(vertical = 14.dp),
-            )
-            if (deezerConnected) {
-                Text(
-                    text = "Disconnect Deezer",
-                    color = Color(0xFFE57373),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable {
-                            com.music.spotui.data.preferences.clearDeezer(context)
-                            navController.navigate(com.music.spotui.ui.navigation.Routes.Settings.route) {
-                                popUpTo(com.music.spotui.ui.navigation.Routes.Settings.route) { inclusive = true }
-                            }
-                        }
-                        .padding(vertical = 12.dp),
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-            SectionTitle("SpotiFLAC (experimental)")
-            val sfConnected = com.music.spotui.data.preferences.hasSpotiflacSession(context)
-            Text(
-                text = if (sfConnected) "Verified — signed session active" else "Not verified — tap below to solve Turnstile check",
-                color = Color(0xFFB3B3B3),
-                fontSize = 12.sp,
-                modifier = Modifier.padding(start = 4.dp, top = 2.dp),
-            )
-            Text(
-                text = if (sfConnected) "Re-verify SpotiFLAC" else "Verify SpotiFLAC",
-                color = Color(0xFF00C7B7),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        navController.navigate(com.music.spotui.ui.navigation.Routes.SpotiflacVerify.route)
-                    }
-                    .padding(vertical = 14.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-            SectionTitle("Matching")
+            SectionTitle("Playback")
             SettingsSwitchRow(
                 title = "Allow video fallback",
-                subtitle = "Use regular YouTube videos only after Music song results fail",
+                subtitle = "Use regular YouTube videos when a song result is not available",
                 checked = videoFallback,
             ) {
                 videoFallback = it
                 setVideoFallbackEnabled(context, it)
             }
-
-            Spacer(Modifier.height(12.dp))
-            SectionTitle("Playback")
             SettingsSwitchRow(
                 title = "Auto-play on startup",
                 subtitle = "Resume playing the last track when the app opens",
@@ -857,16 +721,6 @@ fun SettingsScreen(navController: NavController) {
                 )
             }
             Spacer(Modifier.height(40.dp))
-        }
-
-        if (showDefaultGuide) {
-            DefaultAppPrompt(
-                forceShow = true,
-                onDismiss = {
-                    showDefaultGuide = false
-                    isDefaultLinkHandler = DefaultLinkHelper.isAppDefaultLinkHandler(context)
-                }
-            )
         }
 
         if (showDevicesSheet) {
