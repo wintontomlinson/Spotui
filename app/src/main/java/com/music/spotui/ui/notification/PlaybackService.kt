@@ -84,6 +84,10 @@ class PlaybackService : MediaLibraryService() {
     private var truncationRecoveryAttempts = 0
     private var truncationRecoveryMark = 0L
 
+    // Tracks that failed back to back without anything playing in between. Reset as soon as
+    // audio actually starts.
+    private var consecutiveFailures = 0
+
     /** Forgets recovery state, so the next track starts with a full budget. */
     private fun resetTruncationRecovery() {
         truncationRecoveryFor = null
@@ -176,6 +180,8 @@ class PlaybackService : MediaLibraryService() {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
                 SongPlayer.releaseWakeLock()
+                // Audio is flowing, so the run of failures is over.
+                consecutiveFailures = 0
                 // A different track is playing, so give it its own recovery budget.
                 val playing = currentSongState.songUrl.value
                 if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
@@ -276,6 +282,30 @@ class PlaybackService : MediaLibraryService() {
             // resume the same track from where the audio stopped first, and only move on
             // when the track genuinely cannot play.
             if (recoverFromTruncatedStream()) return
+
+            // When failures come one after another nothing is going to play, and racing
+            // through the rest of the queue only means more refused requests, which makes
+            // it worse. Stop and say so instead of skipping silently through everything.
+            consecutiveFailures++
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                com.music.spotui.data.diagnostics.PlaybackLog.add(
+                    "queue",
+                    "stopped after $consecutiveFailures tracks failed in a row",
+                )
+                SongPlayer.pause()
+                currentSongState.updateResolveError(
+                    "Streams are being refused right now. Wait a minute and try again.",
+                )
+                serviceScope.launch {
+                    android.widget.Toast.makeText(
+                        applicationContext,
+                        "Streams are being refused right now. Wait a minute and try again.",
+                        android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
+                return
+            }
+
             SongPlayer.acquireWakeLock(applicationContext, "spotui:error_advance", 60_000L)
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
@@ -563,6 +593,9 @@ class PlaybackService : MediaLibraryService() {
 
         /** Attempts allowed before progress becomes a requirement. */
         const val ATTEMPTS_BEFORE_PROGRESS_REQUIRED = 2
+
+        /** Back to back failures tolerated before playback stops and says something. */
+        const val MAX_CONSECUTIVE_FAILURES = 3
 
         /** Upper bound on recovery attempts for a single track. */
         const val MAX_RECOVERY_ATTEMPTS = 6

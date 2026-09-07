@@ -749,11 +749,7 @@ object SongPlayer {
         // header with 403 on anything but the first request for a URL, which broke seeking
         // and reconnecting.
         val upstream = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
-            upstreamFactory = androidx.media3.datasource.DefaultDataSource.Factory(context, http),
-            // Only this instance may move an offset into the URL, since it is the one
-            // talking to the network. Above the cache a rewritten URL looks like a
-            // different resource entirely.
-            rewriteRangeIntoUrl = true,
+            androidx.media3.datasource.DefaultDataSource.Factory(context, http),
         )
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(mediaCache(context))

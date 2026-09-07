@@ -35,10 +35,9 @@ import java.io.IOException
 class ResilientPlaybackDataSourceFactory(
     private val upstreamFactory: DataSource.Factory,
     private val chunkBytes: Long = DEFAULT_CHUNK_BYTES,
-    private val rewriteRangeIntoUrl: Boolean = false,
 ) : DataSource.Factory {
     override fun createDataSource(): DataSource =
-        ResilientPlaybackDataSource(upstreamFactory.createDataSource(), chunkBytes, rewriteRangeIntoUrl)
+        ResilientPlaybackDataSource(upstreamFactory.createDataSource(), chunkBytes)
 
     companion object {
         /**
@@ -58,15 +57,6 @@ class ResilientPlaybackDataSourceFactory(
 class ResilientPlaybackDataSource(
     private val upstream: DataSource,
     private val chunkBytes: Long = ResilientPlaybackDataSourceFactory.DEFAULT_CHUNK_BYTES,
-    /**
-     * Whether a byte offset may be moved into the URL's query string.
-     *
-     * Only true for the instance sitting directly above the network. Doing it anywhere else
-     * hands a rewritten URL to a layer that treats a URL as the identity of a resource: a
-     * log showed this instance above the cache opening `position 1048576 via query range`
-     * and getting a length of -1 back, because the cache had never heard of that URL.
-     */
-    private val rewriteRangeIntoUrl: Boolean = false,
 ) : DataSource {
     private var baseDataSpec: DataSpec? = null
 
@@ -111,8 +101,7 @@ class ResilientPlaybackDataSource(
         declaredLength = openUpstream(dataSpec, offset = 0L, length = dataSpec.length)
         PlaybackLog.add(
             "stream",
-            "opened $declaredLength bytes from position ${dataSpec.position}" +
-                if (usesQueryRange(dataSpec) && dataSpec.position > 0L) " via query range" else "",
+            "opened $declaredLength bytes from position ${dataSpec.position}",
         )
         return declaredLength
     }
@@ -183,37 +172,21 @@ class ResilientPlaybackDataSource(
     /**
      * Opens the upstream for [length] bytes starting [offset] past the base position.
      *
-     * For hosts that only accept a Range header on the very first request for a URL, the
-     * offset is put in the query string and the spec is handed down as an unbounded read
-     * from position zero, so no Range header is produced at all.
+     * Offsets are asked for the plain way, with a Range header. Putting the offset in the
+     * URL's query string was tried and reverted: a log showed such a request returning no
+     * content length at all and the extractor then reporting
+     * ERROR_CODE_PARSING_CONTAINER_MALFORMED, which is what a response framed in some other
+     * protocol looks like to a media extractor. Raw bytes with a Range header are what the
+     * player can actually read.
      */
     private fun openUpstream(base: DataSpec, offset: Long, length: Long): Long {
-        val absolute = base.position + offset
-        val needsExplicitRange = absolute > 0L || length != C.LENGTH_UNSET.toLong()
-
-        if (usesQueryRange(base) && needsExplicitRange) {
-            val end = if (length == C.LENGTH_UNSET.toLong()) null else absolute + length - 1
-            val rangedUri = base.uri
-                .buildUpon()
-                .appendQueryParameter("range", if (end == null) "$absolute-" else "$absolute-$end")
-                .build()
-            val spec = base
-                .buildUpon()
-                .setUri(rangedUri)
-                .setPosition(0L)
-                .setLength(C.LENGTH_UNSET.toLong())
-                .build()
-            return upstream.open(spec)
-        }
-
-        val spec = base.buildUpon().setPosition(absolute).setLength(length).build()
+        val spec = base
+            .buildUpon()
+            .setPosition(base.position + offset)
+            .setLength(length)
+            .build()
         return upstream.open(spec)
     }
-
-    /** Hosts known to refuse a Range header on anything but the first request for a URL. */
-    private fun usesQueryRange(dataSpec: DataSpec): Boolean =
-        rewriteRangeIntoUrl &&
-            dataSpec.uri.host?.contains("googlevideo.com", ignoreCase = true) == true
 
     /** Chunking only makes sense for a remote resource we were asked to read to the end. */
     private fun isChunkable(dataSpec: DataSpec): Boolean {

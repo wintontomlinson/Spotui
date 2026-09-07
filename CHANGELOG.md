@@ -5,6 +5,26 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.5
+
+### 🛠 Playback Fixes
+
+* **Byte offsets go back to a Range header.** Putting the offset in the URL's query string, added in
+  1.6.3, is reverted. The log line `opened -1 bytes from position 703837 via query range` followed by
+  `ERROR_CODE_PARSING_CONTAINER_MALFORMED` says it plainly: that request came back with no content
+  length and contents the extractor could not parse, which is what a response framed in another
+  protocol looks like to a media extractor. Raw bytes with a Range header are what the player can
+  read, so that is what playback asks for again.
+* **Playback stops instead of racing through the queue.** When three tracks fail back to back,
+  playback pauses and says so rather than skipping onward, which looked like every song being
+  skipped. Skipping also meant a burst of further requests, which makes a host that is already
+  refusing them refuse more.
+
+Together with 1.6.4 this leaves the request shape playback originally had, one plain request per
+stream URL, minus the intro preload that was spending that request before the song ever started.
+
+---
+
 ## 🚀 Release v1.6.4
 
 ### 🛠 Playback Fixes
