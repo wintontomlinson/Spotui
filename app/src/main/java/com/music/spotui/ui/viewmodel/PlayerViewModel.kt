@@ -129,19 +129,72 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         val seeds = queueSongs.takeLast(5)
             .mapNotNull { it.spotifyTrackId.ifBlank { null } }
             .distinct()
-        if (seeds.isEmpty()) return
         radioLoading = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val recs = repository.provideRecommendations(seeds)
                 val existing = currentSongState.queue.value
                 val existingIds = existing.map { it.id }.toSet()
-                val fresh = recs.filter { it.id !in existingIds }
+                val fresh = if (seeds.isNotEmpty()) {
+                    // Spotify-backed queue: use Spotify recommendations.
+                    repository.provideRecommendations(seeds).filter { it.id !in existingIds }
+                } else {
+                    // Login-free / YouTube queue: fetch related songs from YouTube,
+                    // seeded by what's playing (title + artist), so autoplay keeps going.
+                    fetchYoutubeRelated(queueSongs).filter { it.id !in existingIds }
+                }
                 if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
             } finally {
                 radioLoading = false
             }
         }
+    }
+
+    /**
+     * Login-free autoplay "algorithm": builds a continuation queue from YouTube by
+     * searching for songs related to the recently played tracks (title + artist).
+     * Used when there is no Spotify seed (the whole point of the free experience).
+     */
+    private suspend fun fetchYoutubeRelated(
+        queueSongs: List<SongsModel>,
+    ): List<SongsModel> {
+        val playedIds = queueSongs.map { it.id }.toSet()
+        val playedUrls = queueSongs.map { it.url }.toSet()
+        // Seed from the last couple of tracks so the mix stays on-theme.
+        val seedTracks = queueSongs.takeLast(2)
+        val out = LinkedHashMap<String, SongsModel>()
+        for (seed in seedTracks) {
+            val artist = seed.singer.substringBefore(",").trim()
+            val query = listOf(seed.title, artist, "mix")
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+            val results = runCatching {
+                com.metrolist.innertube.YouTube
+                    .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)
+                    .getOrNull()
+                    ?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                    ?.take(10)
+                    .orEmpty()
+            }.getOrElse { emptyList() }
+            for (item in results) {
+                val model = SongsModel(
+                    id = item.id.hashCode(),
+                    title = item.title,
+                    album = item.album?.name.orEmpty(),
+                    singer = item.artists.joinToString(", ") { it.name }.ifBlank { "Unknown artist" },
+                    coverUri = item.thumbnail.orEmpty(),
+                    url = item.id,
+                    spotifyTrackId = "",
+                    explicit = item.explicit,
+                    durationMs = (item.duration ?: 0) * 1000,
+                )
+                // Skip anything already in the queue (by id or by videoId).
+                if (model.id !in playedIds && model.url !in playedUrls) {
+                    out.putIfAbsent(model.url, model)
+                }
+            }
+        }
+        return out.values.toList()
     }
 
     // End-of-track autoplay fires from the UI on every recomposition while the

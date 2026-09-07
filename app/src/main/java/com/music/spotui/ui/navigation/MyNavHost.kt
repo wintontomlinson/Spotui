@@ -24,7 +24,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.music.spotui.ui.screens.AlbumScreen
 import com.music.spotui.ui.screens.ArtistReleasesScreen
 import com.music.spotui.ui.screens.ArtistScreen
-import com.music.spotui.ui.screens.CategoryScreen
 import com.music.spotui.ui.screens.DownloadsScreen
 import com.music.spotui.ui.screens.HistoryScreen
 import com.music.spotui.ui.screens.LibraryScreen
@@ -33,7 +32,6 @@ import com.music.spotui.ui.screens.PlayerScreen
 import com.music.spotui.ui.screens.PlaylistScreen
 import com.music.spotui.ui.screens.ShowScreen
 import com.music.spotui.ui.screens.QueueScreen
-import com.music.spotui.ui.screens.SearchScreen
 import com.music.spotui.ui.screens.SettingsScreen
 import com.music.spotui.ui.screens.DeezerIntroScreen
 import com.music.spotui.ui.screens.DeezerLoginScreen
@@ -45,7 +43,6 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 @Composable
 fun MyNavHost(
     navHostController: NavHostController,
-    searchFocusTrigger: Int = 0,
 ) {
 
     val playerViewModel : PlayerViewModel = hiltViewModel()
@@ -103,9 +100,6 @@ fun MyNavHost(
             // Home is the login-free, YouTube-powered screen — the old Spotify
             // home (and its "session expired / log in" prompt) is never shown.
             FreeHomeScreen(navHostController)
-        }
-        composable(Routes.Search.route){
-            SearchScreen(navHostController, searchFocusTrigger = searchFocusTrigger)
         }
         composable(
             "${Routes.YtSearch.route}?q={q}",
@@ -173,14 +167,6 @@ fun MyNavHost(
             SpotiflacVerifyScreen(navHostController, next = next)
         }
 
-        composable(
-            "${Routes.Category.route}/{genre}?title={title}",
-            arguments = listOf(navArgument("title") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val genre = navBackStackEntry.arguments?.getString("genre").orEmpty()
-            val title = navBackStackEntry.arguments?.getString("title").orEmpty()
-            CategoryScreen(navHostController, genre = genre, title = title.ifBlank { genre })
-        }
 
         composable(
             "${Routes.Album.route}/{uString}?artist={artist}",

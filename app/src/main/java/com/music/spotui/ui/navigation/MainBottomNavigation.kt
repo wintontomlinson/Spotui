@@ -51,7 +51,6 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
 
     val navItems = listOf(
         Routes.Home,
-        Routes.Search,
         Routes.YtSearch,
         Routes.Library
     )
@@ -101,7 +100,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         val navStack by navController.currentBackStackEntryAsState()
                         val currentRoute = navStack?.destination?.route
 
-                        val rootRoutes = listOf(Routes.Home.route, Routes.Search.route, Routes.YtSearch.route, Routes.Library.route)
+                        val rootRoutes = listOf(Routes.Home.route, Routes.YtSearch.route, Routes.Library.route)
                         var currentTab by rememberSaveable { mutableStateOf(Routes.Home.route) }
                         if (currentRoute in rootRoutes) {
                             currentTab = currentRoute!!
@@ -141,8 +140,6 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                         }
                                     } else if (currentRoute != item.route) {
                                         navController.popBackStack(item.route, inclusive = false)
-                                    } else if (item.route == Routes.Search.route) {
-                                        onSearchReselected()
                                     }
                                 },
                                 alwaysShowLabel = true,
