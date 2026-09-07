@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -56,9 +56,9 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 
 /**
- * Login-free search & play. Type a song name, get YouTube Music results, tap to
- * play — no Spotify session required. Results are mapped to [SongsModel] and go
- * through the exact same queue + player as the rest of the app.
+ * Login free search and play. Type a song name, get YouTube Music results, tap to
+ * play. No Spotify session is required. Results are mapped to [SongsModel] and go
+ * through the exact same queue and player as the rest of the app.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -171,8 +171,7 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                 }
                 results.isNotEmpty() -> {
                     LazyColumn(contentPadding = PaddingValues(bottom = 160.dp)) {
-                        items(results, key = { it.id }) { song ->
-                            val index = results.indexOf(song)
+                        itemsIndexed(results) { index, song ->
                             YtResultRow(song = song, onClick = { playResult(song, index) })
                         }
                     }
@@ -186,7 +185,7 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                 else -> {
                     EmptyHint(
                         icon = true,
-                        text = "Search for any song and play it instantly.",
+                        text = "Search millions of songs and play instantly.",
                     )
                 }
             }

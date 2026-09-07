@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -51,7 +52,7 @@ import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
 /**
- * Login-free Home. No Spotify session needed — content is a set of curated
+ * Login free Home. No Spotify session needed. Content is a set of curated
  * sections populated from YouTube search, and tapping a track plays it through
  * the normal queue/player. Also hosts a recreated search bar that opens the
  * free search screen.
@@ -88,25 +89,30 @@ fun FreeHomeScreen(navController: NavController) {
                 Text(
                     text = greeting(),
                     color = Color.White,
-                    fontSize = 26.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Free music, powered by YouTube — no login needed.",
+                    text = greetingSubtitle(),
                     color = Color(0xFFB3B3B3),
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
-                Spacer(Modifier.height(14.dp))
-                // Search lives on the Explore tab — Home only shows mood chips.
-                // YouTube Music-style mood chips.
+                Spacer(Modifier.height(16.dp))
+                // Search lives on the Explore tab, so Home only shows mood chips.
                 MoodChips(onPick = { query ->
-                    navController.navigate("${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}")
+                    navController.navigate(
+                        "${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}"
+                    ) {
+                        // Avoid piling identical destinations on the back stack when
+                        // several chips are tapped in a row.
+                        launchSingleTop = true
+                    }
                 })
             }
         }
 
-        items(rows) { row ->
+        items(rows, key = { it.title }) { row ->
             HomeRowSection(row = row, onPlay = play)
         }
 
@@ -173,8 +179,7 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        items(row.tracks) { song ->
-            val index = row.tracks.indexOf(song)
+        itemsIndexed(row.tracks) { index, song ->
             TrackCard(song = song, onClick = { onPlay(row.tracks, index) })
         }
     }
@@ -217,12 +222,29 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Time aware greeting. Locale agnostic and free of any java.time dependency so it
+ * works on every supported API level.
+ */
 private fun greeting(): String {
-    // Simple, locale-agnostic greeting (no java.time dependency).
     val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-    return when {
-        hour < 12 -> "Good morning"
-        hour < 17 -> "Good afternoon"
-        else -> "Good evening"
+    return when (hour) {
+        in 0..4 -> "Late night listening"
+        in 5..11 -> "Good morning"
+        in 12..16 -> "Good afternoon"
+        in 17..20 -> "Good evening"
+        else -> "Good night"
+    }
+}
+
+/** A short line under the greeting that sets the tone for the hour. */
+private fun greetingSubtitle(): String {
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    return when (hour) {
+        in 0..4 -> "Something calm to see the night through"
+        in 5..11 -> "Start your day with something you love"
+        in 12..16 -> "Keep the afternoon going"
+        in 17..20 -> "Unwind with your favourites"
+        else -> "Wind down with a quiet mix"
     }
 }

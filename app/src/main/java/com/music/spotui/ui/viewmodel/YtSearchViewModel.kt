@@ -19,7 +19,7 @@ import javax.inject.Inject
  * Login-free search. Queries YouTube Music anonymously (no Spotify session, no
  * YouTube cookie) via [YouTube.search] and maps the [SongItem] results to the
  * app's [SongsModel] so they play through the normal player/queue exactly like
- * Spotify-backed tracks — the audio engine already resolves YouTube streams
+ * Spotify backed tracks. The audio engine already resolves YouTube streams
  * without any login.
  */
 @HiltViewModel
@@ -85,7 +85,7 @@ class YtSearchViewModel @Inject constructor() : ViewModel() {
                 // A network/parse failure and a genuinely empty result look the same
                 // here; surface a soft message either way.
                 _results.value = emptyList()
-                _error.value = "No results — check your connection and try again."
+                _error.value = "No results found. Please check your connection and try again."
             } else {
                 _results.value = songs.map { it.toSongsModel() }
                 _error.value = null
