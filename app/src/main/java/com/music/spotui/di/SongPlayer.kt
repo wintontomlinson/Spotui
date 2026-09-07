@@ -686,11 +686,28 @@ object SongPlayer {
     private fun mediaCache(context: Context): androidx.media3.datasource.cache.SimpleCache =
         mediaCache ?: synchronized(this) {
             mediaCache ?: androidx.media3.datasource.cache.SimpleCache(
-                java.io.File(context.cacheDir, "media"),
+                mediaCacheDir(context),
                 androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor(256L * 1024 * 1024),
                 androidx.media3.database.StandaloneDatabaseProvider(context),
             ).also { mediaCache = it }
         }
+
+    /**
+     * Directory backing the media cache.
+     *
+     * The name is versioned because older builds could record a truncated stream as the
+     * real content length of a track. Once that landed in the cache metadata the song
+     * ended at the same early point on every later play, so those entries have to be
+     * abandoned rather than reused.
+     */
+    private fun mediaCacheDir(context: Context): java.io.File {
+        val legacy = java.io.File(context.cacheDir, "media")
+        if (legacy.exists()) {
+            runCatching { legacy.deleteRecursively() }
+                .onFailure { Log.w(TAG, "could not drop legacy media cache", it) }
+        }
+        return java.io.File(context.cacheDir, "media-v2")
+    }
 
     private fun cacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
         val http = androidx.media3.datasource.DefaultHttpDataSource.Factory()
@@ -698,7 +715,12 @@ object SongPlayer {
                 "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)",
             )
             .setAllowCrossProtocolRedirects(true)
-        val upstream = androidx.media3.datasource.DefaultDataSource.Factory(context, http)
+        // Reconnect a cut short response before the cache sees it. A truncated stream that
+        // reaches CacheDataSource as a clean end of input is stored as the length of the
+        // track, which permanently cuts the song off at that point on every later play.
+        val upstream = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
+            androidx.media3.datasource.DefaultDataSource.Factory(context, http),
+        )
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(mediaCache(context))
             .setUpstreamDataSourceFactory(upstream)
@@ -746,6 +768,20 @@ object SongPlayer {
                 }
             }
         )
+    }
+
+    /**
+     * Drops every cached byte and all metadata held under [cacheKey].
+     *
+     * Used when a track ended before its real length. Whatever the cache holds for that
+     * track can no longer be trusted, in particular a recorded content length taken from
+     * a cut short response, which would otherwise end the song at the same early point on
+     * every later play.
+     */
+    fun forgetCachedMedia(cacheKey: String, context: Context) {
+        if (cacheKey.isBlank()) return
+        runCatching { mediaCache(context).removeResource(cacheKey) }
+            .onFailure { Log.w(TAG, "could not clear cached media for $cacheKey", it) }
     }
 
     /** Pre-cache the first [PRELOAD_BYTES] of [url] into the media cache (http(s) only). */

@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Monochrome variant used by themed icons on Android 13 and above. Same glyph as
-  the foreground, drawn as a single solid shape so the system can tint it.
+  Monochrome variant used by themed icons on Android 13 and above. Same waveform as
+  the foreground, flat white so the system can tint it.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:scaleX="2.15"
-        android:scaleY="2.15"
-        android:translateX="27"
-        android:translateY="27">
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M12,3v10.55c-0.59,-0.34 -1.27,-0.55 -2,-0.55c-2.21,0 -4,1.79 -4,4s1.79,4 4,4s4,-1.79 4,-4V7h4V3H12z" />
-    </group>
+
+    <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="8.4"
+        android:strokeLineCap="round" />
 </vector>

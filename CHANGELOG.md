@@ -5,6 +5,28 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.0
+
+### 🛠 Playback Fixes
+
+* **Songs no longer stop halfway:** a stream that was cut short was reported to the player as a
+  normal end of track, so the queue advanced mid song. Worse, the cache stored that early end as
+  the length of the track, which made the same song stop at the same point on every later play.
+  Short responses are now reconnected from the exact byte offset already played, the cache can no
+  longer record a truncated length, and the media cache directory was versioned so entries poisoned
+  by older builds are dropped.
+* **Errors retry instead of skipping:** a dropped connection used to jump straight to the next song.
+  The current track is now re-resolved and resumed from where the audio stopped, and the queue only
+  advances when the track genuinely cannot play.
+
+### 🎨 Identity
+
+* **New launcher icon:** an amber plate with a dark five bar waveform, replacing the previous dark
+  plate and music note. Adaptive, round, themed monochrome and Play Store variants are all
+  generated from the same mark by `tools/generate_launcher_icons.py`.
+
+---
+
 ## 🚀 Release v1.4.5
 
 ### 💾 Lossless & Stream Controls

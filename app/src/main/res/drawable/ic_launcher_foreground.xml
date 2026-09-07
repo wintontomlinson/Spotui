@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Launcher foreground: a clean music note sized to sit inside the adaptive icon
-  safe zone (the centre 66 of 108), with a soft red under glow for depth.
+  Launcher foreground: a five bar waveform, drawn as round capped strokes so every
+  bar is a clean pill. The whole mark sits inside the adaptive icon safe zone (the
+  centre 66 of 108), including the rounded ends of the outer bars, and the bars stay
+  thick enough to stay readable at the smallest launcher size.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -10,35 +12,30 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Subtle offset copy in the accent colour, giving the glyph depth. -->
-    <group
-        android:scaleX="2.15"
-        android:scaleY="2.15"
-        android:translateX="28.2"
-        android:translateY="29.4">
-        <path
-            android:fillColor="#66F5A524"
-            android:pathData="M12,3v10.55c-0.59,-0.34 -1.27,-0.55 -2,-0.55c-2.21,0 -4,1.79 -4,4s1.79,4 4,4s4,-1.79 4,-4V7h4V3H12z" />
+    <!-- Warm shadow under the mark, giving it a little lift off the amber plate. -->
+    <group android:translateY="1.4">
+        <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
+            android:fillColor="#00000000"
+            android:strokeColor="#3D5C2E02"
+            android:strokeWidth="8.4"
+            android:strokeLineCap="round" />
     </group>
 
-    <!-- Main glyph -->
-    <group
-        android:scaleX="2.15"
-        android:scaleY="2.15"
-        android:translateX="27"
-        android:translateY="27">
-        <path android:pathData="M12,3v10.55c-0.59,-0.34 -1.27,-0.55 -2,-0.55c-2.21,0 -4,1.79 -4,4s1.79,4 4,4s4,-1.79 4,-4V7h4V3H12z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:type="linear"
-                    android:startX="6"
-                    android:startY="3"
-                    android:endX="18"
-                    android:endY="21">
-                    <item android:offset="0.0" android:color="#FFFFFFFF" />
-                    <item android:offset="1.0" android:color="#FFEDEDF2" />
-                </gradient>
-            </aapt:attr>
-        </path>
-    </group>
+    <!-- The waveform itself. -->
+    <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
+        android:fillColor="#00000000"
+        android:strokeWidth="8.4"
+        android:strokeLineCap="round">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="linear"
+                android:startX="30"
+                android:startY="29"
+                android:endX="78"
+                android:endY="79">
+                <item android:offset="0.0" android:color="#FF261A05" />
+                <item android:offset="1.0" android:color="#FF120C02" />
+            </gradient>
+        </aapt:attr>
+    </path>
 </vector>

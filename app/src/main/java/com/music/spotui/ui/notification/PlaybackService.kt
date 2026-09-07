@@ -106,6 +106,11 @@ class PlaybackService : MediaLibraryService() {
             "PlaybackService",
             "Stream ended early at ${position}ms of ${duration}ms, re-resolving and resuming",
         )
+        // Anything cached for this track came from the same cut short response, including
+        // a possibly wrong content length, so start from a clean slate.
+        player.currentMediaItem?.localConfiguration?.customCacheKey?.let { cacheKey ->
+            SongPlayer.forgetCachedMedia(cacheKey, applicationContext)
+        }
         com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
         SongPlayer.invalidateResolvedStream(songUrl)
         SongPlayer.setRestorePoint(songUrl, position)
@@ -200,6 +205,11 @@ class PlaybackService : MediaLibraryService() {
                 "Player error during playback: ${error.message}",
                 error
             )
+            // A dropped connection surfaces here in the middle of a song. Skipping to the
+            // next track throws away the rest of the song the user asked for, so try to
+            // resume the same track from where the audio stopped first, and only move on
+            // when the track genuinely cannot play.
+            if (recoverFromTruncatedStream()) return
             SongPlayer.acquireWakeLock(applicationContext, "spotui:error_advance", 60_000L)
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
