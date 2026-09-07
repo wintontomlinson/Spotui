@@ -234,17 +234,22 @@ fun LikedSongsScreen(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
                                      ) {
-                                        albumViewModel.updateQueue(likedSongs)
-                                        albumViewModel.updateSongState(
-                                            likedSongs[0].coverUri,
-                                            likedSongs[0].title,
-                                            likedSongs[0].singer,
-                                            true,
-                                            likedSongs[0].id,
-                                            0,
-                                            "Liked Songs"
-                                        )
-                                        SongPlayer.playSong(likedSongs[0].url, context, "song/${likedSongs[0].id}")
+                                        // Nothing liked yet means nothing to play, and
+                                        // indexing the empty list here crashed the screen.
+                                        val first = likedSongs.firstOrNull()
+                                        if (first != null) {
+                                            albumViewModel.updateQueue(likedSongs)
+                                            albumViewModel.updateSongState(
+                                                first.coverUri,
+                                                first.title,
+                                                first.singer,
+                                                true,
+                                                first.id,
+                                                0,
+                                                "Liked Songs"
+                                            )
+                                            SongPlayer.playSong(first.url, context, "song/${first.id}")
+                                        }
                                     }
                             ) {
                                 Icon(
