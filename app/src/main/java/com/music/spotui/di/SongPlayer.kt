@@ -1867,6 +1867,19 @@ object SongPlayer {
         filter: YouTube.SearchFilter = YouTube.SearchFilter.FILTER_SONG,
         forPlayback: Boolean = false,
     ): List<String> {
+        // A raw YouTube videoId is 11 characters with no spaces. When the caller already
+        // knows the exact video, resolve to it directly and skip every other path,
+        // including the candidate caches.
+        //
+        // This runs first for two reasons. The explicit hint used to be appended before
+        // the id check, turning an exact id like "dQw4w9WgXcQ" into the text
+        // "dQw4w9WgXcQ explicit", which no longer looks like an id, so the app ran a
+        // text search for the id itself and played whatever came back. That is why
+        // tapping a title could start a completely unrelated song. Running the check
+        // before the cache also bypasses any wrong candidates that bug already stored.
+        fun isRawVideoId(text: String) = text.length == 11 && !text.contains(' ')
+        if (isRawVideoId(query)) return listOf(query)
+
         val cacheKey = "$query|${filter.value}"
         videoCandidatesCache[cacheKey]?.let { return it }
         appCtx?.let { ctx ->
@@ -1880,12 +1893,11 @@ object SongPlayer {
         }
         val wantExplicit = explicitRegistry[query]
         val baseSearchText = searchTextForPlayback(query)
-        // Append "explicit" to the YouTube search query when Spotify says the
-        // track is explicit, increases the chance YouTube returns the correct
-        // version instead of the clean/radio edit.
+        if (isRawVideoId(baseSearchText)) return listOf(baseSearchText)
+
+        // Append "explicit" to the search query when the track is marked explicit, to
+        // improve the odds YouTube returns that version rather than a clean edit.
         val searchText = if (wantExplicit == true) "$baseSearchText explicit" else baseSearchText
-        // A raw YouTube videoId is 11 chars with no spaces, accept it directly.
-        if (searchText.length == 11 && !searchText.contains(' ')) return listOf(searchText)
         val hits = YouTube.search(searchText, filter)
             .onFailure { Log.w(TAG, "resolveVideoId: YouTube search failed for: $searchText", it) }
             .getOrNull()
