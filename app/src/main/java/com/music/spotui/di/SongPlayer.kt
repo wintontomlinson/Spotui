@@ -379,9 +379,20 @@ object SongPlayer {
         runCatching {
             val cache = mediaCache(context)
             val spotifyId = trackIdRegistry[song] ?: spotifyTrackIdForPlayback(song)
-            val key = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, song)
-            cache.removeResource(key)
-        }
+            val videoId = videoIdFromYouTubeLink(song)
+            // A track has one cache entry per audio format, and which format was cached
+            // depends on the network at the time, so drop every entry belonging to the
+            // track instead of guessing one key. This used to build the key from the
+            // request rather than the stream URL, so it silently cleared nothing.
+            val prefixes = buildList {
+                spotifyId?.takeIf { it.isNotBlank() }?.let { add("spotui-track:$it:") }
+                videoId?.takeIf { it.isNotBlank() }?.let { add("spotui-yt:$it:") }
+            }
+            if (prefixes.isEmpty()) return@runCatching
+            cache.keys
+                .filter { key -> prefixes.any { key.startsWith(it) } }
+                .forEach { cache.removeResource(it) }
+        }.onFailure { Log.w(TAG, "could not clear cached media for $song", it) }
     }
 
     fun invalidateResolvedStream(song: String) {
@@ -615,7 +626,11 @@ object SongPlayer {
         val metadata = metadataBuilder.build()
         val query = songQuery.ifBlank { currentRequest }
         val spotifyId = trackIdRegistry[query] ?: spotifyTrackIdForPlayback(query)
-        val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, streamUrl)
+        // The video id comes from the request, not the stream URL, because the URL only
+        // carries a per request token that would give a new cache key every time.
+        val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(
+            spotifyId, streamUrl, videoIdFromYouTubeLink(query),
+        )
 
         return MediaItem.Builder()
             .apply { currentMediaId?.let { setMediaId(it) } }
@@ -657,7 +672,7 @@ object SongPlayer {
             acquireWakeLock(appContext, "spotui:prefetch", 30_000L)
             try {
                 val url = runCatching { resolveStreamUrl(song, appContext, forPlayback = false) }.getOrNull()
-                if (url != null) cacheIntro(url, appContext)
+                if (url != null) cacheIntro(url, appContext, song)
             } finally {
                 releaseWakeLock("spotui:prefetch")
             }
@@ -797,13 +812,18 @@ object SongPlayer {
     }
 
     /** Pre-cache the first [PRELOAD_BYTES] of [url] into the media cache (http(s) only). */
-    private fun cacheIntro(url: String, appContext: Context) {
+    private fun cacheIntro(url: String, appContext: Context, song: String = "") {
         if (!url.startsWith("http")) return
         if (!com.music.spotui.data.preferences.isPreloadEnabled(appContext)) return
         runCatching {
             val ds = cacheDataSourceFactory(appContext).createDataSource()
-            val spotifyId = trackIdRegistry[url] ?: spotifyTrackIdForPlayback(url)
-            val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, url)
+            val query = song.ifBlank { url }
+            val spotifyId = trackIdRegistry[query] ?: spotifyTrackIdForPlayback(query)
+            // Must match the key playback will use, or the preload is written somewhere
+            // the player never looks.
+            val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(
+                spotifyId, url, videoIdFromYouTubeLink(query),
+            )
             val spec = androidx.media3.datasource.DataSpec.Builder()
                 .setUri(android.net.Uri.parse(url))
                 .setKey(stableKey)
@@ -2284,7 +2304,9 @@ object SongPlayer {
                         metadataBuilder, ctx, nextSong.coverUri, "song/${nextSong.id}", nextUrl
                     )
                     val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(
-                        nextSong.spotifyTrackId.ifBlank { null }, nextUrl
+                        nextSong.spotifyTrackId.ifBlank { null },
+                        nextUrl,
+                        videoIdFromYouTubeLink(nextSong.url),
                     )
                     val item = MediaItem.Builder()
                         .setMediaId("song/${nextSong.id}")

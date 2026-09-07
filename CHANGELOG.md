@@ -5,6 +5,28 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.1
+
+### 🛠 Cache Correctness
+
+* **One cache entry per audio format.** A track is offered in several audio formats and the one
+  used is chosen per playback from the network conditions. Checked against a live response, the four
+  audio formats of a single track were 1,231,355 / 1,300,631 / 3,433,755 / 3,449,447 bytes, and all
+  four produced the same cache key, because only the host path and an id went into it. Sharing one
+  entry across them means bytes from one format being fed to the player as another, and a recorded
+  length belonging to a different format, which ends a song early with no error shown at all. The
+  format is now part of the key.
+* **Cache keys survive re-resolution.** Stream URLs carry a per request token, so keying on it
+  produced a fresh key every time a track was resolved and the cache was never actually reused. The
+  stable source id is used instead, which also makes the intro preload land where playback looks
+  for it.
+* **Per track cache clearing works.** It built its key from the request rather than the stream URL,
+  so it silently cleared nothing. It now drops every format entry belonging to the track.
+* **Version bumped so builds can be told apart.** Several fixes shipped as 1.6.0, which made it
+  impossible to check which one was installed.
+
+---
+
 ## 🚀 Release v1.6.0
 
 ### 🛠 Playback Fixes
