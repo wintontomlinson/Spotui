@@ -12,6 +12,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import com.music.spotui.data.api.SpotifySession
+import com.music.spotui.ui.screens.FreeHomeScreen
 import com.music.spotui.ui.screens.YtSearchScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -26,7 +27,6 @@ import com.music.spotui.ui.screens.ArtistScreen
 import com.music.spotui.ui.screens.CategoryScreen
 import com.music.spotui.ui.screens.DownloadsScreen
 import com.music.spotui.ui.screens.HistoryScreen
-import com.music.spotui.ui.screens.HomeScreen
 import com.music.spotui.ui.screens.LibraryScreen
 import com.music.spotui.ui.screens.LikedSongsScreen
 import com.music.spotui.ui.screens.PlayerScreen
@@ -100,7 +100,9 @@ fun MyNavHost(
         popExitTransition = { fadeOut(animationSpec = tween(150)) },
     ){
         composable(Routes.Home.route){
-            HomeScreen(navHostController)
+            // Home is the login-free, YouTube-powered screen — the old Spotify
+            // home (and its "session expired / log in" prompt) is never shown.
+            FreeHomeScreen(navHostController)
         }
         composable(Routes.Search.route){
             SearchScreen(navHostController, searchFocusTrigger = searchFocusTrigger)

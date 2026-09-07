@@ -106,14 +106,6 @@ import java.time.LocalTime
 @Composable
 fun HomeScreen(navController: NavController){
 
-    // Login-free by default: with no Spotify session, show the YouTube-powered
-    // FreeHome instead of the Spotify feed (which would be empty without a login).
-    val homeContext = androidx.compose.ui.platform.LocalContext.current
-    if (com.music.spotui.data.api.SpotifySession.spDc(homeContext).isBlank()) {
-        FreeHomeScreen(navController)
-        return
-    }
-
     val homeViewModel : HomeViewModel = hiltViewModel()
     val home by homeViewModel.home.collectAsState()
     val albums by homeViewModel.albums.collectAsState()
