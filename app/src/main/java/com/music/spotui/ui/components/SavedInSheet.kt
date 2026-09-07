@@ -228,7 +228,8 @@ fun SavedInSheet(
                         },
                     ) {
                         liked = !liked
-                        if (liked) addLikedSongId(context, song.id.toString())
+                        // Save the whole track so Liked Songs works with no account.
+                        if (liked) com.music.spotui.data.preferences.addLikedSong(context, song)
                         else removeLikedSongId(context, song.id.toString())
                         SpotifySync.setTrackSaved(context, song.spotifyTrackId, liked)
                         onLikedChanged(liked)

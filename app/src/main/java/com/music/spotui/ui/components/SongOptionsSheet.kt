@@ -168,7 +168,8 @@ fun SongOptionsSheet(
                 iconTint = if (liked) Color(AppPalette.toArgb()) else Color.White,
             ) {
                 if (liked) removeLikedSongId(context, song.id.toString())
-                else addLikedSongId(context, song.id.toString())
+                // Save the whole track so Liked Songs can show it without any account.
+                else com.music.spotui.data.preferences.addLikedSong(context, song)
                 liked = !liked
                 // Mirror the like to the real Spotify account.
                 com.music.spotui.data.api.SpotifySync.setTrackSaved(context, song.spotifyTrackId, liked)

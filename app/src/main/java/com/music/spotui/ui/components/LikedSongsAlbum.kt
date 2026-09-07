@@ -80,19 +80,25 @@ fun LikedSongsScreen(
     val playerViewModel : PlayerViewModel = hiltViewModel()
 
 
-    val album = albums.filter { it.name == "Liked Songs" }
-    val likesSongIds = getLikedSongIds(context)
-    var likedSongs  by remember { mutableStateOf(emptyList<SongsModel>()) }
+    // There is no guarantee a "Liked Songs" entry exists in the album list, and
+    // indexing it blindly crashed this screen whenever the list was empty.
+    val likedAlbumCover = albums.firstOrNull { it.name == "Liked Songs" }?.coverUri
+    var likedSongs by remember { mutableStateOf(emptyList<SongsModel>()) }
 
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
-    Palette().extractSecondColorFromCoverUrl(context = context, album[0].coverUri){ color ->
-        dominentColor = color
+    if (!likedAlbumCover.isNullOrBlank()) {
+        Palette().extractSecondColorFromCoverUrl(context = context, likedAlbumCover) { color ->
+            dominentColor = color
+        }
     }
     val likeState = albumViewModel.likeState.value
-    LaunchedEffect(likeState) {
-        likedSongs = getSongsByIds(likesSongIds, songs).sortedBy { it.title }
+    LaunchedEffect(likeState, songs) {
+        // Resolve from the catalogue when it is available, and fall back to the copies
+        // saved at like time so this works with no account at all.
+        likedSongs = com.music.spotui.data.preferences.resolveLikedSongs(context, songs)
+            .sortedBy { it.title }
     }
 
 
@@ -154,7 +160,9 @@ fun LikedSongsScreen(
                 ) {
                     GlideImage(
                         modifier = Modifier.size(180.dp),
-                        model = album[0].coverUri,
+                        // Fall back to the first liked track's art when the library has
+                        // no Liked Songs entry to take a cover from.
+                        model = likedAlbumCover ?: likedSongs.firstOrNull()?.coverUri,
                         failure = placeholder(R.drawable.placeholder),
                         //loading = placeholder(R.drawable.album),
                         //contentScale = ContentScale.Crop,

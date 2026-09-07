@@ -1197,7 +1197,14 @@ fun PlayerInfo(
                                 removeLikedSongId(context, songId.toString())
                                 snackbarMessage = "Removed from Liked Songs"
                             } else {
-                                addLikedSongId(context, songId.toString())
+                                // Save the whole track when it is in the queue, so Liked
+                                // Songs can show it without any account.
+                                val song = SongPlayer.queuedSong(songId)
+                                if (song != null) {
+                                    com.music.spotui.data.preferences.addLikedSong(context, song)
+                                } else {
+                                    addLikedSongId(context, songId.toString())
+                                }
                                 snackbarMessage = "Added to Liked Songs"
                             }
                             snackbarVisible = true
@@ -2123,7 +2130,14 @@ fun PlayerOptionsSheet(
                     if (isLiked.value) {
                         removeLikedSongId(context, songId.toString())
                     } else {
-                        addLikedSongId(context, songId.toString())
+                        // Save the whole track when we have it, so Liked Songs can show
+                        // it without any account behind the scenes.
+                        val song = currentSong
+                        if (song != null) {
+                            com.music.spotui.data.preferences.addLikedSong(context, song)
+                        } else {
+                            addLikedSongId(context, songId.toString())
+                        }
                     }
                     isLiked.value = isSongLiked(context, songId.toString())
                     // Mirror the like to the real Spotify account.

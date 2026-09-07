@@ -2380,6 +2380,13 @@ object SongPlayer {
 
     fun isCrossfadeActive(): Boolean = isCrossfading
 
+    /**
+     * The queued track with this id, when the queue holds it. Lets UI that only has an
+     * id, such as the player heart, save the full track rather than just the id.
+     */
+    fun queuedSong(songId: Int): com.music.spotui.data.entity.SongsModel? =
+        boundState?.queue?.value?.firstOrNull { it.id == songId }
+
     private fun sigmoid(t: Float): Float = 1.0f / (1.0f + exp(-CF_SIGMOID_K * (t - 0.5f)))
 
     private fun expInterpolate(start: Float, end: Float, t: Float): Float {
