@@ -798,23 +798,49 @@ fun SettingsScreen(navController: NavController) {
 
             Spacer(Modifier.height(12.dp))
             SectionTitle("Account")
-            Text(
-                text = "Log out",
-                color = Color(0xFFE57373),
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        com.music.spotui.data.api.SpotifySession.setSpDc(context, "")
-                        com.music.spotui.data.api.Api.HomeCache.clear()
-                        navController.navigate(com.music.spotui.ui.navigation.Routes.Login.route) {
-                            popUpTo(0) { inclusive = true }
+            // Spotify login is optional — the app runs login-free by default. Show
+            // "Log in" when signed out (unlocks Home/Search/Library), or "Log out"
+            // when a Spotify session exists.
+            val loggedIn = com.music.spotui.data.api.SpotifySession.spDc(context).isNotBlank()
+            if (loggedIn) {
+                Text(
+                    text = "Log out of Spotify",
+                    color = Color(0xFFE57373),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable {
+                            com.music.spotui.data.api.SpotifySession.setSpDc(context, "")
+                            com.music.spotui.data.api.Api.HomeCache.clear()
+                            navController.navigate(com.music.spotui.ui.navigation.Routes.YtSearch.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
-                    }
-                    .padding(vertical = 14.dp)
-            )
+                        .padding(vertical = 14.dp)
+                )
+            } else {
+                Text(
+                    text = "Log in to Spotify (optional)",
+                    color = Color(0xFF1ED760),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable {
+                            navController.navigate(com.music.spotui.ui.navigation.Routes.Login.route)
+                        }
+                        .padding(vertical = 14.dp)
+                )
+                Text(
+                    text = "Connect a Spotify account to unlock Home, Search and your library. Not required — free YouTube search works without it.",
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+            }
             Spacer(Modifier.height(24.dp))
             val uriHandler = LocalUriHandler.current
             Row(

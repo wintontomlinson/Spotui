@@ -59,9 +59,11 @@ fun MyNavHost(
 //    player = ExoPlayer.Builder(context).build()
 
     val context = LocalContext.current
-    // First launch (no Spotify session) lands on the login screen.
+    // Login-free by default: with no Spotify session, open the "Free" YouTube
+    // search screen so the app is usable immediately. Spotify login is optional
+    // (reachable from Settings) and, once set, the app opens on Home.
     val startDestination = if (SpotifySession.spDc(context).isBlank()) {
-        Routes.Login.route
+        Routes.YtSearch.route
     } else {
         Routes.Home.route
     }
