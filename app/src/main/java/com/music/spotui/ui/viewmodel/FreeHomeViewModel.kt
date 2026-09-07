@@ -39,15 +39,19 @@ class FreeHomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
-    // Evergreen fallback sections (also shown when there's no history yet).
+    // Evergreen fallback sections, also shown when there is no history yet. Trending
+    // is not in here because it leads the screen as its own block.
     private val curated = listOf(
+        "New releases" to "new songs this week",
         "Today's biggest hits" to "top hits this week",
-        "Trending now" to "trending songs",
         "Bollywood hits" to "latest bollywood songs",
-        "Chill & Lo-Fi" to "lofi chill beats",
+        "Chill and Lo-Fi" to "lofi chill beats",
         "Workout energy" to "workout gym music",
         "Throwback classics" to "throwback hits playlist",
     )
+
+    /** Query behind the trending block that leads Home. */
+    private val trendingQuery = "trending songs this week"
 
     private val _rows = mutableStateOf<List<HomeRow>>(emptyList())
     val rows: State<List<HomeRow>> get() = _rows
@@ -60,11 +64,15 @@ class FreeHomeViewModel @Inject constructor(
     val recentlyPlayed: State<List<SongsModel>> get() = _recentlyPlayed
 
     /**
-     * A short list pulled from the first loaded section, shown as a compact grid at
-     * the top of Home so there is something playable above the fold straight away.
+     * The trending block that leads Home, so the newest songs are the first thing on
+     * the screen. Loaded from its own query rather than borrowed from a section below,
+     * which keeps it stable no matter how the personalised rows are ordered.
      */
-    private val _quickPicks = mutableStateOf<List<SongsModel>>(emptyList())
-    val quickPicks: State<List<SongsModel>> get() = _quickPicks
+    private val _trending = mutableStateOf<List<SongsModel>>(emptyList())
+    val trending: State<List<SongsModel>> get() = _trending
+
+    private val _trendingLoading = mutableStateOf(true)
+    val trendingLoading: State<Boolean> get() = _trendingLoading
 
     private var loaded = false
     // Timestamp of the newest history entry the current Home was built from, so we
@@ -112,10 +120,20 @@ class FreeHomeViewModel @Inject constructor(
                     url = entry.url,
                 )
             }
+        fetchTrending()
         val sections = buildSections(history)
-        _quickPicks.value = emptyList()
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
+    }
+
+    /** Loads the trending block that leads Home. */
+    private fun fetchTrending() {
+        _trendingLoading.value = true
+        viewModelScope.launch {
+            val songs = searchSongs(trendingQuery, limit = 8)
+            _trending.value = songs
+            _trendingLoading.value = false
+        }
     }
 
     /**
@@ -158,27 +176,27 @@ class FreeHomeViewModel @Inject constructor(
 
     private fun fetchRow(index: Int, query: String) {
         viewModelScope.launch {
-            val songs = withContext(Dispatchers.IO) {
-                runCatching {
-                    YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
-                        .getOrNull()
-                        ?.items
-                        ?.filterIsInstance<SongItem>()
-                        ?.take(12)
-                        ?.map { it.toSongsModel() }
-                        .orEmpty()
-                }.getOrElse { emptyList() }
-            }
+            val songs = searchSongs(query, limit = 12)
             val current = _rows.value.toMutableList()
             if (index in current.indices) {
                 current[index] = current[index].copy(tracks = songs, loading = false)
                 _rows.value = current
             }
-            // Seed quick picks from the very first section so the top of Home fills in
-            // as soon as any content arrives.
-            if (index == 0 && songs.isNotEmpty()) {
-                _quickPicks.value = songs.take(6)
-            }
         }
     }
+
+    /** One anonymous YouTube song search, mapped to the app's track model. */
+    private suspend fun searchSongs(query: String, limit: Int): List<SongsModel> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
+                    .getOrNull()
+                    ?.items
+                    ?.filterIsInstance<SongItem>()
+                    ?.distinctBy { it.id }
+                    ?.take(limit)
+                    ?.map { it.toSongsModel() }
+                    .orEmpty()
+            }.getOrElse { emptyList() }
+        }
 }

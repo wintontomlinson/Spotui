@@ -79,7 +79,8 @@ fun FreeHomeScreen(navController: NavController) {
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val rows by vm.rows
     val recentlyPlayed by vm.recentlyPlayed
-    val quickPicks by vm.quickPicks
+    val trending by vm.trending
+    val trendingLoading by vm.trendingLoading
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -119,10 +120,12 @@ fun FreeHomeScreen(navController: NavController) {
             Spacer(Modifier.height(4.dp))
         }
 
-        if (quickPicks.isNotEmpty()) {
-            item {
-                SectionHeader(title = "Quick picks")
-                QuickPicks(tracks = quickPicks, onPlay = play)
+        // Trending leads the screen, so the newest songs are the first thing seen.
+        item {
+            SectionHeader(title = "Trending now")
+            when {
+                trendingLoading && trending.isEmpty() -> TrendingSkeleton()
+                trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
             }
         }
 
@@ -450,6 +453,64 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 fontSize = 11.sp,
                 maxLines = 1,
             )
+        }
+    }
+}
+
+/** Placeholder rows for the trending block while it loads. */
+@Composable
+private fun TrendingSkeleton() {
+    val transition = rememberInfiniteTransition(label = "trendingSkeleton")
+    val alpha by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(750),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "trendingSkeletonAlpha",
+    )
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Surface),
+    ) {
+        repeat(4) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(SurfaceHigh.copy(alpha = alpha)),
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(12.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(SurfaceHigh.copy(alpha = alpha)),
+                    )
+                    Spacer(Modifier.height(7.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.35f)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(SurfaceHigh.copy(alpha = alpha)),
+                    )
+                }
+            }
         }
     }
 }
