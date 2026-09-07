@@ -22,7 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -104,7 +104,10 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         val currentRoute = navStack?.destination?.route?.substringBefore("?")
 
                         val rootRoutes = listOf(Routes.Home.route, Routes.YtSearch.route, Routes.Library.route)
-                        var currentTab by rememberSaveable { mutableStateOf(Routes.Home.route) }
+                        // Tracks which tab to highlight. On destinations that are not
+                        // tabs, such as the player or a playlist, the last tab stays lit.
+                        // This is presentation only: taps are decided from currentRoute.
+                        var currentTab by remember { mutableStateOf(Routes.Home.route) }
                         if (currentRoute in rootRoutes) {
                             currentTab = currentRoute!!
                         }
@@ -131,18 +134,21 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                     }
                                 },
                                 onClick = {
-                                    if (currentTab != item.route) {
+                                    // Decide from the LIVE route, never from the
+                                    // remembered tab. The remembered value can drift out
+                                    // of sync, and when it did the old code fell through
+                                    // to popBackStack for a destination that was no
+                                    // longer on the stack, which silently did nothing and
+                                    // left the tab unresponsive.
+                                    if (currentRoute != item.route) {
                                         navController.navigate(item.route) {
-                                            navController.graph.startDestinationRoute?.let { startRoute ->
-                                                popUpTo(startRoute) {
-                                                    saveState = true
-                                                }
+                                            val startRoute = navController.graph.startDestinationRoute
+                                            popUpTo(startRoute ?: item.route) {
+                                                saveState = true
                                             }
                                             launchSingleTop = true
                                             restoreState = true
                                         }
-                                    } else if (currentRoute != item.route) {
-                                        navController.popBackStack(item.route, inclusive = false)
                                     }
                                 },
                                 alwaysShowLabel = true,
