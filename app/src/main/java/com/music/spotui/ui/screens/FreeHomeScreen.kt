@@ -100,6 +100,11 @@ fun FreeHomeScreen(navController: NavController) {
                 Spacer(Modifier.height(14.dp))
                 // Recreated search bar — tapping opens the live free-search screen.
                 FakeSearchBar(onClick = { navController.navigate(Routes.YtSearch.route) })
+                Spacer(Modifier.height(14.dp))
+                // YouTube Music-style mood chips.
+                MoodChips(onPick = { query ->
+                    navController.navigate("${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}")
+                })
             }
         }
 
@@ -108,6 +113,36 @@ fun FreeHomeScreen(navController: NavController) {
         }
 
         item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+private val MOODS = listOf(
+    "Energize" to "energetic upbeat songs",
+    "Relax" to "relaxing chill songs",
+    "Focus" to "focus concentration music",
+    "Workout" to "workout gym music",
+    "Feel good" to "feel good happy songs",
+    "Romance" to "romantic love songs",
+    "Party" to "party dance hits",
+    "Sad" to "sad emotional songs",
+)
+
+@Composable
+private fun MoodChips(onPick: (String) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        items(MOODS) { (label, query) ->
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF1F1F24))
+                    .clickable { onPick(query) }
+                    .padding(horizontal = 16.dp, vertical = 9.dp),
+            )
+        }
     }
 }
 
@@ -162,7 +197,7 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
                 .height(180.dp),
             contentAlignment = Alignment.Center,
         ) {
-            CircularProgressIndicator(color = Color(0xFF1ED760), strokeWidth = 2.dp)
+            CircularProgressIndicator(color = Color(0xFFFF0033), strokeWidth = 2.dp)
         }
         return
     }

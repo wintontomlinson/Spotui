@@ -107,8 +107,12 @@ fun MyNavHost(
         composable(Routes.Search.route){
             SearchScreen(navHostController, searchFocusTrigger = searchFocusTrigger)
         }
-        composable(Routes.YtSearch.route){
-            YtSearchScreen(navHostController)
+        composable(
+            "${Routes.YtSearch.route}?q={q}",
+            arguments = listOf(navArgument("q") { defaultValue = "" }),
+        ) { navBackStackEntry ->
+            val q = navBackStackEntry.arguments?.getString("q").orEmpty()
+            YtSearchScreen(navHostController, initialQuery = q)
         }
         composable(Routes.Library.route) {
             LibraryScreen(navHostController)

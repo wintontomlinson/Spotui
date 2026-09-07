@@ -59,10 +59,18 @@ import com.music.spotui.ui.viewmodel.YtSearchViewModel
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun YtSearchScreen(navController: NavController) {
+fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     val context = LocalContext.current
     val vm: YtSearchViewModel = hiltViewModel()
     val playerViewModel: PlayerViewModel = hiltViewModel()
+
+    // Pre-fill and run a search when opened from a Home mood chip.
+    androidx.compose.runtime.LaunchedEffect(initialQuery) {
+        if (initialQuery.isNotBlank() && vm.query.value != initialQuery) {
+            vm.onQueryChange(initialQuery)
+            vm.search(initialQuery)
+        }
+    }
 
     val query by vm.query
     val results by vm.results
@@ -131,7 +139,7 @@ fun YtSearchScreen(navController: NavController) {
                 unfocusedContainerColor = Color(0xFF1F1F1F),
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                cursorColor = Color(0xFF1ED760),
+                cursorColor = Color(0xFFFF0033),
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
@@ -144,7 +152,7 @@ fun YtSearchScreen(navController: NavController) {
             when {
                 isLoading && results.isEmpty() -> {
                     CircularProgressIndicator(
-                        color = Color(0xFF1ED760),
+                        color = Color(0xFFFF0033),
                         modifier = Modifier.align(Alignment.TopCenter).padding(top = 40.dp),
                     )
                 }

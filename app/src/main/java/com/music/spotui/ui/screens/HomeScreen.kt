@@ -220,7 +220,7 @@ fun HomeScreen(navController: NavController){
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(24.dp))
-                                        .background(Color(0xFF1ED760))
+                                        .background(Color(0xFFFF0033))
                                         .clickable { navController.navigate(Routes.YtSearch.route) }
                                         .padding(horizontal = 24.dp, vertical = 12.dp)
                                 ) {
@@ -1059,7 +1059,7 @@ private fun HomeSongRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF1ED760))
+                .background(Color(0xFFFF0033))
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,

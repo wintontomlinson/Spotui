@@ -42,7 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val SpotifyGreen = Color(0xFF1DB954)
+private val SpotifyGreen = Color(0xFFFF0033)
 
 // Fixed thumb height — never changes during scroll
 private val THUMB_HEIGHT = 48.dp

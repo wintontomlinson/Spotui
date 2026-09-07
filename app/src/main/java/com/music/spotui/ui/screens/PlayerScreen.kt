@@ -1104,7 +1104,7 @@ fun PlayerInfo(
                         val badgeColor = when {
                             hasError -> Color(0xFFFF6B6B)
                             isResolvingState -> Color(0xFF3DABFF)
-                            source == "Spotify" -> Color(0xFF1ED760)
+                            source == "Spotify" -> Color(0xFFFF0033)
                             source.startsWith("Lossless") -> Color(0xFFFFC862)
                             source.startsWith("Deezer") || source == "Deezer" -> Color(0xFFA238FF)
                             source == "Downloaded" -> Color(0xFF9C9C9C)
@@ -1355,7 +1355,7 @@ fun PlayerFull(
 
                 },
             tint = if (shuffle) {
-                Color(0xFF1ED760)
+                Color(0xFFFF0033)
             } else {
                 Color.White
             },
@@ -1475,7 +1475,7 @@ fun PlayerFull(
                 Icon(
                     modifier = Modifier.size(20.dp),
                     tint = if (repeat != RepeatMode.OFF) {
-                        Color(0xFF1ED760)
+                        Color(0xFFFF0033)
                     } else {
                         Color.White
                     },
@@ -1485,7 +1485,7 @@ fun PlayerFull(
                 if (repeat == RepeatMode.ONE) {
                     Text(
                         text = "1",
-                        color = Color(0xFF1ED760),
+                        color = Color(0xFFFF0033),
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.offset(y = (-1).dp)
@@ -1497,7 +1497,7 @@ fun PlayerFull(
                 Box(
 modifier = Modifier
                         .size(4.dp)
-                        .background(Color(0xFF1ED760), shape = CircleShape)
+                        .background(Color(0xFFFF0033), shape = CircleShape)
                 )
             } else {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1584,13 +1584,13 @@ fun PlayerConnectRow(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_devices),
-                tint = Color(0xFF1ED760),
+                tint = Color(0xFFFF0033),
                 modifier = Modifier.size(18.dp),
                 contentDescription = "Device",
             )
             Text(
                 text = routeName,
-                color = Color(0xFF1ED760),
+                color = Color(0xFFFF0033),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -1781,7 +1781,7 @@ fun ArtistsSheet(
                                     RoundedCornerShape(20.dp),
                                 )
                                 .background(
-                                    if (following) Color(0xFF1DB954) else Color.Transparent,
+                                    if (following) Color(0xFFFF0033) else Color.Transparent,
                                     RoundedCornerShape(20.dp),
                                 )
                                 .clickable {

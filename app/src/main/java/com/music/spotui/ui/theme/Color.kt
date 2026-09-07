@@ -12,3 +12,8 @@ val Pink40 = Color(0xFF7D5260)
 val AppBackground = Color(0xFF0B0B0F)
 val GridBackground = Color(0xFF2A2A2A)
 val AppPalette = Color(0xFF618DFF)
+
+// YouTube Music-style accent (red). Used across the app in place of the former
+// Spotify green.
+val YtmRed = Color(0xFFFF0033)
+val YtmRedDim = Color(0xFFCC0029)

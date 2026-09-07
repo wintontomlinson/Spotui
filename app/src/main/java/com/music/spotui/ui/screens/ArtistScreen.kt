@@ -77,7 +77,7 @@ import com.music.spotui.ui.viewmodel.ArtistViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 
-private val SpotifyGreen = Color(0xFF1ED760)
+private val SpotifyGreen = Color(0xFFFF0033)
 
 private fun grouped(n: Long): String =
     "%,d".format(n)
