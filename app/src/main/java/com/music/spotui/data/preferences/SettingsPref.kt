@@ -5,19 +5,21 @@ import android.net.ConnectivityManager
 import com.metrolist.music.constants.AudioQuality
 
 /**
- * User-facing audio quality tiers (Spotify-style). Each maps to the YouTube format
- * selector ([AudioQuality]) and whether to attempt a lossless FLAC source first.
+ * User facing audio quality tiers, each mapping to the YouTube format selector.
+ *
+ * There is no lossless tier. The lossless providers identified tracks by Spotify id
+ * or ISRC, neither of which exists on the login free path, and YouTube itself only
+ * serves lossy audio. Keeping the tier meant every play waited for those providers
+ * to fail before falling back, which cost startup time and delivered nothing.
  */
 enum class StreamQuality(
     val label: String,
     val detail: String,
     val audioQuality: AudioQuality,
-    val lossless: Boolean,
 ) {
-    LOW("Low", "Data saver, smallest size", AudioQuality.LOW, false),
-    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO, false),
-    HIGH("High", "Best compressed quality", AudioQuality.HIGH, false),
-    LOSSLESS("Lossless", "FLAC when available, else High", AudioQuality.HIGH, true),
+    LOW("Low", "Data saver, smallest size", AudioQuality.LOW),
+    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO),
+    HIGH("High", "Best available quality", AudioQuality.HIGH),
 }
 
 private const val PREF = "settings_prefs"
@@ -63,7 +65,7 @@ fun setCellularQuality(c: Context, q: StreamQuality) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getDownloadQuality(c: Context): StreamQuality = readQ(c, KEY_DL_Q, StreamQuality.LOSSLESS)
+fun getDownloadQuality(c: Context): StreamQuality = readQ(c, KEY_DL_Q, StreamQuality.HIGH)
 fun setDownloadQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_DL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)

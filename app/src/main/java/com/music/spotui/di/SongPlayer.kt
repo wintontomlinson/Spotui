@@ -967,7 +967,10 @@ object SongPlayer {
         //
         // The candidates/search step of resolveYtPlayback also runs in this scope;
         // if FLAC succeeds, that search result is just discarded.
-        val shouldTryFlac = losslessStreaming && quality.lossless
+        // Lossless is gone. The providers matched tracks by Spotify id or ISRC, which do
+        // not exist on the login free path, so every attempt failed after holding up
+        // playback. YouTube is the only source now.
+        val shouldTryFlac = false
         val shouldTryYoutube = youtubeEnabled
 
         if (!shouldTryFlac && !shouldTryYoutube) {
@@ -1104,7 +1107,9 @@ object SongPlayer {
                                     )
                                 }.getOrNull()
                                 if (dzRes is com.music.spotui.deezer.DeezerSource.Result.Success) {
-                                    if (dzRes.mimeFlac || !quality.lossless) {
+                                    // Any Deezer result is acceptable now that there is no
+                                    // lossless tier to hold out for.
+                                    if (true) {
                                         if (forPlayback) logResolution("✓ Deezer Direct SUCCESS (${dzRes.qualityLabel})")
                                         result = Triple(dzRes.uri, "Deezer", dzRes.qualityLabel)
                                     } else {
@@ -1499,16 +1504,10 @@ object SongPlayer {
         song: com.music.spotui.data.entity.SongsModel,
         appContext: Context,
     ): Boolean {
+        // Downloads come from YouTube like everything else. The lossless provider pass
+        // used to run first here and could stall a download for up to 45 seconds before
+        // failing, since it had no Spotify id or ISRC to match on.
         val dlQuality = com.music.spotui.data.preferences.getDownloadQuality(appContext)
-        val losslessDownloading = losslessStreaming
-
-        // Attempt Lossless download across all configured providers (Amazon, Qobuz, Deezer, SpotiFLAC, SoundCloud)
-        if (dlQuality.lossless || losslessDownloading) {
-            val flacOk = kotlinx.coroutines.withTimeoutOrNull(45_000) {
-                runCatching { downloadLosslessTrackToFile(song, appContext) }.getOrDefault(false)
-            } ?: false
-            if (flacOk) return true
-        }
 
         if (!youtubeEnabled) {
             lastDownloadError = "Track not available on configured audio providers"

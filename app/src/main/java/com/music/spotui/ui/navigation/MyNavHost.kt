@@ -32,10 +32,9 @@ import com.music.spotui.ui.screens.PlaylistScreen
 import com.music.spotui.ui.screens.ShowScreen
 import com.music.spotui.ui.screens.QueueScreen
 import com.music.spotui.ui.screens.SettingsScreen
-import com.music.spotui.ui.screens.DeezerIntroScreen
-import com.music.spotui.ui.screens.DeezerLoginScreen
+
 import com.music.spotui.ui.screens.LocalFilesScreen
-import com.music.spotui.ui.screens.SpotiflacVerifyScreen
+
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -139,26 +138,6 @@ fun MyNavHost(
 
         composable(Routes.LocalFiles.route) {
             LocalFilesScreen(navHostController)
-        }
-
-        composable(Routes.DeezerIntro.route) {
-            DeezerIntroScreen(navHostController)
-        }
-
-        composable(
-            "${Routes.DeezerLogin.route}?next={next}",
-            arguments = listOf(navArgument("next") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val next = navBackStackEntry.arguments?.getString("next").orEmpty()
-            DeezerLoginScreen(navHostController, next = next)
-        }
-
-        composable(
-            "${Routes.SpotiflacVerify.route}?next={next}",
-            arguments = listOf(navArgument("next") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val next = navBackStackEntry.arguments?.getString("next").orEmpty()
-            SpotiflacVerifyScreen(navHostController, next = next)
         }
 
 

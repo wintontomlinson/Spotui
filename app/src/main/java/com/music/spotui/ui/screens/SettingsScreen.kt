@@ -285,22 +285,16 @@ fun SettingsScreen(navController: NavController) {
             QualityPicker(
                 title = "Streaming over Wi-Fi",
                 selected = wifiQ,
-                showFlacWarning = wifiQ == StreamQuality.LOSSLESS,
-                onDeezerLogin = { navController.navigate(com.music.spotui.ui.navigation.Routes.DeezerLogin.route) }
             ) { wifiQ = it; setWifiQuality(context, it) }
 
             QualityPicker(
                 title = "Streaming over cellular",
                 selected = cellQ,
-                showFlacWarning = cellQ == StreamQuality.LOSSLESS,
-                onDeezerLogin = { navController.navigate(com.music.spotui.ui.navigation.Routes.DeezerLogin.route) }
             ) { cellQ = it; setCellularQuality(context, it) }
 
             QualityPicker(
                 title = "Download quality",
                 selected = dlQ,
-                showFlacWarning = dlQ == StreamQuality.LOSSLESS,
-                onDeezerLogin = { navController.navigate(com.music.spotui.ui.navigation.Routes.DeezerLogin.route) }
             ) { dlQ = it; setDownloadQuality(context, it) }
 
             Spacer(Modifier.height(6.dp))
@@ -682,8 +676,6 @@ private fun SettingsSwitchRow(
 private fun QualityPicker(
     title: String,
     selected: StreamQuality,
-    showFlacWarning: Boolean = false,
-    onDeezerLogin: (() -> Unit)? = null,
     onSelect: (StreamQuality) -> Unit
 ) {
     Column(
