@@ -98,9 +98,7 @@ fun FreeHomeScreen(navController: NavController) {
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 Spacer(Modifier.height(14.dp))
-                // Recreated search bar — tapping opens the live free-search screen.
-                FakeSearchBar(onClick = { navController.navigate(Routes.YtSearch.route) })
-                Spacer(Modifier.height(14.dp))
+                // Search lives on the Explore tab — Home only shows mood chips.
                 // YouTube Music-style mood chips.
                 MoodChips(onPick = { query ->
                     navController.navigate("${Routes.YtSearch.route}?q=${android.net.Uri.encode(query)}")
@@ -143,37 +141,6 @@ private fun MoodChips(onPick: (String) -> Unit) {
                     .padding(horizontal = 16.dp, vertical = 9.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun FakeSearchBar(onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(0xFF242424))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick,
-            )
-            .height(52.dp)
-            .padding(horizontal = 12.dp),
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_search_big),
-            tint = Color(0xFFB3B3B3),
-            contentDescription = "Search",
-            modifier = Modifier.size(22.dp),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = "What do you want to listen to?",
-            color = Color(0xFFB3B3B3),
-            fontSize = 15.sp,
-        )
     }
 }
 
