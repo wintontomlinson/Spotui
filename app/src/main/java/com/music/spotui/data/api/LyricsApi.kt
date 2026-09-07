@@ -38,17 +38,40 @@ object LyricsApi {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
     private fun cacheKey(title: String, artist: String) =
-        "${cleanTitle(title).lowercase()}|${artist.substringBefore(",").trim().lowercase()}"
+        "${cleanTitle(title).lowercase()}|${cleanArtist(artist).lowercase()}"
 
     // Strip the noise Spotify puts in titles that LRCLIB doesn't know about:
     // "Song - 2011 Remaster", "Song (feat. X)", "Song [Bonus Track]".
     private val featTag = Regex("""\s*[(\[][^)\]]*(feat\.?|ft\.?|with )[^)\]]*[)\]]""", RegexOption.IGNORE_CASE)
     private val bracketTag = Regex("""\s*[(\[][^)\]]*(remaster|remastered|live|version|edit|mono|stereo|deluxe|bonus)[^)\]]*[)\]]""", RegexOption.IGNORE_CASE)
+    // YouTube titles add a lot of noise LRCLIB does not know about, e.g.
+    // "Song (Official Video)", "Song [Official Music Video]", "Song | Lyrics",
+    // "Song (Audio)", "Song 4K", "Song HD", "Song (Slowed + Reverb)".
+    private val ytNoiseBracket = Regex(
+        """\s*[(\[][^)\]]*(official|music video|lyric|lyrics|audio|visualizer|video|hd|4k|hq|full song|slowed|reverb|remix|cover|performance|mv)[^)\]]*[)\]]""",
+        RegexOption.IGNORE_CASE,
+    )
+    // Anything after a pipe "|" is almost always channel/label promo noise.
+    private val pipeTail = Regex("""\s*\|.*$""")
+    // Bare trailing tokens like "Official Video", "Lyrics", "4K" without brackets.
+    private val bareNoiseTail = Regex(
+        """\s*[-–]?\s*(official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|full\s*video|full\s*audio|audio|visualizer|hd|4k|hq)\s*$""",
+        RegexOption.IGNORE_CASE,
+    )
     private fun cleanTitle(title: String) =
         title.substringBefore(" - ")
             .replace(featTag, "")
             .replace(bracketTag, "")
+            .replace(ytNoiseBracket, "")
+            .replace(pipeTail, "")
+            .replace(bareNoiseTail, "")
             .trim()
+
+    // Clean an artist string too: YouTube "- Topic" auto-channels and "VEVO"
+    // suffixes confuse the artist match.
+    private val artistNoise = Regex("""\s*-\s*topic$|\s*vevo$""", RegexOption.IGNORE_CASE)
+    private fun cleanArtist(artist: String) =
+        artist.substringBefore(",").trim().replace(artistNoise, "").trim()
 
     // Play-queue registry: "title|artist" → Spotify track id, seeded by
     // CurrentSongState.updateQueue so we can hit Spotify's own lyrics endpoint
@@ -98,7 +121,7 @@ object LyricsApi {
             return disk
         }
 
-        val primaryArtist = artist.substringBefore(",").trim()
+        val primaryArtist = cleanArtist(artist)
         val cleaned = cleanTitle(title)
 
         // 1) Spotify's own color-lyrics — the exact synced lyrics the official app

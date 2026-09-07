@@ -106,7 +106,7 @@ class YtSearchViewModel @Inject constructor() : ViewModel() {
 
 /**
  * Maps a YouTube [SongItem] to a [SongsModel]. The [SongsModel.url] is set to the
- * raw YouTube video id — [com.music.spotui.di.SongPlayer.playSong] accepts an
+ * raw YouTube video id, so [com.music.spotui.di.SongPlayer.playSong] accepts an
  * 11-char id directly and resolves the stream anonymously. [spotifyTrackId] is
  * left blank so the Spotify/FLAC fast-paths are skipped and playback goes straight
  * to YouTube.
@@ -116,9 +116,28 @@ fun SongItem.toSongsModel(): SongsModel = SongsModel(
     title = title,
     album = album?.name.orEmpty(),
     singer = artists.joinToString(", ") { it.name }.ifBlank { "Unknown artist" },
-    coverUri = thumbnail.orEmpty(),
+    coverUri = hiResThumbnail(thumbnail),
     url = id,
     spotifyTrackId = "",
     explicit = explicit,
     durationMs = (duration ?: 0) * 1000,
 )
+
+/**
+ * YouTube Music serves thumbnails at a small size baked into the URL (for example
+ * "...=w120-h120-l90-rj"), which looks blurry when shown large. This rewrites the
+ * size parameters to request a crisp high-resolution image from the same CDN.
+ */
+fun hiResThumbnail(url: String?, size: Int = 544): String {
+    val u = url.orEmpty()
+    if (u.isBlank()) return u
+    // Google image CDN: size is encoded after "=" (e.g. "=w120-h120-l90-rj").
+    val eq = u.lastIndexOf('=')
+    if (eq != -1 && (u.contains("=w") || u.contains("=s"))) {
+        return u.substring(0, eq) + "=w$size-h$size-l90-rj"
+    }
+    // Some URLs carry the size as a path segment (".../w120-h120/...").
+    val replaced = Regex("""/w\d+-h\d+""").replace(u, "/w$size-h$size")
+    if (replaced != u) return replaced
+    return u
+}

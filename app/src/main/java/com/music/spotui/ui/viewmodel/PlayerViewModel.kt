@@ -182,7 +182,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                     title = item.title,
                     album = item.album?.name.orEmpty(),
                     singer = item.artists.joinToString(", ") { it.name }.ifBlank { "Unknown artist" },
-                    coverUri = item.thumbnail.orEmpty(),
+                    coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(item.thumbnail),
                     url = item.id,
                     spotifyTrackId = "",
                     explicit = item.explicit,

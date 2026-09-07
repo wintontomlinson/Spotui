@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -30,9 +31,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -64,11 +67,16 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     val vm: YtSearchViewModel = hiltViewModel()
     val playerViewModel: PlayerViewModel = hiltViewModel()
 
-    // Pre-fill and run a search when opened from a Home mood chip.
+    val searchFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+
+    // Pre-fill and run a search when opened from a Home mood chip; otherwise put
+    // the cursor in the search box so typing starts immediately (YT behaviour).
     androidx.compose.runtime.LaunchedEffect(initialQuery) {
         if (initialQuery.isNotBlank() && vm.query.value != initialQuery) {
             vm.onQueryChange(initialQuery)
             vm.search(initialQuery)
+        } else if (initialQuery.isBlank() && vm.query.value.isBlank()) {
+            runCatching { searchFocus.requestFocus() }
         }
     }
 
@@ -94,59 +102,64 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
             .background(Color.Black)
             .statusBarsPadding(),
     ) {
-        Text(
-            text = "Free search",
-            color = Color.White,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
-        )
-        Text(
-            text = "Play any song from YouTube — no login needed",
-            color = Color(0xFFB3B3B3),
-            fontSize = 13.sp,
-            modifier = Modifier.padding(start = 16.dp, bottom = 12.dp),
-        )
-
-        TextField(
-            value = query,
-            onValueChange = { vm.onQueryChangeDebounced(it) },
+        // Professional YouTube-style search bar: a rounded pill in a top bar.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            placeholder = { Text("Songs, artists…", color = Color(0xFF808080)) },
-            leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF808080))
-            },
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Clear",
-                        tint = Color(0xFF808080),
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clickable { vm.clear() },
-                    )
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(8.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { vm.search() }),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFF1F1F1F),
-                unfocusedContainerColor = Color(0xFF1F1F1F),
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = Color(0xFFFF0033),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-            ),
-        )
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xFF1F1F24))
+                .padding(start = 16.dp, end = 8.dp)
+                .height(48.dp),
+        ) {
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                tint = Color(0xFFB3B3B3),
+                modifier = Modifier.size(22.dp),
+            )
+            BasicTextField(
+                value = query,
+                onValueChange = { vm.onQueryChangeDebounced(it) },
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    color = Color.White,
+                    fontSize = 16.sp,
+                ),
+                cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFFFF0033)),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { vm.search() }),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+                    .focusRequester(searchFocus),
+                decorationBox = { inner ->
+                    if (query.isEmpty()) {
+                        Text(
+                            "Search songs, artists, albums",
+                            color = Color(0xFF808080),
+                            fontSize = 16.sp,
+                        )
+                    }
+                    inner()
+                },
+            )
+            if (query.isNotEmpty()) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Clear",
+                    tint = Color(0xFFB3B3B3),
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(50))
+                        .clickable { vm.clear() }
+                        .padding(9.dp),
+                )
+            }
+        }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         Box(modifier = Modifier.fillMaxSize()) {
             when {
