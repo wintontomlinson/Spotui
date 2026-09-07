@@ -348,6 +348,15 @@ fun SpotifyLoginScreen(navController: NavController) {
                                 .padding(end = 8.dp),
                         )
                     } else {
+                        // Continue without logging in: opens the login-free YouTube
+                        // search screen, from which any song can be searched and played.
+                        TextButton(
+                            onClick = {
+                                navController.navigate(Routes.YtSearch.route)
+                            },
+                        ) {
+                            Text("Skip", color = Color(SPOTIFY_GREEN), fontWeight = FontWeight.Bold)
+                        }
                         IconButton(
                             onClick = { showManualCookieDialog = true },
                             modifier = Modifier.size(40.dp),

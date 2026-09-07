@@ -52,6 +52,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
     val navItems = listOf(
         Routes.Home,
         Routes.Search,
+        Routes.YtSearch,
         Routes.Library
     )
     AnimatedVisibility(
@@ -100,7 +101,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         val navStack by navController.currentBackStackEntryAsState()
                         val currentRoute = navStack?.destination?.route
 
-                        val rootRoutes = listOf(Routes.Home.route, Routes.Search.route, Routes.Library.route)
+                        val rootRoutes = listOf(Routes.Home.route, Routes.Search.route, Routes.YtSearch.route, Routes.Library.route)
                         var currentTab by rememberSaveable { mutableStateOf(Routes.Home.route) }
                         if (currentRoute in rootRoutes) {
                             currentTab = currentRoute!!

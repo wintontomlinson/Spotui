@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import com.music.spotui.data.api.SpotifySession
 import com.music.spotui.ui.screens.SpotifyLoginScreen
+import com.music.spotui.ui.screens.YtSearchScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -105,6 +106,9 @@ fun MyNavHost(
         }
         composable(Routes.Search.route){
             SearchScreen(navHostController, searchFocusTrigger = searchFocusTrigger)
+        }
+        composable(Routes.YtSearch.route){
+            YtSearchScreen(navHostController)
         }
         composable(Routes.Library.route) {
             LibraryScreen(navHostController)
