@@ -734,11 +734,11 @@ object SongPlayer {
                 "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)",
             )
             .setAllowCrossProtocolRedirects(true)
-        // Page the stream in bounded chunks and reconnect anything that drops, before the
-        // cache ever sees it. One open ended request for a whole track gets throttled and
-        // then reset, and a response that stops early reaches CacheDataSource as a clean
-        // end of input, which it stores as the length of the track. That is what made
-        // songs stop partway through and then stop at the same place on every later play.
+        // Sits below the cache so a stream that stops short never reaches CacheDataSource as
+        // a clean end of input, which it would store as the length of the track. It also
+        // asks these hosts for byte offsets the way they accept, since they answer a Range
+        // header with 403 on anything but the first request for a URL, which broke seeking
+        // and reconnecting.
         val upstream = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
             androidx.media3.datasource.DefaultDataSource.Factory(context, http),
         )

@@ -7,29 +7,28 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.TransferListener
+import com.music.spotui.data.diagnostics.PlaybackLog
 import java.io.IOException
 
 /**
- * Keeps a track playing to its end instead of letting a dropped stream look like the
- * song finishing.
+ * Keeps a track playing to its end instead of letting a dropped stream look like the song
+ * finishing, and asks streaming hosts for byte ranges in the form they actually accept.
  *
- * Two things go wrong with one long lived open ended request for a whole track:
+ * Everything here is driven by real playback logs:
  *
- * 1. Streaming hosts throttle open ended responses hard and then reset the connection,
- *    usually while the player is sitting on a full buffer and not reading. Measured
- *    against a real stream, a single open ended GET was throttled to roughly 28 KB/s and
- *    then reset partway through, while the same bytes fetched as bounded range requests
- *    arrived complete and at full speed.
- * 2. media3's DefaultHttpDataSource turns a response that stops early into a plain
- *    RESULT_END_OF_INPUT, and a reset surfaces as an IOException that the player treats
- *    as fatal. Either way the queue moves on and the rest of the song is lost. Worse, an
- *    early end of input reaching CacheDataSource is recorded as the content length of the
- *    track, so the song then stops at the same point on every later play.
- *
- * So this source pages through http resources in bounded chunks, and whenever a chunk
- * ends early or the connection dies it reopens from the exact byte offset already
- * delivered. The caller never sees a short read, and an IOException is raised only when
- * continuing is genuinely impossible, which keeps a truncated length out of the cache.
+ * * A single open ended request for a whole track gets throttled hard and then reset.
+ *   Measured against a live stream, one open ended GET ran at about 28 KB/s and was reset
+ *   at 95% of the file.
+ * * media3's DefaultHttpDataSource turns a response that stops early into a plain
+ *   RESULT_END_OF_INPUT. The player then treats a cut off stream as the end of the song and
+ *   the queue advances, with no error anywhere. Worse, that end of input reaching
+ *   CacheDataSource is recorded as the content length of the track.
+ * * These hosts serve the first request for a URL and answer later ones with 403 when the
+ *   offset is asked for with a Range header. A log showed a stream open successfully for
+ *   3261926 bytes and then fail with `Response code: 403` after 194 bytes as soon as a
+ *   request at a non zero offset was needed, on every retry. That breaks both seeking and
+ *   reconnecting. The official clients pass the offset as a query parameter instead, so
+ *   that is what this does for those hosts.
  *
  * Non http sources (local files, content URIs) are passed straight through.
  */
@@ -41,8 +40,17 @@ class ResilientPlaybackDataSourceFactory(
         ResilientPlaybackDataSource(upstreamFactory.createDataSource(), chunkBytes)
 
     companion object {
-        /** Roughly a minute of audio at typical streaming bitrates. */
-        const val DEFAULT_CHUNK_BYTES = 1L * 1024 * 1024
+        /**
+         * Chunking is off.
+         *
+         * Paging a track into bounded requests does avoid the throttling on open ended
+         * responses, but it needs one request per chunk, and these hosts refuse the
+         * follow up requests. A log showed the first chunk served and the next one
+         * refused with 403 at exactly the 1048576 byte boundary, so playback stopped
+         * about a minute into every track. One request per URL is what these URLs
+         * support, and a dropped one is recovered by re-resolving the track.
+         */
+        const val DEFAULT_CHUNK_BYTES = 0L
     }
 }
 
@@ -74,27 +82,29 @@ class ResilientPlaybackDataSource(
         reopensSinceProgress = 0
         bytesAtLastReopen = 0L
 
-        if (!isChunkable(dataSpec)) return openWhole(dataSpec)
-
-        // Ask for a bounded first chunk rather than the whole track.
-        val firstChunk = dataSpec.buildUpon().setLength(chunkBytes).build()
-        upstream.open(firstChunk)
-
-        val available = availableFromResponse(dataSpec)
-        if (available == C.LENGTH_UNSET.toLong()) {
-            // Without the real size there is no way to page forward safely, so fall back
-            // to a single request instead of guessing.
+        if (isChunkable(dataSpec)) {
+            openUpstream(dataSpec, offset = 0L, length = chunkBytes)
+            val available = availableFromResponse(dataSpec)
+            if (available != C.LENGTH_UNSET.toLong()) {
+                chunked = true
+                declaredLength = available
+                PlaybackLog.add(
+                    "stream",
+                    "opened chunked, $available bytes from position ${dataSpec.position}",
+                )
+                return available
+            }
+            // Without the real size there is no way to page forward safely.
             runCatching { upstream.close() }
-            return openWhole(dataSpec)
         }
 
-        chunked = true
-        declaredLength = available
-        com.music.spotui.data.diagnostics.PlaybackLog.add(
+        declaredLength = openUpstream(dataSpec, offset = 0L, length = dataSpec.length)
+        PlaybackLog.add(
             "stream",
-            "opened chunked, $available bytes from position ${dataSpec.position}",
+            "opened $declaredLength bytes from position ${dataSpec.position}" +
+                if (usesQueryRange(dataSpec) && dataSpec.position > 0L) " via query range" else "",
         )
-        return available
+        return declaredLength
     }
 
     override fun read(
@@ -108,7 +118,7 @@ class ResilientPlaybackDataSource(
                     upstream.read(buffer, offset, length)
                 } catch (error: IOException) {
                     if (!isWorthContinuing(error) || !continueFromCurrentOffset(afterError = true)) {
-                        com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        PlaybackLog.add(
                             "stream",
                             "gave up at $bytesReadFromBase of $declaredLength: " +
                                 "${error.javaClass.simpleName}: ${error.message}",
@@ -129,10 +139,9 @@ class ResilientPlaybackDataSource(
             if (missingBytes() <= 0L) return read
 
             if (!continueFromCurrentOffset(afterError = false)) {
-                com.music.spotui.data.diagnostics.PlaybackLog.add(
+                PlaybackLog.add(
                     "stream",
-                    "stopped ${missingBytes()} bytes early, " +
-                        "after $bytesReadFromBase of $declaredLength",
+                    "stopped ${missingBytes()} bytes early, after $bytesReadFromBase of $declaredLength",
                 )
                 throw IOException(
                     "Stream stopped ${missingBytes()} bytes early, " +
@@ -142,7 +151,12 @@ class ResilientPlaybackDataSource(
         }
     }
 
-    override fun getUri(): Uri? = upstream.uri
+    /**
+     * The base URI, never the one carrying a range parameter. CacheDataSource records the
+     * uri a source reports as a redirect target and reuses it for later requests, so
+     * handing it a ranged uri would make every later request ask for the wrong bytes.
+     */
+    override fun getUri(): Uri? = baseDataSpec?.uri ?: upstream.uri
 
     override fun getResponseHeaders(): Map<String, List<String>> = upstream.responseHeaders
 
@@ -156,11 +170,39 @@ class ResilientPlaybackDataSource(
         upstream.close()
     }
 
-    private fun openWhole(dataSpec: DataSpec): Long {
-        chunked = false
-        declaredLength = upstream.open(dataSpec)
-        return declaredLength
+    /**
+     * Opens the upstream for [length] bytes starting [offset] past the base position.
+     *
+     * For hosts that only accept a Range header on the very first request for a URL, the
+     * offset is put in the query string and the spec is handed down as an unbounded read
+     * from position zero, so no Range header is produced at all.
+     */
+    private fun openUpstream(base: DataSpec, offset: Long, length: Long): Long {
+        val absolute = base.position + offset
+        val needsExplicitRange = absolute > 0L || length != C.LENGTH_UNSET.toLong()
+
+        if (usesQueryRange(base) && needsExplicitRange) {
+            val end = if (length == C.LENGTH_UNSET.toLong()) null else absolute + length - 1
+            val rangedUri = base.uri
+                .buildUpon()
+                .appendQueryParameter("range", if (end == null) "$absolute-" else "$absolute-$end")
+                .build()
+            val spec = base
+                .buildUpon()
+                .setUri(rangedUri)
+                .setPosition(0L)
+                .setLength(C.LENGTH_UNSET.toLong())
+                .build()
+            return upstream.open(spec)
+        }
+
+        val spec = base.buildUpon().setPosition(absolute).setLength(length).build()
+        return upstream.open(spec)
     }
+
+    /** Hosts known to refuse a Range header on anything but the first request for a URL. */
+    private fun usesQueryRange(dataSpec: DataSpec): Boolean =
+        dataSpec.uri.host?.contains("googlevideo.com", ignoreCase = true) == true
 
     /** Chunking only makes sense for a remote resource we were asked to read to the end. */
     private fun isChunkable(dataSpec: DataSpec): Boolean {
@@ -172,7 +214,7 @@ class ResilientPlaybackDataSource(
     }
 
     /**
-     * Bytes available from [dataSpec]'s position, worked out from the Content-Range of the
+     * Bytes available from [dataSpec]'s position, worked out from the Content-Range of a
      * bounded response, falling back to the content length the URL itself carries.
      */
     private fun availableFromResponse(dataSpec: DataSpec): Long {
@@ -206,8 +248,8 @@ class ResilientPlaybackDataSource(
     }
 
     /**
-     * Reopens the upstream at the offset already delivered, asking for the next chunk.
-     * Returns false when nothing is outstanding or the retry budget is spent.
+     * Reopens the upstream at the offset already delivered. Returns false when nothing is
+     * outstanding or the retry budget is spent.
      */
     private fun continueFromCurrentOffset(afterError: Boolean): Boolean {
         val original = baseDataSpec ?: return false
@@ -223,13 +265,6 @@ class ResilientPlaybackDataSource(
 
         reopensSinceProgress++
         bytesAtLastReopen = bytesReadFromBase
-        runCatching { upstream.close() }
-
-        com.music.spotui.data.diagnostics.PlaybackLog.add(
-            "stream",
-            (if (afterError) "reconnect after error" else "next chunk") +
-                " at $bytesReadFromBase, $remaining of $declaredLength left",
-        )
 
         if (afterError) {
             // Give a flapping connection a moment rather than burning the budget at once.
@@ -238,16 +273,19 @@ class ResilientPlaybackDataSource(
         }
 
         val take = if (chunked) minOf(chunkBytes, remaining) else remaining
+        PlaybackLog.add(
+            "stream",
+            (if (afterError) "reconnect after error" else "next chunk") +
+                " at $bytesReadFromBase, $remaining of $declaredLength left",
+        )
         if (tryOpenAtCurrentOffset(original, take)) return true
 
-        // The first chunk was served and a later one was refused, which means this URL will
-        // not keep serving ranged continuations. Ask for everything that is left instead,
-        // the way playback worked before chunking, and let the reconnect path above deal
-        // with the drops that a long single request brings.
+        // The first chunk was served and a later one refused, so this URL will not keep
+        // serving ranged continuations. Ask for everything that is left in one request.
         if (chunked && take != remaining) {
             chunked = false
             rememberChunkingRefused()
-            com.music.spotui.data.diagnostics.PlaybackLog.add(
+            PlaybackLog.add(
                 "stream",
                 "chunked continuation refused at $bytesReadFromBase, " +
                     "asking for the remaining $remaining in one request",
@@ -259,12 +297,7 @@ class ResilientPlaybackDataSource(
 
     private fun tryOpenAtCurrentOffset(original: DataSpec, length: Long): Boolean {
         runCatching { upstream.close() }
-        val next = original
-            .buildUpon()
-            .setPosition(original.position + bytesReadFromBase)
-            .setLength(length)
-            .build()
-        return runCatching { upstream.open(next) }
+        return runCatching { openUpstream(original, bytesReadFromBase, length) }
             .onFailure { Log.w(TAG, "could not continue at offset $bytesReadFromBase", it) }
             .isSuccess
     }
@@ -273,10 +306,9 @@ class ResilientPlaybackDataSource(
      * Whether it is worth trying to carry on after [error].
      *
      * A request refused before a single byte arrived means the URL itself is no longer
-     * accepted, and retrying the same URL will not change that, so it goes straight back
-     * to the caller to be re-resolved. Once audio has flowed the situation is different:
-     * a refusal part way through is usually the host declining this particular follow up
-     * request, which [continueFromCurrentOffset] can work around.
+     * accepted, and retrying it will not change that, so it goes back to the caller to be
+     * re-resolved. Once audio has flowed, a refusal is usually the host declining this
+     * particular follow up request, which [continueFromCurrentOffset] can work around.
      */
     private fun isWorthContinuing(error: IOException): Boolean {
         if (bytesReadFromBase > 0L) return true

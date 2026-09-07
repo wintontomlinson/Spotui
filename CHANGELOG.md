@@ -5,6 +5,30 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.3
+
+### 🛠 Playback Fixes
+
+From a second playback log, which showed a stream open successfully for 3261926 bytes and then fail
+with `Response code: 403` after only 194 bytes, on both recovery attempts, as soon as a request at a
+non zero offset was needed. These hosts serve the first request for a URL and refuse later ones when
+the offset is asked for with a Range header.
+
+* **Byte offsets go in the query string for these hosts.** Every request past the first one, whether
+  it comes from a seek or from reconnecting after a drop, now carries the offset as a query parameter
+  and sends no Range header, which is how the official clients ask. Header based offsets were being
+  refused outright, which broke seeking and made every recovery attempt fail at the same place.
+* **The base URL is reported to the cache, never a ranged one.** CacheDataSource remembers the uri a
+  source reports and reuses it, so a ranged uri leaking into that would have made every later
+  request ask for the wrong bytes.
+* **Chunked reads are off.** Paging a track into bounded requests avoided the throttling on open
+  ended responses, but it needs a request per chunk and these hosts refuse them. The previous log
+  showed the first chunk served and the next refused with 403 at exactly the 1048576 byte boundary,
+  so playback stopped about a minute into every track. One request per URL is what these URLs
+  support, and a dropped one is handled by re-resolving the track and resuming.
+
+---
+
 ## 🚀 Release v1.6.2
 
 ### 🛠 Playback Fixes
