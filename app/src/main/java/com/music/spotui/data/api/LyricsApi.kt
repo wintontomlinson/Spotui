@@ -158,6 +158,12 @@ object LyricsApi {
             exact.await()
                 ?: fuzzy.await()
                 ?: searchTitleOnly(cleaned, primaryArtist, durationSec)
+                // LRCLIB coverage is thin outside western pop, so fall back to KuGou,
+                // which carries a lot of Hindi, Punjabi and other regional catalogues.
+                ?: fromKuGou(cleaned, primaryArtist, durationSec)
+                // Last resort: retry KuGou with the untouched title, in case the
+                // cleaner removed something the catalogue actually indexes.
+                ?: fromKuGou(title.trim(), primaryArtist, durationSec)
         }
         cache[key] = result ?: when (cache[key]) {
             is Lyrics -> return cache[key] as Lyrics
@@ -189,6 +195,21 @@ object LyricsApi {
                 null
             },
         )
+    }
+
+    /**
+     * KuGou fallback. It returns a raw LRC document, which is parsed with the same
+     * parser used for LRCLIB synced lyrics.
+     */
+    private suspend fun fromKuGou(title: String, artist: String, durationSec: Int): Lyrics? {
+        if (title.isBlank()) return null
+        val lrc = runCatching {
+            com.music.spotui.lyrics.KuGouLyricsProvider.getLyrics(title, artist, durationSec)
+        }.getOrNull() ?: return null
+        val lines = parseLrc(lrc)
+        if (lines.isEmpty()) return null
+        Log.d("LyricsApi", "KuGou hit for \"$title\" by \"$artist\" (${lines.size} lines)")
+        return Lyrics(lines, synced = true)
     }
 
     private fun getExact(title: String, artist: String, album: String, durationSec: Int): Lyrics? {

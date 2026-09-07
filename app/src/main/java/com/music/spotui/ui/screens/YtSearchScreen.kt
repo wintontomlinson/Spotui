@@ -63,7 +63,6 @@ import com.music.spotui.data.entity.SongsModel
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.viewmodel.PlayerViewModel
-import com.music.spotui.ui.viewmodel.SearchFilterType
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 import com.music.spotui.ui.viewmodel.formatDurationMs
 
@@ -111,7 +110,6 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     val isLoading by vm.isLoading
     val error by vm.error
     val hasSearched by vm.hasSearched
-    val filter by vm.filter
     val recent by vm.recent
 
     val submit: (String) -> Unit = { q ->
@@ -144,11 +142,6 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
             onClear = { vm.clear() },
         )
 
-        // Type filters appear once there is something to filter.
-        if (query.isNotBlank()) {
-            FilterChips(selected = filter, onSelect = { vm.setFilter(it) })
-        }
-
         Box(modifier = Modifier.fillMaxSize()) {
             when {
                 isLoading && results.isEmpty() -> ResultSkeleton()
@@ -156,11 +149,7 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                 results.isNotEmpty() -> {
                     LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 180.dp)) {
                         itemsIndexed(results) { index, song ->
-                            ResultRow(
-                                song = song,
-                                isVideo = filter == SearchFilterType.VIDEOS,
-                                onClick = { playResult(song, index) },
-                            )
+                            ResultRow(song = song, onClick = { playResult(song, index) })
                         }
                     }
                 }
@@ -239,29 +228,6 @@ private fun SearchField(
                     .clip(RoundedCornerShape(50))
                     .clickable(onClick = onClear)
                     .padding(9.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun FilterChips(selected: SearchFilterType, onSelect: (SearchFilterType) -> Unit) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 6.dp),
-    ) {
-        SearchFilterType.entries.forEach { type ->
-            val active = type == selected
-            Text(
-                text = type.label,
-                color = if (active) Color.Black else Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(if (active) Color.White else SurfaceHigh)
-                    .clickable { onSelect(type) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
     }
@@ -379,7 +345,7 @@ private fun DiscoverPane(
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun ResultRow(song: SongsModel, isVideo: Boolean, onClick: () -> Unit) {
+private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -387,14 +353,10 @@ private fun ResultRow(song: SongsModel, isVideo: Boolean, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Videos read better as a 16:9 frame, songs as square art.
         GlideImage(
             modifier = Modifier
-                .then(
-                    if (isVideo) Modifier.width(76.dp).height(44.dp)
-                    else Modifier.size(52.dp)
-                )
-                .clip(RoundedCornerShape(if (isVideo) 8.dp else 6.dp)),
+                .size(52.dp)
+                .clip(RoundedCornerShape(6.dp)),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -416,14 +378,9 @@ private fun ResultRow(song: SongsModel, isVideo: Boolean, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(3.dp))
             // Lead with the artist when it is known, since that is what people scan
-            // for. The type label is only useful on its own when there is no artist.
-            val meta = if (song.singer.isNotBlank()) {
-                song.singer
-            } else {
-                if (isVideo) "Video" else "Song"
-            }
+            // for, and fall back to a plain type label when it is not.
             Text(
-                text = meta,
+                text = song.singer.ifBlank { "Song" },
                 color = TextDim,
                 fontSize = 12.sp,
                 maxLines = 1,

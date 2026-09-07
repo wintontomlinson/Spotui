@@ -21,12 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-/** Result type filter shown as chips above the results. */
-enum class SearchFilterType(val label: String) {
-    SONGS("Songs"),
-    VIDEOS("Videos"),
-}
-
 /**
  * Login free search. Queries YouTube Music anonymously (no Spotify session, no
  * YouTube cookie) via [YouTube.search] and maps the results to the app's
@@ -55,9 +49,6 @@ class YtSearchViewModel @Inject constructor(
     private val _hasSearched = mutableStateOf(false)
     val hasSearched: State<Boolean> get() = _hasSearched
 
-    private val _filter = mutableStateOf(SearchFilterType.SONGS)
-    val filter: State<SearchFilterType> get() = _filter
-
     private val _recent = mutableStateOf(getRecentSearches(context))
     val recent: State<List<String>> get() = _recent
 
@@ -84,13 +75,6 @@ class YtSearchViewModel @Inject constructor(
         }
     }
 
-    /** Switch between Songs and Videos, re-running the current query. */
-    fun setFilter(type: SearchFilterType) {
-        if (_filter.value == type) return
-        _filter.value = type
-        if (_query.value.isNotBlank()) search(_query.value, remember = false)
-    }
-
     fun search(text: String = _query.value, remember: Boolean = true) {
         val q = text.trim()
         if (q.isBlank()) return
@@ -100,13 +84,11 @@ class YtSearchViewModel @Inject constructor(
             _isLoading.value = true
             _error.value = null
             _hasSearched.value = true
-            val ytFilter = when (_filter.value) {
-                SearchFilterType.SONGS -> YouTube.SearchFilter.FILTER_SONG
-                SearchFilterType.VIDEOS -> YouTube.SearchFilter.FILTER_VIDEO
-            }
             val songs = withContext(Dispatchers.IO) {
                 runCatching {
-                    YouTube.search(q, ytFilter)
+                    // Songs only. This is an audio player, so video results would
+                    // promise something the app cannot deliver.
+                    YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
                         .getOrNull()
                         ?.items
                         ?.filterIsInstance<SongItem>()
