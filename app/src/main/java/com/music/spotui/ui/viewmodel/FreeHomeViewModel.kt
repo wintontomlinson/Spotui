@@ -59,6 +59,13 @@ class FreeHomeViewModel @Inject constructor(
     private val _recentlyPlayed = mutableStateOf<List<SongsModel>>(emptyList())
     val recentlyPlayed: State<List<SongsModel>> get() = _recentlyPlayed
 
+    /**
+     * A short list pulled from the first loaded section, shown as a compact grid at
+     * the top of Home so there is something playable above the fold straight away.
+     */
+    private val _quickPicks = mutableStateOf<List<SongsModel>>(emptyList())
+    val quickPicks: State<List<SongsModel>> get() = _quickPicks
+
     private var loaded = false
     // Timestamp of the newest history entry the current Home was built from, so we
     // can rebuild only when the user has actually played something new.
@@ -106,6 +113,7 @@ class FreeHomeViewModel @Inject constructor(
                 )
             }
         val sections = buildSections(history)
+        _quickPicks.value = emptyList()
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
     }
@@ -165,6 +173,11 @@ class FreeHomeViewModel @Inject constructor(
             if (index in current.indices) {
                 current[index] = current[index].copy(tracks = songs, loading = false)
                 _rows.value = current
+            }
+            // Seed quick picks from the very first section so the top of Home fills in
+            // as soon as any content arrives.
+            if (index == 0 && songs.isNotEmpty()) {
+                _quickPicks.value = songs.take(6)
             }
         }
     }

@@ -79,6 +79,7 @@ fun FreeHomeScreen(navController: NavController) {
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val rows by vm.rows
     val recentlyPlayed by vm.recentlyPlayed
+    val quickPicks by vm.quickPicks
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -116,6 +117,13 @@ fun FreeHomeScreen(navController: NavController) {
         item {
             MoodChips(onPick = openSearch)
             Spacer(Modifier.height(4.dp))
+        }
+
+        if (quickPicks.isNotEmpty()) {
+            item {
+                SectionHeader(title = "Quick picks")
+                QuickPicks(tracks = quickPicks, onPlay = play)
+            }
         }
 
         if (recentlyPlayed.isNotEmpty()) {
@@ -177,6 +185,81 @@ private fun HomeHeader(onSearch: () -> Unit) {
                 tint = Color.White,
                 modifier = Modifier.size(21.dp),
             )
+        }
+    }
+}
+
+/**
+ * Quick picks. A compact numbered list of playable rows, which gives the top of Home
+ * a dense, premium feel rather than another row of identical cards.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int) -> Unit) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Surface),
+    ) {
+        tracks.forEachIndexed { index, song ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onPlay(tracks, index) }
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+            ) {
+                GlideImage(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(6.dp)),
+                    model = song.coverUri,
+                    contentScale = ContentScale.Crop,
+                    failure = placeholder(R.drawable.placeholder),
+                    loading = placeholder(R.drawable.placeholder),
+                    contentDescription = null,
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp, end = 8.dp),
+                ) {
+                    Text(
+                        text = song.title,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                    if (song.singer.isNotBlank()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = song.singer,
+                            color = TextDim,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(SurfaceHigh),
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }

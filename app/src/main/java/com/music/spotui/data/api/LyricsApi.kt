@@ -23,7 +23,12 @@ import java.net.URLEncoder
  */
 object LyricsApi {
     private const val BASE = "https://lrclib.net/api"
-    private const val UA = "SpotuiSpotifyClone (https://github.com/)"
+
+    // LRCLIB sits behind Cloudflare and rejects generic or placeholder user agents
+    // with a 520. The previous value ended in a bare "https://github.com/" and was
+    // blocked outright, which is why every lookup silently failed. Keep this a real
+    // descriptive agent with a working project URL.
+    private const val UA = "SOLO/1.6.0 (https://github.com/wintontomlinson/Spotui)"
 
     // In-memory cache keyed by "title|artist" so re-opening the lyrics view (or the
     // inline card + full-screen view, which both request the same track) is instant

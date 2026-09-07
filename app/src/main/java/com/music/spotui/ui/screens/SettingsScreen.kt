@@ -446,52 +446,6 @@ fun SettingsScreen(navController: NavController) {
                 ),
             )
             Spacer(Modifier.height(12.dp))
-            SectionTitle("Updates")
-            Text(
-                "Update source repository",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                "GitHub repo URL used to check for new versions",
-                color = Color(0xFFB3B3B3),
-                fontSize = 12.sp,
-            )
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = updateRepoUrl,
-                onValueChange = {
-                    updateRepoUrl = it
-                    setUpdateRepoUrl(context, it)
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = AppPalette,
-                    unfocusedBorderColor = Color(0xFF333333),
-                    cursorColor = AppPalette,
-                    focusedPlaceholderColor = Color(0xFF666666),
-                    unfocusedPlaceholderColor = Color(0xFF666666),
-                ),
-                placeholder = { Text("https://github.com/Owner/Repo") },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "Reset to default",
-                        tint = if (updateRepoUrl != DEFAULT_UPDATE_REPO_URL) AppPalette else Color(0xFF444444),
-                        modifier = Modifier
-                            .padding(end = 4.dp)
-                            .clickable {
-                                updateRepoUrl = DEFAULT_UPDATE_REPO_URL
-                                resetUpdateRepoUrl(context)
-                            }
-                    )
-                },
-            )
-            Spacer(Modifier.height(12.dp))
             SectionTitle("Backup & Restore")
 
             Row(

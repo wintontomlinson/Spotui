@@ -108,10 +108,14 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
             dst.limit(size)
             return
         }
+        // Bulk copy. This runs for every audio buffer whenever the filter is idle,
+        // which is the normal case, so copying byte by byte here was pure overhead
+        // and could starve the audio thread on slower devices.
         val pos = src.position()
-        for (i in 0 until size) {
-            dst.put(src.get(pos + i))
-        }
+        val limit = src.limit()
+        src.limit(pos + size)
+        dst.put(src)
+        src.limit(limit)
         src.position(pos + size)
     }
 
