@@ -2422,7 +2422,14 @@ object SongPlayer {
                 val dur = withContext(Dispatchers.Main) { p.duration }
                 val pos = withContext(Dispatchers.Main) { p.currentPosition }
                 if (dur <= 0 || pos < 0) continue
-                if (pos >= dur - crossfadeMs) {
+                // Guard against an under reported duration. Progressive streams can
+                // report a short duration while still buffering, and because this
+                // watcher advances the queue itself that would cut the track off well
+                // before its real end. Never blend before the last quarter, and never
+                // blend a track we have barely started.
+                val nearEnd = pos >= dur - crossfadeMs
+                val pastThreeQuarters = pos >= (dur * 3) / 4
+                if (nearEnd && pastThreeQuarters) {
                     triggerCrossfade(ctx, crossfadeMs)
                 }
             }

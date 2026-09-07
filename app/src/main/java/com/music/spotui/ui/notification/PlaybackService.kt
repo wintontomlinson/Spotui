@@ -77,11 +77,52 @@ class PlaybackService : MediaLibraryService() {
     private var webPlayer: WebMediaPlayer? = null
     private var showingWeb = false
 
+    // Guards the truncated stream recovery so a track that genuinely refuses to play
+    // through cannot bounce between recovery attempts forever.
+    private var truncationRecoveryFor: String? = null
+
+    /**
+     * Handles the case where playback reports it ended but the position is well short
+     * of the track length, which means the stream ran out of data rather than the song
+     * finishing. Drops the cached URL, re-resolves the same track and resumes from the
+     * point the audio stopped. Returns true when a recovery was started, so the caller
+     * should not advance the queue.
+     */
+    private fun recoverFromTruncatedStream(): Boolean {
+        val player = SongPlayer.exoPlayer ?: return false
+        val duration = player.duration
+        val position = player.currentPosition
+        // Only meaningful with a known duration, and only when a real chunk is missing.
+        if (duration <= 0L || position <= 0L) return false
+        if (position >= (duration * 9) / 10) return false
+
+        val songUrl = currentSongState.songUrl.value
+        if (songUrl.isBlank()) return false
+        // One attempt per track, cleared whenever a different track starts.
+        if (truncationRecoveryFor == songUrl) return false
+        truncationRecoveryFor = songUrl
+
+        android.util.Log.w(
+            "PlaybackService",
+            "Stream ended early at ${position}ms of ${duration}ms, re-resolving and resuming",
+        )
+        com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
+        SongPlayer.invalidateResolvedStream(songUrl)
+        SongPlayer.setRestorePoint(songUrl, position)
+        SongPlayer.playSong(songUrl, applicationContext, currentSongState.songId.value.let { "song/$it" })
+        return true
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
                 SongPlayer.releaseWakeLock()
+                // A different track is playing, so allow it its own recovery attempt.
+                val playing = currentSongState.songUrl.value
+                if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
+                    truncationRecoveryFor = null
+                }
             }
             if (playbackState == Player.STATE_ENDED) {
                 if (SongPlayer.isCrossfadeActive()) {
@@ -89,6 +130,11 @@ class PlaybackService : MediaLibraryService() {
                     // The crossfade routine itself handles the transition and promotes the new player.
                     return
                 }
+                // A stream can run out of data well before the real end of the track,
+                // and ExoPlayer reports that as a normal end. Skipping to the next song
+                // there loses the rest of the track, so re-resolve a fresh URL once and
+                // resume from where the audio stopped.
+                if (recoverFromTruncatedStream()) return
                 SongPlayer.acquireWakeLock(applicationContext, "spotui:advance", 60_000L)
                 when (currentSongState.repeat.value) {
                     RepeatMode.ONE -> {
