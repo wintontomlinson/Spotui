@@ -703,6 +703,8 @@ fun SumUpLibraryScreen(
                 .background(Color(0xFF0E0E13))
         ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
+        // Premium quick access grid for the destinations that always work.
+        item { LibraryQuickAccess(navController) }
         if (showHistoryTile) {
             // Listening history & stats entry.
             item {
@@ -1140,4 +1142,98 @@ private fun AccountRow(label: String, tint: Color = Color.White, onClick: () -> 
             .clickable { onClick() }
             .padding(20.dp, 16.dp)
     )
+}
+
+
+/**
+ * Premium quick access grid at the top of the Library. These four destinations
+ * always work regardless of any account state, so they are surfaced as large,
+ * tappable cards instead of being buried in the list below.
+ */
+@Composable
+private fun LibraryQuickAccess(navController: NavController) {
+    data class Tile(
+        val label: String,
+        val caption: String,
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+        val start: Color,
+        val end: Color,
+        val route: String,
+    )
+
+    val tiles = listOf(
+        Tile(
+            "Liked songs", "Your favourites",
+            Icons.Default.Favorite,
+            Color(0xFFFF0033), Color(0xFF7A0020),
+            Routes.Liked.route,
+        ),
+        Tile(
+            "Recently played", "Plays and stats",
+            Icons.Default.DateRange,
+            Color(0xFF3D5AFE), Color(0xFF1A237E),
+            Routes.History.route,
+        ),
+        Tile(
+            "Downloads", "Saved offline",
+            Icons.Default.Add,
+            Color(0xFF00BFA5), Color(0xFF00695C),
+            Routes.Downloads.route,
+        ),
+        Tile(
+            "Local files", "Music on this device",
+            Icons.Default.PhoneAndroid,
+            Color(0xFF8E24AA), Color(0xFF4A148C),
+            Routes.LocalFiles.route,
+        ),
+    )
+
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        tiles.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                pair.forEach { tile ->
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                androidx.compose.ui.graphics.Brush.linearGradient(
+                                    listOf(tile.start, tile.end)
+                                )
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { navController.navigate(tile.route) }
+                            .padding(14.dp),
+                    ) {
+                        Icon(
+                            tile.icon,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp),
+                        )
+                        Spacer(Modifier.height(18.dp))
+                        Text(
+                            text = tile.label,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = tile.caption,
+                            color = Color.White.copy(alpha = 0.75f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

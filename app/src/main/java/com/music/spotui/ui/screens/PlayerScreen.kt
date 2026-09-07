@@ -62,6 +62,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
@@ -636,6 +637,7 @@ fun PlayerScreen(navController: NavController) {
                         onMenuClick = { showMenu = true },
                         contextName = playerViewModel.currentSongAlbum.value,
                         onLyricsClick = { showLyrics = true },
+                        onQueueClick = { navController.navigate(Routes.Queue.route) },
                         onBackClick = { dismissPlayer() }
                     )
                     //Spacer(modifier = Modifier.padding(16.dp))
@@ -868,6 +870,7 @@ fun PlayerTopBar(
     contextName: String = "",
     onBackClick: () -> Unit,
     onLyricsClick: (() -> Unit)? = null,
+    onQueueClick: (() -> Unit)? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -920,6 +923,22 @@ fun PlayerTopBar(
                             indication = null
                         ) { onLyricsClick() },
                     contentDescription = "Lyrics"
+                )
+                Spacer(Modifier.width(18.dp))
+            }
+            // Up next gives direct access to the queue, which previously had no
+            // entry point from the now playing screen.
+            if (onQueueClick != null) {
+                Icon(
+                    imageVector = Icons.Default.QueueMusic,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(23.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onQueueClick() },
+                    contentDescription = "Up next"
                 )
                 Spacer(Modifier.width(18.dp))
             }
