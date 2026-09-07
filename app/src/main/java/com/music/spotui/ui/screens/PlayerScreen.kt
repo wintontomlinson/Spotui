@@ -659,8 +659,8 @@ fun PlayerScreen(navController: NavController) {
                                 modifier = Modifier
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f)
-                                    .padding(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .padding(16.dp)
+                                    .clip(RoundedCornerShape(8.dp))
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -676,8 +676,8 @@ fun PlayerScreen(navController: NavController) {
                                 GlideImage(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(20.dp)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .padding(16.dp)
+                                        .clip(RoundedCornerShape(8.dp))
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -1275,19 +1275,19 @@ fun CustomSlider(
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active (played) track
+            // Active (played) track — YouTube Music red
             drawLine(
-                color = Color.White,
+                color = Color(0xFFFF0033),
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Thumb dot — only visible while dragging
-            if (thumbAlpha > 0f) {
+            // Thumb dot — always visible (YT Music shows it), pops larger while dragging
+            run {
                 drawCircle(
-                    color = Color.White.copy(alpha = thumbAlpha),
-                    radius = thumbRadiusPx,
+                    color = Color(0xFFFF0033),
+                    radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
                     center = Offset(thumbX, trackY)
                 )
             }
