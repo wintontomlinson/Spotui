@@ -137,9 +137,11 @@ class PlaybackService : MediaLibraryService() {
             truncationRecoveryAttempts = 0
             truncationRecoveryMark = 0L
         }
-        // Each attempt has to reach further into the song than the last one. A stream that
-        // stops at the same place twice is not going to play through, so let the queue move.
-        if (truncationRecoveryAttempts > 0 &&
+        // Later attempts have to reach further into the song than the last one, otherwise
+        // the track is not going to play through and the queue should move on. The first
+        // couple are always allowed, because a fresh stream sometimes has to fail once
+        // before playback settles on a request pattern the host will serve.
+        if (truncationRecoveryAttempts >= ATTEMPTS_BEFORE_PROGRESS_REQUIRED &&
             position < truncationRecoveryMark + MIN_RECOVERY_PROGRESS_MS
         ) {
             return false
@@ -558,6 +560,9 @@ class PlaybackService : MediaLibraryService() {
 
         /** How much further a recovery attempt has to reach to be worth another try. */
         const val MIN_RECOVERY_PROGRESS_MS = 5_000L
+
+        /** Attempts allowed before progress becomes a requirement. */
+        const val ATTEMPTS_BEFORE_PROGRESS_REQUIRED = 2
 
         /** Upper bound on recovery attempts for a single track. */
         const val MAX_RECOVERY_ATTEMPTS = 6

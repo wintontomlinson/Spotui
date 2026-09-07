@@ -5,6 +5,30 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.2
+
+### 🛠 Playback Fixes
+
+Driven by a real playback log rather than a guess. The log showed a track failing with
+`ERROR_CODE_IO_BAD_HTTP_STATUS` at 37s, a recovery re-resolving it, and then the stream giving up
+with `Response code: 403` at exactly 1048576 bytes, which is the chunk boundary introduced in 1.6.0.
+The first bounded request was served and the follow up was refused.
+
+* **Ranged continuations fall back to a single request.** When a host serves the first chunk and then
+  refuses a later one, playback now asks for everything that is left in one request instead of
+  failing, and the reconnect logic still covers the drops that a long request brings. The refusal is
+  remembered for ten minutes, so the sources created for later loads and seeks do not each spend a
+  request rediscovering it.
+* **A refusal part way through a track is no longer fatal.** Only a request refused before any audio
+  arrived goes straight back to be re-resolved, because that means the URL itself is dead. Once audio
+  has flowed, a refusal is treated as this particular request being declined and worked around.
+* **The first recovery attempts are always allowed.** Recovery previously required every attempt to
+  reach further into the song than the last, so a stream that failed twice at the same position gave
+  up immediately. The first two attempts now always run, which gives the fallback above a chance to
+  engage.
+
+---
+
 ## 🚀 Release v1.6.1
 
 ### 🛠 Cache Correctness

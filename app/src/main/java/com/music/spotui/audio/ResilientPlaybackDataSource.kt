@@ -107,7 +107,7 @@ class ResilientPlaybackDataSource(
                 try {
                     upstream.read(buffer, offset, length)
                 } catch (error: IOException) {
-                    if (isFatal(error) || !continueFromCurrentOffset(afterError = true)) {
+                    if (!isWorthContinuing(error) || !continueFromCurrentOffset(afterError = true)) {
                         com.music.spotui.data.diagnostics.PlaybackLog.add(
                             "stream",
                             "gave up at $bytesReadFromBase of $declaredLength: " +
@@ -166,6 +166,7 @@ class ResilientPlaybackDataSource(
     private fun isChunkable(dataSpec: DataSpec): Boolean {
         if (chunkBytes <= 0L) return false
         if (dataSpec.length != C.LENGTH_UNSET.toLong()) return false
+        if (chunkingIsRefused()) return false
         val scheme = dataSpec.uri.scheme?.lowercase()
         return scheme == "http" || scheme == "https"
     }
@@ -237,18 +238,52 @@ class ResilientPlaybackDataSource(
         }
 
         val take = if (chunked) minOf(chunkBytes, remaining) else remaining
+        if (tryOpenAtCurrentOffset(original, take)) return true
+
+        // The first chunk was served and a later one was refused, which means this URL will
+        // not keep serving ranged continuations. Ask for everything that is left instead,
+        // the way playback worked before chunking, and let the reconnect path above deal
+        // with the drops that a long single request brings.
+        if (chunked && take != remaining) {
+            chunked = false
+            rememberChunkingRefused()
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "stream",
+                "chunked continuation refused at $bytesReadFromBase, " +
+                    "asking for the remaining $remaining in one request",
+            )
+            if (tryOpenAtCurrentOffset(original, remaining)) return true
+        }
+        return false
+    }
+
+    private fun tryOpenAtCurrentOffset(original: DataSpec, length: Long): Boolean {
+        runCatching { upstream.close() }
         val next = original
             .buildUpon()
             .setPosition(original.position + bytesReadFromBase)
-            .setLength(take)
+            .setLength(length)
             .build()
         return runCatching { upstream.open(next) }
             .onFailure { Log.w(TAG, "could not continue at offset $bytesReadFromBase", it) }
             .isSuccess
     }
 
-    /** A rejected request will not start working on a retry, so do not spend the budget. */
-    private fun isFatal(error: IOException): Boolean {
+    /**
+     * Whether it is worth trying to carry on after [error].
+     *
+     * A request refused before a single byte arrived means the URL itself is no longer
+     * accepted, and retrying the same URL will not change that, so it goes straight back
+     * to the caller to be re-resolved. Once audio has flowed the situation is different:
+     * a refusal part way through is usually the host declining this particular follow up
+     * request, which [continueFromCurrentOffset] can work around.
+     */
+    private fun isWorthContinuing(error: IOException): Boolean {
+        if (bytesReadFromBase > 0L) return true
+        return !isRejected(error)
+    }
+
+    private fun isRejected(error: IOException): Boolean {
         var current: Throwable? = error
         while (current != null) {
             if (current is HttpDataSource.InvalidResponseCodeException &&
@@ -266,5 +301,22 @@ class ResilientPlaybackDataSource(
         private const val MAX_REOPENS_WITHOUT_PROGRESS = 5
         private const val PROGRESS_RESET_BYTES = 256L * 1024
         private const val RETRY_BACKOFF_MS = 200L
+
+        /** How long to stop chunking after a host refused a ranged continuation. */
+        private const val CHUNKING_COOLDOWN_MS = 10 * 60 * 1000L
+
+        /**
+         * A new source is created for every load and seek, so without remembering this
+         * each one would spend a request discovering the same refusal all over again.
+         */
+        @Volatile
+        private var chunkingRefusedUntil = 0L
+
+        fun rememberChunkingRefused() {
+            chunkingRefusedUntil = android.os.SystemClock.elapsedRealtime() + CHUNKING_COOLDOWN_MS
+        }
+
+        fun chunkingIsRefused(): Boolean =
+            android.os.SystemClock.elapsedRealtime() < chunkingRefusedUntil
     }
 }
