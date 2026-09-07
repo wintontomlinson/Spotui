@@ -23,7 +23,6 @@ sealed class Routes(
     object Liked : Routes(0, "Liked", "liked")
     object Downloads : Routes(0, "Downloads", "downloads")
     object Category : Routes(0, "Category", "category")
-    object Login : Routes(0, "Login", "login")
     object Settings : Routes(0, "Settings", "settings")
     object History : Routes(0, "History", "history")
     object LocalFiles : Routes(0, "LocalFiles", "localfiles")

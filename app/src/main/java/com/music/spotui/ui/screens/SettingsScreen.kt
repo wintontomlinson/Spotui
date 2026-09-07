@@ -822,20 +822,14 @@ fun SettingsScreen(navController: NavController) {
                 )
             } else {
                 Text(
-                    text = "Log in to Spotify (optional)",
-                    color = Color(0xFF1ED760),
+                    text = "Free mode",
+                    color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable {
-                            navController.navigate(com.music.spotui.ui.navigation.Routes.Login.route)
-                        }
-                        .padding(vertical = 14.dp)
+                    modifier = Modifier.padding(vertical = 6.dp),
                 )
                 Text(
-                    text = "Connect a Spotify account to unlock Home, Search and your library. Not required — free YouTube search works without it.",
+                    text = "You're using Spotu for free — search and play any song, no account needed.",
                     color = Color.Gray,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 6.dp),

@@ -41,11 +41,11 @@ fun App() {
     LaunchedEffect(currentRoute, playerState) {
         if (currentRoute != Routes.Player.route) {
             bottomBarState.value = when (currentRoute) {
-                Routes.Login.route, Routes.Queue.route -> false
+                Routes.Queue.route -> false
                 else -> true
             }
             bottomBarPlayerState.value = when (currentRoute) {
-                Routes.Login.route, Routes.Queue.route -> false
+                Routes.Queue.route -> false
                 else -> playerState.isNotEmpty()
             }
         }

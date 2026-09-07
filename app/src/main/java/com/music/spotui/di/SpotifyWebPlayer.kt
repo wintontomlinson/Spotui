@@ -18,8 +18,8 @@ import android.widget.FrameLayout
  * buttons (data-testid controls) and reads its now-playing state.
  *
  * Requirements / limits:
- *  - The WebView reuses the login cookie jar (sp_dc etc.), so the user must have
- *    logged in via SpotifyLoginScreen first.
+ *  - The WebView reuses the login cookie jar (sp_dc etc.), so a Spotify session
+ *    must already be present (set via sp_dc).
  *  - Free tier works (desktop web allows on-demand) but injects ads; Premium is
  *    ad-free. Playback is real-time only: no seek-ahead / download / crossfade.
  *  - Whether audio actually plays depends on Widevine being provisioned in the

@@ -106,6 +106,14 @@ import java.time.LocalTime
 @Composable
 fun HomeScreen(navController: NavController){
 
+    // Login-free by default: with no Spotify session, show the YouTube-powered
+    // FreeHome instead of the Spotify feed (which would be empty without a login).
+    val homeContext = androidx.compose.ui.platform.LocalContext.current
+    if (com.music.spotui.data.api.SpotifySession.spDc(homeContext).isBlank()) {
+        FreeHomeScreen(navController)
+        return
+    }
+
     val homeViewModel : HomeViewModel = hiltViewModel()
     val home by homeViewModel.home.collectAsState()
     val albums by homeViewModel.albums.collectAsState()
@@ -203,7 +211,7 @@ fun HomeScreen(navController: NavController){
                                 modifier = Modifier.padding(24.dp)
                             ) {
                                 Text(
-                                    text = "Spotify session expired or unauthenticated",
+                                    text = "Couldn't load your Spotify feed",
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
@@ -211,7 +219,7 @@ fun HomeScreen(navController: NavController){
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Log in to load your personalized playlists, recommendations, and library.",
+                                    text = "Your Spotify session may have expired. You can still search and play any song for free.",
                                     color = Color.Gray,
                                     fontSize = 13.sp,
                                     textAlign = TextAlign.Center
@@ -221,11 +229,11 @@ fun HomeScreen(navController: NavController){
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(Color(0xFF1ED760))
-                                        .clickable { navController.navigate(Routes.Login.route) }
+                                        .clickable { navController.navigate(Routes.YtSearch.route) }
                                         .padding(horizontal = 24.dp, vertical = 12.dp)
                                 ) {
                                     Text(
-                                        text = "Log in to Spotify",
+                                        text = "Browse free music",
                                         color = Color.Black,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp

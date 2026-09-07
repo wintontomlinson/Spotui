@@ -12,7 +12,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import com.music.spotui.data.api.SpotifySession
-import com.music.spotui.ui.screens.SpotifyLoginScreen
 import com.music.spotui.ui.screens.YtSearchScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -100,9 +99,6 @@ fun MyNavHost(
         popEnterTransition = { fadeIn(animationSpec = tween(150)) },
         popExitTransition = { fadeOut(animationSpec = tween(150)) },
     ){
-        composable(Routes.Login.route){
-            SpotifyLoginScreen(navHostController)
-        }
         composable(Routes.Home.route){
             HomeScreen(navHostController)
         }
