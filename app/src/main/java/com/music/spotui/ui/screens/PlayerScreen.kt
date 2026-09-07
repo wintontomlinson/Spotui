@@ -1142,7 +1142,7 @@ fun PlayerInfo(
                         val badgeColor = when {
                             hasError -> Color(0xFFFF6B6B)
                             isResolvingState -> Color(0xFF3DABFF)
-                            source == "Spotify" -> Color(0xFFFF0033)
+                            source == "Spotify" -> Color(0xFFF5A524)
                             source.startsWith("Lossless") -> Color(0xFFFFC862)
                             source.startsWith("Deezer") || source == "Deezer" -> Color(0xFFA238FF)
                             source == "Downloaded" -> Color(0xFF9C9C9C)
@@ -1315,7 +1315,7 @@ fun CustomSlider(
             )
             // Active (played) track — YouTube Music red
             drawLine(
-                color = Color(0xFFFF0033),
+                color = Color(0xFFF5A524),
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
@@ -1324,7 +1324,7 @@ fun CustomSlider(
             // Thumb dot — always visible (YT Music shows it), pops larger while dragging
             run {
                 drawCircle(
-                    color = Color(0xFFFF0033),
+                    color = Color(0xFFF5A524),
                     radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
                     center = Offset(thumbX, trackY)
                 )
@@ -1393,7 +1393,7 @@ fun PlayerFull(
 
                 },
             tint = if (shuffle) {
-                Color(0xFFFF0033)
+                Color(0xFFF5A524)
             } else {
                 Color.White
             },
@@ -1513,7 +1513,7 @@ fun PlayerFull(
                 Icon(
                     modifier = Modifier.size(20.dp),
                     tint = if (repeat != RepeatMode.OFF) {
-                        Color(0xFFFF0033)
+                        Color(0xFFF5A524)
                     } else {
                         Color.White
                     },
@@ -1523,7 +1523,7 @@ fun PlayerFull(
                 if (repeat == RepeatMode.ONE) {
                     Text(
                         text = "1",
-                        color = Color(0xFFFF0033),
+                        color = Color(0xFFF5A524),
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.offset(y = (-1).dp)
@@ -1535,7 +1535,7 @@ fun PlayerFull(
                 Box(
 modifier = Modifier
                         .size(4.dp)
-                        .background(Color(0xFFFF0033), shape = CircleShape)
+                        .background(Color(0xFFF5A524), shape = CircleShape)
                 )
             } else {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1622,13 +1622,13 @@ fun PlayerConnectRow(
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_devices),
-                tint = Color(0xFFFF0033),
+                tint = Color(0xFFF5A524),
                 modifier = Modifier.size(18.dp),
                 contentDescription = "Device",
             )
             Text(
                 text = routeName,
-                color = Color(0xFFFF0033),
+                color = Color(0xFFF5A524),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -1819,7 +1819,7 @@ fun ArtistsSheet(
                                     RoundedCornerShape(20.dp),
                                 )
                                 .background(
-                                    if (following) Color(0xFFFF0033) else Color.Transparent,
+                                    if (following) Color(0xFFF5A524) else Color.Transparent,
                                     RoundedCornerShape(20.dp),
                                 )
                                 .clickable {

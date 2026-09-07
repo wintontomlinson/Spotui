@@ -68,7 +68,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val SpotifyGreen = Color(0xFFFF0033)
+private val SpotifyGreen = Color(0xFFF5A524)
 
 /**
  * Spotify-style "Saved in" sheet: Liked Songs plus local playlists and Spotify user playlists.

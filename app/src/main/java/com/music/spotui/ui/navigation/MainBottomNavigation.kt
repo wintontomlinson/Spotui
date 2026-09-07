@@ -121,7 +121,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 },
                                 label = {
                                     if (currentTab == item.route) {
-                                        Text(color = Color(0xFFFF0033), text = item.label, fontSize = 11.sp)
+                                        Text(color = Color(0xFFF5A524), text = item.label, fontSize = 11.sp)
                                     } else {
                                         Text(
                                             color = Color.Gray,
@@ -148,7 +148,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 alwaysShowLabel = true,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFFFF0033),
+                                    selectedIconColor = Color(0xFFF5A524),
                                     unselectedIconColor = Color.Gray,
                                     indicatorColor = Color.Transparent
                                 )

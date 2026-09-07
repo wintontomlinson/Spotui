@@ -185,7 +185,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                         unfocusedContainerColor = Color(0xFF383838),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        cursorColor = Color(0xFFFF0033),
+                        cursorColor = Color(0xFFF5A524),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -197,7 +197,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             confirmButton = {
                 Text(
                     "Save",
-                    color = Color(0xFFFF0033),
+                    color = Color(0xFFF5A524),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier
@@ -418,7 +418,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Icon(
                                     imageVector = Icons.Default.PhoneAndroid,
                                     contentDescription = "Local Playlist",
-                                    tint = Color(0xFFFF0033),
+                                    tint = Color(0xFFF5A524),
                                     modifier = Modifier
                                         .size(14.dp)
                                         .padding(end = 4.dp)

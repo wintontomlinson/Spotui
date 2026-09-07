@@ -413,7 +413,7 @@ fun MiniPlayer(navController: NavHostController) {
                 if (isLiked) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        tint = Color(0xFFFF0033),
+                        tint = Color(0xFFF5A524),
                         modifier = Modifier
                             .size(22.dp)
                             .clickable(
@@ -630,13 +630,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFFF0033)) // Spotify Green
+                    .background(Color(0xFFF5A524)) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_queue_add),
                     contentDescription = "Play next",
-                    tint = Color.White,
+                    // Dark content on the light amber accent keeps the contrast strong.
+                    tint = Color(0xFF1A1206),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -718,7 +719,7 @@ fun AppSearchBar(
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFFFF0033)
+                cursorColor = Color(0xFFF5A524)
             ),
             singleLine = true,
             placeholder = {

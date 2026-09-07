@@ -67,7 +67,8 @@ import com.music.spotui.ui.viewmodel.SearchFilterType
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 import com.music.spotui.ui.viewmodel.formatDurationMs
 
-private val Accent = Color(0xFFFF0033)
+// Accent comes from the single source of truth in the theme package.
+private val Accent = com.music.spotui.ui.theme.Accent
 private val Surface = Color(0xFF17171C)
 private val SurfaceHigh = Color(0xFF20202A)
 private val TextDim = Color(0xFFB3B3B3)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Premium launcher background: a deep near black plate lifted by a soft red glow
+  Premium launcher background: a deep near black plate lifted by a soft amber glow
   in the upper left, so the white glyph on top reads clearly at every icon size.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -19,8 +19,8 @@
                 android:startY="0"
                 android:endX="108"
                 android:endY="108">
-                <item android:offset="0.0" android:color="#FF1A1016" />
-                <item android:offset="0.55" android:color="#FF120E12" />
+                <item android:offset="0.0" android:color="#FF1C1610" />
+                <item android:offset="0.55" android:color="#FF13100C" />
                 <item android:offset="1.0" android:color="#FF08070A" />
             </gradient>
         </aapt:attr>
@@ -34,9 +34,9 @@
                 android:centerX="34"
                 android:centerY="30"
                 android:gradientRadius="72">
-                <item android:offset="0.0" android:color="#66FF0033" />
-                <item android:offset="0.6" android:color="#1AFF0033" />
-                <item android:offset="1.0" android:color="#00FF0033" />
+                <item android:offset="0.0" android:color="#73F5A524" />
+                <item android:offset="0.6" android:color="#1FF5A524" />
+                <item android:offset="1.0" android:color="#00F5A524" />
             </gradient>
         </aapt:attr>
     </path>

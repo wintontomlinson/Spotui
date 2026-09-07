@@ -59,7 +59,9 @@ import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
-private val Accent = Color(0xFFFF0033)
+// Accent comes from the single source of truth in the theme package.
+private val Accent = com.music.spotui.ui.theme.Accent
+private val OnAccent = com.music.spotui.ui.theme.OnAccent
 private val Surface = Color(0xFF17171C)
 private val SurfaceHigh = Color(0xFF20202A)
 private val TextDim = Color(0xFFB3B3B3)
@@ -340,7 +342,8 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 Icon(
                     Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.White,
+                    // Dark glyph on the light amber badge for strong contrast.
+                    tint = OnAccent,
                     modifier = Modifier.size(20.dp),
                 )
             }
