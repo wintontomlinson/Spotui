@@ -179,7 +179,7 @@ class LyricsViewModel @Inject constructor(
                 Log.d(TAG, "Translation complete: $translatedCount/${result.size} lines translated")
                 withContext(Dispatchers.Main) {
                     if (translatedCount == 0) {
-                        translationError = "Translation failed — no lines were translated."
+                        translationError = "Translation failed, no lines were translated."
                     } else {
                         translatedLines = result
                         // Persist to disk so it auto-shows on next load.

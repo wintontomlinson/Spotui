@@ -14,7 +14,7 @@ enum class StreamQuality(
     val audioQuality: AudioQuality,
     val lossless: Boolean,
 ) {
-    LOW("Low", "Data saver — smallest size", AudioQuality.LOW, false),
+    LOW("Low", "Data saver, smallest size", AudioQuality.LOW, false),
     NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO, false),
     HIGH("High", "Best compressed quality", AudioQuality.HIGH, false),
     LOSSLESS("Lossless", "FLAC when available, else High", AudioQuality.HIGH, true),
@@ -80,7 +80,7 @@ fun setPreloadEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_P
 /**
  * YouTube account cookie (captured from an in-app WebView login). Passed to the
  * InnerTube client so age-restricted / login-required videos resolve. Empty when
- * not signed in — the app then uses anonymous YouTube access.
+ * not signed in, the app then uses anonymous YouTube access.
  */
 private const val KEY_YT_COOKIE = "youtube_cookie"
 fun getYoutubeCookie(c: Context): String = prefs(c).getString(KEY_YT_COOKIE, "").orEmpty()
@@ -89,7 +89,7 @@ fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPIS
 
 /**
  * Play audio through Spotify's own web player in a hidden WebView (real Spotify
- * streaming, no decryption/bypass). DEFAULT OFF (and hidden from Settings) — the
+ * streaming, no decryption/bypass). DEFAULT OFF (and hidden from Settings), the
  * YouTube/FLAC engine is the primary source; this path is real-time only with no
  * download/crossfade support.
  */

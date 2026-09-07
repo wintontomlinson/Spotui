@@ -5,7 +5,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * One "Recent searches" entry — Spotify-style: not the typed query but the
+ * One "Recent searches" entry, Spotify-style: not the typed query but the
  * actual item the user opened from the results (song / artist / album / show).
  * Carries enough payload to re-launch the item on tap.
  */

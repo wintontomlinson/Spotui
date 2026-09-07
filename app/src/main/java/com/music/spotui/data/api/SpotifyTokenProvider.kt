@@ -28,7 +28,7 @@ object SpotifyTokenProvider {
         }
         val spDc = SpotifySession.spDc(context)
         if (spDc.isBlank()) {
-            Log.w(TAG, "No sp_dc cookie set — Spotify data unavailable")
+            Log.w(TAG, "No sp_dc cookie set, Spotify data unavailable")
             return@withLock false
         }
         SpotifyAuth.fetchAccessToken(spDc).fold(

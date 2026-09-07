@@ -213,16 +213,16 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // Function to play the next song in the album
     fun playNextSongs(queueSongs : List<SongsModel>, context: Context) {
         if (queueSongs.isEmpty()) return
-        // A crossfade is already advancing the queue itself — don't double-skip.
+        // A crossfade is already advancing the queue itself, don't double-skip.
         if (SongPlayer.isCrossfadeActive()) return
         val cur = currentPositionIn(queueSongs)
         // Top up the queue with Spotify recommendations as we approach the end.
-        // Don't append radio tracks when repeat-ALL is on — we want to loop the exact queue.
+        // Don't append radio tracks when repeat-ALL is on, we want to loop the exact queue.
         if (currentSongState.repeat.value != RepeatMode.ALL && currentSongState.repeat.value != RepeatMode.ONE) {
             maybeExtendRadio(queueSongs, cur)
         }
         if (cur >= queueSongs.size - 1 && autoplayRadioEnabled && currentSongState.repeat.value == RepeatMode.OFF) {
-            // End of the queue (e.g. a single). Don't loop back to the start —
+            // End of the queue (e.g. a single). Don't loop back to the start -
             // wait for the radio fetch kicked off above to append tracks and
             // continue into them, like Spotify's autoplay.
             continueIntoRadio(queueSongs, context)
@@ -324,7 +324,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                     }
                     delay(250L)
                 }
-                // Radio never arrived (offline / no seed id) — loop only if repeat is ALL.
+                // Radio never arrived (offline / no seed id), loop only if repeat is ALL.
                 if (currentSongState.repeat.value == RepeatMode.ALL) {
                     val first = queueSongs.first()
                     withContext(Dispatchers.Main) {

@@ -110,7 +110,7 @@ object YTPlayerUtils {
         val isLoggedIn = YouTube.cookie != null
         Timber.tag(TAG).d("Authentication status: ${if (isLoggedIn) "LOGGED_IN" else "ANONYMOUS"}")
 
-        // Run signature-timestamp and PoToken generation in parallel — they are
+        // Run signature-timestamp and PoToken generation in parallel, they are
         // independent and each takes 1-3s, so overlapping them nearly halves the
         // cold-start latency. Both are blocking calls, so we use Java futures on
         // the IO executor rather than coroutine async (runCatching is non-suspend).
@@ -158,7 +158,7 @@ object YTPlayerUtils {
         // Skip it and go straight to the fallback chain.
         val skipMainClient = mainClientNeedsPoToken && poToken == null
         if (skipMainClient) {
-            Timber.tag(TAG).w("PoToken unavailable — skipping MAIN_CLIENT and using fallback chain directly")
+            Timber.tag(TAG).w("PoToken unavailable, skipping MAIN_CLIENT and using fallback chain directly")
         }
 
         var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else {
@@ -283,7 +283,7 @@ object YTPlayerUtils {
             if (returnedVideoId != null && returnedVideoId != videoId) {
                 Timber.tag(TAG).w(
                     "Client ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName} " +
-                        "returned WRONG video: $returnedVideoId != $videoId — skipping",
+                        "returned WRONG video: $returnedVideoId != $videoId, skipping",
                 )
                 continue
             }
@@ -292,14 +292,29 @@ object YTPlayerUtils {
             if (streamPlayerResponse?.playabilityStatus?.status == "OK") {
                 Timber.tag(logTag).d("Player response status OK for client: ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName}")
 
-                // Skip NewPipe for age-restricted content (NewPipe doesn't use our auth)
-                val responseToUse = if (wasOriginallyAgeRestricted) {
-                    Timber.tag(logTag).d("Skipping NewPipe for age-restricted content")
-                    streamPlayerResponse
-                } else {
-                    // Try to get streams using newPipePlayer method
-                    val newPipeResponse = YouTube.newPipePlayer(videoId, streamPlayerResponse)
-                    newPipeResponse ?: streamPlayerResponse
+                // NewPipe extraction fetches and parses YouTube's web player, which costs
+                // a noticeable chunk of the time between tapping play and hearing audio.
+                // It is only needed when this response cannot give us a playable audio
+                // URL on its own, so check for a ready to use format first.
+                val hasDirectAudioUrl = streamPlayerResponse.streamingData
+                    ?.adaptiveFormats
+                    ?.any { it.isAudio && !it.url.isNullOrBlank() } == true
+
+                val responseToUse = when {
+                    wasOriginallyAgeRestricted -> {
+                        // NewPipe does not use our auth, so it cannot help here.
+                        Timber.tag(logTag).d("Skipping NewPipe for age-restricted content")
+                        streamPlayerResponse
+                    }
+                    hasDirectAudioUrl -> {
+                        Timber.tag(logTag).d("Skipping NewPipe: response already has a direct audio URL")
+                        streamPlayerResponse
+                    }
+                    else -> {
+                        // No direct URL, the formats are ciphered or missing. Let NewPipe try.
+                        Timber.tag(logTag).d("No direct audio URL, falling back to NewPipe extraction")
+                        YouTube.newPipePlayer(videoId, streamPlayerResponse) ?: streamPlayerResponse
+                    }
                 }
 
                 format =
@@ -584,7 +599,7 @@ object YTPlayerUtils {
             return accepted
         } catch (e: java.io.IOException) {
             // Network timeout / reset while probing. The stream URL itself may still
-            // be fine — let ExoPlayer attempt GET rather than burning a fallback client.
+            // be fine, let ExoPlayer attempt GET rather than burning a fallback client.
             Timber.tag(logTag).w(e, "Stream URL probe failed (IO); accepting optimistically")
             return true
         } catch (e: Exception) {

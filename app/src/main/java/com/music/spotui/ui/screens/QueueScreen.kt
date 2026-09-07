@@ -114,7 +114,7 @@ fun QueueScreen(navController: NavController) {
 }
 
 /**
- * The core queue UI — the track that's playing now plus everything coming up.
+ * The core queue UI, the track that's playing now plus everything coming up.
  * Tapping an upcoming track jumps straight to it; dragging the handle reorders it;
  * swiping a row removes it.
  */

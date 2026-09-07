@@ -139,7 +139,7 @@ object CipherDeobfuscator {
 
         Timber.tag(TAG).d("Creating CipherWebView with sig=${sigInfo.name}, constantArg=${sigInfo.constantArg}, nFunc=${nFuncInfo?.name}[${nFuncInfo?.arrayIndex}]")
 
-        // Create WebView — n-function is exported to window if found, with brute-force fallback
+        // Create WebView, n-function is exported to window if found, with brute-force fallback
         val webView = CipherWebView.create(
             context = appContext,
             playerJs = playerJs,

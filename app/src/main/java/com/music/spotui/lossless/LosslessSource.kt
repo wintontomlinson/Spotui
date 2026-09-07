@@ -11,14 +11,14 @@ import java.net.URLEncoder
 
 /**
  * Resolves a Spotify track to a lossless FLAC URL via SpotiFLAC's **public**
- * community backends — plain HTTP calls with a shared, published API key. No
+ * community backends, plain HTTP calls with a shared, published API key. No
  * login, no CAPTCHA, no per-user credentials.
  *
  * Providers are tried in priority order and each fails gracefully (a down or
  * account-limited backend just falls through to the next, then to YouTube):
- *   1. Tidal  — Spotify→Tidal id (Odesli) → `/track/?id=` → BTS manifest FLAC url
- *   2. Amazon — `/api/resolve/spotify/{id}` (self-resolving)   [often dormant]
- *   3. Qobuz  — Spotify→Qobuz id (Odesli) → `/api/track/{id}`  [often dormant]
+ *   1. Tidal , Spotify→Tidal id (Odesli) → `/track/?id=` → BTS manifest FLAC url
+ *   2. Amazon, `/api/resolve/spotify/{id}` (self-resolving)   [often dormant]
+ *   3. Qobuz , Spotify→Qobuz id (Odesli) → `/api/track/{id}`  [often dormant]
  *
  * Amazon/Qobuz are frequently down or account-limited; they're kept in the chain
  * so coverage improves automatically when those servers rotate back up. Endpoint
@@ -42,7 +42,7 @@ object LosslessSource {
     suspend fun resolve(context: Context, spotifyId: String, preferHiRes: Boolean = true): Result =
         withContext(Dispatchers.IO) {
             val ids = odesliIds(spotifyId)
-            // 1. Tidal — SpotiFLAC's gated backend (if verified) then direct endpoints
+            // 1. Tidal, SpotiFLAC's gated backend (if verified) then direct endpoints
             ids["tidal"]?.let { tid ->
                 tidalFlac(context, tid, preferHiRes)?.let { return@withContext Result.Success(it) }
             }
@@ -57,7 +57,7 @@ object LosslessSource {
 
     // ── Provider: Tidal ───────────────────────────────────────────────────────
     private fun tidalFlac(context: Context, tidalId: String, preferHiRes: Boolean): FlacTrack? {
-        // SpotiFLAC's own gated backend first (if the user completed verification) —
+        // SpotiFLAC's own gated backend first (if the user completed verification) -
         // it's their most reliable source. Falls through to the direct API-key ones.
         if (SpotiflacGated.hasSession(context)) {
             SpotiflacGated.tidalFlacUrl(context, tidalId, "LOSSLESS")?.let {
@@ -65,7 +65,7 @@ object LosslessSource {
                 return FlacTrack(it, "SpotiFLAC", "16")
             }
         }
-        // LOSSLESS (16-bit) is a single-file FLAC and the most reliable/fastest —
+        // LOSSLESS (16-bit) is a single-file FLAC and the most reliable/fastest -
         // request only it. HI_RES usually comes back as a multi-segment manifest we
         // can't hand to the player as one URL anyway, and the extra slow call just
         // burns the timeout budget on these flaky community servers.
@@ -77,7 +77,7 @@ object LosslessSource {
                     val data = JSONObject(body).optJSONObject("data") ?: return@runCatching null
                     val manifest = decodeBtsManifest(data.optString("manifest")) ?: return@runCatching null
                     val urls = manifest.optJSONArray("urls") ?: return@runCatching null
-                    // Single-file FLAC only — a multi-segment manifest can't be one URL.
+                    // Single-file FLAC only, a multi-segment manifest can't be one URL.
                     if (urls.length() != 1) return@runCatching null
                     val flacUrl = urls.optString(0).takeIf { it.isNotBlank() } ?: return@runCatching null
                     if (!manifest.optString("mimeType").contains("flac", true) && !flacUrl.contains(".flac")) {
@@ -102,7 +102,7 @@ object LosslessSource {
                 val body = get("$endpoint/api/resolve/spotify/$spotifyId", keyHeader())
                 val json = JSONObject(body)
                 val data = json.optJSONObject("data") ?: json
-                // Only accept a directly-playable url with NO decryption key — we
+                // Only accept a directly-playable url with NO decryption key, we
                 // don't ship Amazon's stream decryption, so encrypted responses are
                 // skipped rather than saved as garbled audio.
                 if (data.has("decryption_key") || json.has("decryption_key")) return@runCatching null

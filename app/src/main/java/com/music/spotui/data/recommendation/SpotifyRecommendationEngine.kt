@@ -17,12 +17,12 @@ import kotlin.math.abs
  * Spotify deprecated its `/v1/recommendations` and related-artists endpoints for
  * cookie/dev-mode tokens, so this builds its own recommender from endpoints that
  * still work:
- * 1. **Taste profile** — the user's top tracks/artists → artist-affinity + genre maps.
- * 2. **Candidate generation** — seed-artist top tracks, same-album tracks,
+ * 1. **Taste profile**, the user's top tracks/artists → artist-affinity + genre maps.
+ * 2. **Candidate generation**, seed-artist top tracks, same-album tracks,
  *    genre-neighbour artist top tracks, and the user's top-track pool.
- * 3. **Composite scoring** — source relevance, artist affinity, genre overlap,
+ * 3. **Composite scoring**, source relevance, artist affinity, genre overlap,
  *    popularity similarity, recency.
- * 4. **Diversification** — per-artist cap + bucket interleaving.
+ * 4. **Diversification**, per-artist cap + bucket interleaving.
  */
 object SpotifyRecommendationEngine {
 
@@ -122,7 +122,7 @@ object SpotifyRecommendationEngine {
             shortTermArtistIds = profileArtists.take(10).map { it.id }.filter { it.isNotEmpty() }.toSet()
             lastProfileRefresh = System.currentTimeMillis()
 
-            Log.d(TAG, "Profile built — ${normalizedAffinity.size} artists, ${trackPool.size} tracks")
+            Log.d(TAG, "Profile built, ${normalizedAffinity.size} artists, ${trackPool.size} tracks")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to build profile", e)

@@ -54,7 +54,7 @@ import javax.inject.Inject
  * lazily per track), so we advance the queue ourselves rather than via a playlist.
  *
  * It is a [MediaLibraryService] (not just a session service) so Android Auto can
- * browse the library — Liked Songs, Downloads, playlists and albums — and start
+ * browse the library, Liked Songs, Downloads, playlists and albums, and start
  * playback from the car.
  */
 @AndroidEntryPoint
@@ -462,7 +462,7 @@ class PlaybackService : MediaLibraryService() {
     private inner class LibraryCallback : MediaLibrarySession.Callback {
 
         /**
-         * Intercept media button events at the earliest point — BEFORE the session
+         * Intercept media button events at the earliest point, BEFORE the session
          * checks command availability or calls onPlayerCommandRequest. This ensures
          * next/previous work even when MacroDroid dispatches a key event without
          * being a connected MediaController.

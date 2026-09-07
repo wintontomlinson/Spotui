@@ -13,7 +13,7 @@ import android.widget.FrameLayout
 /**
  * Experimental "real Spotify" playback: rather than resolve a track from
  * YouTube/FLAC, we host Spotify's OWN web player in a hidden 1×1 WebView and let
- * it stream + play the track itself (its DRM/decoding, not ours — no bypass).
+ * it stream + play the track itself (its DRM/decoding, not ours, no bypass).
  * Our native UI becomes a remote control that drives the web player's on-page
  * buttons (data-testid controls) and reads its now-playing state.
  *
@@ -36,7 +36,7 @@ object SpotifyWebPlayer {
         private set
 
     // Android's System WebView ships WITHOUT the Widevine CDM (only full Chrome
-    // has it), so Spotify's DRM web player can't decrypt audio here — it shows
+    // has it), so Spotify's DRM web player can't decrypt audio here, it shows
     // "playing" but stays silent. We probe for Widevine on load; when it's absent
     // (all current Android WebViews) callers must NOT route playback here.
     @Volatile var canPlay = false
@@ -53,12 +53,12 @@ object SpotifyWebPlayer {
         private set
 
     // True once the web player has registered a device and we've captured its
-    // auth/client tokens — then we switch tracks via Spotify's own command API
+    // auth/client tokens, then we switch tracks via Spotify's own command API
     // (playFromUri) instead of reloading the page for each one.
     @Volatile private var commandReady = false
 
     // True once the first play navigated+clicked, activating the web player's
-    // Connect device — a prerequisite for the command API to actually start audio.
+    // Connect device, a prerequisite for the command API to actually start audio.
     @Volatile private var activated = false
 
     /** Invoked (on the main thread) after each progress poll so the media
@@ -108,7 +108,7 @@ object SpotifyWebPlayer {
                 @Suppress("DEPRECATION")
                 setSupportMultipleWindows(false)
             }
-            // Bridge so the page can report the async Widevine probe result back —
+            // Bridge so the page can report the async Widevine probe result back -
             // evaluateJavascript can't await a Promise, so we call in via JS instead.
             wv.addJavascriptInterface(object {
                 @android.webkit.JavascriptInterface
@@ -203,7 +203,7 @@ object SpotifyWebPlayer {
                 }
             }
             // Give it a real full-screen viewport so Spotify's responsive web player
-            // renders its full DOM incl. the Play button — a tiny/0-size view
+            // renders its full DOM incl. the Play button, a tiny/0-size view
             // collapses the layout (innerWidth=0) and the controls never get
             // created, and the track page won't even navigate. MATCH_PARENT gives a
             // genuine size; translate it off-screen so it's invisible but attached
@@ -225,7 +225,7 @@ object SpotifyWebPlayer {
 
     /**
      * Re-load the player with the now-current login. The hidden player WebView is
-     * created at app startup — on a fresh install that's BEFORE the user logs in,
+     * created at app startup, on a fresh install that's BEFORE the user logs in,
      * so it's stuck with a logged-out session (→ "Oops"). Call this the moment
      * login succeeds so the player picks up the new sp_dc session.
      */
@@ -258,7 +258,7 @@ object SpotifyWebPlayer {
 
     /**
      * Play a Spotify uri. Once the web player is initialized (commandReady), switch
-     * tracks via the connect-state command API — NO page reload, which is what
+     * tracks via the connect-state command API, NO page reload, which is what
      * caused the frequent "Oops, something went wrong". Before it's ready, do the
      * one-time navigation (which also boots the player + captures its tokens).
      */
@@ -359,7 +359,7 @@ object SpotifyWebPlayer {
     // Injected once per page load. Hooks fetch to capture the web player's device
     // id + auth/client tokens (from its own requests), then exposes
     // __spotuiPlay(uri) which plays any track/episode via Spotify's connect-state
-    // command API — no page reload. license:'tft' matches SpotiFuck. Also reloads
+    // command API, no page reload. license:'tft' matches SpotiFuck. Also reloads
     // on a connect-state 404 (player lock) to self-heal.
     private val BOOTSTRAP_JS = """
         (function(){
@@ -370,7 +370,7 @@ object SpotifyWebPlayer {
           window.__oriFetch = oriFetch;
           // PURELY OBSERVATIONAL: read the player's own requests to capture its
           // device id, tokens and region-correct spclient origin. Never alters a
-          // request and never reloads — the old reload-on-404 destabilised the
+          // request and never reloads, the old reload-on-404 destabilised the
           // half-initialised player and caused the "Oops" loop.
           window.fetch = function(){
             try {
@@ -415,7 +415,7 @@ object SpotifyWebPlayer {
     private fun clickPlayJs() =
         """
         (function(){
-          // Already playing? The transport button reads "Pause" — do nothing, so the
+          // Already playing? The transport button reads "Pause", do nothing, so the
           // poll loop stops re-clicking (which could toggle or hit another track).
           var pp=document.querySelector('[data-testid="control-button-playpause"]');
           if (pp && (pp.getAttribute('aria-label')||'').toLowerCase().indexOf('pause')>-1)
@@ -486,7 +486,7 @@ object SpotifyWebPlayer {
     )
     // Audio-ad sources → answered with a bundled silent.mp3. Only UNAMBIGUOUS ad
     // hosts here: the shared scdn.co/audio/ + spotifycdn.com/audio/ were REMOVED
-    // because real track audio streams from them too — probing every segment there
+    // because real track audio streams from them too, probing every segment there
     // (to check content-type) throttled playback (stutter/restart/lag). These
     // remaining hosts are ad-only, so a cheap URL match is safe.
     private val audioAdPatterns = listOf(
@@ -504,7 +504,7 @@ object SpotifyWebPlayer {
         val url = request.url.toString()
         val lower = url.lowercase()
 
-        // Analytics/telemetry: answer with an empty 200 — no network needed.
+        // Analytics/telemetry: answer with an empty 200, no network needed.
         if (analyticsHosts.any { it in lower }) {
             return android.webkit.WebResourceResponse(
                 "text/plain", "utf-8", 200, "OK",
@@ -513,7 +513,7 @@ object SpotifyWebPlayer {
             )
         }
 
-        // Never touch streaming media segments (they carry a Range header) — those
+        // Never touch streaming media segments (they carry a Range header), those
         // are the real audio/video being fetched in chunks; intercepting them is
         // what caused the stutter. Ad-only hosts get a silent.mp3.
         val isRange = request.requestHeaders.keys.any { it.equals("Range", ignoreCase = true) }

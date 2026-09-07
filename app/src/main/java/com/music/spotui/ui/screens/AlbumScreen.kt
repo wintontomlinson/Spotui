@@ -174,7 +174,7 @@ fun SumUpAlbumScreen(
 
     val albumByName : Map<String, List<AlbumsModel>> = albums.groupBy { it.name }
     // The album may not be in the cached new-releases list (e.g. opened from
-    // search) — fall back to a model built from the album's first track.
+    // search), fall back to a model built from the album's first track.
     val album : List<AlbumsModel> = albumByName[albumName]
         ?: listOf(
             AlbumsModel(
@@ -383,7 +383,7 @@ fun SumUpAlbumScreen(
                             Snackbar(showMessage = snackbarMessage)
                         }
                     else{
-                        // Let the action icons take their natural width — a fixed
+                        // Let the action icons take their natural width, a fixed
                         // 75dp squeezed the add + download buttons together.
                         Row(horizontalArrangement = Arrangement.spacedBy(18.dp),
                             verticalAlignment = Alignment.CenterVertically,

@@ -91,7 +91,7 @@ fun MyNavHost(
         popExitTransition = { fadeOut(animationSpec = tween(150)) },
     ){
         composable(Routes.Home.route){
-            // Home is the login-free, YouTube-powered screen — the old Spotify
+            // Home is the login-free, YouTube-powered screen, the old Spotify
             // home (and its "session expired / log in" prompt) is never shown.
             FreeHomeScreen(navHostController)
         }

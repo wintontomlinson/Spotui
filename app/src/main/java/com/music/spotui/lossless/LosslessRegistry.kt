@@ -17,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec
  * fetch fails.
  *
  * These are public community APIs (a plain `GET .../track/?id=…` with a shared,
- * published API key) — no login, no CAPTCHA, no per-user credentials.
+ * published API key), no login, no CAPTCHA, no per-user credentials.
  */
 internal object LosslessRegistry {
 

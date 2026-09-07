@@ -38,7 +38,7 @@ class CurrentSongState @Inject constructor() {
     // UI (updateSongState(…, playingState=true, …)).  When ExoPlayer's
     // onIsPlayingChanged(true) fires later (after buffering), we compare:
     // if _playGen != _lastPlayGen the user has already toggled again (e.g.
-    // tapped pause) and the callback is stale — drop it.
+    // tapped pause) and the callback is stale, drop it.
     private var _playGen = 0L
     private var _lastPlayGen = 0L
 
@@ -202,7 +202,7 @@ class CurrentSongState @Inject constructor() {
     }
 
     /** Sync the play/pause state without touching the rest of the now-playing
-     *  metadata — used to reflect the engine's real state (e.g. ExoPlayer or
+     *  metadata, used to reflect the engine's real state (e.g. ExoPlayer or
      *  web player callbacks, system notification actions, Bluetooth media keys).
      *
      *  CRITICAL FIX: If audio is actually playing in SongPlayer, or if playing is true,

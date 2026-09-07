@@ -341,7 +341,7 @@ private fun ArtistOverviewContent(
             }
         }
 
-        // ── Popular releases (discography) — vertical list, first few + "Show all" ──
+        // ── Popular releases (discography), vertical list, first few + "Show all" ──
         if (overview.popularReleases.isNotEmpty()) {
             item { SectionHeader("Popular releases") }
             itemsIndexed(overview.popularReleases.take(4)) { _, album ->

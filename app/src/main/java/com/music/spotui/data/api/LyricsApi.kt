@@ -15,7 +15,7 @@ import java.net.URLEncoder
 
 /**
  * Synced lyrics. Primary source is Spotify's own color-lyrics endpoint (the
- * exact synced lyrics the official client shows, fetched by track id) — with
+ * exact synced lyrics the official client shows, fetched by track id), with
  * LRCLIB (lrclib.net, free + key-less) as the fallback for tracks Spotify has
  * no lyrics for or when the track id isn't known.
  *
@@ -33,7 +33,7 @@ object LyricsApi {
     // In-memory cache keyed by "title|artist" so re-opening the lyrics view (or the
     // inline card + full-screen view, which both request the same track) is instant
     // and we never re-hit the network for a track we already resolved this session.
-    // A miss is cached too, but only for MISS_RETRY_MS — a "not found" is often just
+    // A miss is cached too, but only for MISS_RETRY_MS, a "not found" is often just
     // a timeout / flaky network, not a fact, so it becomes retryable.
     private class Miss(val at: Long = System.currentTimeMillis())
     private const val MISS_RETRY_MS = 120_000L
@@ -60,7 +60,7 @@ object LyricsApi {
     private val pipeTail = Regex("""\s*\|.*$""")
     // Bare trailing tokens like "Official Video", "Lyrics", "4K" without brackets.
     private val bareNoiseTail = Regex(
-        """\s*[-–]?\s*(official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|full\s*video|full\s*audio|audio|visualizer|hd|4k|hq)\s*$""",
+        """\s*[-\u2013\u2014]?\s*(official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|full\s*video|full\s*audio|audio|visualizer|hd|4k|hq)\s*$""",
         RegexOption.IGNORE_CASE,
     )
     // Remove all the noise from a raw title WITHOUT splitting on " - " (the split
@@ -123,7 +123,7 @@ object LyricsApi {
         val cached = cache[key]
         if (cached is Lyrics) return
         if (cached is Miss && System.currentTimeMillis() - cached.at < MISS_RETRY_MS) return
-        // Disk cache is already warm — populate in-memory cache without network.
+        // Disk cache is already warm, populate in-memory cache without network.
         LyricsCachePref.get(MyApplication.instance, key)?.let { disk ->
             cache[key] = disk
             return
@@ -138,7 +138,7 @@ object LyricsApi {
             is Miss -> if (System.currentTimeMillis() - cached.at < MISS_RETRY_MS) return null
         }
 
-        // 2nd-level cache: disk (survives process death). No expiry — lyrics are
+        // 2nd-level cache: disk (survives process death). No expiry, lyrics are
         // static content that never change for a given song.
         val ctx = MyApplication.instance
         LyricsCachePref.get(ctx, key)?.let { disk ->
@@ -149,7 +149,7 @@ object LyricsApi {
         val primaryArtist = cleanArtist(artist, title)
         val cleaned = cleanTitle(title)
 
-        // 1) Spotify's own color-lyrics — the exact synced lyrics the official app
+        // 1) Spotify's own color-lyrics, the exact synced lyrics the official app
         //    shows, keyed by track id, so no title/artist matching can go wrong.
         // 2) LRCLIB fallback: exact get + fuzzy search fired CONCURRENTLY, then a
         //    title-only search. Serial fallbacks used to stack 3 × 5s timeouts.
@@ -184,7 +184,7 @@ object LyricsApi {
 
     private suspend fun fromSpotify(key: String): Lyrics? {
         val trackId = trackIds[key] ?: return null
-        // The web token expires hourly — refresh before hitting color-lyrics.
+        // The web token expires hourly, refresh before hitting color-lyrics.
         runCatching {
             SpotifyTokenProvider.ensureToken(com.music.spotui.MyApplication.instance)
         }

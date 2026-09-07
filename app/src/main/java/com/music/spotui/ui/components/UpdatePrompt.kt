@@ -76,7 +76,7 @@ fun UpdatePrompt() {
         containerColor = Color(0xFF1A1A1A),
         titleContentColor = Color.White,
         title = {
-            Text("Update available — ${info.version}")
+            Text("Update available, ${info.version}")
         },
         text = {
             Column(

@@ -12,7 +12,7 @@ private const val PREF_NAME = "LyricsCache"
  * Persistent disk cache for resolved lyrics. Keyed by the same
  * "cleanTitle|primaryArtist" key used by the in-memory cache in [LyricsApi].
  *
- * Only successful [Lyrics] results are persisted — misses are never written so
+ * Only successful [Lyrics] results are persisted, misses are never written so
  * a transient network failure doesn't poison the disk cache and retries happen
  * naturally on the next launch.
  *

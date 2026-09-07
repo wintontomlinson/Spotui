@@ -59,7 +59,7 @@ fun DeezerLoginScreen(navController: NavController, next: String = "") {
     var hasError by remember { mutableStateOf(false) }
     val captured = remember { AtomicBoolean(false) }
 
-    // Poll for the arl cookie — it's set on .deezer.com the moment login succeeds.
+    // Poll for the arl cookie, it's set on .deezer.com the moment login succeeds.
     LaunchedEffect(Unit) {
         while (true) {
             delay(1000)
@@ -78,7 +78,7 @@ fun DeezerLoginScreen(navController: NavController, next: String = "") {
                     }
                     setDeezerTier(context, tier)
                     withContext(Dispatchers.Main) {
-                        statusMessage = "Signed in — $tier"
+                        statusMessage = "Signed in, $tier"
                         delay(400)
                         if (next == "home") {
                             // Onboarding order is Spotify → Deezer → SpotiFLAC: hand off

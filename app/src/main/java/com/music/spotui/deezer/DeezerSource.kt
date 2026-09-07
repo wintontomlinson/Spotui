@@ -44,7 +44,7 @@ object DeezerSource {
         val qualityLabel: String,
     )
 
-    /** Whether Deezer is configured (ARL present) — cheap, no network. */
+    /** Whether Deezer is configured (ARL present), cheap, no network. */
     fun isConfigured(context: Context): Boolean = getDeezerArl(context) != null
 
     /**

@@ -71,7 +71,7 @@ fun SpotuiTheme(
         typography = Typography,
     ) {
         // Bare Text() uses LocalTextStyle, which MaterialTheme does NOT derive
-        // from the typography — so provide Montserrat as the global default so
+        // from the typography, so provide Montserrat as the global default so
         // every screen picks it up without touching each Text call.
         androidx.compose.material3.ProvideTextStyle(
             value = androidx.compose.material3.LocalTextStyle.current.copy(

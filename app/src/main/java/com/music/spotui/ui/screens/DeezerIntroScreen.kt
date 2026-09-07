@@ -84,7 +84,7 @@ fun DeezerIntroScreen(navController: NavController) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Spotui streams your music from Deezer. Skip this and playback falls back to YouTube instead — slower to load, and some tracks come back censored or as a different edit.",
+                "Spotui streams your music from Deezer. Skip this and playback falls back to YouTube instead, slower to load, and some tracks come back censored or as a different edit.",
                 color = Color(0xFFB3B3B3),
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -92,9 +92,9 @@ fun DeezerIntroScreen(navController: NavController) {
             )
 
             Spacer(Modifier.height(28.dp))
-            Benefit("Accurate matches", "The exact track — right version, right length — not a YouTube best-guess.")
+            Benefit("Accurate matches", "The exact track, right version, right length, not a YouTube best-guess.")
             Benefit("Uncensored", "No censored or altered edits swapped in for the real thing.")
-            Benefit("Loads faster", "Playback starts quicker — much less waiting than YouTube.")
+            Benefit("Loads faster", "Playback starts quicker, much less waiting than YouTube.")
 
             Spacer(Modifier.height(36.dp))
             Button(

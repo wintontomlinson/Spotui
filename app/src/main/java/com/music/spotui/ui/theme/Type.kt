@@ -10,7 +10,7 @@ import com.music.spotui.R
 
 /**
  * The genuine Spotify fonts, extracted from the official app.
- * SpotifyMixUI — body / UI text. SpotifyMixUITitle — headings (heavier display cut).
+ * SpotifyMixUI, body / UI text. SpotifyMixUITitle, headings (heavier display cut).
  * Medium/SemiBold don't exist as cuts, so they map to the nearest available weight.
  */
 val SpotifyMix = FontFamily(

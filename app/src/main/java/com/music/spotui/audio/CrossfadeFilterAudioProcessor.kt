@@ -64,7 +64,7 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    // NOTE: do NOT override isActive() to true — onConfigure returns NOT_SET for
+    // NOTE: do NOT override isActive() to true, onConfigure returns NOT_SET for
     // non-16-bit input (e.g. 24-bit hi-res FLAC), and claiming to be active with an
     // unset format broke the audio pipeline: lossless downloads played silently.
     // BaseAudioProcessor's isActive() correctly deactivates us so such streams

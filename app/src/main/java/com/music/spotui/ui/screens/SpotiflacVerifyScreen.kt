@@ -34,7 +34,7 @@ import org.json.JSONObject
 /**
  * EXPERIMENTAL (path 1a). Obtains a signed session from SpotiFLAC's gated backend
  * by having the user solve the Cloudflare Turnstile **themselves** in this WebView
- * — no auto-solving. The page is loaded with base URL [LosslessRegistry.SESSION_BASE]
+ *, no auto-solving. The page is loaded with base URL [LosslessRegistry.SESSION_BASE]
  * so it behaves as same-origin with that host: fetches avoid CORS, the Turnstile
  * widget passes its domain check, and the resulting cf_clearance cookie applies to
  * the same WebView. Every step is logged on-screen and to logcat (tag SpotiflacVerify)

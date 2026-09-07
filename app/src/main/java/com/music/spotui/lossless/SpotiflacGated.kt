@@ -17,10 +17,10 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * SpotiFLAC's **gated** community download (experimental path 1a, stage 2). Uses
  * the signed session captured by the verification WebView to HMAC-sign a request
- * to the community `/api/dl` endpoint — SpotiFLAC's own, most-reliable FLAC source.
+ * to the community `/api/dl` endpoint, SpotiFLAC's own, most-reliable FLAC source.
  *
  * The `/api/dl` host is signature-gated (not Cloudflare/cf_clearance-gated like the
- * session endpoints), so this runs natively — no WebView. Signing scheme
+ * session endpoints), so this runs natively, no WebView. Signing scheme
  * `SPOTIFLAC-HMAC-V1` is ported exactly from their client.
  */
 internal object SpotiflacGated {
@@ -32,7 +32,7 @@ internal object SpotiflacGated {
     private const val WINDOW_SECONDS = 300
     private const val USER_AGENT = "SpotiFLAC-Mobile/$APP_VERSION"
 
-    /** Whether a session exists — cheap, no network. */
+    /** Whether a session exists, cheap, no network. */
     fun hasSession(context: Context): Boolean = getSpotiflacSession(context) != null
 
     /** Signed `/api/dl` for a Tidal id → single-file FLAC url, or null on miss. */

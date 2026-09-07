@@ -246,7 +246,7 @@ fun SettingsScreen(navController: NavController) {
                 Column(Modifier.weight(1f)) {
                     Text("Battery optimization", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        if (batteryOptExempt) "Exempt — app won't be killed" else "Not exempt — tap to change",
+                        if (batteryOptExempt) "Exempt, app won't be killed" else "Not exempt, tap to change",
                         color = if (batteryOptExempt) Color(0xFF81C784) else Color(0xFFB3B3B3),
                         fontSize = 12.sp,
                     )
@@ -549,7 +549,7 @@ fun SettingsScreen(navController: NavController) {
 
             Spacer(Modifier.height(12.dp))
             SectionTitle("Account")
-            // Spotify login is optional — the app runs login-free by default. Show
+            // Spotify login is optional, the app runs login-free by default. Show
             // "Log in" when signed out (unlocks Home/Search/Library), or "Log out"
             // when a Spotify session exists.
             val loggedIn = com.music.spotui.data.api.SpotifySession.spDc(context).isNotBlank()
@@ -580,7 +580,7 @@ fun SettingsScreen(navController: NavController) {
                     modifier = Modifier.padding(vertical = 6.dp),
                 )
                 Text(
-                    text = "You're using Spotu for free — search and play any song, no account needed.",
+                    text = "You're using Spotu for free, search and play any song, no account needed.",
                     color = Color.Gray,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 6.dp),
