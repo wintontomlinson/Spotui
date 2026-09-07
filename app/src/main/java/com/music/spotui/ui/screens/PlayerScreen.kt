@@ -60,6 +60,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pause
@@ -634,6 +635,7 @@ fun PlayerScreen(navController: NavController) {
                         navController = navController,
                         onMenuClick = { showMenu = true },
                         contextName = playerViewModel.currentSongAlbum.value,
+                        onLyricsClick = { showLyrics = true },
                         onBackClick = { dismissPlayer() }
                     )
                     //Spacer(modifier = Modifier.padding(16.dp))
@@ -865,6 +867,7 @@ fun PlayerTopBar(
     onMenuClick: () -> Unit,
     contextName: String = "",
     onBackClick: () -> Unit,
+    onLyricsClick: (() -> Unit)? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -904,6 +907,22 @@ fun PlayerTopBar(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Lyrics is a primary action, so it gets its own always visible button
+            // instead of being buried at the bottom of the scrolling content.
+            if (onLyricsClick != null) {
+                Icon(
+                    imageVector = Icons.Default.Lyrics,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onLyricsClick() },
+                    contentDescription = "Lyrics"
+                )
+                Spacer(Modifier.width(18.dp))
+            }
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 tint = Color.White,
