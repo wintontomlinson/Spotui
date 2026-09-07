@@ -5,6 +5,30 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.4
+
+### 🛠 Playback Fixes
+
+The playback log finally showed the cause of songs stopping halfway. `stream opened 1048576 bytes
+from position 0` appeared over and over, and every single failure was a request for the bytes after
+that same point being refused with 403. 1048576 is the size of the intro preload.
+
+* **The intro preload is gone.** It downloaded the opening megabyte of upcoming tracks into the media
+  cache using the freshly resolved stream URL. These hosts serve one request per stream URL, so the
+  preload spent the track's only request. Playback then had about a minute of cached audio and no way
+  to fetch anything after it, which is where the song stopped. At the bitrates in the logs that
+  megabyte is 55 to 60 seconds, which is half of a short song, exactly what it looked like. Some
+  tracks would not start at all, which was the same thing happening at the very first byte.
+  Resolving the URL ahead of time, which is what actually hid the tap latency, still happens.
+* **Only the network facing layer may put an offset in the URL.** The log showed the wrapper above
+  the cache opening `position 1048576 via query range` and getting a length of -1 back, because a
+  rewritten URL is a different resource as far as the cache is concerned. That rewrite is now
+  restricted to the one instance that talks to the network.
+* **The cache directory is versioned again**, so the one megabyte fragments earlier builds wrote are
+  abandoned instead of being read back and failed on.
+
+---
+
 ## 🚀 Release v1.6.3
 
 ### 🛠 Playback Fixes

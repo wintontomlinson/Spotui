@@ -35,9 +35,10 @@ import java.io.IOException
 class ResilientPlaybackDataSourceFactory(
     private val upstreamFactory: DataSource.Factory,
     private val chunkBytes: Long = DEFAULT_CHUNK_BYTES,
+    private val rewriteRangeIntoUrl: Boolean = false,
 ) : DataSource.Factory {
     override fun createDataSource(): DataSource =
-        ResilientPlaybackDataSource(upstreamFactory.createDataSource(), chunkBytes)
+        ResilientPlaybackDataSource(upstreamFactory.createDataSource(), chunkBytes, rewriteRangeIntoUrl)
 
     companion object {
         /**
@@ -57,6 +58,15 @@ class ResilientPlaybackDataSourceFactory(
 class ResilientPlaybackDataSource(
     private val upstream: DataSource,
     private val chunkBytes: Long = ResilientPlaybackDataSourceFactory.DEFAULT_CHUNK_BYTES,
+    /**
+     * Whether a byte offset may be moved into the URL's query string.
+     *
+     * Only true for the instance sitting directly above the network. Doing it anywhere else
+     * hands a rewritten URL to a layer that treats a URL as the identity of a resource: a
+     * log showed this instance above the cache opening `position 1048576 via query range`
+     * and getting a length of -1 back, because the cache had never heard of that URL.
+     */
+    private val rewriteRangeIntoUrl: Boolean = false,
 ) : DataSource {
     private var baseDataSpec: DataSpec? = null
 
@@ -202,7 +212,8 @@ class ResilientPlaybackDataSource(
 
     /** Hosts known to refuse a Range header on anything but the first request for a URL. */
     private fun usesQueryRange(dataSpec: DataSpec): Boolean =
-        dataSpec.uri.host?.contains("googlevideo.com", ignoreCase = true) == true
+        rewriteRangeIntoUrl &&
+            dataSpec.uri.host?.contains("googlevideo.com", ignoreCase = true) == true
 
     /** Chunking only makes sense for a remote resource we were asked to read to the end. */
     private fun isChunkable(dataSpec: DataSpec): Boolean {
