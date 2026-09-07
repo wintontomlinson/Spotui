@@ -104,7 +104,7 @@ fun setVideoFallbackEnabled(c: Context, v: Boolean) =
  * Crossfade overlap length in ms (0 = off). When > 0, the end of each track is blended
  * into the start of the next over this window.
  */
-fun getCrossfadeMs(c: Context): Int = prefs(c).getInt(KEY_CROSSFADE_MS, 0)
+fun getCrossfadeMs(c: Context): Int = prefs(c).getInt(KEY_CROSSFADE_MS, CROSSFADE_DEFAULT_MS)
 fun setCrossfadeMs(c: Context, ms: Int) =
     prefs(c).edit().putInt(KEY_CROSSFADE_MS, ms.coerceIn(CROSSFADE_MIN_MS, CROSSFADE_MAX_MS)).apply()
 

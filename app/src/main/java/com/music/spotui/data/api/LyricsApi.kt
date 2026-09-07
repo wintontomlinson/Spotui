@@ -38,7 +38,7 @@ object LyricsApi {
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
     private fun cacheKey(title: String, artist: String) =
-        "${cleanTitle(title).lowercase()}|${cleanArtist(artist).lowercase()}"
+        "${cleanTitle(title).lowercase()}|${cleanArtist(artist, title).lowercase()}"
 
     // Strip the noise Spotify puts in titles that LRCLIB doesn't know about:
     // "Song - 2011 Remaster", "Song (feat. X)", "Song [Bonus Track]".
@@ -58,8 +58,10 @@ object LyricsApi {
         """\s*[-–]?\s*(official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|full\s*video|full\s*audio|audio|visualizer|hd|4k|hq)\s*$""",
         RegexOption.IGNORE_CASE,
     )
-    private fun cleanTitle(title: String) =
-        title.substringBefore(" - ")
+    // Remove all the noise from a raw title WITHOUT splitting on " - " (the split
+    // is handled separately, because YouTube titles are often "Artist - Song").
+    private fun stripNoise(title: String) =
+        title
             .replace(featTag, "")
             .replace(bracketTag, "")
             .replace(ytNoiseBracket, "")
@@ -67,11 +69,29 @@ object LyricsApi {
             .replace(bareNoiseTail, "")
             .trim()
 
+    private fun cleanTitle(title: String): String {
+        val stripped = stripNoise(title)
+        // A YouTube title is commonly "Artist - Song". Blindly taking the part
+        // before " - " would keep the ARTIST and drop the song, so only split
+        // when it looks like that pattern, and keep the right-hand (song) side.
+        return if (stripped.contains(" - ")) {
+            stripped.substringAfter(" - ").trim().ifBlank { stripped.substringBefore(" - ").trim() }
+        } else {
+            stripped
+        }
+    }
+
     // Clean an artist string too: YouTube "- Topic" auto-channels and "VEVO"
     // suffixes confuse the artist match.
     private val artistNoise = Regex("""\s*-\s*topic$|\s*vevo$""", RegexOption.IGNORE_CASE)
-    private fun cleanArtist(artist: String) =
-        artist.substringBefore(",").trim().replace(artistNoise, "").trim()
+    private fun cleanArtist(artist: String, title: String = ""): String {
+        val a = artist.substringBefore(",").trim().replace(artistNoise, "").trim()
+        if (a.isNotBlank()) return a
+        // No usable artist (common for YouTube). If the title is "Artist - Song",
+        // recover the artist from the left-hand side.
+        val stripped = stripNoise(title)
+        return if (stripped.contains(" - ")) stripped.substringBefore(" - ").trim() else a
+    }
 
     // Play-queue registry: "title|artist" → Spotify track id, seeded by
     // CurrentSongState.updateQueue so we can hit Spotify's own lyrics endpoint
@@ -121,7 +141,7 @@ object LyricsApi {
             return disk
         }
 
-        val primaryArtist = cleanArtist(artist)
+        val primaryArtist = cleanArtist(artist, title)
         val cleaned = cleanTitle(title)
 
         // 1) Spotify's own color-lyrics — the exact synced lyrics the official app

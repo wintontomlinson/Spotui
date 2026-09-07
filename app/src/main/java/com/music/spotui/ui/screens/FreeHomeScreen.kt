@@ -64,7 +64,7 @@ fun FreeHomeScreen(navController: NavController) {
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val rows by vm.rows
 
-    LaunchedEffect(Unit) { vm.loadOnce() }
+    LaunchedEffect(Unit) { vm.maybeRefresh() }
 
     val play: (List<SongsModel>, Int) -> Unit = { list, index ->
         val song = list[index]
