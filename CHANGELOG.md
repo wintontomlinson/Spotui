@@ -9,15 +9,27 @@ compared to the main Spotui repository.
 
 ### 🛠 Playback Fixes
 
-* **Songs no longer stop halfway:** a stream that was cut short was reported to the player as a
-  normal end of track, so the queue advanced mid song. Worse, the cache stored that early end as
-  the length of the track, which made the same song stop at the same point on every later play.
-  Short responses are now reconnected from the exact byte offset already played, the cache can no
-  longer record a truncated length, and the media cache directory was versioned so entries poisoned
-  by older builds are dropped.
-* **Errors retry instead of skipping:** a dropped connection used to jump straight to the next song.
-  The current track is now re-resolved and resumed from where the audio stopped, and the queue only
-  advances when the track genuinely cannot play.
+Songs stopping partway through and skipping to the next track had three separate causes, all now
+fixed. The behaviour was reproduced against a real stream before changing anything: a single open
+ended request for a whole track was throttled to about 28 KB/s and then reset by the host at 95% of
+the file, while the same bytes fetched as bounded range requests arrived complete and at full speed.
+
+* **Streams are paged in bounded chunks.** Playback no longer holds one request open for an entire
+  track. Each chunk is a short lived range request, which avoids both the throttling and the reset.
+* **Any dropped connection reconnects.** A reset used to surface as a fatal player error, because
+  only `unexpected end of stream` was treated as recoverable. Any mid stream failure now reopens
+  from the exact byte offset already played, with a retry budget that refreshes on real progress and
+  a fast path out for responses that were rejected outright.
+* **A short stream can no longer poison the cache.** media3 reports a response that stops early as a
+  clean end of input, which CacheDataSource stores as the content length of the track, so the song
+  then ended at the same point on every later play. Truncation is now raised as an error instead, the
+  cache entry is dropped when a track is recovered, and the cache directory was versioned so entries
+  poisoned by older builds are abandoned.
+* **Recovery keeps going.** Re-resolving a track used to be allowed once, so a stream that dropped
+  twice still lost the rest of the song. Up to six attempts are allowed now, each required to reach
+  further into the song than the last, and the queue advances only when a track truly cannot play.
+* **Track length is sanity checked.** When the player reports a length well short of what the search
+  result said, the catalogue duration wins, so a partial stream is not mistaken for a short song.
 
 ### 🎨 Identity
 

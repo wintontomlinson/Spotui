@@ -715,9 +715,11 @@ object SongPlayer {
                 "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)",
             )
             .setAllowCrossProtocolRedirects(true)
-        // Reconnect a cut short response before the cache sees it. A truncated stream that
-        // reaches CacheDataSource as a clean end of input is stored as the length of the
-        // track, which permanently cuts the song off at that point on every later play.
+        // Page the stream in bounded chunks and reconnect anything that drops, before the
+        // cache ever sees it. One open ended request for a whole track gets throttled and
+        // then reset, and a response that stops early reaches CacheDataSource as a clean
+        // end of input, which it stores as the length of the track. That is what made
+        // songs stop partway through and then stop at the same place on every later play.
         val upstream = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
             androidx.media3.datasource.DefaultDataSource.Factory(context, http),
         )
@@ -746,7 +748,13 @@ object SongPlayer {
                 .build()
         }
 
-        val resilientFactory = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(resolvingFactory)
+        // Chunking belongs on the network side, which the factory below the cache already
+        // does. Here the wrapper is only a safety net for errors raised by the cache layer
+        // itself, so it reconnects but does not page.
+        val resilientFactory = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
+            upstreamFactory = resolvingFactory,
+            chunkBytes = 0L,
+        )
 
         return com.music.spotui.audio.LiveFlacBitrateDataSourceFactory(
             upstreamFactory = resilientFactory,
