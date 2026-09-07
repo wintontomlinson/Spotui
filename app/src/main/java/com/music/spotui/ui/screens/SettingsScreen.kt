@@ -842,7 +842,6 @@ fun SettingsScreen(navController: NavController) {
                 )
             }
             Spacer(Modifier.height(24.dp))
-            val uriHandler = LocalUriHandler.current
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -857,13 +856,10 @@ fun SettingsScreen(navController: NavController) {
                     fontWeight = FontWeight.Medium,
                 )
                 Text(
-                    text = "Hazhan Salih",
+                    text = "SATYAN SHARMA",
                     color = Color.White,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable {
-                        uriHandler.openUri("https://github.com/H4zh4n/Spotui/")
-                    }
                 )
             }
             Spacer(Modifier.height(40.dp))
