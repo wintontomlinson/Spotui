@@ -214,21 +214,45 @@ internal fun cleanTrackTitle(title: String): String {
     return t.ifBlank { title }
 }
 
+private val SIZE_OPTION = Regex("""^[swh]\d""")
+private val WIDTH_TOKEN = Regex("""\bw\d+""")
+private val HEIGHT_TOKEN = Regex("""\bh\d+""")
+private val SQUARE_TOKEN = Regex("""\bs\d+""")
+private val PATH_SIZE = Regex("""/w\d+-h\d+""")
+
 /**
- * YouTube Music serves thumbnails at a small size baked into the URL, for example
- * "...=w120-h120-l90-rj", which looks blurry when shown large. This rewrites the
- * size parameters to request a crisp high resolution image from the same CDN.
+ * Google's image CDN bakes the requested size into the URL, and the sizes served for
+ * list thumbnails look blurry when shown large. This raises the requested size while
+ * leaving everything else about the URL untouched.
+ *
+ * Only the size tokens are swapped. An earlier version replaced the whole option
+ * string after the "=" with a fixed "w544-h544-l90-rj", which broke any URL using a
+ * different option set. Artist and channel avatars are served as
+ * "...=s176-c-k-c0x00ffffff-no-rj", so rewriting the options dropped the crop and
+ * background flags and the image failed to load, which is why artist photos went
+ * missing. URLs with no size option, such as i.ytimg.com thumbnails, are returned
+ * unchanged.
  */
 fun hiResThumbnail(url: String?, size: Int = 544): String {
     val u = url.orEmpty()
     if (u.isBlank()) return u
-    // Google image CDN: size is encoded after "=", for example "=w120-h120-l90-rj".
+
     val eq = u.lastIndexOf('=')
-    if (eq != -1 && (u.contains("=w") || u.contains("=s"))) {
-        return u.substring(0, eq) + "=w$size-h$size-l90-rj"
+    if (eq != -1 && eq < u.length - 1) {
+        val base = u.substring(0, eq)
+        val options = u.substring(eq + 1)
+        // Only touch it when the part after "=" really is a size option, so query
+        // strings that happen to contain "=" are left alone.
+        if (SIZE_OPTION.containsMatchIn(options)) {
+            var updated = WIDTH_TOKEN.replace(options, "w$size")
+            updated = HEIGHT_TOKEN.replace(updated, "h$size")
+            updated = SQUARE_TOKEN.replace(updated, "s$size")
+            return "$base=$updated"
+        }
     }
+
     // Some URLs carry the size as a path segment such as ".../w120-h120/...".
-    val replaced = Regex("""/w\d+-h\d+""").replace(u, "/w$size-h$size")
+    val replaced = PATH_SIZE.replace(u, "/w$size-h$size")
     if (replaced != u) return replaced
     return u
 }
