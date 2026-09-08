@@ -5,6 +5,21 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.0
+
+### 🛠 Library No Longer Looks Empty
+
+Removing the duplicate Liked and Downloads rows had a side effect: a user with no playlists, albums
+or offline songs saw only the quick access tiles and blank space below, so Library looked broken.
+
+* **A heading and a real empty state.** The list now shows a "Your playlists" heading above your
+  playlists and albums when you have some, and when you have none it shows a friendly empty state
+  below the quick access grid, with a short note and two buttons, Create playlist and Explore.
+* Quick access (Liked, Recently played, Downloads, Local files) is always there, so the top of
+  Library is never bare.
+
+---
+
 ## 🚀 Release v1.8.9
 
 ### 🎨 Library, Explore & Live Trending
