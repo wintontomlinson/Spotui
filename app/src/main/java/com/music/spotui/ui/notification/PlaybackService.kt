@@ -106,6 +106,10 @@ class PlaybackService : MediaLibraryService() {
             "PlaybackService",
             "Stream ended early at ${position}ms of ${duration}ms, re-resolving and resuming",
         )
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "recover",
+            "stream ended early at ${position / 1000}s of ${duration / 1000}s, re-resolving",
+        )
         com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
         SongPlayer.invalidateResolvedStream(songUrl)
         SongPlayer.setRestorePoint(songUrl, position)
@@ -125,6 +129,20 @@ class PlaybackService : MediaLibraryService() {
                 }
             }
             if (playbackState == Player.STATE_ENDED) {
+                SongPlayer.exoPlayer?.let { p ->
+                    // The decisive numbers for a track ending early: where it stopped, how
+                    // long the player thinks it is, and how long the catalogue said it is.
+                    // If position is well short of either, the stream ran out, it did not
+                    // finish.
+                    val known = currentSongState.queue.value
+                        .firstOrNull { it.id == currentSongState.songId.value }
+                        ?.durationMs ?: 0
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "ended",
+                        "at ${p.currentPosition / 1000}s, player says ${p.duration / 1000}s, " +
+                            "catalogue says ${known / 1000}s, crossfading=${SongPlayer.isCrossfadeActive()}",
+                    )
+                }
                 if (SongPlayer.isCrossfadeActive()) {
                     // Ignore the old player's STATE_ENDED event during an active crossfade.
                     // The crossfade routine itself handles the transition and promotes the new player.
