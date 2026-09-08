@@ -5,6 +5,22 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.9
+
+### 🎨 Library, Explore & Live Trending
+
+* **Library is fully on palette.** The toolbar and control chips still used stray flat greys; they
+  now use the warm dark surface colours, so the create, search, grid toggle and account controls read
+  as one consistent set.
+* **Explore has a Browse grid.** The empty search screen now shows ten colourful category tiles,
+  Trending, Bollywood, Punjabi, Hip-Hop, Chill and Lo-Fi, Workout, Romance, Party, Devotional and
+  90s, each running its search on tap. Something to explore before you type, not just a row of chips.
+* **Trending keeps updating.** Beyond refreshing when you play something new, Home now re-pulls
+  Trending whenever it is reopened after a 30 minute window, so the top of the screen stays current
+  through the day. A failed refresh leaves the existing list in place rather than blanking it.
+
+---
+
 ## 🚀 Release v1.8.8
 
 ### 🎨 Warmer Theme, Cleaner Library, Working Artist Images & Lyrics
