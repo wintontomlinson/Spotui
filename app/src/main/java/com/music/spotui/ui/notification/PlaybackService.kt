@@ -113,11 +113,71 @@ class PlaybackService : MediaLibraryService() {
         return true
     }
 
+    // Retry bookkeeping for the fresh URL retry below: which track it applies to, how many
+    // goes it has had, and how far into the track the last go reached.
+    private var streamRetryFor: String? = null
+    private var streamRetryCount = 0
+    private var streamRetryMark = 0L
+
+    /**
+     * Re-resolves the current track and resumes it from where the audio stopped.
+     *
+     * A stream URL carries the client's IP address, and that address is covered by the
+     * URL's signature, so the URL is only valid from the network it was issued to. Mobile
+     * networks hand out a new public address regularly, and switching between mobile data
+     * and wifi changes it immediately. From then on every request for that stream is
+     * refused, which is why a song would play for a while and then be skipped.
+     *
+     * A refused stream is therefore not a reason to give up on the track, it is a reason to
+     * ask for a new URL. Returns true when a retry was started, meaning the caller must not
+     * advance the queue.
+     */
+    private fun retryOnFreshStreamUrl(): Boolean {
+        val player = SongPlayer.exoPlayer ?: return false
+        val song = currentSongState.songUrl.value
+        if (song.isBlank()) return false
+        val position = player.currentPosition.coerceAtLeast(0L)
+
+        if (streamRetryFor != song) {
+            streamRetryFor = song
+            streamRetryCount = 0
+            streamRetryMark = -1L
+        }
+        // Later goes have to reach further into the track than the last one, otherwise the
+        // track genuinely cannot play and the queue should move on. The first two always
+        // run, since the very first failure often happens before any audio at all.
+        if (streamRetryCount >= STREAM_RETRIES_BEFORE_PROGRESS_REQUIRED &&
+            position < streamRetryMark + MIN_STREAM_RETRY_PROGRESS_MS
+        ) {
+            return false
+        }
+        if (streamRetryCount >= MAX_STREAM_RETRIES) return false
+        streamRetryCount++
+        streamRetryMark = position
+
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "retry",
+            "fresh stream url, go $streamRetryCount, resuming at ${position / 1000}s",
+        )
+        com.music.spotui.data.preferences.clearCachedStream(applicationContext, song)
+        SongPlayer.invalidateResolvedStream(song)
+        if (position > 0L) SongPlayer.setRestorePoint(song, position)
+        SongPlayer.playSong(song, applicationContext, "song/${currentSongState.songId.value}")
+        return true
+    }
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
                 SongPlayer.releaseWakeLock()
+                // Audio is flowing again, so a later failure on a different track starts
+                // with a full retry budget.
+                if (streamRetryFor != null && streamRetryFor != currentSongState.songUrl.value) {
+                    streamRetryFor = null
+                    streamRetryCount = 0
+                    streamRetryMark = 0L
+                }
                 // A different track is playing, so allow it its own recovery attempt.
                 val playing = currentSongState.songUrl.value
                 if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
@@ -212,6 +272,11 @@ class PlaybackService : MediaLibraryService() {
                 "at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s, " +
                     "${error.errorCodeName}: ${error.message}",
             )
+            // A stream URL is signed for one specific client IP, so it stops working the
+            // moment the device's public IP changes. Get a fresh URL and carry on from
+            // where the audio stopped, instead of throwing away the rest of the song.
+            if (retryOnFreshStreamUrl()) return
+
             SongPlayer.acquireWakeLock(applicationContext, "spotui:error_advance", 60_000L)
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
@@ -490,6 +555,15 @@ class PlaybackService : MediaLibraryService() {
         const val NODE_DOWNLOADS = "downloads"
         const val NODE_PLAYLISTS = "playlists"
         const val NODE_ALBUMS = "albums"
+
+        /** Fresh URL retries allowed for one track before the queue moves on. */
+        const val MAX_STREAM_RETRIES = 4
+
+        /** Retries allowed before reaching further into the track becomes a requirement. */
+        const val STREAM_RETRIES_BEFORE_PROGRESS_REQUIRED = 2
+
+        /** How much further a retry has to reach to be worth another one. */
+        const val MIN_STREAM_RETRY_PROGRESS_MS = 5_000L
     }
 
     /**

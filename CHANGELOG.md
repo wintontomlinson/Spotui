@@ -5,6 +5,33 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.1
+
+### 🛠 Playback Fixes
+
+The cause of songs stopping partway is now confirmed rather than guessed. A stream URL contains the
+client's IP address as a parameter, and that parameter is listed in the URL's own `sparams`, meaning
+it is covered by the signature:
+
+```
+ip      = 44.213.75.27
+sparams = expire,ei,ip,id,itag,source,requiressl,xpc,bui,spc,vprv,svpuc,mime,rqh
+```
+
+A stream URL is therefore only valid from the network it was issued to. Mobile networks hand out a
+new public address regularly and switching between mobile data and wifi changes it immediately. From
+that moment every request for that stream is refused with 403, which is exactly what the playback
+logs showed. No change to how the bytes are requested can work around this, which is why several
+earlier attempts failed.
+
+* **A refused stream now gets a fresh URL instead of being skipped.** The track is re-resolved and
+  resumed from the point the audio stopped, up to four times, with later attempts required to reach
+  further into the track than the last so an unplayable track still moves on. Verified from a live
+  response that a URL is not single use and that offset, bounded and unbounded requests all succeed
+  while the address matches, so a fresh URL is the thing that was missing.
+
+---
+
 ## 🚀 Release v1.7.0
 
 ### 🔄 Playback Reset
