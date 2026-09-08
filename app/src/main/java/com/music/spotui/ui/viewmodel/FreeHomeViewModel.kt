@@ -53,6 +53,10 @@ class FreeHomeViewModel @Inject constructor(
     /** Query behind the trending block that leads Home. */
     private val trendingQuery = "trending songs this week"
 
+    /** When trending was last pulled, and how long before Home re-pulls it. */
+    private var lastTrendingTs = 0L
+    private val TRENDING_REFRESH_MS = 30 * 60 * 1000L
+
     private val _rows = mutableStateOf<List<HomeRow>>(emptyList())
     val rows: State<List<HomeRow>> get() = _rows
 
@@ -93,7 +97,16 @@ class FreeHomeViewModel @Inject constructor(
     fun maybeRefresh() {
         if (!loaded) { loadOnce(); return }
         val newestTs = runCatching { getListeningHistory(context).firstOrNull()?.ts ?: 0L }.getOrDefault(0L)
-        if (newestTs > builtFromHistoryTs) rebuild()
+        if (newestTs > builtFromHistoryTs) {
+            rebuild()
+            return
+        }
+        // Keep Trending fresh even without new listening: re-pull it whenever Home is
+        // reopened after the refresh window, so the top of the screen keeps updating
+        // through the day instead of showing the same list until a track is played.
+        if (System.currentTimeMillis() - lastTrendingTs > TRENDING_REFRESH_MS) {
+            fetchTrending()
+        }
     }
 
     /** Force a rebuild from the latest history. */
@@ -129,9 +142,12 @@ class FreeHomeViewModel @Inject constructor(
     /** Loads the trending block that leads Home. */
     private fun fetchTrending() {
         _trendingLoading.value = true
+        lastTrendingTs = System.currentTimeMillis()
         viewModelScope.launch {
             val songs = searchSongs(trendingQuery, limit = 8)
-            _trending.value = songs
+            // Only replace the shown list when the pull actually returned something, so a
+            // failed refresh never blanks out trending that was already on screen.
+            if (songs.isNotEmpty()) _trending.value = songs
             _trendingLoading.value = false
         }
     }

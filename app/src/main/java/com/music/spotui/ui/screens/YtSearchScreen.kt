@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,6 +80,22 @@ private val TextFaint = Color(0xFF7A7A85)
 private val SUGGESTIONS = listOf(
     "Top hits", "New releases", "Bollywood", "Lofi", "Punjabi",
     "Workout", "Party", "Romantic", "Instrumental", "90s",
+)
+
+/** Colourful browse tiles shown on the empty search screen, each seeds a search. */
+private data class BrowseCategory(val label: String, val query: String, val color: Color)
+
+private val BROWSE_CATEGORIES = listOf(
+    BrowseCategory("Trending", "trending songs this week", Color(0xFFE0562B)),
+    BrowseCategory("Bollywood", "bollywood hits", Color(0xFFB4267A)),
+    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF1E7A54)),
+    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF485AC4)),
+    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF537AA1)),
+    BrowseCategory("Workout", "workout songs", Color(0xFF777777)),
+    BrowseCategory("Romance", "romantic songs", Color(0xFFD84E76)),
+    BrowseCategory("Party", "party songs", Color(0xFF8768B0)),
+    BrowseCategory("Devotional", "devotional songs", Color(0xFFC7873B)),
+    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF3D6B7D)),
 )
 
 /**
@@ -311,11 +328,62 @@ private fun DiscoverPane(
 
         item {
             Text(
-                text = "Popular searches",
+                text = "Browse all",
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 12.dp),
+            )
+        }
+        item {
+            // Two column grid of colourful browse tiles. Each is a rounded card in its own
+            // hue with the label bottom-left, the familiar premium browse layout, and each
+            // tap runs the seeded search.
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                BROWSE_CATEGORIES.chunked(2).forEach { pair ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        pair.forEach { cat ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(84.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(
+                                                cat.color,
+                                                androidx.compose.ui.graphics.lerp(cat.color, Color.Black, 0.35f),
+                                            )
+                                        )
+                                    )
+                                    .clickable { onPick(cat.query) }
+                                    .padding(14.dp),
+                            ) {
+                                Text(
+                                    text = cat.label,
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.align(Alignment.TopStart),
+                                )
+                            }
+                        }
+                        // Keep the last row aligned when the list is odd.
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        item {
+            Text(
+                text = "Popular searches",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 12.dp),
             )
         }
         item {

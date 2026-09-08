@@ -142,7 +142,7 @@ fun LibraryFilterChips(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF262019))
                         .clickable { onClearFilters() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -332,7 +332,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2A2A2A))
+                    .background(Color(0xFF262019))
                     .clickable { showCreateDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -345,7 +345,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFF5A524) else Color(0xFF2A2A2A))
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFF5A524) else Color(0xFF262019))
                     .clickable { isSearchVisible = !isSearchVisible },
                 contentAlignment = Alignment.Center
             ) {
@@ -363,7 +363,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2A2A2A))
+                    .background(Color(0xFF262019))
                     .clickable {
                         gridView = !gridView
                         setLibraryGridView(context, gridView)
@@ -384,7 +384,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF3A3A3A))
+                    .background(Color(0xFF352E24))
                     .clickable { navController.navigate(Routes.Settings.route) },
                 contentAlignment = Alignment.Center
             ) {
@@ -425,7 +425,7 @@ fun LibraryScreen(navController: NavController) {
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .height(36.dp)
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF262019))
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
@@ -479,7 +479,7 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier
                         .height(36.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF262019))
                         .clickable { showSortSheet = true }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -588,7 +588,7 @@ fun LibraryScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    HorizontalDivider(color = Color(0xFF262019))
                     Spacer(modifier = Modifier.height(4.dp))
                     LibrarySortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
