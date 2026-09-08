@@ -5,6 +5,24 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.5
+
+### 🛠 Albums, Nav Colour, Responsiveness & Cleanup
+
+* **Full albums load.** Albums were capped at 50 tracks, so long albums and deluxe editions were cut
+  off. Raised to 150, so real albums load in full.
+* **Colour in the bottom nav.** The nav bar was a flat dark slab; it now has a warm amber gradient
+  with an amber edge, so it carries the app's colour.
+* **Responsive cards.** The Recently played tile had a fixed width that overflowed on small phones
+  and looked cramped on tablets; it now scales with the screen.
+* **Removed dead leftovers.** Unused Deezer and SpotiFLAC navigation routes from the old lossless
+  sources are gone.
+
+Explore already has its Browse grid and Trending keeps updating, and the app was built per CPU so the
+arm64 download stays about 38 MB.
+
+---
+
 ## 🚀 Release v1.9.4
 
 ### 🛠 Library Is List Only
