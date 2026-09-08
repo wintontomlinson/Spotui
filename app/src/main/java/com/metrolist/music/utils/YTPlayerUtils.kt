@@ -99,6 +99,9 @@ object YTPlayerUtils {
     ): Result<PlaybackData> {
         // Declared out here so the failure branch can say which client was in play.
         var usedClientName: String? = null
+        var nTransformApplied = false
+        // The url exactly as the host issued it, kept so a rejected descramble can fall back.
+        var urlBeforeNTransform: String? = null
         return runCatching {
         Timber.tag(TAG).d("=== PLAYER RESPONSE FOR PLAYBACK ===")
         Timber.tag(TAG).d("videoId: $videoId")
@@ -368,9 +371,15 @@ object YTPlayerUtils {
                 Timber.tag(TAG).d("  currentClient: ${currentClient.clientName}")
                 Timber.tag(TAG).d("  useWebPoTokens: ${currentClient.useWebPoTokens}")
 
-                // Apply n-transform and PoToken for web clients OR for private tracks (including TVHTML5)
+                // The n parameter only needs descrambling on URLs from the web family of
+                // clients. Every stream URL carries an n parameter, so keying off its mere
+                // presence ran the transform on IOS, ANDROID and ANDROID_VR URLs too, whose
+                // n is already usable. Rewriting it there produces a value the host rejects,
+                // and since the URL is signed the request comes back 403. Verified against
+                // live responses that IOS and ANDROID_VR stream URLs are served correctly
+                // exactly as issued, with no transform applied.
                 val hasNParam = streamUrl.contains(Regex("[?&]n="))
-                val needsNTransform = hasNParam || currentClient.useWebPoTokens ||
+                val needsNTransform = currentClient.useWebPoTokens ||
                     currentClient.clientName in listOf("WEB", "WEB_REMIX", "WEB_CREATOR", "TVHTML5", "TVHTML5_SIMPLY_EMBEDDED_PLAYER") ||
                     isPrivatelyOwnedTrack
 
@@ -380,12 +389,14 @@ object YTPlayerUtils {
                     "isPrivatelyOwnedTrack=$isPrivatelyOwnedTrack")
 
                 if (needsNTransform) {
+                    nTransformApplied = true
                     try {
                         Timber.tag(TAG).d("Applying n-transform to stream URL...")
                         Timber.tag(TAG).d("  Original URL length: ${streamUrl.length}")
                         Timber.tag(TAG).d("  Original URL preview: ${streamUrl.take(100)}...")
 
                         val originalUrl = streamUrl
+                        urlBeforeNTransform = originalUrl
                         // Use CipherDeobfuscator for n-transform
                         streamUrl = CipherDeobfuscator.transformNParamInUrl(streamUrl)
                         if (hasNParam && streamUrl == originalUrl) {
@@ -447,9 +458,24 @@ object YTPlayerUtils {
                     // Log for release builds
                     Timber.tag(TAG).i("Playback: client=${currentClient.clientName}, videoId=$videoId")
                     break
-                } else {
-                    Timber.tag(logTag).d("Stream validation failed for client: ${currentClient.clientName}")
                 }
+
+                // The descrambled n parameter was rejected but the url as issued may well be
+                // served. That is what happens when the host rotates the player script the
+                // descrambler was built against, and it would otherwise burn every client in
+                // the chain and end up returning a url that cannot play.
+                val asIssued = urlBeforeNTransform
+                if (asIssued != null && asIssued != streamUrl && validateStatus(asIssued)) {
+                    Timber.tag(TAG).w("n transform rejected for ${currentClient.clientName}, using the url as issued")
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "resolve",
+                        "$videoId n transform rejected by host, using the url as issued",
+                    )
+                    streamUrl = asIssued
+                    nTransformApplied = false
+                    break
+                }
+                Timber.tag(logTag).d("Stream validation failed for client: ${currentClient.clientName}")
             } else {
                 Timber.tag(logTag).d("Player response status not OK: ${streamPlayerResponse?.playabilityStatus?.status}, reason: ${streamPlayerResponse?.playabilityStatus?.reason}")
             }
@@ -495,7 +521,8 @@ object YTPlayerUtils {
         com.music.spotui.data.diagnostics.PlaybackLog.add(
             "resolve",
             "$videoId ok via ${usedClientName ?: "unknown"}, itag=${format.itag} " +
-                "${format.mimeType?.substringBefore(';')} expires in ${streamExpiresInSeconds}s",
+                "${format.mimeType?.substringBefore(';')} expires in ${streamExpiresInSeconds}s, " +
+                "nTransform=${if (nTransformApplied) "applied" else "not needed"}",
         )
         if (isUploadedTrack) {
             println("[PLAYBACK_DEBUG] SUCCESS: Got playback data for uploaded track - format=${format.mimeType}, streamUrl=${streamUrl.take(100)}...")

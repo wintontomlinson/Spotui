@@ -5,6 +5,48 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.2
+
+### 🛠 Playback Fixes
+
+Every one of the app's stream clients was tested live, with the app's own versions and user agents,
+against the same track:
+
+```
+WEB_REMIX (main, PoToken)  UNPLAYABLE       0 audio
+IOS                        OK               5 audio   stream 206 OK
+IPADOS                     OK               5 audio   stream 206 OK
+MOBILE / ANDROID           OK               0 audio
+TVHTML5_SIMPLY_EMBEDDED    ERROR            0 audio
+TVHTML5                    UNPLAYABLE       0 audio
+ANDROID_VR 1.43.32         OK               4 audio   stream 206 OK
+ANDROID_VR 1.61.48         OK               4 audio   stream 206 OK
+ANDROID_CREATOR            LOGIN_REQUIRED   0 audio
+WEB                        UNPLAYABLE       0 audio
+```
+
+Four clients work, and their URLs are served correctly **exactly as issued**. The app was not using
+them as issued.
+
+* **The n parameter is no longer descrambled on URLs that do not need it.** That descrambling only
+  applies to the web family of clients, but the condition also fired on the mere presence of an `n`
+  parameter, and every stream URL has one. So IOS, ANDROID and ANDROID_VR URLs were being rewritten
+  too. Their `n` is already usable, the URL is signed, and a rewritten value comes back 403. Since
+  validation then failed for every client in turn, the chain ran to its last entry, where validation
+  is deliberately skipped, and returned a URL that could not play. That is why tracks were skipped
+  with nothing but a 403 to show for it.
+* **A rejected descramble falls back to the URL as issued.** When the host rotates the player script
+  the descrambler was built against, the descrambled value stops being accepted. Rather than burning
+  the whole client chain, the URL as issued is validated and used.
+* **The playback log reports the transform**, so `nTransform=applied` or `not needed` now appears on
+  every resolve line.
+
+Endpoint, origin headers and visitor data were tested as possible causes and ruled out: IOS and
+ANDROID_VR both return playable responses from `www.youtube.com` and `music.youtube.com`, with and
+without visitor data.
+
+---
+
 ## 🚀 Release v1.7.1
 
 ### 🛠 Playback Fixes
