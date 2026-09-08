@@ -1774,6 +1774,7 @@ fun ArtistsSheet(
                     artistImages[name] = cachedUrl
                     if (!cachedId.isNullOrBlank()) resolvedIds[name] = cachedId
                 } else {
+                    var found = false
                     if (com.music.spotui.data.api.SpotifyTokenProvider.ensureToken(context)) {
                         com.metrolist.spotify.Spotify.search(name, types = listOf("artist"), limit = 1).getOrNull()
                             ?.artists?.items?.firstOrNull()?.let { artist ->
@@ -1783,7 +1784,36 @@ fun ArtistsSheet(
                                 artistImageCache[artist.id] = url
                                 artistImages[name] = url
                                 resolvedIds[name] = artist.id
+                                found = url.isNotBlank()
                             }
+                    }
+                    // Login free fallback: with no Spotify token the lookup above never
+                    // runs, so ask YouTube. A song search for the artist name returns an
+                    // ArtistItem carrying a channel avatar; use its thumbnail so the sheet
+                    // shows a real photo instead of the grey placeholder.
+                    if (!found) {
+                        runCatching {
+                            com.metrolist.innertube.YouTube.search(
+                                name,
+                                com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG,
+                            ).getOrNull()
+                        }.getOrNull()?.let { result ->
+                            val artistThumb = result.items
+                                .filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                                .firstOrNull { !it.thumbnail.isNullOrBlank() }
+                                ?.thumbnail
+                            val songThumb = result.items
+                                .filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                                .firstOrNull()
+                                ?.thumbnail
+                            val url = com.music.spotui.ui.viewmodel.hiResThumbnail(
+                                artistThumb ?: songThumb
+                            )
+                            if (url.isNotBlank()) {
+                                artistImageCache[name] = url
+                                artistImages[name] = url
+                            }
+                        }
                     }
                 }
             }

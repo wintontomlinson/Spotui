@@ -172,13 +172,9 @@ fun LibraryFilterChips(
             )
         }
 
-        item {
-            LibraryChipItem(
-                label = "Artists",
-                isSelected = selectedFilter == LibraryFilterType.ARTISTS,
-                onClick = { onFilterSelected(LibraryFilterType.ARTISTS) }
-            )
-        }
+        // The Artists filter is dropped: it hides every library entry and only shows
+        // followed artists, which do not exist on this login free build, so it always
+        // produced an empty screen.
 
         item {
             LibraryChipItem(
@@ -513,10 +509,18 @@ fun LibraryScreen(navController: NavController) {
                 val rawEntries = (entries as Response.Success).data
                 val filteredEntries = remember(rawEntries, selectedFilter, isDownloadedOnly, searchQuery, currentSort, isDescending, context) {
                     val filtered = rawEntries.filter { entry ->
+                        // Liked Songs and Downloads already have their own tiles in the
+                        // Quick access grid at the top, so drop the pinned pseudo-entries
+                        // from the list below to stop them appearing twice.
+                        if (entry.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
+                            entry.spotifyId == Api.HomeCache.DOWNLOADS_ID
+                        ) {
+                            return@filter false
+                        }
                         val matchesCategory = when (selectedFilter) {
                             LibraryFilterType.ALL -> true
                             LibraryFilterType.PLAYLISTS -> entry.isPlaylist
-                            LibraryFilterType.ALBUMS -> !entry.isPlaylist && entry.spotifyId != Api.HomeCache.LIKED_SONGS_ID && entry.spotifyId != Api.HomeCache.DOWNLOADS_ID
+                            LibraryFilterType.ALBUMS -> !entry.isPlaylist
                             LibraryFilterType.ARTISTS -> false
                         }
                         val matchesDownload = if (isDownloadedOnly) isLibraryEntryDownloaded(context, entry) else true
@@ -540,7 +544,9 @@ fun LibraryScreen(navController: NavController) {
                         }
                     }
                 }
-                val showHistoryTile = selectedFilter == LibraryFilterType.ALL && !isDownloadedOnly && searchQuery.isBlank()
+                // Recently played already has a Quick access tile, so the separate history
+                // tile in the list/grid is a duplicate. Turned off.
+                val showHistoryTile = false
 
                 if (gridView) {
                     LibraryGridScreen(

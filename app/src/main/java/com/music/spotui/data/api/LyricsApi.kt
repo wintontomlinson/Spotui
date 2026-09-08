@@ -154,15 +154,21 @@ object LyricsApi {
         // 2) LRCLIB fallback: exact get + fuzzy search fired CONCURRENTLY, then a
         //    title-only search. Serial fallbacks used to stack 3 × 5s timeouts.
         val result = fromSpotify(key) ?: kotlinx.coroutines.coroutineScope {
-            val exact = async(kotlinx.coroutines.Dispatchers.IO) {
-                getExact(cleaned, primaryArtist, album, durationSec)
-            }
+            // getExact needs an artist to match on, so it only helps when we have one.
+            val exact = if (primaryArtist.isNotBlank()) {
+                async(kotlinx.coroutines.Dispatchers.IO) {
+                    getExact(cleaned, primaryArtist, album, durationSec)
+                }
+            } else null
             val fuzzy = async(kotlinx.coroutines.Dispatchers.IO) {
                 search(cleaned, primaryArtist, durationSec)
             }
-            exact.await()
+            exact?.await()
                 ?: fuzzy.await()
                 ?: searchTitleOnly(cleaned, primaryArtist, durationSec)
+                // Many YouTube tracks resolve with a blank or noisy artist, so also try a
+                // title only search on the untouched title before giving up on LRCLIB.
+                ?: (if (title.trim() != cleaned) searchTitleOnly(title.trim(), primaryArtist, durationSec) else null)
                 // LRCLIB coverage is thin outside western pop, so fall back to KuGou,
                 // which carries a lot of Hindi, Punjabi and other regional catalogues.
                 ?: fromKuGou(cleaned, primaryArtist, durationSec)
