@@ -96,7 +96,10 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
         skipValidation: Boolean = false,
-    ): Result<PlaybackData> = runCatching {
+    ): Result<PlaybackData> {
+        // Declared out here so the failure branch can say which client was in play.
+        var usedClientName: String? = null
+        return runCatching {
         Timber.tag(TAG).d("=== PLAYER RESPONSE FOR PLAYBACK ===")
         Timber.tag(TAG).d("videoId: $videoId")
         Timber.tag(TAG).d("playlistId: $playlistId")
@@ -160,6 +163,12 @@ object YTPlayerUtils {
         if (skipMainClient) {
             Timber.tag(TAG).w("PoToken unavailable, skipping MAIN_CLIENT and using fallback chain directly")
         }
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "resolve",
+            "$videoId poToken=${if (poToken != null) "yes" else "no"} " +
+                "sigTimestamp=${signatureTimestamp.timestamp != null} " +
+                "mainClient=${if (skipMainClient) "skipped" else MAIN_CLIENT.clientName}",
+        )
 
         var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else {
             Timber.tag(logTag).d("Attempting to get player response using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
@@ -343,6 +352,7 @@ object YTPlayerUtils {
                 } else {
                     STREAM_FALLBACK_CLIENTS[clientIndex]
                 }
+                usedClientName = currentClient.clientName
 
                 // Check if this is a privately owned track
                 val isPrivatelyOwnedTrack = streamPlayerResponse.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
@@ -482,6 +492,11 @@ object YTPlayerUtils {
         }
 
         Timber.tag(logTag).d("Successfully obtained playback data with format: ${format.mimeType}, bitrate: ${format.bitrate}")
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "resolve",
+            "$videoId ok via ${usedClientName ?: "unknown"}, itag=${format.itag} " +
+                "${format.mimeType?.substringBefore(';')} expires in ${streamExpiresInSeconds}s",
+        )
         if (isUploadedTrack) {
             println("[PLAYBACK_DEBUG] SUCCESS: Got playback data for uploaded track - format=${format.mimeType}, streamUrl=${streamUrl.take(100)}...")
         }
@@ -495,7 +510,13 @@ object YTPlayerUtils {
         )
     }.onFailure { e ->
         println("[PLAYBACK_DEBUG] EXCEPTION during playback for videoId=$videoId: ${e::class.simpleName}: ${e.message}")
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "resolve",
+            "$videoId FAILED after ${usedClientName ?: "no client"}: " +
+                "${e::class.simpleName}: ${e.message}",
+        )
         e.printStackTrace()
+        }
     }
     /**
      * Simple player response intended to use for metadata only.

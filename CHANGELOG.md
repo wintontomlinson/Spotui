@@ -5,6 +5,22 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.6.6
+
+### 🔍 Playback Diagnostics
+
+The playback log covered what happened once a stream was open, but said nothing about how the stream
+was obtained. That is the missing half: a stream refused on playback means something entirely
+different depending on which client minted it and whether a PoToken was available.
+
+* **Resolution is logged.** Each attempt records whether a PoToken and signature timestamp were
+  obtained and whether the main client was skipped, then either the client that produced the stream
+  with its format and expiry, or the failure and how far the client chain got.
+
+No playback behaviour changed in this release.
+
+---
+
 ## 🚀 Release v1.6.5
 
 ### 🛠 Playback Fixes
