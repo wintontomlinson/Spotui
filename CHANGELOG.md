@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.1
+
+### 🛠 Library Shows Everything Again
+
+An earlier change to remove duplicates dropped the Liked Songs and Downloads rows from the library
+list. Combined with this being a login-free build (no synced albums or playlists), that could leave
+the list looking empty.
+
+* **The list shows everything again**, including the pinned Liked Songs and Downloads, exactly like
+  before. They also have quick access tiles at the top, the same way Spotify pins Liked Songs in both
+  places.
+* The invite to create a collection now appears only when there is genuinely nothing beyond those
+  pinned rows.
+
+Note: saved albums and playlists come from a Spotify account sync, which a login-free build does not
+have. They show up once added as offline collections or created locally.
+
+---
+
 ## 🚀 Release v1.9.0
 
 ### 🛠 Library No Longer Looks Empty
