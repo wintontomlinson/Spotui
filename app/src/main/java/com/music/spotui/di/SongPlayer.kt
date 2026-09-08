@@ -379,20 +379,9 @@ object SongPlayer {
         runCatching {
             val cache = mediaCache(context)
             val spotifyId = trackIdRegistry[song] ?: spotifyTrackIdForPlayback(song)
-            val videoId = videoIdFromYouTubeLink(song)
-            // A track has one cache entry per audio format, and which format was cached
-            // depends on the network at the time, so drop every entry belonging to the
-            // track instead of guessing one key. This used to build the key from the
-            // request rather than the stream URL, so it silently cleared nothing.
-            val prefixes = buildList {
-                spotifyId?.takeIf { it.isNotBlank() }?.let { add("spotui-track:$it:") }
-                videoId?.takeIf { it.isNotBlank() }?.let { add("spotui-yt:$it:") }
-            }
-            if (prefixes.isEmpty()) return@runCatching
-            cache.keys
-                .filter { key -> prefixes.any { key.startsWith(it) } }
-                .forEach { cache.removeResource(it) }
-        }.onFailure { Log.w(TAG, "could not clear cached media for $song", it) }
+            val key = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, song)
+            cache.removeResource(key)
+        }
     }
 
     fun invalidateResolvedStream(song: String) {
@@ -626,11 +615,7 @@ object SongPlayer {
         val metadata = metadataBuilder.build()
         val query = songQuery.ifBlank { currentRequest }
         val spotifyId = trackIdRegistry[query] ?: spotifyTrackIdForPlayback(query)
-        // The video id comes from the request, not the stream URL, because the URL only
-        // carries a per request token that would give a new cache key every time.
-        val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(
-            spotifyId, streamUrl, videoIdFromYouTubeLink(query),
-        )
+        val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, streamUrl)
 
         return MediaItem.Builder()
             .apply { currentMediaId?.let { setMediaId(it) } }
@@ -660,23 +645,19 @@ object SongPlayer {
         }
     }
 
-    /**
-     * Resolve an upcoming track's stream URL ahead of time, so tapping it starts without
-     * waiting on the resolution chain.
-     *
-     * Only the URL is resolved. Downloading the opening bytes into the media cache used to
-     * happen here too, and it was the reason songs stopped partway through. A playback log
-     * showed the preload fetching exactly 1048576 bytes, and then every request for the
-     * bytes after that point being refused with 403. These hosts serve one request per
-     * stream URL, so the preload spent the track's only request and playback was left with
-     * a minute of cached audio it could never continue. About a minute is half of a short
-     * song, which is exactly what it looked like.
-     */
+    /** Warm the cache for an upcoming track (e.g. the next/previous queue item). */
     fun prefetch(song: String, context: Context) {
         if (song.isBlank() || streamCache.containsKey(song)) return
         val appContext = context.applicationContext
         // No point resolving streams while Spotify web is the active engine.
         if (webPlaybackActive()) return
+        // Only the stream URL is resolved ahead of time, which is what hides the tap
+        // latency. Downloading the opening bytes into the cache used to happen here too and
+        // is deliberately gone: a playback log showed that preload fetching exactly 1048576
+        // bytes, and then every request for the bytes after that point refused with 403.
+        // These hosts serve one request per stream URL, so the preload spent the track's
+        // only request and playback was left with about a minute of audio it could never
+        // continue past.
         scope.launch {
             acquireWakeLock(appContext, "spotui:prefetch", 30_000L)
             try {
@@ -701,11 +682,11 @@ object SongPlayer {
     }
 
     // ── Media cache ──
-    // Playback reads through this cache, so audio already fetched is not fetched again.
-    // Nothing pre-downloads into it any more: pre-caching the opening bytes of upcoming
-    // tracks spent the one request these hosts allow per stream URL, which left playback
-    // with cached audio it could never continue past. Resolving the URL ahead of time,
-    // which is what actually hid the tap latency, still happens in prefetch.
+    // Playback reads through this cache, so audio already fetched is not fetched twice.
+    // Nothing pre-downloads into it. Pre-caching the opening megabyte of upcoming tracks
+    // used to live here, and it was spending the one request these hosts allow per stream
+    // URL, which left playback with audio it could never continue past. Resolving the URL
+    // ahead of time, which is what actually hid the tap latency, still happens in prefetch.
 
     @Volatile private var mediaCache: androidx.media3.datasource.cache.SimpleCache? = null
 
@@ -721,20 +702,20 @@ object SongPlayer {
     /**
      * Directory backing the media cache.
      *
-     * The name is versioned so entries older builds left behind are abandoned rather than
-     * reused. Two kinds of bad entry are in there: a truncated stream recorded as the real
-     * content length of a track, and the one megabyte fragments the intro preload wrote,
-     * which playback could never continue past.
+     * Versioned so nothing written by an earlier build is read back. Two kinds of bad entry
+     * are out there: a stream that stopped early recorded as the real length of a track, and
+     * the one megabyte fragments the old intro preload wrote, which playback could never
+     * continue past. Both make a song end at the same wrong point on every play.
      */
     private fun mediaCacheDir(context: Context): java.io.File {
-        listOf("media", "media-v2").forEach { name ->
-            val legacy = java.io.File(context.cacheDir, name)
-            if (legacy.exists()) {
-                runCatching { legacy.deleteRecursively() }
-                    .onFailure { Log.w(TAG, "could not drop legacy media cache $name", it) }
+        listOf("media", "media-v2", "media-v3").forEach { name ->
+            val stale = java.io.File(context.cacheDir, name)
+            if (stale.exists()) {
+                runCatching { stale.deleteRecursively() }
+                    .onFailure { Log.w(TAG, "could not drop stale media cache $name", it) }
             }
         }
-        return java.io.File(context.cacheDir, "media-v3")
+        return java.io.File(context.cacheDir, "media-v4")
     }
 
     private fun cacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
@@ -743,14 +724,7 @@ object SongPlayer {
                 "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)",
             )
             .setAllowCrossProtocolRedirects(true)
-        // Sits below the cache so a stream that stops short never reaches CacheDataSource as
-        // a clean end of input, which it would store as the length of the track. It also
-        // asks these hosts for byte offsets the way they accept, since they answer a Range
-        // header with 403 on anything but the first request for a URL, which broke seeking
-        // and reconnecting.
-        val upstream = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
-            androidx.media3.datasource.DefaultDataSource.Factory(context, http),
-        )
+        val upstream = androidx.media3.datasource.DefaultDataSource.Factory(context, http)
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(mediaCache(context))
             .setUpstreamDataSourceFactory(upstream)
@@ -776,13 +750,7 @@ object SongPlayer {
                 .build()
         }
 
-        // Chunking belongs on the network side, which the factory below the cache already
-        // does. Here the wrapper is only a safety net for errors raised by the cache layer
-        // itself, so it reconnects but does not page.
-        val resilientFactory = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(
-            upstreamFactory = resolvingFactory,
-            chunkBytes = 0L,
-        )
+        val resilientFactory = com.music.spotui.audio.ResilientPlaybackDataSourceFactory(resolvingFactory)
 
         return com.music.spotui.audio.LiveFlacBitrateDataSourceFactory(
             upstreamFactory = resilientFactory,
@@ -805,21 +773,6 @@ object SongPlayer {
             }
         )
     }
-
-    /**
-     * Drops every cached byte and all metadata held under [cacheKey].
-     *
-     * Used when a track ended before its real length. Whatever the cache holds for that
-     * track can no longer be trusted, in particular a recorded content length taken from
-     * a cut short response, which would otherwise end the song at the same early point on
-     * every later play.
-     */
-    fun forgetCachedMedia(cacheKey: String, context: Context) {
-        if (cacheKey.isBlank()) return
-        runCatching { mediaCache(context).removeResource(cacheKey) }
-            .onFailure { Log.w(TAG, "could not clear cached media for $cacheKey", it) }
-    }
-
 
     private val inFlightResolutions = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.Deferred<String?>>()
 
@@ -2292,9 +2245,7 @@ object SongPlayer {
                         metadataBuilder, ctx, nextSong.coverUri, "song/${nextSong.id}", nextUrl
                     )
                     val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(
-                        nextSong.spotifyTrackId.ifBlank { null },
-                        nextUrl,
-                        videoIdFromYouTubeLink(nextSong.url),
+                        nextSong.spotifyTrackId.ifBlank { null }, nextUrl
                     )
                     val item = MediaItem.Builder()
                         .setMediaId("song/${nextSong.id}")

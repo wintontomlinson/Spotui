@@ -77,45 +77,9 @@ class PlaybackService : MediaLibraryService() {
     private var webPlayer: WebMediaPlayer? = null
     private var showingWeb = false
 
-    // State for the truncated stream recovery: the track it applies to, how many attempts
-    // it has taken, and how far into the song the last attempt reached. A track that
-    // refuses to get any further is allowed to give up rather than loop.
+    // Guards the truncated stream recovery so a track that genuinely refuses to play
+    // through cannot bounce between recovery attempts forever.
     private var truncationRecoveryFor: String? = null
-    private var truncationRecoveryAttempts = 0
-    private var truncationRecoveryMark = 0L
-
-    // Tracks that failed back to back without anything playing in between. Reset as soon as
-    // audio actually starts.
-    private var consecutiveFailures = 0
-
-    /** Forgets recovery state, so the next track starts with a full budget. */
-    private fun resetTruncationRecovery() {
-        truncationRecoveryFor = null
-        truncationRecoveryAttempts = 0
-        truncationRecoveryMark = 0L
-    }
-
-    /**
-     * How long the current track really is.
-     *
-     * Normally the player knows best, but when only part of a stream was ever available
-     * the player reports that short piece as the whole song. The catalogue duration that
-     * came with the search result catches exactly that case, so it is preferred only when
-     * the player's own figure is clearly too small.
-     */
-    private fun trackDurationMs(playerDuration: Long): Long {
-        val queue = currentSongState.queue.value
-        val songId = currentSongState.songId.value
-        val songUrl = currentSongState.songUrl.value
-        val known = (
-            queue.firstOrNull { it.id == songId }
-                ?: queue.firstOrNull { it.url == songUrl }
-            )?.durationMs?.toLong() ?: 0L
-
-        if (known <= 0L) return playerDuration
-        if (playerDuration <= 0L) return known
-        return if (playerDuration < known * 9 / 10) known else playerDuration
-    }
 
     /**
      * Handles the case where playback reports it ended but the position is well short
@@ -126,48 +90,22 @@ class PlaybackService : MediaLibraryService() {
      */
     private fun recoverFromTruncatedStream(): Boolean {
         val player = SongPlayer.exoPlayer ?: return false
+        val duration = player.duration
         val position = player.currentPosition
-        if (position <= 0L) return false
-        val duration = trackDurationMs(player.duration)
-        if (duration <= 0L) return false
-        // A track can end a beat before its nominal length, so only a real gap counts.
-        if (duration - position <= END_OF_TRACK_TOLERANCE_MS) return false
+        // Only meaningful with a known duration, and only when a real chunk is missing.
+        if (duration <= 0L || position <= 0L) return false
+        if (position >= (duration * 9) / 10) return false
 
         val songUrl = currentSongState.songUrl.value
         if (songUrl.isBlank()) return false
-
-        if (truncationRecoveryFor != songUrl) {
-            truncationRecoveryFor = songUrl
-            truncationRecoveryAttempts = 0
-            truncationRecoveryMark = 0L
-        }
-        // Later attempts have to reach further into the song than the last one, otherwise
-        // the track is not going to play through and the queue should move on. The first
-        // couple are always allowed, because a fresh stream sometimes has to fail once
-        // before playback settles on a request pattern the host will serve.
-        if (truncationRecoveryAttempts >= ATTEMPTS_BEFORE_PROGRESS_REQUIRED &&
-            position < truncationRecoveryMark + MIN_RECOVERY_PROGRESS_MS
-        ) {
-            return false
-        }
-        if (truncationRecoveryAttempts >= MAX_RECOVERY_ATTEMPTS) return false
-        truncationRecoveryAttempts++
-        truncationRecoveryMark = position
+        // One attempt per track, cleared whenever a different track starts.
+        if (truncationRecoveryFor == songUrl) return false
+        truncationRecoveryFor = songUrl
 
         android.util.Log.w(
             "PlaybackService",
-            "Stream ended early at ${position}ms of ${duration}ms, " +
-                "re-resolving and resuming (attempt $truncationRecoveryAttempts)",
+            "Stream ended early at ${position}ms of ${duration}ms, re-resolving and resuming",
         )
-        com.music.spotui.data.diagnostics.PlaybackLog.add(
-            "recover",
-            "attempt $truncationRecoveryAttempts, resuming at ${position / 1000}s of ${duration / 1000}s",
-        )
-        // Anything cached for this track came from the same cut short response, including
-        // a possibly wrong content length, so start from a clean slate.
-        player.currentMediaItem?.localConfiguration?.customCacheKey?.let { cacheKey ->
-            SongPlayer.forgetCachedMedia(cacheKey, applicationContext)
-        }
         com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
         SongPlayer.invalidateResolvedStream(songUrl)
         SongPlayer.setRestorePoint(songUrl, position)
@@ -180,20 +118,17 @@ class PlaybackService : MediaLibraryService() {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
                 SongPlayer.releaseWakeLock()
-                // Audio is flowing, so the run of failures is over.
-                consecutiveFailures = 0
-                // A different track is playing, so give it its own recovery budget.
+                // A different track is playing, so allow it its own recovery attempt.
                 val playing = currentSongState.songUrl.value
                 if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
-                    resetTruncationRecovery()
+                    truncationRecoveryFor = null
                 }
             }
             if (playbackState == Player.STATE_ENDED) {
                 SongPlayer.exoPlayer?.let { p ->
                     com.music.spotui.data.diagnostics.PlaybackLog.add(
                         "ended",
-                        "at ${p.currentPosition / 1000}s, player says ${p.duration / 1000}s, " +
-                            "catalogue says ${trackDurationMs(0L) / 1000}s, " +
+                        "at ${p.currentPosition / 1000}s of ${p.duration / 1000}s, " +
                             "crossfading=${SongPlayer.isCrossfadeActive()}",
                     )
                 }
@@ -277,35 +212,6 @@ class PlaybackService : MediaLibraryService() {
                 "at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s, " +
                     "${error.errorCodeName}: ${error.message}",
             )
-            // A dropped connection surfaces here in the middle of a song. Skipping to the
-            // next track throws away the rest of the song the user asked for, so try to
-            // resume the same track from where the audio stopped first, and only move on
-            // when the track genuinely cannot play.
-            if (recoverFromTruncatedStream()) return
-
-            // When failures come one after another nothing is going to play, and racing
-            // through the rest of the queue only means more refused requests, which makes
-            // it worse. Stop and say so instead of skipping silently through everything.
-            consecutiveFailures++
-            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-                com.music.spotui.data.diagnostics.PlaybackLog.add(
-                    "queue",
-                    "stopped after $consecutiveFailures tracks failed in a row",
-                )
-                SongPlayer.pause()
-                currentSongState.updateResolveError(
-                    "Streams are being refused right now. Wait a minute and try again.",
-                )
-                serviceScope.launch {
-                    android.widget.Toast.makeText(
-                        applicationContext,
-                        "Streams are being refused right now. Wait a minute and try again.",
-                        android.widget.Toast.LENGTH_LONG,
-                    ).show()
-                }
-                return
-            }
-
             SongPlayer.acquireWakeLock(applicationContext, "spotui:error_advance", 60_000L)
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
@@ -584,21 +490,6 @@ class PlaybackService : MediaLibraryService() {
         const val NODE_DOWNLOADS = "downloads"
         const val NODE_PLAYLISTS = "playlists"
         const val NODE_ALBUMS = "albums"
-
-        /** Gap between position and track length that still counts as the end of a song. */
-        const val END_OF_TRACK_TOLERANCE_MS = 4_000L
-
-        /** How much further a recovery attempt has to reach to be worth another try. */
-        const val MIN_RECOVERY_PROGRESS_MS = 5_000L
-
-        /** Attempts allowed before progress becomes a requirement. */
-        const val ATTEMPTS_BEFORE_PROGRESS_REQUIRED = 2
-
-        /** Back to back failures tolerated before playback stops and says something. */
-        const val MAX_CONSECUTIVE_FAILURES = 3
-
-        /** Upper bound on recovery attempts for a single track. */
-        const val MAX_RECOVERY_ATTEMPTS = 6
     }
 
     /**

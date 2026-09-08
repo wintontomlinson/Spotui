@@ -5,6 +5,33 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.0
+
+### 🔄 Playback Reset
+
+Playback is back to the code it had before this run of fixes started. Chasing songs that stopped
+halfway produced two changes that each made things worse: reading a track in bounded chunks (1.6.0),
+which these hosts answer with 403 on the follow up requests, and putting byte offsets in the URL's
+query string (1.6.3), which returns something a media extractor cannot parse. Both are gone, along
+with the retry and circuit breaker logic layered on top of them. `ResilientPlaybackDataSource` is
+byte for byte what it was before.
+
+Exactly three deliberate changes remain on top of that baseline, and none of them can stop a track
+from playing:
+
+* **No intro preload.** It downloaded the opening megabyte of upcoming tracks using the freshly
+  resolved stream URL. The playback log showed that as `opened 1048576 bytes from position 0` over and
+  over, with every failure landing on the first request for the bytes after that point. These hosts
+  serve one request per stream URL, so the preload spent the track's only request. Resolving the URL
+  ahead of time, which is what actually hid the tap latency, still happens.
+* **A fresh media cache directory.** Earlier builds wrote entries that cannot be played: a stream that
+  stopped early recorded as the real length of a track, and one megabyte fragments from the preload.
+  Anything written by an older build is dropped rather than read back.
+* **Diagnostics only.** Track start, end of track, player errors, queue moves and stream resolution
+  are recorded for the playback log in Settings. Reads and writes nothing else.
+
+---
+
 ## 🚀 Release v1.6.6
 
 ### 🔍 Playback Diagnostics
