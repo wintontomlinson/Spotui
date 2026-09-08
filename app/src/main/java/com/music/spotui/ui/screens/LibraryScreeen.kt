@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -194,16 +196,20 @@ private fun LibraryChipItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) Color(0xFFF5A524) else Color(0xFF2A2A2A)
-    val textColor = if (isSelected) Color.Black else Color.White
+    val backgroundColor = if (isSelected) Color(0xFFF5A524) else Color(0xFF1C1C21)
+    val textColor = if (isSelected) Color(0xFF1A1206) else Color.White
 
     Box(
         modifier = Modifier
-            .height(32.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(34.dp)
+            .clip(RoundedCornerShape(17.dp))
             .background(backgroundColor)
+            .then(
+                if (isSelected) Modifier
+                else Modifier.border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(17.dp))
+            )
             .clickable { onClick() }
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 15.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -1112,33 +1118,36 @@ private fun LibraryQuickAccess(navController: NavController) {
         val route: String,
     )
 
+    // One cohesive palette instead of the old blue/teal/purple mix. Liked songs leads in
+    // the amber accent; the rest are graded dark surfaces with an amber tinted icon, so
+    // the grid reads as one premium set rather than four unrelated colours.
     val tiles = listOf(
         Tile(
             "Liked songs", "Your favourites",
             Icons.Default.Favorite,
-            // Deeper amber so the white icon and label stay readable on the card.
-            Color(0xFFC87F0A), Color(0xFF6B4304),
+            Color(0xFFF5A524), Color(0xFFC87F0A),
             Routes.Liked.route,
         ),
         Tile(
             "Recently played", "Plays and stats",
             Icons.Default.DateRange,
-            Color(0xFF3D5AFE), Color(0xFF1A237E),
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.History.route,
         ),
         Tile(
             "Downloads", "Saved offline",
             Icons.Default.Add,
-            Color(0xFF00BFA5), Color(0xFF00695C),
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.Downloads.route,
         ),
         Tile(
             "Local files", "Music on this device",
             Icons.Default.PhoneAndroid,
-            Color(0xFF8E24AA), Color(0xFF4A148C),
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.LocalFiles.route,
         ),
     )
+    val accent = com.music.spotui.ui.theme.Accent
 
     Column(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -1147,31 +1156,43 @@ private fun LibraryQuickAccess(navController: NavController) {
         tiles.chunked(2).forEach { pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 pair.forEach { tile ->
+                    // The Liked tile is the amber one, so its content is dark for contrast;
+                    // the dark tiles use an amber icon and white text.
+                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF1A1206) else Color.White
+                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF1A1206) else accent
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(16.dp),
+                                clip = false,
+                                ambientColor = Color.Black,
+                                spotColor = Color.Black,
+                            )
+                            .clip(RoundedCornerShape(16.dp))
                             .background(
                                 androidx.compose.ui.graphics.Brush.linearGradient(
                                     listOf(tile.start, tile.end)
                                 )
                             )
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                             ) { navController.navigate(tile.route) }
-                            .padding(14.dp),
+                            .padding(16.dp),
                     ) {
                         Icon(
                             tile.icon,
                             contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp),
+                            tint = iconTint,
+                            modifier = Modifier.size(24.dp),
                         )
                         Spacer(Modifier.height(18.dp))
                         Text(
                             text = tile.label,
-                            color = Color.White,
+                            color = onTile,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -1179,7 +1200,7 @@ private fun LibraryQuickAccess(navController: NavController) {
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = tile.caption,
-                            color = Color.White.copy(alpha = 0.75f),
+                            color = onTile.copy(alpha = 0.72f),
                             fontSize = 11.sp,
                             maxLines = 1,
                         )

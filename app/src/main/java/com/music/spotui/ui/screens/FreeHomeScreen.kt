@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -62,8 +64,9 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
 private val OnAccent = com.music.spotui.ui.theme.OnAccent
-private val Surface = Color(0xFF17171C)
-private val SurfaceHigh = Color(0xFF20202A)
+private val Surface = Color(0xFF1C1C21)
+private val SurfaceHigh = Color(0xFF26262E)
+private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 
 /**
@@ -177,15 +180,16 @@ private fun HomeHeader(onSearch: () -> Unit) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(42.dp)
+                .size(44.dp)
                 .clip(CircleShape)
                 .background(SurfaceHigh)
+                .border(1.dp, Hairline, CircleShape)
                 .clickable(onClick = onSearch),
         ) {
             Icon(
                 Icons.Default.Search,
                 contentDescription = "Search",
-                tint = Color.White,
+                tint = Accent,
                 modifier = Modifier.size(21.dp),
             )
         }
@@ -202,8 +206,14 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Surface),
+            .clip(RoundedCornerShape(18.dp))
+            // A soft top down gradient inside the card plus a hairline edge gives the
+            // quick picks block real depth instead of a flat panel.
+            .background(
+                Brush.verticalGradient(colors = listOf(SurfaceHigh, Surface)),
+            )
+            .border(1.dp, Hairline, RoundedCornerShape(18.dp))
+            .padding(vertical = 4.dp),
     ) {
         tracks.forEachIndexed { index, song ->
             Row(
@@ -218,8 +228,8 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
             ) {
                 GlideImage(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(6.dp)),
+                        .size(50.dp)
+                        .clip(RoundedCornerShape(9.dp)),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -251,15 +261,15 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(34.dp)
                         .clip(CircleShape)
-                        .background(SurfaceHigh),
+                        .background(Accent.copy(alpha = 0.16f)),
                 ) {
                     Icon(
                         Icons.Default.PlayArrow,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp),
+                        tint = Accent,
+                        modifier = Modifier.size(19.dp),
                     )
                 }
             }
@@ -396,7 +406,14 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(152.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .shadow(
+                    elevation = 10.dp,
+                    shape = RoundedCornerShape(12.dp),
+                    clip = false,
+                    ambientColor = Color.Black,
+                    spotColor = Color.Black,
+                )
+                .clip(RoundedCornerShape(12.dp))
                 .background(Surface),
         ) {
             GlideImage(

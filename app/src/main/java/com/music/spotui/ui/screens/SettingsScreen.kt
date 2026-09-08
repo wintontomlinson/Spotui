@@ -665,7 +665,8 @@ fun SettingsScreen(navController: NavController) {
 
 // Shared surfaces so every settings group reads as one consistent card system.
 private val SettingsAccent = com.music.spotui.ui.theme.Accent
-private val SettingsCard = Color(0xFF17171C)
+private val SettingsCard = Color(0xFF1C1C21)
+private val SettingsHairline = Color(0x14FFFFFF)
 private val SettingsTextDim = Color(0xFFB3B3B3)
 
 /**
@@ -694,10 +695,11 @@ private fun SettingsSwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(SettingsCard)
+            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
             .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 14.dp, vertical = 13.dp),
+            .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -730,8 +732,9 @@ private fun QualityPicker(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(SettingsCard)
+            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
             .padding(vertical = 12.dp),
     ) {
         Text(

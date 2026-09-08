@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,8 +69,9 @@ import com.music.spotui.ui.viewmodel.formatDurationMs
 
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
-private val Surface = Color(0xFF17171C)
-private val SurfaceHigh = Color(0xFF20202A)
+private val Surface = Color(0xFF1C1C21)
+private val SurfaceHigh = Color(0xFF26262E)
+private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 private val TextFaint = Color(0xFF7A7A85)
 
@@ -186,13 +188,14 @@ private fun SearchField(
             .padding(horizontal = 12.dp, vertical = 10.dp)
             .clip(RoundedCornerShape(26.dp))
             .background(Surface)
-            .height(50.dp)
+            .border(1.dp, Hairline, RoundedCornerShape(26.dp))
+            .height(52.dp)
             .padding(start = 16.dp, end = 6.dp),
     ) {
         Icon(
             Icons.Default.Search,
             contentDescription = null,
-            tint = TextDim,
+            tint = Accent,
             modifier = Modifier.size(22.dp),
         )
         BasicTextField(
@@ -332,6 +335,7 @@ private fun DiscoverPane(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50))
                                     .background(SurfaceHigh)
+                                    .border(1.dp, Hairline, RoundedCornerShape(50))
                                     .clickable { onPick(label) }
                                     .padding(horizontal = 16.dp, vertical = 9.dp),
                             )
