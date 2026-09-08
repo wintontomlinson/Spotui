@@ -5,6 +5,31 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.2
+
+### 🎨 Full Premium Redesign
+
+Redesigned from the shared design system, so the whole app moves together and cohesively, rather
+than one screen at a time.
+
+* **One deliberate dark + amber theme.** Dynamic colour is now off. On Android 12+ it was retinting
+  the whole app from the user's wallpaper, which overrode the amber accent and dark look and made the
+  app look different on every phone. The app now owns its palette: a single dark scheme built around
+  amber, with every Material control (buttons, switches, sliders, spinners) picking up the accent
+  instead of a stray purple. Surfaces use a real depth ramp, near black base, lighter cards, lighter
+  sheets, and titles get tighter, more intentional letter spacing.
+* **Mini player** is a lifted pill with a soft shadow, a gradient from the artwork's colour into a
+  darker shade, and a hairline edge, so it floats over the content.
+* **Bottom navigation** is a floating rounded bar on its own raised surface with a hairline edge and
+  a soft amber pill behind the active tab.
+* **Search bar and loaders** move onto the new palette: a softer rounded search field, and an amber
+  loading spinner in place of the old off brand purple.
+
+All playback, gestures and navigation wiring is untouched; these are visual changes carried by the
+shared theme and components.
+
+---
+
 ## 🚀 Release v1.8.1
 
 ### 🎚 Quality & 🎨 Player Redesign
