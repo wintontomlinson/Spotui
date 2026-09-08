@@ -45,7 +45,12 @@ data class BrowsePage(
 data class ArtistPage(
     val id: String,
     val name: String,
-    val thumbnail: String?,
+    /**
+     * The artist's wide header picture. It is a banner, roughly two and a half to one, so
+     * it must not be squared off into an avatar: doing that pads it into a square and
+     * leaves bars down the sides.
+     */
+    val banner: String?,
     val songs: List<SongItem>,
     val albums: List<AlbumItem>,
     val songsPlaylistId: String?,
@@ -67,8 +72,10 @@ object BrowseParser {
         val header = sections.firstNotNullOfOrNull { it.musicResponsiveHeaderRenderer }
 
         val title = header?.title?.runs?.joinToString("") { it.text }.orEmpty()
-        val thumbnail = header?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
-            ?: header?.thumbnail?.croppedSquareThumbnailRenderer?.getThumbnailUrl()
+        // Sized for a large cover on a phone, rather than whichever variant happens to be
+        // listed last.
+        val thumbnail = header?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl(720)
+            ?: header?.thumbnail?.croppedSquareThumbnailRenderer?.getThumbnailUrl(720)
 
         // An album puts its artist on the strapline; a playlist puts its author in the
         // subtitle, after the "Playlist" type label.
@@ -159,8 +166,11 @@ object BrowseParser {
         val header = response.header?.musicImmersiveHeaderRenderer
 
         val name = header?.title?.runs?.joinToString("") { it.text }.orEmpty()
-        val thumbnail = header?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
-            ?: header?.thumbnail?.croppedSquareThumbnailRenderer?.getThumbnailUrl()
+        // Sized for a phone-width header rather than taking the largest on offer, which
+        // for an artist banner is around 2456 pixels wide.
+        val banner = header?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl(1280)
+            ?: header?.thumbnail?.croppedSquareThumbnailRenderer?.getThumbnailUrl(1280)
+        val thumbnail = banner
 
         // The songs shelf, plus the playlist it links to for the complete list.
         val songShelf = sections.firstNotNullOfOrNull { it.musicShelfRenderer }
@@ -212,8 +222,8 @@ object BrowseParser {
                             ?.toIntOrNull()
                             ?.takeIf { it in 1900..2100 },
                         type = label,
-                        thumbnail = item.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl()
-                            ?: item.thumbnailRenderer.croppedSquareThumbnailRenderer?.getThumbnailUrl()
+                        thumbnail = item.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl(544)
+                            ?: item.thumbnailRenderer.croppedSquareThumbnailRenderer?.getThumbnailUrl(544)
                             ?: return@mapNotNull null,
                     )
                 }
@@ -225,7 +235,7 @@ object BrowseParser {
         return ArtistPage(
             id = channelId,
             name = name,
-            thumbnail = thumbnail,
+            banner = banner,
             songs = songs,
             albums = albums,
             songsPlaylistId = songsPlaylistId,

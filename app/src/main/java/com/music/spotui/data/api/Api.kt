@@ -868,19 +868,36 @@ class Api @Inject constructor(
                 coverUri = "",
                 isPlaylist = true,
             )
-            val offlineEntries = com.music.spotui.data.preferences.OfflineCollectionsPref.getOfflineCollections(context).map { col ->
-                com.music.spotui.data.entity.LibraryEntry(
-                    spotifyId = col.id,
-                    name = col.name,
-                    subtitle = if (col.isPlaylist) "Playlist • Available offline" else "Album • ${col.artists} • Available offline",
-                    coverUri = col.coverUri,
-                    isPlaylist = col.isPlaylist,
-                    artists = col.artists,
-                )
-            }
+            // Every saved collection, not only the downloaded ones. Filtering on downloads
+            // meant an album or playlist you had opened never reached your library unless
+            // you had also downloaded a track from it.
+            val savedEntries = com.music.spotui.data.preferences.OfflineCollectionsPref
+                .getAllCollections(context)
+                .map { col ->
+                    val offline = com.music.spotui.data.preferences.OfflineCollectionsPref
+                        .isDownloadedCollection(context, col)
+                    val kind = if (col.isPlaylist) "Playlist" else "Album"
+                    val parts = listOfNotNull(
+                        kind,
+                        col.artists.takeIf { it.isNotBlank() && !col.isPlaylist },
+                        "Available offline".takeIf { offline },
+                    )
+                    com.music.spotui.data.entity.LibraryEntry(
+                        spotifyId = col.id,
+                        name = col.name,
+                        subtitle = parts.joinToString(" • "),
+                        coverUri = col.coverUri,
+                        isPlaylist = col.isPlaylist,
+                        artists = col.artists,
+                    )
+                }
+
+            // Rows the user has removed stay removed, including derived ones that would
+            // otherwise reappear on the next rebuild.
+            val hidden = com.music.spotui.data.preferences.LibraryHiddenPref.hiddenIds(context)
             val offlineLibrary = deduplicateLibraryEntries(
-                listOf(liked, downloaded) + localEntries + offlineEntries + derivedAlbumEntries()
-            )
+                listOf(liked, downloaded) + localEntries + savedEntries + derivedAlbumEntries()
+            ).filterNot { it.spotifyId in hidden }
             HomeCache.library = offlineLibrary
             emit(Response.Success(offlineLibrary))
             return@flow
@@ -1234,9 +1251,12 @@ class Api @Inject constructor(
         }.getOrNull() ?: return null
         if (page.songs.isEmpty() && page.albums.isEmpty()) return null
 
-        val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(
-            page.thumbnail ?: channel.thumbnail
-        )
+        // The avatar has to come from the square search thumbnail. The artist page's own
+        // picture is a wide banner, and squaring that off pads it into a box with bars
+        // down the sides, which is what made artist avatars look wrong. The banner is
+        // still used, as the wide header it actually is.
+        val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(channel.thumbnail, size = 720)
+        val header = page.banner.orEmpty().ifBlank { avatar }
 
         val topTracks = page.songs.map { item ->
             val song = item.toSongsModel()
@@ -1260,7 +1280,7 @@ class Api @Inject constructor(
 
         return ArtistOverviewModel(
             name = page.name.ifBlank { artistName },
-            headerImage = avatar,
+            headerImage = header,
             avatarImage = avatar,
             topTracks = topTracks,
             popularReleases = releases,

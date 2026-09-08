@@ -95,14 +95,31 @@ object OfflineCollectionsPref {
     }
 
     fun getOfflineCollections(context: Context): List<OfflineCollection> {
-        val prefs = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-        val allCollections = prefs.all.values.mapNotNull { (it as? String)?.let { parseCollection(it) } }
-        // Filter: only return collections that have at least one downloaded song
-        return allCollections.filter { col ->
+        // Only collections with something actually downloaded, for the offline views.
+        return getAllCollections(context).filter { col ->
             col.songs.any { song ->
                 com.music.spotui.data.preferences.isDownloaded(context, song.id.toString())
             }
         }
+    }
+
+    /**
+     * Every saved collection, downloaded or not.
+     *
+     * The library needs this rather than the downloaded-only list: an album or playlist you
+     * opened is saved here, and filtering on downloads meant it never appeared in your
+     * library unless you had also downloaded a track from it.
+     */
+    fun getAllCollections(context: Context): List<OfflineCollection> {
+        val prefs = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+        return prefs.all.values.mapNotNull { (it as? String)?.let { json -> parseCollection(json) } }
+    }
+
+    fun isDownloadedCollection(context: Context, col: OfflineCollection): Boolean =
+        col.songs.any { com.music.spotui.data.preferences.isDownloaded(context, it.id.toString()) }
+
+    fun removeCollection(context: Context, id: String) {
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().remove(id).apply()
     }
 
     fun clearAll(context: Context) {

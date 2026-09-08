@@ -44,7 +44,8 @@ object BrowseTileImages {
                         ?.filterIsInstance<PlaylistItem>()
                         ?.firstOrNull { !it.thumbnail.isNullOrBlank() }
                         ?.thumbnail
-                hiResThumbnail(albumArt, size = 240)
+                // Requested large so the tile art stays sharp on high density screens.
+                hiResThumbnail(albumArt, size = 544)
             }.getOrDefault("")
         }
 

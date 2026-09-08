@@ -40,6 +40,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -115,6 +117,142 @@ fun isLibraryEntryDownloaded(context: android.content.Context, entry: LibraryEnt
         val cleanColId = Api.cleanId(col.id)
         (cleanColId.isNotBlank() && cleanColId == cleanEntryId) ||
         (entry.isPlaylist == col.isPlaylist && entry.name.equals(col.name, ignoreCase = true))
+    }
+}
+
+/**
+ * Per-row overflow menu. A local playlist can be deleted outright; anything else is
+ * removed from the library, which is recorded so derived rows do not come straight back.
+ */
+@Composable
+private fun LibraryRowMenu(
+    entry: com.music.spotui.data.entity.LibraryEntry,
+    onChanged: () -> Unit,
+) {
+    val context = LocalContext.current
+    var showSheet by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val accent = com.music.spotui.ui.theme.Accent
+    val isLocalPlaylist = entry.spotifyId.startsWith("local_pl_")
+
+    Icon(
+        imageVector = Icons.Default.MoreVert,
+        contentDescription = "More options for ${entry.name}",
+        tint = Color.Gray,
+        modifier = Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { showSheet = true }
+            .padding(7.dp),
+    )
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            containerColor = Color(0xFF1A1A1A),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 8.dp),
+            ) {
+                Text(
+                    text = entry.name,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showSheet = false
+                            confirmDelete = true
+                        }
+                        .padding(20.dp, 14.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color(0xFFE0562B),
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = if (isLocalPlaylist) "Delete playlist" else "Remove from library",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        modifier = Modifier.padding(start = 16.dp),
+                    )
+                }
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            containerColor = Color(0xFF262019),
+            title = {
+                Text(
+                    text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = if (isLocalPlaylist) {
+                        "\"${entry.name}\" and the songs you added to it will be deleted. " +
+                            "This cannot be undone."
+                    } else {
+                        "\"${entry.name}\" will be taken out of your library. " +
+                            "You can always open it again from search."
+                    },
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                )
+            },
+            confirmButton = {
+                Text(
+                    text = if (isLocalPlaylist) "Delete" else "Remove",
+                    color = Color(0xFFE0562B),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            if (isLocalPlaylist) {
+                                LocalPlaylistPref.deletePlaylist(context, entry.spotifyId)
+                            }
+                            // Also drop any saved copy, and record the removal so a row
+                            // rebuilt from history does not reappear.
+                            com.music.spotui.data.preferences.OfflineCollectionsPref
+                                .removeCollection(context, entry.spotifyId)
+                            com.music.spotui.data.preferences.LibraryHiddenPref
+                                .hide(context, entry.spotifyId)
+                            Api.HomeCache.library = null
+                            confirmDelete = false
+                            onChanged()
+                        }
+                        .padding(8.dp),
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = "Cancel",
+                    color = accent,
+                    modifier = Modifier
+                        .clickable { confirmDelete = false }
+                        .padding(8.dp),
+                )
+            },
+        )
     }
 }
 
@@ -568,7 +706,8 @@ fun LibraryScreen(navController: NavController) {
                     followedArtists = filteredArtists,
                     navController = navController,
                     showHistoryTile = showHistoryTile,
-                    onClearFilters = { libraryViewModel.clearFilters() }
+                    onClearFilters = { libraryViewModel.clearFilters() },
+                    onLibraryChanged = { libraryViewModel.load() },
                 )
             }
             else -> Box(modifier = Modifier.padding(20.dp, 100.dp)) { Snackbar(showMessage = "Couldn't load your library") }
@@ -666,7 +805,8 @@ fun SumUpLibraryScreen(
     followedArtists: List<com.music.spotui.data.entity.ArtistsModel>,
     navController: NavController,
     showHistoryTile: Boolean = true,
-    onClearFilters: () -> Unit = {}
+    onClearFilters: () -> Unit = {},
+    onLibraryChanged: () -> Unit = {},
 ) {
     if (entries.isEmpty() && followedArtists.isEmpty()) {
         Column(
@@ -785,7 +925,7 @@ fun SumUpLibraryScreen(
                         contentDescription = ""
                     )
                 }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(text = entry.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (entry.isLocal) {
@@ -801,6 +941,10 @@ fun SumUpLibraryScreen(
                         Text(text = entry.subtitle, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
+                // Deleting a playlist used to mean opening it and finding a small icon in
+                // the header, so most people never found it. Every row now carries its own
+                // menu, right where the playlist is.
+                LibraryRowMenu(entry = entry, onChanged = onLibraryChanged)
             }
         }
         // When the only entries are the two pinned shortcuts, invite the user to start a

@@ -82,26 +82,22 @@ private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 private val TextFaint = Color(0xFF7A7A85)
 
-/** Popular starting points offered when the search box is still empty. */
-private val SUGGESTIONS = listOf(
-    "Top hits", "New releases", "Bollywood", "Lofi", "Punjabi",
-    "Workout", "Party", "Romantic", "Instrumental", "90s",
-)
-
 /** Colourful browse tiles shown on the empty search screen, each seeds a search. */
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
     BrowseCategory("Trending", "trending songs this week", Color(0xFFE0562B)),
+    BrowseCategory("New releases", "new songs this month", Color(0xFF1E7A54)),
     BrowseCategory("Bollywood", "bollywood hits", Color(0xFFB4267A)),
-    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF1E7A54)),
+    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF6A4BA8)),
     BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF485AC4)),
     BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF537AA1)),
-    BrowseCategory("Workout", "workout songs", Color(0xFF777777)),
+    BrowseCategory("Workout", "workout songs", Color(0xFF9C4221)),
     BrowseCategory("Romance", "romantic songs", Color(0xFFD84E76)),
     BrowseCategory("Party", "party songs", Color(0xFF8768B0)),
     BrowseCategory("Devotional", "devotional songs", Color(0xFFC7873B)),
     BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF3D6B7D)),
+    BrowseCategory("Sad songs", "sad songs", Color(0xFF3F5C7A)),
 )
 
 /**
@@ -629,41 +625,9 @@ private fun DiscoverPane(
                 }
             }
         }
-        item {
-            Text(
-                text = "Popular searches",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 12.dp),
-            )
-        }
-        item {
-            // Two rows of suggestion chips so they read as a tidy block.
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SUGGESTIONS.chunked(5).forEach { chunk ->
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        items(chunk, key = { it }) { label ->
-                            Text(
-                                text = label,
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(SurfaceHigh)
-                                    .border(1.dp, Hairline, RoundedCornerShape(50))
-                                    .clickable { onPick(label) }
-                                    .padding(horizontal = 16.dp, vertical = 9.dp),
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        // The "Popular searches" chip rows are gone. They were the same idea as the browse
+        // tiles above, a canned search behind a label, only without artwork, so the screen
+        // was asking twice for the same tap. The tiles do the job better.
     }
 }
 

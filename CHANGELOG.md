@@ -5,6 +5,31 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.9
+
+### 🛠 Delete Playlists, A Leaner Explore, And Sharper Artwork
+
+* **Every library row has its own menu.** Deleting a playlist meant opening it and finding a
+  small icon tucked in the header next to shuffle, so in practice there was no way to do it.
+  Each row now has a menu with **Delete playlist** for your own playlists and **Remove from
+  library** for anything else, with a confirmation before it goes.
+* **Removals stick.** Album rows are built from your listening history, so deleting one used
+  to bring it straight back on the next rebuild. Removals are now recorded and respected.
+* **Albums and playlists you open reach your library.** They were being filtered on whether
+  you had downloaded a track from them, so opening an album saved it and then hid it. The
+  library shows every saved collection, and marks which are available offline.
+* **Explore lost its duplicate row.** "Popular searches" was the same idea as the browse
+  tiles above it, a canned search behind a label, only without artwork. It is gone, and the
+  tiles gained New releases and Sad songs instead.
+* **Sharper artist pictures.** The avatar was built from the artist page's wide banner, and
+  squaring a banner off pads it into a box. It now comes from the square source at 720
+  pixels, up from a 120 pixel request.
+* **Images are requested at the size they are shown.** Artwork used to take whichever variant
+  was listed last, which for an artist banner meant downloading a 2456 pixel image to fill a
+  phone-width header. Browse tile art is requested large, so it stays crisp on dense screens.
+
+---
+
 ## 🚀 Release v1.9.8
 
 ### 🛠 Artists Have Their Whole Catalogue, And No More Dead Ends In The Library
