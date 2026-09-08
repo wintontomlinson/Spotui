@@ -5,6 +5,18 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.4
+
+### 🎨 Premium Greeting, No Search Button on Home
+
+* **The greeting is a proper masthead now.** A short amber accent bar sits above it, and the greeting
+  itself is drawn in the heavy title typeface with a warm amber gradient fill, so the top of Home
+  feels premium rather than plain white text.
+* **The search button is gone from Home.** Search has its own tab in the bottom navigation, so the
+  circle on the header was redundant. The header is now a clean full width masthead.
+
+---
+
 ## 🚀 Release v1.8.3
 
 ### 🎨 Home, Search, Library & Settings Redesigned
