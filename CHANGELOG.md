@@ -5,6 +5,15 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.4
+
+### 🛠 Library Is List Only
+
+Removed the grid/list toggle from the library toolbar. The library is now always a single, clean list
+view. Everything else stays: create playlist, search and filters, and the account button.
+
+---
+
 ## 🚀 Release v1.9.3
 
 ### 🛠 Library & Artists
