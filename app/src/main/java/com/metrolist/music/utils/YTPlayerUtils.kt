@@ -63,32 +63,17 @@ object YTPlayerUtils {
 
     private val MAIN_CLIENT: YouTubeClient = WEB_REMIX
 
-    /**
-     * Ordered by what actually serves playable audio when logged out.
-     *
-     * Every client here was tested against the same track, with these exact versions and
-     * user agents. The VR clients and the two iOS ones returned playable responses whose
-     * stream URLs were served fine. The rest did not: MOBILE returned a playable response
-     * with no stream URLs at all, TVHTML5 was UNPLAYABLE, its embedded variant errored,
-     * ANDROID_CREATOR wanted a login, and WEB was UNPLAYABLE.
-     *
-     * The VR clients lead because they are the ones designed to work without a PoToken, and
-     * the iOS clients, while they do return streams, are the ones that get answered with
-     * "Sign in to confirm you're not a bot" on a fair number of tracks. Order matters for
-     * more than speed: every client tried is another request, and a burst of them is what
-     * makes the host start refusing.
-     */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
-        ANDROID_VR_1_61_48,
-        ANDROID_VR_1_43_32,
-        ANDROID_VR_NO_AUTH,
         IOS,
         IPADOS,
-        ANDROID_NO_SDK,
         MOBILE,
+        ANDROID_NO_SDK,
         TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         TVHTML5,
+        ANDROID_VR_1_43_32,
+        ANDROID_VR_1_61_48,
         ANDROID_CREATOR,
+        ANDROID_VR_NO_AUTH,
         WEB,
         WEB_CREATOR
     )
@@ -111,13 +96,7 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
         skipValidation: Boolean = false,
-    ): Result<PlaybackData> {
-        // Declared out here so the failure branch can say which client was in play.
-        var usedClientName: String? = null
-        var nTransformApplied = false
-        // The url exactly as the host issued it, kept so a rejected descramble can fall back.
-        var urlBeforeNTransform: String? = null
-        return runCatching {
+    ): Result<PlaybackData> = runCatching {
         Timber.tag(TAG).d("=== PLAYER RESPONSE FOR PLAYBACK ===")
         Timber.tag(TAG).d("videoId: $videoId")
         Timber.tag(TAG).d("playlistId: $playlistId")
@@ -135,14 +114,12 @@ object YTPlayerUtils {
         // independent and each takes 1-3s, so overlapping them nearly halves the
         // cold-start latency. Both are blocking calls, so we use Java futures on
         // the IO executor rather than coroutine async (runCatching is non-suspend).
-        // A PoToken can only be minted against a session id, and logged out that means
-        // visitorData. It is fetched in the background when the app starts, so tapping a
-        // track before that lands left it null, the PoToken was never even attempted, and
-        // the main client was skipped for want of one. Fetch it here when it is missing so
-        // that never silently costs a PoToken.
+        // A PoToken can only be minted against a session id, which logged out means
+        // visitorData. That is fetched by a background job at startup, so a track tapped
+        // before it lands would leave it null and the PoToken would be skipped without a
+        // word. Fetch it here when it is missing so the attempt is never silently lost.
         if (!isLoggedIn && YouTube.visitorData == null) {
             runCatching { YouTube.visitorData = YouTube.visitorData().getOrNull() }
-            Timber.tag(TAG).d("visitorData fetched on demand: ${YouTube.visitorData != null}")
         }
         val sessionId = if (isLoggedIn) YouTube.dataSyncId else YouTube.visitorData
         val mainClientNeedsPoToken = MAIN_CLIENT.useWebPoTokens
@@ -190,17 +167,6 @@ object YTPlayerUtils {
         if (skipMainClient) {
             Timber.tag(TAG).w("PoToken unavailable, skipping MAIN_CLIENT and using fallback chain directly")
         }
-        com.music.spotui.data.diagnostics.PlaybackLog.add(
-            "resolve",
-            "$videoId poToken=" + when {
-                poToken != null -> "yes"
-                sessionId == null -> "no (no session id)"
-                potFuture == null -> "no (not attempted)"
-                else -> "no (generation failed)"
-            } +
-                " sigTimestamp=${signatureTimestamp.timestamp != null}" +
-                " mainClient=${if (skipMainClient) "skipped" else MAIN_CLIENT.clientName}",
-        )
 
         var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else {
             Timber.tag(logTag).d("Attempting to get player response using MAIN_CLIENT: ${MAIN_CLIENT.clientName}")
@@ -272,13 +238,11 @@ object YTPlayerUtils {
         // Check if this is a privately owned track (uploaded song)
         val isPrivateTrack = mainPlayerResponse?.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
 
-        // Age-restricted: skip the main client and start with the fallbacks.
-        // Normal content: try the main client's own streams first.
-        // Private tracks used to jump to a hardcoded index meant to be TVHTML5, which had
-        // long since stopped being that entry. They start at the top of the chain like
-        // everything else now rather than at whatever happens to sit at that index.
+        // For private tracks: use TVHTML5 (index 1) with PoToken + n-transform
+        // For age-restricted: skip main client, start with fallbacks
+        // For normal content: standard order
         val startIndex = when {
-            isPrivateTrack -> 0
+            isPrivateTrack -> 1  // TVHTML5
             isAgeRestricted -> 0
             skipMainClient -> 0  // MAIN_CLIENT streams unplayable without PoToken
             mainPlayerResponse == null || mainPlayerResponse.playabilityStatus.status != "OK" -> 0
@@ -386,7 +350,6 @@ object YTPlayerUtils {
                 } else {
                     STREAM_FALLBACK_CLIENTS[clientIndex]
                 }
-                usedClientName = currentClient.clientName
 
                 // Check if this is a privately owned track
                 val isPrivatelyOwnedTrack = streamPlayerResponse.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
@@ -402,15 +365,9 @@ object YTPlayerUtils {
                 Timber.tag(TAG).d("  currentClient: ${currentClient.clientName}")
                 Timber.tag(TAG).d("  useWebPoTokens: ${currentClient.useWebPoTokens}")
 
-                // The n parameter only needs descrambling on URLs from the web family of
-                // clients. Every stream URL carries an n parameter, so keying off its mere
-                // presence ran the transform on IOS, ANDROID and ANDROID_VR URLs too, whose
-                // n is already usable. Rewriting it there produces a value the host rejects,
-                // and since the URL is signed the request comes back 403. Verified against
-                // live responses that IOS and ANDROID_VR stream URLs are served correctly
-                // exactly as issued, with no transform applied.
+                // Apply n-transform and PoToken for web clients OR for private tracks (including TVHTML5)
                 val hasNParam = streamUrl.contains(Regex("[?&]n="))
-                val needsNTransform = currentClient.useWebPoTokens ||
+                val needsNTransform = hasNParam || currentClient.useWebPoTokens ||
                     currentClient.clientName in listOf("WEB", "WEB_REMIX", "WEB_CREATOR", "TVHTML5", "TVHTML5_SIMPLY_EMBEDDED_PLAYER") ||
                     isPrivatelyOwnedTrack
 
@@ -420,14 +377,12 @@ object YTPlayerUtils {
                     "isPrivatelyOwnedTrack=$isPrivatelyOwnedTrack")
 
                 if (needsNTransform) {
-                    nTransformApplied = true
                     try {
                         Timber.tag(TAG).d("Applying n-transform to stream URL...")
                         Timber.tag(TAG).d("  Original URL length: ${streamUrl.length}")
                         Timber.tag(TAG).d("  Original URL preview: ${streamUrl.take(100)}...")
 
                         val originalUrl = streamUrl
-                        urlBeforeNTransform = originalUrl
                         // Use CipherDeobfuscator for n-transform
                         streamUrl = CipherDeobfuscator.transformNParamInUrl(streamUrl)
                         if (hasNParam && streamUrl == originalUrl) {
@@ -489,24 +444,9 @@ object YTPlayerUtils {
                     // Log for release builds
                     Timber.tag(TAG).i("Playback: client=${currentClient.clientName}, videoId=$videoId")
                     break
+                } else {
+                    Timber.tag(logTag).d("Stream validation failed for client: ${currentClient.clientName}")
                 }
-
-                // The descrambled n parameter was rejected but the url as issued may well be
-                // served. That is what happens when the host rotates the player script the
-                // descrambler was built against, and it would otherwise burn every client in
-                // the chain and end up returning a url that cannot play.
-                val asIssued = urlBeforeNTransform
-                if (asIssued != null && asIssued != streamUrl && validateStatus(asIssued)) {
-                    Timber.tag(TAG).w("n transform rejected for ${currentClient.clientName}, using the url as issued")
-                    com.music.spotui.data.diagnostics.PlaybackLog.add(
-                        "resolve",
-                        "$videoId n transform rejected by host, using the url as issued",
-                    )
-                    streamUrl = asIssued
-                    nTransformApplied = false
-                    break
-                }
-                Timber.tag(logTag).d("Stream validation failed for client: ${currentClient.clientName}")
             } else {
                 Timber.tag(logTag).d("Player response status not OK: ${streamPlayerResponse?.playabilityStatus?.status}, reason: ${streamPlayerResponse?.playabilityStatus?.reason}")
             }
@@ -551,9 +491,8 @@ object YTPlayerUtils {
         Timber.tag(logTag).d("Successfully obtained playback data with format: ${format.mimeType}, bitrate: ${format.bitrate}")
         com.music.spotui.data.diagnostics.PlaybackLog.add(
             "resolve",
-            "$videoId ok via ${usedClientName ?: "unknown"}, itag=${format.itag} " +
-                "${format.mimeType?.substringBefore(';')} expires in ${streamExpiresInSeconds}s, " +
-                "nTransform=${if (nTransformApplied) "applied" else "not needed"}",
+            "$videoId ok, itag=${format.itag} ${format.mimeType?.substringBefore(';')} " +
+                "poToken=${if (poToken != null) "yes" else "no"} expires in ${streamExpiresInSeconds}s",
         )
         if (isUploadedTrack) {
             println("[PLAYBACK_DEBUG] SUCCESS: Got playback data for uploaded track - format=${format.mimeType}, streamUrl=${streamUrl.take(100)}...")
@@ -570,11 +509,9 @@ object YTPlayerUtils {
         println("[PLAYBACK_DEBUG] EXCEPTION during playback for videoId=$videoId: ${e::class.simpleName}: ${e.message}")
         com.music.spotui.data.diagnostics.PlaybackLog.add(
             "resolve",
-            "$videoId FAILED after ${usedClientName ?: "no client"}: " +
-                "${e::class.simpleName}: ${e.message}",
+            "$videoId FAILED: ${e::class.simpleName}: ${e.message}",
         )
         e.printStackTrace()
-        }
     }
     /**
      * Simple player response intended to use for metadata only.

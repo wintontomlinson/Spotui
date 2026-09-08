@@ -651,17 +651,13 @@ object SongPlayer {
         val appContext = context.applicationContext
         // No point resolving streams while Spotify web is the active engine.
         if (webPlaybackActive()) return
-        // Only the stream URL is resolved ahead of time, which is what hides the tap
-        // latency. Downloading the opening bytes into the cache used to happen here too and
-        // is deliberately gone: a playback log showed that preload fetching exactly 1048576
-        // bytes, and then every request for the bytes after that point refused with 403.
-        // These hosts serve one request per stream URL, so the preload spent the track's
-        // only request and playback was left with about a minute of audio it could never
-        // continue past.
+        // Lossless FLAC & YouTube pre-buffering uses LosslessCacheKeyFactory
+        // and ResolvingDataSource to handle stream URLs seamlessly.
         scope.launch {
             acquireWakeLock(appContext, "spotui:prefetch", 30_000L)
             try {
-                runCatching { resolveStreamUrl(song, appContext, forPlayback = false) }
+                val url = runCatching { resolveStreamUrl(song, appContext, forPlayback = false) }.getOrNull()
+                if (url != null) cacheIntro(url, appContext)
             } finally {
                 releaseWakeLock("spotui:prefetch")
             }
@@ -681,42 +677,24 @@ object SongPlayer {
         // catalog instead of streaming the tapped song.
     }
 
-    // ── Media cache ──
-    // Playback reads through this cache, so audio already fetched is not fetched twice.
-    // Nothing pre-downloads into it. Pre-caching the opening megabyte of upcoming tracks
-    // used to live here, and it was spending the one request these hosts allow per stream
-    // URL, which left playback with audio it could never continue past. Resolving the URL
-    // ahead of time, which is what actually hid the tap latency, still happens in prefetch.
+    // ── Intro preloading (instant playback) ──
+    // Resolving the stream URL hides most latency, but ExoPlayer still has to open the
+    // connection and buffer the first segment on tap. We pre-cache the first ~1 MB (≈20-40s
+    // of audio) of upcoming tracks into a media cache the player reads through, so a tap on a
+    // preloaded track starts almost instantly. Skipped for local files (already instant) and
+    // when the user turns preloading off in Settings.
+    private const val PRELOAD_BYTES = 1L * 1024 * 1024
 
     @Volatile private var mediaCache: androidx.media3.datasource.cache.SimpleCache? = null
 
     private fun mediaCache(context: Context): androidx.media3.datasource.cache.SimpleCache =
         mediaCache ?: synchronized(this) {
             mediaCache ?: androidx.media3.datasource.cache.SimpleCache(
-                mediaCacheDir(context),
+                java.io.File(context.cacheDir, "media"),
                 androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor(256L * 1024 * 1024),
                 androidx.media3.database.StandaloneDatabaseProvider(context),
             ).also { mediaCache = it }
         }
-
-    /**
-     * Directory backing the media cache.
-     *
-     * Versioned so nothing written by an earlier build is read back. Two kinds of bad entry
-     * are out there: a stream that stopped early recorded as the real length of a track, and
-     * the one megabyte fragments the old intro preload wrote, which playback could never
-     * continue past. Both make a song end at the same wrong point on every play.
-     */
-    private fun mediaCacheDir(context: Context): java.io.File {
-        listOf("media", "media-v2", "media-v3").forEach { name ->
-            val stale = java.io.File(context.cacheDir, name)
-            if (stale.exists()) {
-                runCatching { stale.deleteRecursively() }
-                    .onFailure { Log.w(TAG, "could not drop stale media cache $name", it) }
-            }
-        }
-        return java.io.File(context.cacheDir, "media-v4")
-    }
 
     private fun cacheDataSourceFactory(context: Context): androidx.media3.datasource.cache.CacheDataSource.Factory {
         val http = androidx.media3.datasource.DefaultHttpDataSource.Factory()
@@ -772,6 +750,23 @@ object SongPlayer {
                 }
             }
         )
+    }
+
+    /** Pre-cache the first [PRELOAD_BYTES] of [url] into the media cache (http(s) only). */
+    private fun cacheIntro(url: String, appContext: Context) {
+        if (!url.startsWith("http")) return
+        if (!com.music.spotui.data.preferences.isPreloadEnabled(appContext)) return
+        runCatching {
+            val ds = cacheDataSourceFactory(appContext).createDataSource()
+            val spotifyId = trackIdRegistry[url] ?: spotifyTrackIdForPlayback(url)
+            val stableKey = com.music.spotui.audio.LosslessCacheKeyFactory.buildCacheKey(spotifyId, url)
+            val spec = androidx.media3.datasource.DataSpec.Builder()
+                .setUri(android.net.Uri.parse(url))
+                .setKey(stableKey)
+                .setLength(PRELOAD_BYTES)
+                .build()
+            androidx.media3.datasource.cache.CacheWriter(ds, spec, null, null).cache()
+        }.onFailure { Log.d(TAG, "intro preload skipped: ${it.message}") }
     }
 
     private val inFlightResolutions = java.util.concurrent.ConcurrentHashMap<String, kotlinx.coroutines.Deferred<String?>>()
