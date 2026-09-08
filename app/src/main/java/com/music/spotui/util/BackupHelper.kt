@@ -191,7 +191,7 @@ object BackupHelper {
         }
 
         val root = validateBackupJson(jsonString)
-            ?: return@withContext Pair(false, "Invalid backup file: Not a valid Spotui backup")
+            ?: return@withContext Pair(false, "Invalid backup file: Not a valid SOLO backup")
 
         runCatching {
             val data = root.getJSONObject("data")
