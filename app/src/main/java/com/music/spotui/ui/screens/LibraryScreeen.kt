@@ -509,14 +509,19 @@ fun LibraryScreen(navController: NavController) {
                 val rawEntries = (entries as Response.Success).data
                 val filteredEntries = remember(rawEntries, selectedFilter, isDownloadedOnly, searchQuery, currentSort, isDescending, context) {
                     val filtered = rawEntries.filter { entry ->
-                        // Everything the library has is shown, including the pinned Liked
-                        // Songs and Downloads rows, so nothing that used to appear here goes
-                        // missing. They also have quick access tiles at the top, which is
-                        // fine, the same way the Spotify app pins Liked Songs.
+                        // Liked Songs and Downloads live in the quick access grid at the
+                        // top, so drop the pinned rows from the list below to avoid showing
+                        // them twice. The list then holds only real playlists, albums and
+                        // saved collections.
+                        if (entry.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
+                            entry.spotifyId == Api.HomeCache.DOWNLOADS_ID
+                        ) {
+                            return@filter false
+                        }
                         val matchesCategory = when (selectedFilter) {
                             LibraryFilterType.ALL -> true
                             LibraryFilterType.PLAYLISTS -> entry.isPlaylist
-                            LibraryFilterType.ALBUMS -> !entry.isPlaylist && entry.spotifyId != Api.HomeCache.LIKED_SONGS_ID && entry.spotifyId != Api.HomeCache.DOWNLOADS_ID
+                            LibraryFilterType.ALBUMS -> !entry.isPlaylist
                             LibraryFilterType.ARTISTS -> false
                         }
                         val matchesDownload = if (isDownloadedOnly) isLibraryEntryDownloaded(context, entry) else true

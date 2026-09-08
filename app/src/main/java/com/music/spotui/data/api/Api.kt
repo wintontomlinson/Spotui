@@ -10,6 +10,7 @@ import com.music.spotui.data.entity.AlbumsModel
 import com.music.spotui.data.entity.PodcastModel
 import com.music.spotui.data.entity.ArtistOverviewModel
 import com.music.spotui.data.entity.ArtistTrackUi
+import com.music.spotui.ui.viewmodel.toSongsModel
 import com.metrolist.spotify.models.SpotifyHomeFeedItem
 import com.music.spotui.data.entity.ArtistsModel
 import com.music.spotui.data.entity.HomeFeedModel
@@ -483,7 +484,40 @@ class Api @Inject constructor(
             emit(Response.Success(ArtistOverviewModel(name = artistName))); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
+            // Login free: Spotify's artist overview is unavailable, so build a basic one
+            // from YouTube instead of failing. A song search for the artist name gives an
+            // avatar (from an ArtistItem, else a song thumbnail) and a set of their tracks,
+            // which is enough to show the artist header, image and songs without a login.
+            val ytOverview = runCatching {
+                val res = com.metrolist.innertube.YouTube.search(
+                    artistName,
+                    com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG,
+                ).getOrNull()
+                val artistThumb = res?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                    ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
+                val songs = res?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                    .orEmpty()
+                val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(
+                    artistThumb ?: songs.firstOrNull()?.thumbnail
+                )
+                val topTracks = songs.take(10).map { s ->
+                    val song = s.toSongsModel()
+                    ArtistTrackUi(
+                        song = if (song.coverUri.isBlank()) song.copy(coverUri = avatar) else song,
+                        playcount = null,
+                    )
+                }
+                ArtistOverviewModel(
+                    name = artistName,
+                    headerImage = avatar,
+                    avatarImage = avatar,
+                    topTracks = topTracks,
+                )
+            }.getOrNull() ?: ArtistOverviewModel(name = artistName)
+            emit(Response.Success(ytOverview))
+            return@flow
         }
         val knownId = if (knownArtistId.isNotBlank()) knownArtistId
                       else if (artistName.matches(Regex("^[a-zA-Z0-9]{22}$"))) artistName
@@ -787,37 +821,37 @@ class Api @Inject constructor(
             emit(Response.Loading())
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            if (HomeCache.library == null) {
-                val liked = com.music.spotui.data.entity.LibraryEntry(
-                    spotifyId = LIKED_SONGS_ID,
-                    name = "Liked Songs",
-                    subtitle = "Playlist • Liked songs",
-                    coverUri = "https://misc.scdn.co/liked-songs/liked-songs-640.png",
-                    isPlaylist = true,
+            // Login free: the library is always rebuilt from what is on the device right
+            // now, not from a possibly stale cache. This is what makes an album or playlist
+            // you just opened (saved as an offline collection) show up in the library on the
+            // next visit, instead of being hidden behind an old cached list.
+            val liked = com.music.spotui.data.entity.LibraryEntry(
+                spotifyId = LIKED_SONGS_ID,
+                name = "Liked Songs",
+                subtitle = "Playlist • Liked songs",
+                coverUri = "https://misc.scdn.co/liked-songs/liked-songs-640.png",
+                isPlaylist = true,
+            )
+            val downloaded = com.music.spotui.data.entity.LibraryEntry(
+                spotifyId = DOWNLOADS_ID,
+                name = "Downloaded",
+                subtitle = "Available offline",
+                coverUri = "",
+                isPlaylist = true,
+            )
+            val offlineEntries = com.music.spotui.data.preferences.OfflineCollectionsPref.getOfflineCollections(context).map { col ->
+                com.music.spotui.data.entity.LibraryEntry(
+                    spotifyId = col.id,
+                    name = col.name,
+                    subtitle = if (col.isPlaylist) "Playlist • Available offline" else "Album • ${col.artists} • Available offline",
+                    coverUri = col.coverUri,
+                    isPlaylist = col.isPlaylist,
+                    artists = col.artists,
                 )
-                val downloaded = com.music.spotui.data.entity.LibraryEntry(
-                    spotifyId = DOWNLOADS_ID,
-                    name = "Downloaded",
-                    subtitle = "Available offline",
-                    coverUri = "",
-                    isPlaylist = true,
-                )
-                val offlineEntries = com.music.spotui.data.preferences.OfflineCollectionsPref.getOfflineCollections(context).map { col ->
-                    com.music.spotui.data.entity.LibraryEntry(
-                        spotifyId = col.id,
-                        name = col.name,
-                        subtitle = if (col.isPlaylist) "Playlist • Available offline" else "Album • ${col.artists} • Available offline",
-                        coverUri = col.coverUri,
-                        isPlaylist = col.isPlaylist,
-                        artists = col.artists,
-                    )
-                }
-                val offlineLibrary = deduplicateLibraryEntries(listOf(liked, downloaded) + localEntries + offlineEntries)
-                HomeCache.library = offlineLibrary
-                emit(Response.Success(offlineLibrary))
-            } else {
-                emit(Response.Success(HomeCache.library!!))
             }
+            val offlineLibrary = deduplicateLibraryEntries(listOf(liked, downloaded) + localEntries + offlineEntries)
+            HomeCache.library = offlineLibrary
+            emit(Response.Success(offlineLibrary))
             return@flow
         }
         val albums = fetchAllPages { offset -> Spotify.myAlbums(limit = 50, offset = offset) }.map { a ->
