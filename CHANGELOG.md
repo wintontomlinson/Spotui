@@ -5,6 +5,33 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.0
+
+### ⚡ Slow Network, 📦 Smaller APK, 🎧 Same High Quality
+
+A deep pass over the whole playback path and the build.
+
+* **Buffering tuned for audio on a weak link.** The player used stock ExoPlayer buffering, which is
+  built for video: it waits on a big prebuffer to start, then keeps only a modest reserve. That is
+  backwards for audio on a slow connection. Playback now starts after 2.5s buffered (5s after a
+  rebuffer), so a track begins quickly, and holds up to two minutes buffered so a slow link fills
+  far ahead and rides out dips without stalling.
+* **HTTP timeouts on the media path.** The stream data source had no connect or read timeout, so a
+  stalled socket could freeze playback indefinitely. Both are now 15s, so a dead socket fails fast
+  and the resilient data source reconnects.
+* **Much smaller download.** The ML Kit translate and language libraries are the biggest thing in
+  the app and shipped once per CPU architecture inside one universal APK, most of the old 87 MB. The
+  build now produces one APK per architecture: the arm64 build real phones use is about 38 MB. A
+  universal APK is still built for sideloading onto an unknown device.
+* **Audio quality unchanged and still high.** Both wifi and cellular default to the HIGH tier, which
+  picks the highest bitrate stream available and prefers Opus. The deeper buffer is exactly what
+  lets that high stream keep playing on a slow connection.
+
+Downloads: `Spotui_v1.8.0_arm64-v8a.apk` for phones (smaller), `Spotui_v1.8.0.apk` universal (works
+on any device).
+
+---
+
 ## 🚀 Release v1.7.9
 
 ### ⚡ Faster First Play
