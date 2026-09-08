@@ -6,6 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metrolist.innertube.YouTube
+import com.metrolist.innertube.models.AlbumItem
+import com.metrolist.innertube.models.ArtistItem
+import com.metrolist.innertube.models.PlaylistItem
 import com.metrolist.innertube.models.SongItem
 import com.music.spotui.data.entity.SongsModel
 import com.music.spotui.data.preferences.addRecentSearch
@@ -52,10 +55,37 @@ class YtSearchViewModel @Inject constructor(
     private val _recent = mutableStateOf(getRecentSearches(context))
     val recent: State<List<String>> get() = _recent
 
+    /** Which kind of result the user is looking at. */
+    private val _tab = mutableStateOf(SearchTab.SONGS)
+    val tab: State<SearchTab> get() = _tab
+
+    private val _artists = mutableStateOf<List<ArtistResult>>(emptyList())
+    val artists: State<List<ArtistResult>> get() = _artists
+
+    private val _albums = mutableStateOf<List<AlbumResult>>(emptyList())
+    val albums: State<List<AlbumResult>> get() = _albums
+
+    private val _playlists = mutableStateOf<List<PlaylistResult>>(emptyList())
+    val playlists: State<List<PlaylistResult>> get() = _playlists
+
+    /**
+     * Tabs already fetched for the current query, so flicking between them does not
+     * re-hit the network. Cleared whenever the query changes.
+     */
+    private val loadedTabs = mutableSetOf<SearchTab>()
+
     private var searchJob: Job? = null
 
     fun onQueryChange(text: String) {
         _query.value = text
+    }
+
+    /** Switches result kind, fetching that kind on first visit for the current query. */
+    fun selectTab(next: SearchTab) {
+        if (_tab.value == next) return
+        _tab.value = next
+        val q = _query.value.trim()
+        if (q.isNotBlank() && next !in loadedTabs) search(q, remember = false)
     }
 
     /** Debounced live search as the user types. */
@@ -63,7 +93,7 @@ class YtSearchViewModel @Inject constructor(
         _query.value = text
         searchJob?.cancel()
         if (text.isBlank()) {
-            _results.value = emptyList()
+            clearResults()
             _hasSearched.value = false
             _isLoading.value = false
             _error.value = null
@@ -75,35 +105,100 @@ class YtSearchViewModel @Inject constructor(
         }
     }
 
+    private var lastQuery: String = ""
+
+    private fun clearResults() {
+        _results.value = emptyList()
+        _artists.value = emptyList()
+        _albums.value = emptyList()
+        _playlists.value = emptyList()
+        loadedTabs.clear()
+    }
+
     fun search(text: String = _query.value, remember: Boolean = true) {
         val q = text.trim()
         if (q.isBlank()) return
         _query.value = q
+        // A new query invalidates every tab, an unchanged query only needs the tabs
+        // that have not been fetched yet.
+        if (q != lastQuery) {
+            clearResults()
+            lastQuery = q
+        }
+        val activeTab = _tab.value
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             _hasSearched.value = true
-            val songs = withContext(Dispatchers.IO) {
+
+            val items = withContext(Dispatchers.IO) {
                 runCatching {
-                    // Songs only. This is an audio player, so video results would
-                    // promise something the app cannot deliver.
-                    YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
-                        .getOrNull()
-                        ?.items
-                        ?.filterIsInstance<SongItem>()
-                        .orEmpty()
+                    YouTube.search(q, activeTab.filter).getOrNull()?.items.orEmpty()
                 }.getOrElse { emptyList() }
             }
-            if (songs.isEmpty()) {
+
+            var found = 0
+            when (activeTab) {
+                SearchTab.SONGS -> {
+                    // Songs only. This is an audio player, so video results would
+                    // promise something the app cannot deliver.
+                    val songs = items.filterIsInstance<SongItem>().distinctBy { it.id }
+                    _results.value = songs.map { it.toSongsModel() }
+                    found = songs.size
+                }
+                SearchTab.ARTISTS -> {
+                    val list = items.filterIsInstance<ArtistItem>()
+                        .distinctBy { it.id }
+                        .map {
+                            ArtistResult(
+                                id = it.id,
+                                name = it.title,
+                                thumbnail = hiResThumbnail(it.thumbnail),
+                            )
+                        }
+                    _artists.value = list
+                    found = list.size
+                }
+                SearchTab.ALBUMS -> {
+                    val list = items.filterIsInstance<AlbumItem>()
+                        .distinctBy { it.browseId }
+                        .map {
+                            AlbumResult(
+                                browseId = it.browseId,
+                                title = it.title,
+                                artist = it.artists?.joinToString(", ") { a -> a.name }.orEmpty(),
+                                year = it.year,
+                                thumbnail = hiResThumbnail(it.thumbnail),
+                            )
+                        }
+                    _albums.value = list
+                    found = list.size
+                }
+                SearchTab.PLAYLISTS -> {
+                    val list = items.filterIsInstance<PlaylistItem>()
+                        .distinctBy { it.id }
+                        .map {
+                            PlaylistResult(
+                                id = it.id,
+                                title = it.title,
+                                author = it.author?.name.orEmpty(),
+                                songCount = it.songCountText.orEmpty(),
+                                thumbnail = hiResThumbnail(it.thumbnail),
+                            )
+                        }
+                    _playlists.value = list
+                    found = list.size
+                }
+            }
+
+            if (found == 0) {
                 // A network failure and a genuinely empty result look the same here,
                 // so surface a soft, actionable message either way.
-                _results.value = emptyList()
                 _error.value = "No results found. Please check your connection and try again."
             } else {
-                // Drop duplicate videos so the list and the queue stay clean.
-                _results.value = songs.distinctBy { it.id }.map { it.toSongsModel() }
                 _error.value = null
+                loadedTabs += activeTab
                 if (remember) rememberQuery(q)
             }
             _isLoading.value = false
@@ -129,13 +224,44 @@ class YtSearchViewModel @Inject constructor(
     fun clear() {
         searchJob?.cancel()
         _query.value = ""
-        _results.value = emptyList()
+        lastQuery = ""
+        clearResults()
         _hasSearched.value = false
         _error.value = null
         _isLoading.value = false
         _recent.value = getRecentSearches(context)
     }
 }
+
+/** The kinds of result Explore can show, each backed by its own YouTube Music filter. */
+enum class SearchTab(val label: String, val filter: YouTube.SearchFilter) {
+    SONGS("Songs", YouTube.SearchFilter.FILTER_SONG),
+    ARTISTS("Artists", YouTube.SearchFilter.FILTER_ARTIST),
+    ALBUMS("Albums", YouTube.SearchFilter.FILTER_ALBUM),
+    PLAYLISTS("Playlists", YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST),
+}
+
+data class ArtistResult(
+    val id: String,
+    val name: String,
+    val thumbnail: String,
+)
+
+data class AlbumResult(
+    val browseId: String,
+    val title: String,
+    val artist: String,
+    val year: Int?,
+    val thumbnail: String,
+)
+
+data class PlaylistResult(
+    val id: String,
+    val title: String,
+    val author: String,
+    val songCount: String,
+    val thumbnail: String,
+)
 
 /**
  * Maps a YouTube [SongItem] to a [SongsModel]. The [SongsModel.url] is set to the

@@ -5,8 +5,11 @@ import com.metrolist.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.metrolist.innertube.models.YouTubeLocale
 import com.metrolist.innertube.models.getContinuation
 import com.metrolist.innertube.models.getItems
+import com.metrolist.innertube.models.response.BrowseResponse
 import com.metrolist.innertube.models.response.PlayerResponse
 import com.metrolist.innertube.models.response.SearchResponse
+import com.metrolist.innertube.pages.BrowseParser
+import com.metrolist.innertube.pages.BrowsePage
 import com.metrolist.innertube.pages.SearchPage
 import com.metrolist.innertube.pages.SearchResult
 import io.ktor.client.call.body
@@ -113,7 +116,33 @@ object YouTube {
         companion object {
             val FILTER_SONG = SearchFilter("EgWKAQIIAWoKEAkQBRAKEAMQBA%3D%3D")
             val FILTER_VIDEO = SearchFilter("EgWKAQIQAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_ALBUM = SearchFilter("EgWKAQIYAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_ARTIST = SearchFilter("EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_COMMUNITY_PLAYLIST = SearchFilter("EgeKAQQoAEABagoQAxAEEAoQCRAF")
         }
+    }
+
+    /**
+     * An album's tracklist, in order.
+     *
+     * [browseId] is an album id such as "MPREb_xxxxxxxxx", which is what album search
+     * results carry. Search alone cannot list an album's tracks, so this goes through
+     * the browse endpoint.
+     */
+    suspend fun album(browseId: String): Result<BrowsePage> = runCatching {
+        val response = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
+        BrowseParser.parse(browseId, response) ?: error("Album $browseId has no tracklist")
+    }
+
+    /**
+     * A playlist's tracklist. Accepts either a bare playlist id ("PL...", "OLAK5uy_...")
+     * or one that already carries the "VL" browse prefix.
+     */
+    suspend fun playlist(playlistId: String): Result<BrowsePage> = runCatching {
+        val browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
+        val response = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
+        BrowseParser.parse(playlistId.removePrefix("VL"), response)
+            ?: error("Playlist $playlistId has no tracklist")
     }
 
     private val VISITOR_DATA_REGEX = Regex("^Cg[t|s]")

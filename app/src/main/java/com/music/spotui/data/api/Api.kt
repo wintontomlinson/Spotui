@@ -610,14 +610,19 @@ class Api @Inject constructor(
             emit(Response.Success(emptyList())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
+            // Login free. Show whatever was already saved for this album straight away so
+            // the screen is never blank, then replace it with the real YouTube Music
+            // tracklist once that arrives.
             val col = com.music.spotui.data.preferences.OfflineCollectionsPref.getCollection(context, "album:$albumName|$artist")
-            if (col != null) {
-                val downloadedSongs = col.songs.filter {
-                    com.music.spotui.data.preferences.isDownloaded(context, it.id.toString())
-                }
-                emit(Response.Success(downloadedSongs))
-            } else {
-                emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
+            val saved = col?.songs.orEmpty()
+            if (saved.isNotEmpty()) emit(Response.Success(saved))
+
+            val youtubeSongs = youtubeAlbumSongs(albumName, artist)
+            when {
+                youtubeSongs.isNotEmpty() -> emit(Response.Success(youtubeSongs))
+                // Nothing online and nothing saved: an empty album reads better than an
+                // error about a Spotify cookie this build no longer uses.
+                saved.isEmpty() -> emit(Response.Success(emptyList()))
             }
             return@flow
         }
@@ -682,13 +687,23 @@ class Api @Inject constructor(
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
             val col = com.music.spotui.data.preferences.OfflineCollectionsPref.getCollection(context, clean)
-            if (col != null) {
-                val downloadedSongs = col.songs.filter {
-                    com.music.spotui.data.preferences.isDownloaded(context, it.id.toString())
+            val saved = col?.songs.orEmpty()
+            if (saved.isNotEmpty()) emit(Response.Success(saved))
+
+            // Login free: a YouTube Music playlist can be read straight from the browse
+            // endpoint. Spotify ids are 22 character base62 and cannot be read at all
+            // without a session, so those simply fall through to whatever was saved.
+            val youtubeSongs = if (looksLikeYouTubePlaylistId(clean)) {
+                youtubePlaylistSongs(clean)
+            } else {
+                emptyList()
+            }
+            when {
+                youtubeSongs.isNotEmpty() -> {
+                    HomeCache.setPlaylistSongs(clean, youtubeSongs)
+                    emit(Response.Success(youtubeSongs))
                 }
-                emit(Response.Success(downloadedSongs))
-            } else if (cached == null) {
-                emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
+                saved.isEmpty() && cached == null -> emit(Response.Success(emptyList()))
             }
             return@flow
         }
@@ -849,7 +864,9 @@ class Api @Inject constructor(
                     artists = col.artists,
                 )
             }
-            val offlineLibrary = deduplicateLibraryEntries(listOf(liked, downloaded) + localEntries + offlineEntries)
+            val offlineLibrary = deduplicateLibraryEntries(
+                listOf(liked, downloaded) + localEntries + offlineEntries + derivedAlbumEntries()
+            )
             HomeCache.library = offlineLibrary
             emit(Response.Success(offlineLibrary))
             return@flow
@@ -1023,7 +1040,29 @@ class Api @Inject constructor(
                     time = "Available offline",
                 )
                 emit(Response.Success(model))
-            } else if (cached == null) {
+                return@flow
+            }
+            // Login free, a YouTube Music playlist still has a real title and cover, so
+            // read them from the playlist page. Emitting Success rather than an error is
+            // also what lets the playlist screen save the playlist into the library.
+            if (looksLikeYouTubePlaylistId(clean)) {
+                val page = runCatching {
+                    com.metrolist.innertube.YouTube.playlist(clean).getOrNull()
+                }.getOrNull()
+                if (page != null) {
+                    val model = AlbumsModel(
+                        id = stableId("playlist:$clean"),
+                        artists = page.artist,
+                        coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(page.thumbnail),
+                        name = page.title,
+                        time = "",
+                    )
+                    HomeCache.setPlaylistDetail(clean, model)
+                    emit(Response.Success(model))
+                    return@flow
+                }
+            }
+            if (cached == null) {
                 emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
             }
             return@flow
@@ -1085,5 +1124,156 @@ class Api @Inject constructor(
             ?: candidates.firstOrNull { artistMatches(it) }
             ?: nameMatches.firstOrNull()
             ?: candidates.first()
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────
+    // Login free album and playlist loading, straight from YouTube Music.
+    //
+    // The app navigates to an album by display name because that is all the older
+    // Spotify mapping preserved. So the name is resolved to a YouTube album id
+    // first, and only then is the real tracklist fetched. A plain song search can
+    // find tracks that mention the album but it cannot give the album's actual
+    // contents or their order, which is why the browse endpoint is used.
+    // ────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Albums the user has actually played or liked.
+     *
+     * Login free there is no "saved albums" list to read, which is why the library's
+     * Albums filter used to be permanently empty: the only album entries came from
+     * offline collections, and those are written only after an album screen has already
+     * loaded. So the album shelf is derived from what is on the device instead. Every
+     * distinct album named by a liked song or a history entry becomes an entry, newest
+     * first, and tapping it opens the real album page.
+     */
+    private fun derivedAlbumEntries(): List<com.music.spotui.data.entity.LibraryEntry> {
+        val byName = LinkedHashMap<String, com.music.spotui.data.entity.LibraryEntry>()
+
+        fun add(rawName: String, artists: String, cover: String) {
+            val name = rawName.trim()
+            if (name.isBlank()) return
+            val key = name.lowercase()
+            val existing = byName[key]
+            if (existing == null) {
+                byName[key] = com.music.spotui.data.entity.LibraryEntry(
+                    spotifyId = "album:$name|$artists",
+                    name = name,
+                    subtitle = if (artists.isBlank()) "Album" else "Album • $artists",
+                    coverUri = cover,
+                    isPlaylist = false,
+                    artists = artists,
+                )
+            } else if (existing.coverUri.isBlank() && cover.isNotBlank()) {
+                // A later mention may carry the artwork the first one lacked.
+                byName[key] = existing.copy(coverUri = cover)
+            }
+        }
+
+        runCatching {
+            com.music.spotui.data.preferences.getListeningHistory(context)
+                .forEach { add(it.album, it.singer, it.image) }
+        }
+        runCatching {
+            com.music.spotui.data.preferences.getLikedSongs(context)
+                .forEach { add(it.album, it.singer, it.coverUri) }
+        }
+
+        return byName.values.take(60)
+    }
+
+    /** Strips punctuation and case so "Kesariya (From Brahmastra)" compares sanely. */
+    private fun normaliseTitle(value: String): String =
+        value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+
+    private fun pickYouTubeAlbum(
+        candidates: List<com.metrolist.innertube.models.AlbumItem>,
+        albumName: String,
+        artist: String,
+    ): com.metrolist.innertube.models.AlbumItem? {
+        if (candidates.isEmpty()) return null
+        val wantTitle = normaliseTitle(albumName)
+        val wantArtists = artist.split(",", "&")
+            .map { normaliseTitle(it) }
+            .filter { it.isNotBlank() }
+
+        fun titleMatches(a: com.metrolist.innertube.models.AlbumItem) =
+            normaliseTitle(a.title) == wantTitle
+        fun artistMatches(a: com.metrolist.innertube.models.AlbumItem): Boolean {
+            if (wantArtists.isEmpty()) return false
+            val names = normaliseTitle(a.artists?.joinToString(" ") { it.name }.orEmpty())
+            return wantArtists.any { names.contains(it) }
+        }
+
+        return candidates.firstOrNull { titleMatches(it) && artistMatches(it) }
+            ?: candidates.firstOrNull { titleMatches(it) }
+            ?: candidates.firstOrNull { artistMatches(it) }
+            ?: candidates.first()
+    }
+
+    /**
+     * Resolves an album by name (and artist when known) and returns its real tracklist.
+     * Falls back to a song search so the album screen still shows something playable
+     * when the album itself cannot be found.
+     */
+    private suspend fun youtubeAlbumSongs(albumName: String, artist: String): List<SongsModel> {
+        val query = if (artist.isBlank()) albumName else "$albumName $artist"
+
+        val albumItem = runCatching {
+            com.metrolist.innertube.YouTube
+                .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ALBUM)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<com.metrolist.innertube.models.AlbumItem>()
+                .orEmpty()
+        }.getOrElse { emptyList() }
+            .let { pickYouTubeAlbum(it, albumName, artist) }
+
+        if (albumItem != null) {
+            val page = runCatching {
+                com.metrolist.innertube.YouTube.album(albumItem.browseId).getOrNull()
+            }.getOrNull()
+            val songs = page?.songs.orEmpty()
+            if (songs.isNotEmpty()) {
+                val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(
+                    page?.thumbnail ?: albumItem.thumbnail
+                )
+                return songs.map { item ->
+                    val song = item.toSongsModel()
+                    if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
+                }
+            }
+        }
+
+        return runCatching {
+            com.metrolist.innertube.YouTube
+                .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                .orEmpty()
+                .distinctBy { it.id }
+                .take(40)
+                .map { it.toSongsModel() }
+        }.getOrElse { emptyList() }
+    }
+
+    /**
+     * True for ids that YouTube Music can browse. Spotify playlist ids are exactly 22
+     * base62 characters, so anything longer or carrying a known YouTube prefix is
+     * treated as a YouTube playlist.
+     */
+    private fun looksLikeYouTubePlaylistId(id: String): Boolean =
+        id.startsWith("VL") || id.startsWith("OLAK") || id.startsWith("RD") ||
+            id.startsWith("PL") || id.startsWith("LL") || id.length > 22
+
+    private suspend fun youtubePlaylistSongs(playlistId: String): List<SongsModel> {
+        val page = runCatching {
+            com.metrolist.innertube.YouTube.playlist(playlistId).getOrNull()
+        }.getOrNull() ?: return emptyList()
+        val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(page.thumbnail)
+        return page.songs.map { item ->
+            val song = item.toSongsModel()
+            if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
+        }
     }
 }

@@ -56,7 +56,11 @@ fun artistRoute(name: String, id: String = ""): String {
  * different artists resolve to the right one. The artist value is URL-encoded.
  */
 fun albumRoute(name: String, artist: String = ""): String {
-    val base = "${Routes.Album.route}/$name"
+    // The name has to be encoded. Real album titles contain "?", "/", "#" and quotes,
+    // for example 'Kesariya (From "Brahmastra")', and an unencoded "?" turned the rest
+    // of the title into query arguments so the album screen opened with a truncated
+    // name and found nothing.
+    val base = "${Routes.Album.route}/${android.net.Uri.encode(name)}"
     return if (artist.isBlank()) base
     else "$base?artist=${android.net.Uri.encode(artist)}"
 }

@@ -212,6 +212,35 @@ class InnerTube {
         }
     }
 
+    /**
+     * The "browse" endpoint. Used for album and playlist pages, which is the only way
+     * to get a real, ordered tracklist. Search can find that an album exists but it
+     * cannot list what is on it.
+     */
+    suspend fun browse(
+        client: YouTubeClient,
+        browseId: String? = null,
+        params: String? = null,
+        continuation: String? = null,
+    ) = withRetry {
+        httpClient.post("browse") {
+            ytClient(client, setLogin = useLoginForBrowse)
+            setBody(
+                BrowseBody(
+                    context = client.toContext(
+                        locale,
+                        visitorData,
+                        if (useLoginForBrowse) dataSyncId else null
+                    ),
+                    browseId = browseId,
+                    params = params,
+                )
+            )
+            parameter("continuation", continuation)
+            parameter("ctoken", continuation)
+        }
+    }
+
     suspend fun player(
         client: YouTubeClient,
         videoId: String,

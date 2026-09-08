@@ -5,6 +5,30 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.6
+
+### 🛠 Home Tab, Real Albums & A Professional Explore
+
+* **The Home tab works again.** Tapping Home did nothing and the only way back was the back button.
+  The cause was in the navigation itself: the tab recipe saved the stack it was popping under Home's
+  own id, then immediately restored it, so the screen never changed. Home now pops straight back to
+  itself, and the other tabs still keep their state.
+* **Albums actually load.** Album pages were blank because the tracklist was only ever fetched from
+  Spotify. Albums are now read from YouTube Music directly, with the real tracks in the real order,
+  with proper durations and cover art.
+* **Album names with punctuation open correctly.** Titles like `Kesariya (From "Brahmastra")` were
+  cut short because the name was not encoded into the link, so the album could never be found.
+* **Playlists open too.** A YouTube Music playlist now loads its full tracklist, title and cover
+  instead of showing nothing.
+* **The library's album shelf is no longer empty.** Albums are built from what you have actually
+  played and liked, so the Albums filter has content from the start rather than only after you
+  happen to open an album by hand.
+* **Explore searches more than songs.** New Songs, Artists, Albums and Playlists filters. Artists
+  open their page, albums open their tracklist and playlists open and play, all without a login.
+  Switching filters reuses what was already fetched, so it stays quick.
+
+---
+
 ## 🚀 Release v1.9.5
 
 ### 🛠 Albums, Nav Colour, Responsiveness & Cleanup

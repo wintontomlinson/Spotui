@@ -64,7 +64,11 @@ import com.music.spotui.R
 import com.music.spotui.data.entity.SongsModel
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
+import com.music.spotui.ui.viewmodel.AlbumResult
+import com.music.spotui.ui.viewmodel.ArtistResult
 import com.music.spotui.ui.viewmodel.PlayerViewModel
+import com.music.spotui.ui.viewmodel.PlaylistResult
+import com.music.spotui.ui.viewmodel.SearchTab
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 import com.music.spotui.ui.viewmodel.formatDurationMs
 
@@ -130,6 +134,10 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     val error by vm.error
     val hasSearched by vm.hasSearched
     val recent by vm.recent
+    val tab by vm.tab
+    val artistResults by vm.artists
+    val albumResults by vm.albums
+    val playlistResults by vm.playlists
 
     val submit: (String) -> Unit = { q ->
         vm.onQueryChange(q)
@@ -161,21 +169,59 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
             onClear = { vm.clear() },
         )
 
+        // The result-kind filter only makes sense once there is a search to filter.
+        if (hasSearched || query.isNotBlank()) {
+            ResultTabs(selected = tab, onSelect = { vm.selectTab(it) })
+        }
+
+        val currentCount = when (tab) {
+            SearchTab.SONGS -> results.size
+            SearchTab.ARTISTS -> artistResults.size
+            SearchTab.ALBUMS -> albumResults.size
+            SearchTab.PLAYLISTS -> playlistResults.size
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             when {
-                isLoading && results.isEmpty() -> ResultSkeleton()
+                isLoading && currentCount == 0 -> ResultSkeleton(circular = tab == SearchTab.ARTISTS)
 
-                results.isNotEmpty() -> {
-                    LazyColumn(contentPadding = PaddingValues(top = 4.dp, bottom = 180.dp)) {
-                        itemsIndexed(results) { index, song ->
+                currentCount > 0 -> LazyColumn(
+                    contentPadding = PaddingValues(top = 2.dp, bottom = 180.dp),
+                ) {
+                    when (tab) {
+                        SearchTab.SONGS -> itemsIndexed(results) { index, song ->
                             ResultRow(song = song, onClick = { playResult(song, index) })
+                        }
+                        SearchTab.ARTISTS -> items(artistResults, key = { it.id }) { artist ->
+                            ArtistResultRow(artist) {
+                                // The artist page resolves by name on YouTube, which is what
+                                // works without a login. The channel id is deliberately not
+                                // passed, since that argument means a Spotify id downstream.
+                                navController.navigate(
+                                    com.music.spotui.ui.navigation.artistRoute(artist.name)
+                                )
+                            }
+                        }
+                        SearchTab.ALBUMS -> items(albumResults, key = { it.browseId }) { album ->
+                            AlbumResultRow(album) {
+                                navController.navigate(
+                                    com.music.spotui.ui.navigation.albumRoute(album.title, album.artist)
+                                )
+                            }
+                        }
+                        SearchTab.PLAYLISTS -> items(playlistResults, key = { it.id }) { playlist ->
+                            PlaylistResultRow(playlist) {
+                                navController.navigate(
+                                    com.music.spotui.ui.navigation.playlistRoute(playlist.id, playlist.title)
+                                )
+                            }
                         }
                     }
                 }
 
                 hasSearched && !isLoading -> EmptyState(
-                    title = "No results found",
-                    message = error ?: "Try a different spelling or a shorter search.",
+                    title = "No ${tab.label.lowercase()} found",
+                    message = error ?: "Try a different spelling or another filter.",
                 )
 
                 else -> DiscoverPane(
@@ -185,6 +231,157 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                     onClearRecent = { vm.clearRecent() },
                 )
             }
+        }
+    }
+}
+
+/** Songs / Artists / Albums / Playlists selector, styled as amber pills. */
+@Composable
+private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(bottom = 6.dp),
+    ) {
+        items(SearchTab.entries.toList(), key = { it.name }) { entry ->
+            val active = entry == selected
+            Text(
+                text = entry.label,
+                color = if (active) Color.Black else Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(if (active) Accent else SurfaceHigh)
+                    .border(
+                        1.dp,
+                        if (active) Color.Transparent else Hairline,
+                        RoundedCornerShape(50),
+                    )
+                    .clickable { onSelect(entry) }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun ArtistResultRow(artist: ArtistResult, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlideImage(
+            modifier = Modifier
+                .size(52.dp)
+                // Artists read as people, so their image is a circle.
+                .clip(RoundedCornerShape(50)),
+            model = artist.thumbnail,
+            contentScale = ContentScale.Crop,
+            failure = placeholder(R.drawable.placeholder),
+            loading = placeholder(R.drawable.placeholder),
+            contentDescription = null,
+        )
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text(
+                text = artist.name,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(text = "Artist", color = TextDim, fontSize = 12.sp)
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlideImage(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(RoundedCornerShape(6.dp)),
+            model = album.thumbnail,
+            contentScale = ContentScale.Crop,
+            failure = placeholder(R.drawable.placeholder),
+            loading = placeholder(R.drawable.placeholder),
+            contentDescription = null,
+        )
+        Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
+            Text(
+                text = album.title,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = listOfNotNull(
+                    "Album",
+                    album.artist.takeIf { it.isNotBlank() },
+                    album.year?.toString(),
+                ).joinToString(" • "),
+                color = TextDim,
+                fontSize = 12.sp,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GlideImage(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(RoundedCornerShape(6.dp)),
+            model = playlist.thumbnail,
+            contentScale = ContentScale.Crop,
+            failure = placeholder(R.drawable.placeholder),
+            loading = placeholder(R.drawable.placeholder),
+            contentDescription = null,
+        )
+        Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
+            Text(
+                text = playlist.title,
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = listOfNotNull(
+                    "Playlist",
+                    playlist.author.takeIf { it.isNotBlank() },
+                    playlist.songCount.takeIf { it.isNotBlank() },
+                ).joinToString(" • "),
+                color = TextDim,
+                fontSize = 12.sp,
+                maxLines = 1,
+            )
         }
     }
 }
@@ -472,7 +669,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
 
 /** Placeholder rows that pulse while the first page of results loads. */
 @Composable
-private fun ResultSkeleton() {
+private fun ResultSkeleton(circular: Boolean = false) {
     val transition = rememberInfiniteTransition(label = "skeleton")
     val alpha by transition.animateFloat(
         initialValue = 0.35f,
@@ -494,7 +691,9 @@ private fun ResultSkeleton() {
                 Box(
                     modifier = Modifier
                         .size(52.dp)
-                        .clip(RoundedCornerShape(6.dp))
+                        // Match the shape of the rows being waited for, so the list does
+                        // not visibly change form when the results land.
+                        .clip(RoundedCornerShape(if (circular) 50.dp else 6.dp))
                         .background(Surface.copy(alpha = alpha)),
                 )
                 Column(

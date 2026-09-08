@@ -167,13 +167,41 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                     // longer on the stack, which silently did nothing and
                                     // left the tab unresponsive.
                                     if (currentRoute != item.route) {
-                                        navController.navigate(item.route) {
-                                            val startRoute = navController.graph.startDestinationRoute
-                                            popUpTo(startRoute ?: item.route) {
-                                                saveState = true
+                                        val startRoute = navController.graph.startDestinationRoute
+                                        if (startRoute != null && item.route == startRoute) {
+                                            // Home IS the graph's start destination, and that
+                                            // makes the usual tab recipe cancel itself out.
+                                            // NavController runs popUpTo first, and a pop with
+                                            // saveState records the saved stack under the
+                                            // popUpTo destination's own id. Navigating to that
+                                            // same destination with restoreState then finds
+                                            // that fresh entry and restores the stack it just
+                                            // popped, so the screen never actually changed and
+                                            // the only way back to Home was the back button.
+                                            // Popping straight to Home avoids the round trip,
+                                            // and saveState still keeps the other tabs' state
+                                            // for when they are reselected.
+                                            val popped = navController.popBackStack(
+                                                route = startRoute,
+                                                inclusive = false,
+                                                saveState = true,
+                                            )
+                                            if (!popped) {
+                                                // A deep link can leave Home off the stack
+                                                // entirely, in which case there is nothing to
+                                                // pop back to and it has to be pushed.
+                                                navController.navigate(startRoute) {
+                                                    launchSingleTop = true
+                                                }
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
+                                        } else {
+                                            navController.navigate(item.route) {
+                                                popUpTo(startRoute ?: item.route) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
                                         }
                                     }
                                 },
