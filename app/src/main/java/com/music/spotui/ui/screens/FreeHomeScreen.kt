@@ -116,7 +116,7 @@ fun FreeHomeScreen(navController: NavController) {
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
     ) {
-        item { HomeHeader(onSearch = { openSearch("") }) }
+        item { HomeHeader() }
 
         item {
             MoodChips(onPick = openSearch)
@@ -156,43 +156,46 @@ fun FreeHomeScreen(navController: NavController) {
 
 /** Greeting block with a compact search affordance on the right. */
 @Composable
-private fun HomeHeader(onSearch: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+private fun HomeHeader() {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 12.dp, top = 16.dp, bottom = 14.dp),
+            .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 16.dp),
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = greeting(),
-                color = Color.White,
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                text = greetingSubtitle(),
-                color = TextDim,
-                fontSize = 13.sp,
-            )
-        }
+        // A small amber accent bar above the greeting, a premium masthead touch that ties
+        // the header to the app's colour.
         Box(
-            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(SurfaceHigh)
-                .border(1.dp, Hairline, CircleShape)
-                .clickable(onClick = onSearch),
-        ) {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = "Search",
-                tint = Accent,
-                modifier = Modifier.size(21.dp),
-            )
-        }
+                .width(34.dp)
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Accent, com.music.spotui.ui.theme.AccentDark)
+                    )
+                ),
+        )
+        Spacer(Modifier.height(14.dp))
+        // The greeting is drawn in a warm amber gradient with the heavier title cut, so it
+        // reads as a premium masthead rather than plain white body text.
+        Text(
+            text = greeting(),
+            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            letterSpacing = (-0.5).sp,
+            style = androidx.compose.ui.text.TextStyle(
+                brush = Brush.horizontalGradient(
+                    listOf(Color(0xFFFFE0A3), Accent)
+                ),
+            ),
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = greetingSubtitle(),
+            color = TextDim,
+            fontSize = 13.sp,
+        )
     }
 }
 
