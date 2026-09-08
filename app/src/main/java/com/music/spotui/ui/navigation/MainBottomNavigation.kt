@@ -4,6 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -92,8 +95,25 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
 
                     NavigationBar(
                         modifier = Modifier
-                            .padding(30.dp, 0.dp)
-                            .fillMaxWidth(),
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .fillMaxWidth()
+                            // A floating, rounded nav bar that reads as a raised control
+                            // surface over the content, rather than icons sitting loose on
+                            // the gradient.
+                            .shadow(
+                                elevation = 20.dp,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                                clip = false,
+                                ambientColor = Color.Black,
+                                spotColor = Color.Black,
+                            )
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
+                            .background(Color(0xFF16161A))
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.07f),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                            ),
                         containerColor = Color.Transparent,
                         windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
                     ) {
@@ -156,7 +176,9 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = Color(0xFFF5A524),
                                     unselectedIconColor = Color.Gray,
-                                    indicatorColor = Color.Transparent
+                                    // A soft amber pill behind the active tab's icon, so
+                                    // the selection is clear at a glance without shouting.
+                                    indicatorColor = Color(0xFFF5A524).copy(alpha = 0.16f),
                                 )
                             )
 

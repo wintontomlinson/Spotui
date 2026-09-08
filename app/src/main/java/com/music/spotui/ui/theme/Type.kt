@@ -31,13 +31,21 @@ val Montserrat = SpotifyMix
 private val base = TextStyle(fontFamily = SpotifyMix)
 private val title = TextStyle(fontFamily = SpotifyMixTitle, fontWeight = FontWeight.Bold)
 
+// Tighter tracking on the big display/title cuts, which is what makes large headings
+// look intentional and premium rather than loose. Body text keeps a hair of negative
+// tracking for density without hurting legibility.
 val Typography = Typography(
-    displayLarge = title, displayMedium = title, displaySmall = title,
-    headlineLarge = title, headlineMedium = title, headlineSmall = title,
-    titleLarge = base.copy(fontWeight = FontWeight.Bold),
-    titleMedium = base.copy(fontWeight = FontWeight.Bold),
-    titleSmall = base.copy(fontWeight = FontWeight.Bold),
-    bodyLarge = base.copy(fontSize = 16.sp, lineHeight = 24.sp),
-    bodyMedium = base, bodySmall = base,
+    displayLarge = title.copy(letterSpacing = (-0.5).sp),
+    displayMedium = title.copy(letterSpacing = (-0.5).sp),
+    displaySmall = title.copy(letterSpacing = (-0.4).sp),
+    headlineLarge = title.copy(letterSpacing = (-0.4).sp),
+    headlineMedium = title.copy(letterSpacing = (-0.3).sp),
+    headlineSmall = title.copy(letterSpacing = (-0.3).sp),
+    titleLarge = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp),
+    titleMedium = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.2).sp),
+    titleSmall = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.2).sp),
+    bodyLarge = base.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = (-0.2).sp),
+    bodyMedium = base.copy(letterSpacing = (-0.1).sp),
+    bodySmall = base,
     labelLarge = base, labelMedium = base, labelSmall = base,
 )

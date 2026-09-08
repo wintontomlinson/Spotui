@@ -18,11 +18,22 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
+// A single, deliberate dark scheme built around the amber accent, so every Material
+// component (buttons, switches, sliders, indicators) picks up the app's colour instead
+// of a stray purple or a wallpaper tint.
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
+    primary = Accent,
+    onPrimary = OnAccent,
+    secondary = Accent,
+    onSecondary = OnAccent,
+    tertiary = AccentDark,
     background = AppBackground,
+    onBackground = Color(0xFFF2F2F5),
+    surface = SurfaceElevated,
+    onSurface = Color(0xFFF2F2F5),
+    surfaceVariant = SurfaceCard,
+    onSurfaceVariant = Color(0xFFB6B6BE),
+    outline = Hairline,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -43,20 +54,15 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun SpotuiTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // The app is a single, always dark, amber themed experience by design.
+    darkTheme: Boolean = true,
+    // Dynamic color is intentionally OFF. Letting Android 12+ retint the UI from the
+    // user's wallpaper overrode the amber accent and the deliberate dark surfaces, so the
+    // premium look changed from phone to phone. The app owns its palette now.
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = DarkColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
