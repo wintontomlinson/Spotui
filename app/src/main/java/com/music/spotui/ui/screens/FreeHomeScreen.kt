@@ -334,10 +334,15 @@ private fun MoodChips(onPick: (String) -> Unit) {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
+    // Width scales with the screen instead of a fixed 232dp, so on small phones the tile
+    // does not overflow and on tablets it does not look cramped. Bounded so it stays a
+    // tidy card rather than stretching edge to edge.
+    val screenWidth = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
+    val tileWidth = (screenWidth * 0.62f).coerceIn(200.dp, 280.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .width(232.dp)
+            .width(tileWidth)
             .clip(RoundedCornerShape(8.dp))
             .background(Surface)
             .clickable(onClick = onClick)

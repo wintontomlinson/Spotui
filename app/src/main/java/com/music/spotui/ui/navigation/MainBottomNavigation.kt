@@ -108,10 +108,16 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 spotColor = Color.Black,
                             )
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
-                            .background(Color(0xFF16161A))
+                            // A warm amber tinted gradient so the nav bar carries the
+                            // app's colour instead of being a flat dark slab.
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color(0xFF2A2118), Color(0xFF1A160F)),
+                                )
+                            )
                             .border(
                                 width = 1.dp,
-                                color = Color.White.copy(alpha = 0.07f),
+                                color = Color(0xFFF5A524).copy(alpha = 0.18f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             ),
                         containerColor = Color.Transparent,

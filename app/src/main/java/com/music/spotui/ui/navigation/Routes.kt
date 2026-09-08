@@ -25,9 +25,6 @@ sealed class Routes(
     object Settings : Routes(0, "Settings", "settings")
     object History : Routes(0, "History", "history")
     object LocalFiles : Routes(0, "LocalFiles", "localfiles")
-    object DeezerIntro : Routes(0, "DeezerIntro", "deezerintro")
-    object DeezerLogin : Routes(0, "DeezerLogin", "deezerlogin")
-    object SpotiflacVerify : Routes(0, "SpotiflacVerify", "spotiflacverify")
 }
 
 

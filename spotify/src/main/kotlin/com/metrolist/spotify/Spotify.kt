@@ -1731,7 +1731,10 @@ object Spotify {
                     put("uri", "spotify:album:$albumId")
                     put("locale", "")
                     put("offset", 0)
-                    put("limit", 50)
+                    // Raised from 50 so long albums and deluxe editions load in full
+                    // instead of being cut off at 50 tracks. Kept at 150 so a huge box set
+                    // does not compose hundreds of rows at once and stall the screen.
+                    put("limit", 150)
                 }
 
             val response =
