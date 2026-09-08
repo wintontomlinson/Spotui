@@ -5,6 +5,20 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.7
+
+### 🎨 Launch Splash & Naming
+
+* **The launch splash is fixed.** It was showing the dark waveform icon on a dark grey background, so
+  it was nearly invisible, a dark blob for a moment before the app opened. The splash background is
+  now the amber plate colour, so the launch shows the same dark waveform on amber as the launcher
+  icon you tapped. The old unused Spotify green splash logo was removed.
+* **Remaining Spotui text is now SOLO.** The battery optimization tips in Settings, the update
+  message, and the invalid backup message all say SOLO. Internal identifiers no user ever sees (log
+  tags, the package name) are left as is so nothing that depends on them breaks.
+
+---
+
 ## 🚀 Release v1.8.6
 
 ### 🐛 Bug Fixes
