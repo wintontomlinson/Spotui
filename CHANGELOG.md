@@ -5,6 +5,29 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.3
+
+### 🎨 Home, Search, Library & Settings Redesigned
+
+Each of the four main screens got a premium pass, styling only, with all data, navigation and
+playback wiring left as it was.
+
+* **Home.** The search button is an amber tinted circle with a hairline edge, the Trending quick
+  picks block is a bordered card with a soft top down gradient and amber play badges, and artwork
+  cards gained a soft drop shadow.
+* **Search.** A taller rounded search field with a hairline edge and an amber search glyph, and
+  outlined popular search chips so they read as a tidy set.
+* **Library.** The quick access grid dropped the old blue, teal and purple mix for one cohesive
+  palette: Liked leads in amber, the rest are graded dark tiles with an amber icon, each with a
+  hairline edge and a soft shadow. Filter chips get a subtle outline when unselected.
+* **Settings.** Cards get a hairline edge and a little more breathing room so each control reads as
+  its own raised surface.
+
+Surfaces across all four were nudged onto the shared dark ramp so nothing looks off palette beside
+the new theme.
+
+---
+
 ## 🚀 Release v1.8.2
 
 ### 🎨 Full Premium Redesign
