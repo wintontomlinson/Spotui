@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.1
+
+### 🎚 Quality & 🎨 Player Redesign
+
+* **Default quality is Normal again**, on both wifi and cellular. This is safe now: the automatic
+  selector no longer grabs the lowest bitrate on mobile data. It takes the best stream under a
+  160 kbps ceiling on cellular and the full best on wifi, so Normal means good quality that adapts to
+  the connection. High and Low are still there as explicit choices, and downloads stay High.
+* **Premium player redesign**, visual only, with all playback, gestures, swipe to skip, the slider
+  and every sheet untouched:
+  * Background blends from the artwork's dominant colour through a darkened version of itself into
+    near black, rather than a hard colour to black cut.
+  * Artwork sits in a rounded card with a soft drop shadow, and neighbouring tracks scale down as you
+    swipe so the current one stands out.
+  * The play button is an amber gradient disc with an accent glow, so the main control reads in the
+    app's colour instead of flat white.
+
+---
+
 ## 🚀 Release v1.8.0
 
 ### ⚡ Slow Network, 📦 Smaller APK, 🎧 Same High Quality
