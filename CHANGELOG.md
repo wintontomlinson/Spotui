@@ -5,6 +5,27 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.8
+
+### 🎨 Warmer Theme, Cleaner Library, Working Artist Images & Lyrics
+
+* **Less pure black.** The surfaces were near black and read flat. The whole app now carries a warm
+  amber-brown tint through the background, cards and sheets, so it feels lit while staying dark and
+  premium.
+* **Library de-duplicated.** Liked Songs and Downloads were showing both as top tiles and again as
+  list rows; now each appears once. The extra Listening history tile is gone since Recently played
+  already covers it. The Artists filter chip is removed because it only ever produced an empty screen
+  on this login-free build.
+* **Artist photos now load.** The artists sheet used to only fetch images through Spotify, which
+  needs a login this build never has, so it always showed a grey placeholder. It now falls back to
+  YouTube, so a real artist photo shows without any login.
+* **Lyrics are more reliable.** Exact match is skipped when the artist is unknown (it can't match
+  without one), and an extra title search on the raw title is tried before the regional fallback.
+  Confirmed the lyrics servers respond correctly, so the remaining gaps were the blank-artist cases
+  this fixes.
+
+---
+
 ## 🚀 Release v1.8.7
 
 ### 🎨 Launch Splash & Naming
