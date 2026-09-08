@@ -5,6 +5,28 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.6
+
+### 🐛 Bug Fixes
+
+An audit for real bugs, not style. Five fixed, by severity:
+
+* **A crash when starting a track during a cache reset.** The player start chained four non-null
+  assertions on a player that a concurrent cache reset or service teardown can release, racing the
+  release into an NPE. It now takes one safe reference and abandons the start cleanly if the player
+  is gone.
+* **Wrong heart on the Liked Songs list.** Rows kept their liked state by screen position, not by
+  track, so removing or re-sorting a song could leave a row showing the wrong heart or opening the
+  save sheet for the wrong track. State is now tied to the track.
+* **A crash on the Deezer data path.** A read before open or after close threw a hard crash instead
+  of a recoverable error; it now recovers.
+* **A rare crash on the search error message**, where the error could clear itself between being
+  checked and being shown.
+* **A defensive fix on Home**, so tapping a track can never crash if the list changed underneath the
+  tap, plus removal of a dead import and stale comment from the header redesign.
+
+---
+
 ## 🚀 Release v1.8.5
 
 ### 🎨 Settings Recreated & Player Polished
