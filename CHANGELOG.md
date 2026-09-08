@@ -5,6 +5,16 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.2
+
+### 🛠 One Library Heading
+
+The list had a second "Your library" heading below the quick access grid, duplicating the title
+already at the top of the screen. Removed it, so the word appears once and the list follows the grid
+directly.
+
+---
+
 ## 🚀 Release v1.9.1
 
 ### 🛠 Library Shows Everything Again
