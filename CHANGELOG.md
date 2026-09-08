@@ -5,6 +5,22 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.7
+
+### 🛠 Don't Skip the Track You Chose
+
+Still on the restored working baseline, additions only. When a stream failed part way through, the
+player jumped straight to the next track. That is the skip you see. But you chose that track, so a
+failure should first be treated as a stale URL, not a reason to move on.
+
+* **A mid playback error now retries the same track once.** The stale stream is dropped, a fresh URL
+  is resolved, and the track resumes from where it stopped. Only if the same track fails a second
+  time does the queue advance, so a track that genuinely cannot play still moves on instead of
+  looping. This works together with the 1.7.6 PoToken fix: a fresh URL after a PoToken becomes
+  available is what lets the retried track actually play.
+
+---
+
 ## 🚀 Release v1.7.6
 
 ### 🛠 PoToken
