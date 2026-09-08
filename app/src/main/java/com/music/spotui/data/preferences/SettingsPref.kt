@@ -50,16 +50,17 @@ private fun readQ(c: Context, key: String, def: StreamQuality): StreamQuality =
 private fun writeQ(c: Context, key: String, q: StreamQuality) =
     prefs(c).edit().putString(key, q.name).apply()
 
-fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.HIGH)
+// Default is Normal (the automatic selector). This is safe now that AUTO no longer
+// picks the lowest bitrate on a metered network: findFormat's AUTO branch takes the
+// best stream under a 160 kbps ceiling on cellular and the full best on wifi, so
+// Normal means good quality that adapts to the connection rather than poor mobile audio.
+fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.NORMAL)
 fun setWifiQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_WIFI_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-// High on cellular too. The previous Normal default mapped to the automatic
-// selector, which on a metered network deliberately picked the LOWEST bitrate
-// stream and made playback sound poor on mobile data.
-fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.HIGH)
+fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.NORMAL)
 fun setCellularQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_CELL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)

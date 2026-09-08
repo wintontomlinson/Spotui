@@ -49,6 +49,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.lerp
+import kotlin.math.absoluteValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -587,9 +590,17 @@ fun PlayerScreen(navController: NavController) {
                 alpha = (1f - (offsetY / screenHeight)).coerceIn(0f, 1f)
             }
             .background(
+                // A richer three stop blend: the artwork's dominant colour at the top,
+                // eased through a darkened version of itself, into near black at the
+                // bottom, so the screen reads as one deep gradient rather than a hard
+                // colour to black cut.
                 Brush.verticalGradient(
-                    colors = listOf(dominentColor, Color.Black),
-                    startY = 100f
+                    colors = listOf(
+                        dominentColor,
+                        lerp(dominentColor, Color.Black, 0.55f),
+                        Color(0xFF0A0A0C),
+                    ),
+                    startY = 0f,
                 )
             )
     ) {
@@ -664,7 +675,14 @@ fun PlayerScreen(navController: NavController) {
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f)
                                     .padding(16.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .shadow(
+                                        elevation = 24.dp,
+                                        shape = RoundedCornerShape(20.dp),
+                                        clip = false,
+                                        ambientColor = Color.Black,
+                                        spotColor = Color.Black,
+                                    )
+                                    .clip(RoundedCornerShape(20.dp))
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -677,11 +695,31 @@ fun PlayerScreen(navController: NavController) {
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f),
                             ) { page ->
+                                // The playing page sits full size with a soft drop shadow
+                                // for a premium, lifted feel; neighbouring pages scale down
+                                // slightly so the current artwork clearly stands out as the
+                                // finger drags between tracks.
+                                val pageOffset = (
+                                    (artworkPagerState.currentPage - page) +
+                                        artworkPagerState.currentPageOffsetFraction
+                                    ).absoluteValue.coerceIn(0f, 1f)
+                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset)
                                 GlideImage(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .padding(16.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                        }
+                                        .shadow(
+                                            elevation = 24.dp,
+                                            shape = RoundedCornerShape(20.dp),
+                                            clip = false,
+                                            ambientColor = Color.Black,
+                                            spotColor = Color.Black,
+                                        )
+                                        .clip(RoundedCornerShape(20.dp))
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -1426,11 +1464,24 @@ fun PlayerFull(
         )
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                // requiredSize forces an exact 64×64 square even if the parent Column
+                // requiredSize forces an exact 68×68 square even if the parent Column
                 // constrains height, .size() alone let it get squished into an ellipse.
-                .requiredSize(64.dp)
+                .requiredSize(68.dp)
+                // A soft amber glow under the play button so it reads as the primary
+                // control, in the app's accent rather than a flat white disc.
+                .shadow(
+                    elevation = 18.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = Color(0xFFF5A524),
+                    spotColor = Color(0xFFF5A524),
+                )
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFFFC760), Color(0xFFF5A524)),
+                    )
+                )
                 .clickable {
                     if (songPlayingState) {
                         SongPlayer.pause()
