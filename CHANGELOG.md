@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.4
+
+### 🔄 Back to a Working State
+
+Playback is restored to commit 6afdea0, the last point songs were confirmed to play. Everything the
+recent releases changed about how streams are fetched, chunked reads, query string byte ranges, per
+format cache keys, fresh URL retries, the n transform condition and the reordered client list, is
+reverted. The playback files now differ from that baseline by additions only, with no logic removed.
+
+Two small things are kept on top, neither of which can stop a track that already played:
+
+* **visitorData is fetched on demand.** It is normally fetched by a background job at startup, so a
+  track tapped before that landed found it missing and skipped the PoToken attempt. Fetching it right
+  before resolution only restores an attempt that was being lost.
+* **The playback log stays.** Track starts, player errors, queue moves and how each stream resolved
+  are recorded, so a failure can be read out of Settings rather than guessed at.
+
+---
+
 ## 🚀 Release v1.7.3
 
 ### 🛠 Stream Resolution
