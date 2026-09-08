@@ -5,6 +5,22 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.8.5
+
+### 🎨 Settings Recreated & Player Polished
+
+* **Settings rows share one premium card now.** Every actionable row is a bordered surface with a
+  rounded leading icon badge and a trailing chevron, instead of the old inline rows that each carried
+  their own flat colour. A reusable row drives Devices and Battery, and the backup, restore and reset
+  rows moved onto the same shared surface with a consistent rounded shape and hairline edge. Every
+  action, toggle and file picker works exactly as before.
+* **Player title and labels polished.** The now playing title is larger in the heavy title typeface,
+  the artist line is brighter and heavier, and the PLAYING FROM label is a wider tracked amber
+  caption. All playback, gestures, the swipe pager, slider, sheets and the amber play button are
+  untouched.
+
+---
+
 ## 🚀 Release v1.8.4
 
 ### 🎨 Premium Greeting, No Search Button on Home
