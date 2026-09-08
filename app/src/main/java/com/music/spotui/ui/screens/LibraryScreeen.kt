@@ -714,18 +714,8 @@ fun SumUpLibraryScreen(
         // Premium quick access grid for the destinations that always work.
         item { LibraryQuickAccess(navController) }
 
-        // "Your library" heads the full list. When the only entries are the two pinned
-        // shortcuts (no playlists, albums or offline collections), also invite the user to
-        // start a collection so the space below does not look bare.
-        item {
-            Text(
-                text = "Your library",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 8.dp),
-            )
-        }
+        // The screen already has a "Your Library" title at the top, so the list starts
+        // straight after the quick access grid without a second heading.
         items(entries) { entry ->
             Row(
                 horizontalArrangement = Arrangement.Start,
