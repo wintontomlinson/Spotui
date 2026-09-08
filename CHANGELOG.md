@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.5
+
+### 🔍 Diagnosing the Half Plays
+
+No playback behaviour changed. Two log lines are added so a track that stops partway can be diagnosed
+from the device rather than guessed at, which last time cost a working app.
+
+* **End of track is logged with its numbers.** When a track ends, the log records where it stopped,
+  the length the player reports, the length the catalogue gave, and whether a crossfade was running. A
+  stop well short of either length means the stream ran out rather than the song finishing, and the
+  two lengths disagreeing points at a stream under reporting its own duration.
+* **The existing recovery logs when it fires**, so a re-resolve on a short stream is visible in the
+  log too.
+
+If a song still stops halfway, open Settings, view the playback log right after, and the `ended` line
+will say which of those it was.
+
+---
+
 ## 🚀 Release v1.7.4
 
 ### 🔄 Back to a Working State

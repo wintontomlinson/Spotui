@@ -48,8 +48,15 @@ object YTPlayerUtils {
     private const val TAG = "YTPlayerUtils"
     /** Max seconds to wait for signature-timestamp resolution before giving up. */
     private const val SIG_FUTURE_TIMEOUT_SEC = 5L
-    /** Max seconds to wait for PoToken generation before giving up. */
-    private const val POT_FUTURE_TIMEOUT_SEC = 5L
+    /**
+     * Max seconds to wait for PoToken generation before giving up.
+     *
+     * The generator has its own 5s internal budget (POTOKEN_TIMEOUT_MS). This outer wait
+     * has to be longer than that, or the two race and this side can abandon a PoToken the
+     * generator was about to return, which is most likely on the first track of a session
+     * when the WebView is cold starting. Give the generator its full budget plus headroom.
+     */
+    private const val POT_FUTURE_TIMEOUT_SEC = 12L
 
     private val httpClient = OkHttpClient.Builder()
         .proxy(YouTube.proxy)
