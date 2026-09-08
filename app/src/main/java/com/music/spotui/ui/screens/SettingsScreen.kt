@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.FolderOpen
@@ -212,69 +213,65 @@ fun SettingsScreen(navController: NavController) {
                 .padding(bottom = 200.dp)
         ) {
             SectionTitle("Devices & Bluetooth")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable { showDevicesSheet = true }
-                    .background(Color(0xFF1A1A20))
-                    .padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Audio Output Devices", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        com.music.spotui.ui.utils.AudioDeviceHelper.getCurrentAudioRouteName(context),
-                        color = Color(0xFFF5A524),
-                        fontSize = 12.sp,
+            SettingsClickRow(
+                title = "Audio Output Devices",
+                subtitle = com.music.spotui.ui.utils.AudioDeviceHelper.getCurrentAudioRouteName(context),
+                subtitleColor = SettingsAccent,
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_devices),
+                        contentDescription = null,
+                        tint = SettingsAccent,
+                        modifier = Modifier.size(20.dp),
                     )
-                }
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_devices),
-                    contentDescription = "Devices",
-                    tint = Color(0xFFF5A524),
-                    modifier = Modifier.size(22.dp)
-                )
-            }
+                },
+                trailing = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = SettingsTextDim,
+                        modifier = Modifier.size(22.dp),
+                    )
+                },
+                onClick = { showDevicesSheet = true },
+            )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
 
             SectionTitle("Background playback")
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable {
-                        batteryOptLauncher.launch(BatteryOptimizationHelper.buildAppSettingsIntent(context))
-                    }
-                    .background(Color(0xFF1A1A20))
-                    .padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Battery optimization", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (batteryOptExempt) "Exempt, app won't be killed" else "Not exempt, tap to change",
-                        color = if (batteryOptExempt) Color(0xFF81C784) else Color(0xFFB3B3B3),
-                        fontSize = 12.sp,
-                    )
-                }
-                if (batteryOptExempt) {
+            SettingsClickRow(
+                title = "Battery optimization",
+                subtitle = if (batteryOptExempt) "Exempt, app won't be killed" else "Not exempt, tap to change",
+                subtitleColor = if (batteryOptExempt) Color(0xFF81C784) else SettingsTextDim,
+                leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Check,
-                        contentDescription = "Enabled",
-                        tint = AppPalette,
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = null,
+                        tint = SettingsAccent,
+                        modifier = Modifier.size(20.dp),
                     )
-                }
-            }
+                },
+                trailing = if (batteryOptExempt) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = "Enabled",
+                            tint = SettingsAccent,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                } else null,
+                onClick = {
+                    batteryOptLauncher.launch(BatteryOptimizationHelper.buildAppSettingsIntent(context))
+                },
+            )
             BatteryOptimizationHelper.getManufacturerTips()?.let { (name, tip) ->
-                Spacer(Modifier.height(8.dp))
                 Text(
                     text = "Tip for $name",
                     color = Color(0xFFB3B3B3),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                 )
                 Text(
                     text = tip,
@@ -282,10 +279,12 @@ fun SettingsScreen(navController: NavController) {
                     fontSize = 12.sp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF1A1A20))
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
                 )
+                Spacer(Modifier.height(8.dp))
             }
 
 
@@ -309,7 +308,7 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .clickable {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
@@ -399,7 +398,7 @@ fun SettingsScreen(navController: NavController) {
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable { showPlaybackLog = true }
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                 )
@@ -410,7 +409,7 @@ fun SettingsScreen(navController: NavController) {
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable {
                             PlaybackLog.clear()
                             android.widget.Toast
@@ -431,7 +430,7 @@ fun SettingsScreen(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable(enabled = !isBackingUp) {
                             if (backupDirUri.isNullOrBlank()) {
                                 dirPickerLauncher.launch(null)
@@ -444,7 +443,8 @@ fun SettingsScreen(navController: NavController) {
                                 }
                             }
                         }
-                        .background(Color(0xFF1A1A20))
+                        .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
                         .padding(horizontal = 12.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -482,8 +482,9 @@ fun SettingsScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFF1A1A20))
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
                             .clickable(enabled = !isBackingUp) { dirPickerLauncher.launch(null) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -502,11 +503,12 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .clickable(enabled = !isRestoring) {
                         restoreFileLauncher.launch(arrayOf("application/json", "*/*"))
                     }
-                    .background(Color(0xFF1A1A20))
+                    .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -557,7 +559,7 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .clickable {
                         scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             com.music.spotui.di.SongPlayer.clearCaches(context)
@@ -570,7 +572,8 @@ fun SettingsScreen(navController: NavController) {
                             }
                         }
                     }
-                    .background(Color(0xFF1A1A20))
+                    .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -604,7 +607,7 @@ fun SettingsScreen(navController: NavController) {
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable {
                             com.music.spotui.data.api.SpotifySession.setSpDc(context, "")
                             com.music.spotui.data.api.Api.HomeCache.clear()
@@ -683,6 +686,54 @@ private fun SectionTitle(text: String) {
         letterSpacing = 1.2.sp,
         modifier = Modifier.padding(start = 4.dp, top = 22.dp, bottom = 10.dp)
     )
+}
+
+/**
+ * A tappable settings row rendered as a premium card: a bordered surface with a title, a
+ * subtitle, an optional leading icon, and an optional trailing slot (a chevron, a status
+ * icon). Used so every actionable row in Settings shares one look instead of each being
+ * styled inline with its own colours.
+ */
+@Composable
+private fun SettingsClickRow(
+    title: String,
+    subtitle: String,
+    subtitleColor: Color = SettingsTextDim,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SettingsCard)
+            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (leadingIcon != null) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(SettingsAccent.copy(alpha = 0.14f)),
+            ) { leadingIcon() }
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(2.dp))
+            Text(subtitle, color = subtitleColor, fontSize = 12.sp, lineHeight = 16.sp)
+        }
+        if (trailing != null) {
+            Spacer(Modifier.width(12.dp))
+            trailing()
+        }
+    }
+    Spacer(Modifier.height(8.dp))
 }
 
 @Composable

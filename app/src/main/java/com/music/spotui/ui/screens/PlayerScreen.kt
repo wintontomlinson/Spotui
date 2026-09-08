@@ -933,9 +933,10 @@ fun PlayerTopBar(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "PLAYING FROM",
-                color = Color(0xFFB3B3B3),
+                color = Color(0xFFF5A524),
                 fontSize = 9.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
             )
             Text(
                 text = contextName.ifBlank { "Now Playing" },
@@ -1152,17 +1153,20 @@ fun PlayerInfo(
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                             text = songTitle,
                             color = Color.White,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
+                            fontSize = 23.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.4).sp,
                             maxLines = 1,
                             softWrap = false,
                         )
                     }
+                    Spacer(Modifier.height(3.dp))
                     Text(
                         text = songSinger,
-                        color = Color.Gray,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFC4C4CC),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = if (onArtistClick != null) Modifier.clickable(
