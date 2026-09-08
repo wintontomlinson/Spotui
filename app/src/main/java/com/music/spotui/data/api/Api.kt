@@ -486,10 +486,18 @@ class Api @Inject constructor(
             emit(Response.Success(ArtistOverviewModel(name = artistName))); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            // Login free: Spotify's artist overview is unavailable, so build a basic one
-            // from YouTube instead of failing. A song search for the artist name gives an
-            // avatar (from an ArtistItem, else a song thumbnail) and a set of their tracks,
-            // which is enough to show the artist header, image and songs without a login.
+            // Login free: Spotify's artist overview is unavailable, so the artist's own
+            // YouTube Music page is read instead. That page carries the whole catalogue,
+            // which the previous version could not reach: it only ran a song search and
+            // kept ten results, so every artist looked like they had a handful of tracks.
+            val fromArtistPage = runCatching { youtubeArtistOverview(artistName) }.getOrNull()
+            if (fromArtistPage != null) {
+                emit(Response.Success(fromArtistPage))
+                return@flow
+            }
+
+            // No artist page could be found, so fall back to a song search. Fewer songs
+            // and no discography, but better than an empty screen.
             val ytOverview = runCatching {
                 val res = com.metrolist.innertube.YouTube.search(
                     artistName,
@@ -504,7 +512,7 @@ class Api @Inject constructor(
                 val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(
                     artistThumb ?: songs.firstOrNull()?.thumbnail
                 )
-                val topTracks = songs.take(10).map { s ->
+                val topTracks = songs.distinctBy { it.id }.map { s ->
                     val song = s.toSongsModel()
                     ArtistTrackUi(
                         song = if (song.coverUri.isBlank()) song.copy(coverUri = avatar) else song,
@@ -1190,6 +1198,74 @@ class Api @Inject constructor(
     /** Strips punctuation and case so "Kesariya (From Brahmastra)" compares sanely. */
     private fun normaliseTitle(value: String): String =
         value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+
+    /**
+     * Builds an artist overview from the artist's own YouTube Music page.
+     *
+     * Two steps: find the artist's channel by name, then read their page. The page's
+     * visible songs shelf holds about five tracks but links to a playlist with the full
+     * catalogue, and the innertube layer follows that link, so this returns the artist's
+     * real song list rather than a handful of search hits. Albums and singles come back as
+     * the discography, each carrying its exact album id so opening one is not a guess.
+     *
+     * Returns null when no matching channel exists, so the caller can fall back.
+     */
+    private suspend fun youtubeArtistOverview(artistName: String): ArtistOverviewModel? {
+        if (artistName.isBlank()) return null
+        val want = normaliseTitle(artistName)
+
+        val hits = runCatching {
+            com.metrolist.innertube.YouTube
+                .search(artistName, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ARTIST)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                .orEmpty()
+        }.getOrElse { emptyList() }
+
+        // An exact name match first. A fuzzy top hit for a short name is often somebody
+        // else entirely, which is how "RAM" used to open "Rammstein".
+        val channel = hits.firstOrNull { normaliseTitle(it.title) == want }
+            ?: hits.firstOrNull { normaliseTitle(it.title).contains(want) }
+            ?: return null
+
+        val page = runCatching {
+            com.metrolist.innertube.YouTube.artist(channel.id).getOrNull()
+        }.getOrNull() ?: return null
+        if (page.songs.isEmpty() && page.albums.isEmpty()) return null
+
+        val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(
+            page.thumbnail ?: channel.thumbnail
+        )
+
+        val topTracks = page.songs.map { item ->
+            val song = item.toSongsModel()
+            ArtistTrackUi(
+                song = if (song.coverUri.isBlank()) song.copy(coverUri = avatar) else song,
+                playcount = null,
+            )
+        }
+
+        val releases = page.albums.map { album ->
+            AlbumsModel(
+                id = stableId("ytalbum:${album.browseId}"),
+                artists = page.name.ifBlank { artistName },
+                coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(album.thumbnail),
+                name = album.title,
+                time = album.year?.toString().orEmpty(),
+                type = album.type.orEmpty().lowercase(),
+                browseId = album.browseId,
+            )
+        }
+
+        return ArtistOverviewModel(
+            name = page.name.ifBlank { artistName },
+            headerImage = avatar,
+            avatarImage = avatar,
+            topTracks = topTracks,
+            popularReleases = releases,
+        )
+    }
 
     /**
      * How closely a search hit's name matches the album asked for. Negative means the

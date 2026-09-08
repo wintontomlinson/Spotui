@@ -8,6 +8,7 @@ import com.metrolist.innertube.models.getItems
 import com.metrolist.innertube.models.response.BrowseResponse
 import com.metrolist.innertube.models.response.PlayerResponse
 import com.metrolist.innertube.models.response.SearchResponse
+import com.metrolist.innertube.pages.ArtistPage
 import com.metrolist.innertube.pages.BrowseParser
 import com.metrolist.innertube.pages.BrowsePage
 import com.metrolist.innertube.pages.SearchPage
@@ -142,6 +143,27 @@ object YouTube {
             browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId",
             id = playlistId.removePrefix("VL"),
         )
+    }
+
+    /**
+     * An artist's page: their picture, their releases, and their full song list.
+     *
+     * [channelId] is a YouTube channel id ("UC..."), which artist search results carry.
+     * The page's own songs shelf shows only about five tracks, so the playlist it links
+     * to is followed for the complete list.
+     */
+    suspend fun artist(channelId: String): Result<ArtistPage> = runCatching {
+        val response = innerTube.browse(WEB_REMIX, browseId = channelId).body<BrowseResponse>()
+        val page = BrowseParser.parseArtist(channelId, response)
+            ?: error("Artist $channelId could not be read")
+
+        val playlistId = page.songsPlaylistId ?: return@runCatching page
+        val full = runCatching { collection("VL$playlistId", playlistId) }.getOrNull()
+        if (full != null && full.songs.size > page.songs.size) {
+            page.copy(songs = full.songs)
+        } else {
+            page
+        }
     }
 
     /** Upper bound on how many tracks one collection may load, to keep paging sane. */

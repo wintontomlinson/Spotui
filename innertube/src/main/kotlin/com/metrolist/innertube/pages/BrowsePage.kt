@@ -1,6 +1,7 @@
 package com.metrolist.innertube.pages
 
 import com.metrolist.innertube.models.Album
+import com.metrolist.innertube.models.AlbumItem
 import com.metrolist.innertube.models.Artist
 import com.metrolist.innertube.models.MusicResponsiveHeaderRenderer
 import com.metrolist.innertube.models.MusicResponsiveListItemRenderer
@@ -31,6 +32,23 @@ data class BrowsePage(
     val songs: List<SongItem>,
     /** Token for the next page of tracks, or null when the tracklist is complete. */
     val continuation: String? = null,
+)
+
+/**
+ * An artist page: who they are, their songs, and their releases.
+ *
+ * [songsPlaylistId] is the playlist the page links behind its "Top songs" shelf. The
+ * shelf itself only shows a handful, and that handful is all the app used to be able to
+ * offer, which is why an artist looked like they had five songs. Following the link gives
+ * the full list.
+ */
+data class ArtistPage(
+    val id: String,
+    val name: String,
+    val thumbnail: String?,
+    val songs: List<SongItem>,
+    val albums: List<AlbumItem>,
+    val songsPlaylistId: String?,
 )
 
 object BrowseParser {
@@ -133,6 +151,85 @@ object BrowseParser {
             }
 
         return songs to items.getContinuation()
+    }
+
+    /** Parses an artist channel page. */
+    fun parseArtist(channelId: String, response: BrowseResponse): ArtistPage? {
+        val sections = collectSections(response)
+        val header = response.header?.musicImmersiveHeaderRenderer
+
+        val name = header?.title?.runs?.joinToString("") { it.text }.orEmpty()
+        val thumbnail = header?.thumbnail?.musicThumbnailRenderer?.getThumbnailUrl()
+            ?: header?.thumbnail?.croppedSquareThumbnailRenderer?.getThumbnailUrl()
+
+        // The songs shelf, plus the playlist it links to for the complete list.
+        val songShelf = sections.firstNotNullOfOrNull { it.musicShelfRenderer }
+        val songsPlaylistId = songShelf?.bottomEndpoint?.browseEndpoint?.browseId
+            ?.takeIf { it.startsWith("VL") }
+            ?.removePrefix("VL")
+
+        val songs = songShelf?.contents
+            ?.mapNotNull { it.musicResponsiveListItemRenderer }
+            ?.mapNotNull { renderer ->
+                toSongItem(
+                    renderer = renderer,
+                    fallbackThumbnail = thumbnail,
+                    fallbackArtist = name,
+                    collectionTitle = "",
+                    collectionId = "",
+                )
+            }
+            .orEmpty()
+            .distinctBy { it.id }
+
+        // Albums and singles come back as carousels of two row cards.
+        val albums = sections
+            .mapNotNull { it.musicCarouselShelfRenderer }
+            .flatMap { carousel ->
+                val label = carousel.header
+                    ?.musicCarouselShelfBasicHeaderRenderer
+                    ?.title
+                    ?.runs
+                    ?.firstOrNull()
+                    ?.text
+                carousel.contents.mapNotNull { content ->
+                    val item = content.musicTwoRowItemRenderer ?: return@mapNotNull null
+                    if (!item.isAlbum) return@mapNotNull null
+                    val browseId = item.navigationEndpoint.browseEndpoint?.browseId
+                        ?: return@mapNotNull null
+                    AlbumItem(
+                        browseId = browseId,
+                        // Only the album page knows the playlist id, and nothing here
+                        // needs it, so it stays empty rather than being invented.
+                        playlistId = "",
+                        title = item.title.runs?.joinToString("") { it.text }.orEmpty(),
+                        artists = null,
+                        year = item.subtitle?.runs
+                            ?.lastOrNull()
+                            ?.text
+                            ?.trim()
+                            ?.takeIf { it.length == 4 }
+                            ?.toIntOrNull()
+                            ?.takeIf { it in 1900..2100 },
+                        type = label,
+                        thumbnail = item.thumbnailRenderer.musicThumbnailRenderer?.getThumbnailUrl()
+                            ?: item.thumbnailRenderer.croppedSquareThumbnailRenderer?.getThumbnailUrl()
+                            ?: return@mapNotNull null,
+                    )
+                }
+            }
+            .distinctBy { it.browseId }
+
+        if (name.isBlank() && songs.isEmpty() && albums.isEmpty()) return null
+
+        return ArtistPage(
+            id = channelId,
+            name = name,
+            thumbnail = thumbnail,
+            songs = songs,
+            albums = albums,
+            songsPlaylistId = songsPlaylistId,
+        )
     }
 
     private fun collectSections(response: BrowseResponse): List<SectionListRenderer.Content> {

@@ -118,10 +118,18 @@ fun isLibraryEntryDownloaded(context: android.content.Context, entry: LibraryEnt
     }
 }
 
+/** Which library filters currently have anything behind them. */
+data class LibraryChipAvailability(
+    val hasPlaylists: Boolean = false,
+    val hasAlbums: Boolean = false,
+    val hasDownloads: Boolean = false,
+)
+
 @Composable
 fun LibraryFilterChips(
     selectedFilter: LibraryFilterType,
     isDownloadedOnly: Boolean,
+    availability: LibraryChipAvailability = LibraryChipAvailability(true, true, true),
     onFilterSelected: (LibraryFilterType) -> Unit,
     onToggleDownloaded: () -> Unit,
     onClearFilters: () -> Unit
@@ -156,32 +164,38 @@ fun LibraryFilterChips(
             }
         }
 
-        item {
-            LibraryChipItem(
-                label = "Playlists",
-                isSelected = selectedFilter == LibraryFilterType.PLAYLISTS,
-                onClick = { onFilterSelected(LibraryFilterType.PLAYLISTS) }
-            )
+        if (availability.hasPlaylists || selectedFilter == LibraryFilterType.PLAYLISTS) {
+            item {
+                LibraryChipItem(
+                    label = "Playlists",
+                    isSelected = selectedFilter == LibraryFilterType.PLAYLISTS,
+                    onClick = { onFilterSelected(LibraryFilterType.PLAYLISTS) }
+                )
+            }
         }
 
-        item {
-            LibraryChipItem(
-                label = "Albums",
-                isSelected = selectedFilter == LibraryFilterType.ALBUMS,
-                onClick = { onFilterSelected(LibraryFilterType.ALBUMS) }
-            )
+        if (availability.hasAlbums || selectedFilter == LibraryFilterType.ALBUMS) {
+            item {
+                LibraryChipItem(
+                    label = "Albums",
+                    isSelected = selectedFilter == LibraryFilterType.ALBUMS,
+                    onClick = { onFilterSelected(LibraryFilterType.ALBUMS) }
+                )
+            }
         }
 
         // The Artists filter is dropped: it hides every library entry and only shows
         // followed artists, which do not exist on this login free build, so it always
         // produced an empty screen.
 
-        item {
-            LibraryChipItem(
-                label = "Downloaded",
-                isSelected = isDownloadedOnly,
-                onClick = { onToggleDownloaded() }
-            )
+        if (availability.hasDownloads || isDownloadedOnly) {
+            item {
+                LibraryChipItem(
+                    label = "Downloaded",
+                    isSelected = isDownloadedOnly,
+                    onClick = { onToggleDownloaded() }
+                )
+            }
         }
     }
 }
@@ -378,10 +392,27 @@ fun LibraryScreen(navController: NavController) {
             }
         }
 
+        // A filter chip that can only ever lead to a blank screen is worse than no chip
+        // at all, so each one is offered only when it actually has something behind it.
+        // The chip currently in use always stays, otherwise selecting it would make it
+        // vanish along with the only way to switch back.
+        val availableFilters = remember(entries, isDownloadedOnly, context) {
+            val rows = ((entries as? Response.Success)?.data).orEmpty().filterNot {
+                it.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
+                    it.spotifyId == Api.HomeCache.DOWNLOADS_ID
+            }
+            LibraryChipAvailability(
+                hasPlaylists = rows.any { it.isPlaylist },
+                hasAlbums = rows.any { !it.isPlaylist },
+                hasDownloads = rows.any { isLibraryEntryDownloaded(context, it) },
+            )
+        }
+
         // Library Filter Chips bar
         LibraryFilterChips(
             selectedFilter = selectedFilter,
             isDownloadedOnly = isDownloadedOnly,
+            availability = availableFilters,
             onFilterSelected = { libraryViewModel.setFilterType(it) },
             onToggleDownloaded = { libraryViewModel.toggleDownloadedOnly() },
             onClearFilters = { libraryViewModel.clearFilters() }
@@ -1228,27 +1259,47 @@ private fun LibraryQuickAccess(navController: NavController) {
     // One cohesive palette instead of the old blue/teal/purple mix. Liked songs leads in
     // the amber accent; the rest are graded dark surfaces with an amber tinted icon, so
     // the grid reads as one premium set rather than four unrelated colours.
+    // Each tile states how much is actually in it. A tile captioned "Saved offline" that
+    // opens an empty screen is a dead end; a live count sets the expectation up front and
+    // makes the tiles worth glancing at.
+    val tileContext = LocalContext.current
+    val counts = remember {
+        listOf(
+            runCatching { com.music.spotui.data.preferences.getLikedSongs(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getListeningHistory(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getDownloadedSongs(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getLocalTracks(tileContext).size }.getOrDefault(0),
+        )
+    }
+
+    /** "12 songs", or a nudge when there is nothing there yet. */
+    fun caption(count: Int, empty: String, noun: String = "song"): String = when (count) {
+        0 -> empty
+        1 -> "1 $noun"
+        else -> "$count ${noun}s"
+    }
+
     val tiles = listOf(
         Tile(
-            "Liked songs", "Your favourites",
+            "Liked songs", caption(counts[0], "Tap the heart on any song"),
             Icons.Default.Favorite,
             Color(0xFFF5A524), Color(0xFFC87F0A),
             Routes.Liked.route,
         ),
         Tile(
-            "Recently played", "Plays and stats",
+            "Recently played", caption(counts[1], "Nothing played yet", "play"),
             Icons.Default.DateRange,
             Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.History.route,
         ),
         Tile(
-            "Downloads", "Saved offline",
+            "Downloads", caption(counts[2], "Nothing saved offline"),
             Icons.Default.Add,
             Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.Downloads.route,
         ),
         Tile(
-            "Local files", "Music on this device",
+            "Local files", caption(counts[3], "Music on this device", "track"),
             Icons.Default.PhoneAndroid,
             Color(0xFF2C2C34), Color(0xFF1A1A1F),
             Routes.LocalFiles.route,

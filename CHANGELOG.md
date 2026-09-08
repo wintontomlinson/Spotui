@@ -5,6 +5,27 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.8
+
+### 🛠 Artists Have Their Whole Catalogue, And No More Dead Ends In The Library
+
+* **An artist's full song list, not five tracks.** Two things capped it. The artist data came
+  from a song search that kept ten results, and the screen then rendered only the first five
+  no matter what. Artists are now read from their own YouTube Music page, which links a
+  playlist holding the complete catalogue: around 150 songs each instead of 5, with a
+  "Show all" to expand the list in place.
+* **Artists have a discography again.** Their albums and singles come through as well, about
+  twenty releases each, and every one carries its exact album id so opening it fetches that
+  release instead of resolving its name.
+* **No filter chip that leads nowhere.** Playlists, Albums and Downloaded only appear when
+  there is genuinely something behind them, so tapping a chip can no longer land on a blank
+  screen. The chip in use always stays visible so you can switch back.
+* **The library tiles say what is in them.** Liked songs, Recently played, Downloads and
+  Local files each show a live count, and a nudge instead of a count when they are still
+  empty, rather than a caption that promises content that is not there.
+
+---
+
 ## 🚀 Release v1.9.7
 
 ### 🛠 The Right Album, All Of It, And Artwork In Explore
