@@ -7,6 +7,7 @@ import com.metrolist.innertube.models.MusicResponsiveListItemRenderer
 import com.metrolist.innertube.models.SectionListRenderer
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
+import com.metrolist.innertube.models.getContinuation
 import com.metrolist.innertube.models.oddElements
 import com.metrolist.innertube.models.response.BrowseResponse
 import com.metrolist.innertube.models.splitBySeparator
@@ -28,6 +29,8 @@ data class BrowsePage(
     val year: Int?,
     val thumbnail: String?,
     val songs: List<SongItem>,
+    /** Token for the next page of tracks, or null when the tracklist is complete. */
+    val continuation: String? = null,
 )
 
 object BrowseParser {
@@ -74,27 +77,23 @@ object BrowseParser {
         val subtitle = header?.subtitle?.runs?.joinToString("") { it.text }.orEmpty()
 
         // Albums come back in a plain music shelf, playlists in a playlist shelf.
-        val trackRenderers = sections.flatMap { section ->
-            val fromPlaylistShelf = section.musicPlaylistShelfRenderer
-                ?.contents
-                ?.mapNotNull { it.musicResponsiveListItemRenderer }
-                .orEmpty()
-            val fromMusicShelf = section.musicShelfRenderer
-                ?.contents
-                ?.mapNotNull { it.musicResponsiveListItemRenderer }
-                .orEmpty()
-            fromPlaylistShelf + fromMusicShelf
+        val trackContents = sections.flatMap { section ->
+            section.musicPlaylistShelfRenderer?.contents.orEmpty() +
+                section.musicShelfRenderer?.contents.orEmpty()
         }
 
-        val songs = trackRenderers.mapNotNull { renderer ->
-            toSongItem(
-                renderer = renderer,
-                fallbackThumbnail = thumbnail,
-                fallbackArtist = artist,
-                collectionTitle = title,
-                collectionId = id,
-            )
-        }.distinctBy { it.id }
+        val songs = trackContents
+            .mapNotNull { it.musicResponsiveListItemRenderer }
+            .mapNotNull { renderer ->
+                toSongItem(
+                    renderer = renderer,
+                    fallbackThumbnail = thumbnail,
+                    fallbackArtist = artist,
+                    collectionTitle = title,
+                    collectionId = id,
+                )
+            }
+            .distinctBy { it.id }
 
         if (title.isBlank() && songs.isEmpty()) return null
 
@@ -107,7 +106,33 @@ object BrowseParser {
             year = year,
             thumbnail = thumbnail,
             songs = songs,
+            continuation = trackContents.getContinuation(),
         )
+    }
+
+    /**
+     * Parses a follow-up page of tracks. Long playlists are served a hundred at a time,
+     * and without this the tracklist simply stopped at the first hundred.
+     */
+    fun parseContinuation(response: BrowseResponse, page: BrowsePage): Pair<List<SongItem>, String?> {
+        val items = response.onResponseReceivedActions
+            ?.mapNotNull { it.appendContinuationItemsAction?.continuationItems }
+            ?.flatten()
+            .orEmpty()
+
+        val songs = items
+            .mapNotNull { it.musicResponsiveListItemRenderer }
+            .mapNotNull { renderer ->
+                toSongItem(
+                    renderer = renderer,
+                    fallbackThumbnail = page.thumbnail,
+                    fallbackArtist = page.artist,
+                    collectionTitle = page.title,
+                    collectionId = page.id,
+                )
+            }
+
+        return songs to items.getContinuation()
     }
 
     private fun collectSections(response: BrowseResponse): List<SectionListRenderer.Content> {

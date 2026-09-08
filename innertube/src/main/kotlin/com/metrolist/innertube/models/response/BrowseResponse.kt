@@ -15,7 +15,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BrowseResponse(
     val contents: Contents?,
+    /**
+     * Follow-up pages arrive here rather than under [contents]. A playlist page returns
+     * only its first hundred tracks, and the rest come back as appended items.
+     */
+    val onResponseReceivedActions: List<ResponseAction>? = null,
 ) {
+    @Serializable
+    data class ResponseAction(
+        val appendContinuationItemsAction: AppendContinuationItemsAction?,
+    ) {
+        @Serializable
+        data class AppendContinuationItemsAction(
+            val continuationItems: List<com.metrolist.innertube.models.MusicShelfRenderer.Content>?,
+        )
+    }
+
     @Serializable
     data class Contents(
         val twoColumnBrowseResultsRenderer: TwoColumnBrowseResults?,

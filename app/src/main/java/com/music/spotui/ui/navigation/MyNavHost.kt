@@ -142,15 +142,24 @@ fun MyNavHost(
 
 
         composable(
-            "${Routes.Album.route}/{uString}?artist={artist}",
-            arguments = listOf(navArgument("artist") { defaultValue = "" }),
+            "${Routes.Album.route}/{uString}?artist={artist}&id={albumId}",
+            arguments = listOf(
+                navArgument("artist") { defaultValue = "" },
+                navArgument("albumId") { defaultValue = "" },
+            ),
         ) { navBackStackEntry ->
             /* Extracting the id from the route */
             val uId = navBackStackEntry.arguments?.getString("uString")
             val artist = navBackStackEntry.arguments?.getString("artist").orEmpty()
+            val albumId = navBackStackEntry.arguments?.getString("albumId").orEmpty()
             /* We check if it's not null */
             uId?.let { id->
-                AlbumScreen(navController = navHostController, albumName = id, artist = artist)
+                AlbumScreen(
+                    navController = navHostController,
+                    albumName = id,
+                    artist = artist,
+                    albumBrowseId = albumId,
+                )
             }
         }
 

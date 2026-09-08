@@ -42,8 +42,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -204,8 +206,15 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                         }
                         SearchTab.ALBUMS -> items(albumResults, key = { it.browseId }) { album ->
                             AlbumResultRow(album) {
+                                // The exact album id travels with the link, so the album
+                                // screen opens this album rather than guessing from a name
+                                // that dozens of unrelated albums also use.
                                 navController.navigate(
-                                    com.music.spotui.ui.navigation.albumRoute(album.title, album.artist)
+                                    com.music.spotui.ui.navigation.albumRoute(
+                                        album.title,
+                                        album.artist,
+                                        album.browseId,
+                                    )
                                 )
                             }
                         }
@@ -450,6 +459,74 @@ private fun SearchField(
     }
 }
 
+/**
+ * One "Browse all" tile: a coloured card with the label top-left and a real cover
+ * tilted into the bottom-right corner, the way Spotify presents its browse categories.
+ * The cover is fetched on first display and cached for the session, so scrolling back
+ * costs nothing.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun BrowseTile(
+    category: BrowseCategory,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val coverState = androidx.compose.runtime.remember(category.query) {
+        androidx.compose.runtime.mutableStateOf(
+            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.query)
+        )
+    }
+    val cover = coverState.value
+    androidx.compose.runtime.LaunchedEffect(category.query) {
+        if (coverState.value.isBlank()) {
+            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.query)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .height(96.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        category.color,
+                        androidx.compose.ui.graphics.lerp(category.color, Color.Black, 0.35f),
+                    )
+                )
+            )
+            .clickable(onClick = onClick),
+    ) {
+        if (cover.isNotBlank()) {
+            GlideImage(
+                model = cover,
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    // Pushed past the corner and rotated, so the card is clipped through
+                    // it. This is the detail that makes the tile read as Spotify's.
+                    .offset(x = 12.dp, y = 12.dp)
+                    .size(62.dp)
+                    .graphicsLayer { rotationZ = 25f }
+                    .clip(RoundedCornerShape(3.dp)),
+            )
+        }
+        Text(
+            text = category.label,
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                // Leave room for the artwork so long labels do not run under it.
+                .padding(start = 14.dp, top = 14.dp, end = 46.dp, bottom = 8.dp),
+        )
+    }
+}
+
 /** Recent searches plus popular suggestions, shown before any search is run. */
 @Composable
 private fun DiscoverPane(
@@ -543,30 +620,8 @@ private fun DiscoverPane(
                 BROWSE_CATEGORIES.chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         pair.forEach { cat ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(84.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(
-                                        Brush.linearGradient(
-                                            listOf(
-                                                cat.color,
-                                                androidx.compose.ui.graphics.lerp(cat.color, Color.Black, 0.35f),
-                                            )
-                                        )
-                                    )
-                                    .clickable { onPick(cat.query) }
-                                    .padding(14.dp),
-                            ) {
-                                Text(
-                                    text = cat.label,
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.align(Alignment.TopStart),
-                                )
-                            }
+                            BrowseTile(category = cat, onClick = { onPick(cat.query) },
+                                modifier = Modifier.weight(1f))
                         }
                         // Keep the last row aligned when the list is odd.
                         if (pair.size == 1) Spacer(Modifier.weight(1f))

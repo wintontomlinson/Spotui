@@ -211,6 +211,7 @@ object SearchPage {
             }
             renderer.isAlbum -> {
                 AlbumItem(
+                    type = secondaryLine.firstOrNull()?.firstOrNull()?.text,
                     browseId = renderer.navigationEndpoint?.browseEndpoint?.browseId ?: return null,
                     playlistId =
                         renderer.overlay

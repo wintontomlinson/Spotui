@@ -5,6 +5,34 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.7
+
+### 🛠 The Right Album, All Of It, And Artwork In Explore
+
+* **Albums open the right album now.** Resolving an album by name was picking the first
+  search result whenever nothing matched, so asking for "Animal" returned an unrelated
+  record's tracklist. Names are ambiguous, dozens of albums are called "Rockstar" or
+  "Animal", so a name match alone is no longer treated as proof.
+* **Albums are complete, not truncated.** A two-track "Single" often shares a soundtrack's
+  exact name, and picking it made the album look half empty. The best candidates are now
+  fetched and the fullest one wins.
+* **The singer versus composer problem is solved.** An "Aashiqui 2" entry remembered
+  through Arijit Singh is credited on YouTube to Jeet Gannguli, Ankit Tiwari and Mithoon,
+  so a strict artist check would reject the correct album. When the credits disagree, the
+  tracklists themselves are checked for the artist, which is proof instead of a guess.
+* **Albums opened from Explore never guess at all.** The exact album id travels with the
+  link.
+* **Track names are no longer mangled.** A title was cut at its first dash to strip an
+  "Artist - " prefix, which renamed real tracks to their album: "Tum Hi Ho - Aashiqui 2"
+  became "Aashiqui 2". The cut now happens only when the prefix really is the artist.
+* **Long playlists load in full.** YouTube serves a hundred tracks at a time and the rest
+  were being dropped.
+* **Artwork on the Explore browse tiles, like Spotify.** Each coloured category card now
+  carries a real cover tilted into its corner. The old implementation asked Spotify for the
+  image and got nothing without a session, so every tile was blank.
+
+---
+
 ## 🚀 Release v1.9.6
 
 ### 🛠 Home Tab, Real Albums & A Professional Explore

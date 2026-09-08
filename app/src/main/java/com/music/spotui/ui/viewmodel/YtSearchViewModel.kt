@@ -270,17 +270,22 @@ data class PlaylistResult(
  * left blank so the Spotify and FLAC fast paths are skipped and playback goes
  * straight to YouTube.
  */
-fun SongItem.toSongsModel(): SongsModel = SongsModel(
-    id = id.hashCode(),
-    title = cleanTrackTitle(title),
-    album = album?.name.orEmpty(),
-    singer = resolveArtist(artists.map { it.name }, title),
-    coverUri = hiResThumbnail(thumbnail),
-    url = id,
-    spotifyTrackId = "",
-    explicit = explicit,
-    durationMs = (duration ?: 0) * 1000,
-)
+fun SongItem.toSongsModel(): SongsModel {
+    // The artist is resolved first because the title cleanup needs it: a leading
+    // "Something - " may only be dropped once we know it really is the artist.
+    val artist = resolveArtist(artists.map { it.name }, title)
+    return SongsModel(
+        id = id.hashCode(),
+        title = cleanTrackTitle(title, artist),
+        album = album?.name.orEmpty(),
+        singer = artist,
+        coverUri = hiResThumbnail(thumbnail),
+        url = id,
+        spotifyTrackId = "",
+        explicit = explicit,
+        durationMs = (duration ?: 0) * 1000,
+    )
+}
 
 // Values YouTube puts in the subtitle line that are not artists. The subtitle can
 // be "Song · Artist · Album · 3:45" or "Video · Channel · 1.2M views · 3:45", so
@@ -330,14 +335,33 @@ internal fun resolveArtist(names: List<String>, title: String): String {
  * Trims the promotional noise YouTube uploaders add to titles, and drops a leading
  * "Artist - " prefix once the artist is shown separately.
  */
-internal fun cleanTrackTitle(title: String): String {
+internal fun cleanTrackTitle(title: String, knownArtist: String = ""): String {
     var t = title
         .replace(Regex("""\s*[(\[][^)\]]*(official|lyric|lyrics|audio|visualizer|video|hd|4k|hq|mv)[^)\]]*[)\]]""", RegexOption.IGNORE_CASE), "")
         .replace(Regex("""\s*\|.*$"""), "")
         .trim()
+
+    // Only cut at " - " when what comes before it really is the artist. YouTube uploads
+    // are often named "Artist - Song", but plenty of genuine track titles contain a dash
+    // too, as in "Tum Hi Ho - Aashiqui 2", and cutting those blindly renamed the track to
+    // its album, which is why album tracklists showed the wrong names.
     val dash = t.indexOf(" - ")
-    if (dash > 0) t = t.substring(dash + 3).trim()
+    if (dash > 0 && isArtistPrefix(t.substring(0, dash), knownArtist)) {
+        t = t.substring(dash + 3).trim()
+    }
     return t.ifBlank { title }
+}
+
+/** True when [prefix] names the same act as [artist], ignoring case and punctuation. */
+private fun isArtistPrefix(prefix: String, artist: String): Boolean {
+    fun key(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+    val p = key(prefix)
+    if (p.isBlank()) return false
+    val a = key(artist)
+    if (a.isBlank()) return false
+    if (a == p || a.contains(p) || p.contains(a)) return true
+    // "A.R. Rahman, Arijit Singh" should still match a "Arijit Singh - " prefix.
+    return artist.split(",").any { key(it).let { part -> part.isNotBlank() && part == p } }
 }
 
 private val SIZE_OPTION = Regex("""^[swh]\d""")

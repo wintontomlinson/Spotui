@@ -130,8 +130,7 @@ object YouTube {
      * the browse endpoint.
      */
     suspend fun album(browseId: String): Result<BrowsePage> = runCatching {
-        val response = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
-        BrowseParser.parse(browseId, response) ?: error("Album $browseId has no tracklist")
+        collection(browseId = browseId, id = browseId)
     }
 
     /**
@@ -139,10 +138,40 @@ object YouTube {
      * or one that already carries the "VL" browse prefix.
      */
     suspend fun playlist(playlistId: String): Result<BrowsePage> = runCatching {
-        val browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId"
-        val response = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
-        BrowseParser.parse(playlistId.removePrefix("VL"), response)
-            ?: error("Playlist $playlistId has no tracklist")
+        collection(
+            browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId",
+            id = playlistId.removePrefix("VL"),
+        )
+    }
+
+    /** Upper bound on how many tracks one collection may load, to keep paging sane. */
+    private const val MAX_COLLECTION_SONGS = 500
+
+    /**
+     * Fetches an album or playlist page and keeps following continuations until the
+     * tracklist is complete. YouTube serves long playlists a hundred tracks at a time, so
+     * without the follow-up requests a big playlist simply stopped at a hundred.
+     */
+    private suspend fun collection(browseId: String, id: String): BrowsePage {
+        val first = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
+        val page = BrowseParser.parse(id, first) ?: error("$browseId has no tracklist")
+
+        val songs = page.songs.toMutableList()
+        var token = page.continuation
+        var pages = 0
+        while (token != null && songs.size < MAX_COLLECTION_SONGS && pages < 8) {
+            pages++
+            val next = innerTube.browse(WEB_REMIX, continuation = token).body<BrowseResponse>()
+            val (more, nextToken) = BrowseParser.parseContinuation(next, page)
+            if (more.isEmpty()) break
+            songs += more
+            token = nextToken
+        }
+
+        return page.copy(
+            songs = songs.distinctBy { it.id }.take(MAX_COLLECTION_SONGS),
+            continuation = null,
+        )
     }
 
     private val VISITOR_DATA_REGEX = Regex("^Cg[t|s]")

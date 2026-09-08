@@ -22,6 +22,8 @@ import com.music.spotui.data.preferences.PlaylistSortOption
 import com.music.spotui.data.preferences.getPlaylistSortOption
 import com.music.spotui.data.preferences.isPlaylistSortDescending
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -604,7 +606,11 @@ class Api @Inject constructor(
      * (the real Spotify id is lost during mapping), so we resolve the album via
      * search, then fetch its tracks. Uses GraphQL endpoints (not rate-limited).
      */
-    suspend fun getAlbumSongs(albumName: String, artist: String = ""): Flow<Response<List<SongsModel>>> = flow {
+    suspend fun getAlbumSongs(
+        albumName: String,
+        artist: String = "",
+        albumBrowseId: String = "",
+    ): Flow<Response<List<SongsModel>>> = flow {
         emit(Response.Loading())
         if (albumName.isBlank()) {
             emit(Response.Success(emptyList())); return@flow
@@ -617,7 +623,7 @@ class Api @Inject constructor(
             val saved = col?.songs.orEmpty()
             if (saved.isNotEmpty()) emit(Response.Success(saved))
 
-            val youtubeSongs = youtubeAlbumSongs(albumName, artist)
+            val youtubeSongs = youtubeAlbumSongs(albumName, artist, albumBrowseId)
             when {
                 youtubeSongs.isNotEmpty() -> emit(Response.Success(youtubeSongs))
                 // Nothing online and nothing saved: an empty album reads better than an
@@ -1185,65 +1191,188 @@ class Api @Inject constructor(
     private fun normaliseTitle(value: String): String =
         value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
 
-    private fun pickYouTubeAlbum(
-        candidates: List<com.metrolist.innertube.models.AlbumItem>,
-        albumName: String,
-        artist: String,
-    ): com.metrolist.innertube.models.AlbumItem? {
-        if (candidates.isEmpty()) return null
-        val wantTitle = normaliseTitle(albumName)
-        val wantArtists = artist.split(",", "&")
-            .map { normaliseTitle(it) }
-            .filter { it.isNotBlank() }
-
-        fun titleMatches(a: com.metrolist.innertube.models.AlbumItem) =
-            normaliseTitle(a.title) == wantTitle
-        fun artistMatches(a: com.metrolist.innertube.models.AlbumItem): Boolean {
-            if (wantArtists.isEmpty()) return false
-            val names = normaliseTitle(a.artists?.joinToString(" ") { it.name }.orEmpty())
-            return wantArtists.any { names.contains(it) }
+    /**
+     * How closely a search hit's name matches the album asked for. Negative means the
+     * names are unrelated, so it cannot be this album whatever else lines up.
+     */
+    private fun titleAffinity(candidateTitle: String, albumName: String): Int {
+        val want = normaliseTitle(albumName)
+        val have = normaliseTitle(candidateTitle)
+        return when {
+            want.isBlank() -> -1
+            have == want -> 60
+            // "Brahmastra" must still match "Brahmastra (Original Motion Picture
+            // Soundtrack)", which is how albums are usually titled on YouTube Music.
+            have.contains(want) || want.contains(have) -> 35
+            else -> -1
         }
-
-        return candidates.firstOrNull { titleMatches(it) && artistMatches(it) }
-            ?: candidates.firstOrNull { titleMatches(it) }
-            ?: candidates.firstOrNull { artistMatches(it) }
-            ?: candidates.first()
     }
 
     /**
-     * Resolves an album by name (and artist when known) and returns its real tracklist.
-     * Falls back to a song search so the album screen still shows something playable
-     * when the album itself cannot be found.
+     * A "Single" sharing an album's name holds one or two tracks, and choosing it over the
+     * album is exactly what made album pages look truncated.
      */
-    private suspend fun youtubeAlbumSongs(albumName: String, artist: String): List<SongsModel> {
-        val query = if (artist.isBlank()) albumName else "$albumName $artist"
+    private fun albumTypeBonus(type: String?): Int = when (type?.lowercase()) {
+        "album" -> 10
+        "ep" -> 5
+        else -> 0
+    }
 
-        val albumItem = runCatching {
-            com.metrolist.innertube.YouTube
-                .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ALBUM)
-                .getOrNull()
-                ?.items
-                ?.filterIsInstance<com.metrolist.innertube.models.AlbumItem>()
-                .orEmpty()
-        }.getOrElse { emptyList() }
-            .let { pickYouTubeAlbum(it, albumName, artist) }
+    private enum class ArtistAffinity {
+        /** The credited artist is the one asked for. */
+        MATCH,
 
-        if (albumItem != null) {
-            val page = runCatching {
-                com.metrolist.innertube.YouTube.album(albumItem.browseId).getOrNull()
-            }.getOrNull()
+        /** Credited to "Various Artists", which is how many soundtracks are credited. */
+        VARIOUS,
+
+        /** No artist was asked for, so there is nothing to disagree with. */
+        UNCONSTRAINED,
+
+        /** The credited artist is somebody else. Not proof of a mismatch, see below. */
+        OTHER,
+    }
+
+    private fun artistAffinity(
+        candidate: com.metrolist.innertube.models.AlbumItem,
+        wantArtists: List<String>,
+    ): ArtistAffinity {
+        if (wantArtists.isEmpty()) return ArtistAffinity.UNCONSTRAINED
+        val names = normaliseTitle(candidate.artists?.joinToString(" ") { it.name }.orEmpty())
+        return when {
+            wantArtists.any { names.contains(it) } -> ArtistAffinity.MATCH
+            names.contains("various artists") -> ArtistAffinity.VARIOUS
+            else -> ArtistAffinity.OTHER
+        }
+    }
+
+    /** True when any track on the page is credited to one of [wantArtists]. */
+    private fun creditsArtist(
+        page: com.metrolist.innertube.pages.BrowsePage,
+        wantArtists: List<String>,
+    ): Boolean {
+        if (wantArtists.isEmpty()) return true
+        return page.songs.any { song ->
+            val names = normaliseTitle(song.artists.joinToString(" ") { it.name })
+            wantArtists.any { names.contains(it) }
+        }
+    }
+
+    /**
+     * Resolves an album and returns its real tracklist.
+     *
+     * [albumBrowseId] is used directly when the caller already knows it, for example an
+     * album opened from Explore, which skips the guessing entirely.
+     *
+     * Otherwise the album has to be found from a name and an artist, and that is harder
+     * than it sounds. Dozens of unrelated albums are called "Rockstar" or "Animal", so a
+     * name match alone proves nothing. Worse, the artist the app knows is usually the
+     * singer of one track while the album is credited to its composer: an "Aashiqui 2"
+     * entry remembered as an Arijit Singh record is credited on YouTube to Jeet Gannguli,
+     * Ankit Tiwari and Mithoon. So there are two passes:
+     *
+     *  1. Hits whose credited artist agrees (or that are credited to "Various Artists").
+     *     The best two are fetched and the fullest wins, which is how a twenty seven track
+     *     soundtrack beats the two track single of the same name.
+     *  2. Failing that, the name-matching hits are taken in YouTube's own search order for
+     *     the artist-qualified query, fetched, and kept only if the requested artist
+     *     actually appears somewhere in the tracklist. That is what recovers the singer
+     *     versus composer case, and it is proof rather than a guess.
+     *
+     * If nothing survives, the result is a plain song search. On-topic songs are honest;
+     * some unrelated album's tracklist is not, and that is what the previous version did.
+     */
+    private suspend fun youtubeAlbumSongs(
+        albumName: String,
+        artist: String,
+        albumBrowseId: String = "",
+    ): List<SongsModel> {
+        fun render(page: com.metrolist.innertube.pages.BrowsePage?): List<SongsModel> {
             val songs = page?.songs.orEmpty()
-            if (songs.isNotEmpty()) {
-                val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(
-                    page?.thumbnail ?: albumItem.thumbnail
-                )
-                return songs.map { item ->
-                    val song = item.toSongsModel()
-                    if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
-                }
+            if (songs.isEmpty()) return emptyList()
+            val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(page?.thumbnail)
+            return songs.map { item ->
+                val song = item.toSongsModel()
+                if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
             }
         }
 
+        suspend fun browse(browseId: String) = runCatching {
+            com.metrolist.innertube.YouTube.album(browseId).getOrNull()
+        }.getOrNull()
+
+        /** Fetches several albums at once, so verifying candidates costs one round trip. */
+        suspend fun browseAll(ids: List<String>): List<com.metrolist.innertube.pages.BrowsePage> =
+            coroutineScope {
+                ids
+                    .map { id -> async { browse(id) } }
+                    .mapNotNull { deferred -> deferred.await() }
+            }
+
+        // The exact album is known: no searching, no guessing.
+        if (albumBrowseId.startsWith("MPRE")) {
+            val exact = render(browse(albumBrowseId))
+            if (exact.isNotEmpty()) return exact
+        }
+
+        val wantArtists = artist.split(",", "&", "/")
+            .map { normaliseTitle(it) }
+            .filter { it.isNotBlank() }
+
+        // Search order is kept deliberately. YouTube's own ranking for "album + artist" is
+        // a strong signal, and it is what puts the right soundtrack at the top even when
+        // the album is credited to a composer the app has never heard of.
+        val queries = if (artist.isBlank()) listOf(albumName) else listOf("$albumName $artist", albumName)
+        val candidates = LinkedHashMap<String, com.metrolist.innertube.models.AlbumItem>()
+        for (query in queries) {
+            runCatching {
+                com.metrolist.innertube.YouTube
+                    .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ALBUM)
+                    .getOrNull()
+                    ?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.AlbumItem>()
+                    .orEmpty()
+            }.getOrNull()?.forEach { candidates.putIfAbsent(it.browseId, it) }
+        }
+
+        val related = candidates.values.filter { titleAffinity(it.title, albumName) > 0 }
+
+        // Pass 1: the credited artist agrees.
+        val confident = related
+            .mapNotNull { candidate ->
+                val artistBonus = when (artistAffinity(candidate, wantArtists)) {
+                    ArtistAffinity.MATCH -> 80
+                    ArtistAffinity.VARIOUS, ArtistAffinity.UNCONSTRAINED -> 40
+                    ArtistAffinity.OTHER -> return@mapNotNull null
+                }
+                val score = titleAffinity(candidate.title, albumName) +
+                    artistBonus + albumTypeBonus(candidate.type)
+                candidate to score
+            }
+            .sortedByDescending { it.second }
+            .take(2)
+            .map { it.first.browseId }
+
+        if (confident.isNotEmpty()) {
+            val fullest = browseAll(confident).maxByOrNull { it.songs.size }
+            val songs = render(fullest)
+            if (songs.isNotEmpty()) return songs
+        }
+
+        // Pass 2: nothing agreed on the credit, so let the tracklists decide.
+        val unconfirmed = related
+            .filter { artistAffinity(it, wantArtists) == ArtistAffinity.OTHER }
+            .take(4)
+            .map { it.browseId }
+
+        if (unconfirmed.isNotEmpty()) {
+            val verified = browseAll(unconfirmed)
+                .filter { creditsArtist(it, wantArtists) }
+                .maxByOrNull { it.songs.size }
+            val songs = render(verified)
+            if (songs.isNotEmpty()) return songs
+        }
+
+        val query = if (artist.isBlank()) albumName else "$albumName $artist"
         return runCatching {
             com.metrolist.innertube.YouTube
                 .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)

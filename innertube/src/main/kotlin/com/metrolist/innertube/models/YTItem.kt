@@ -53,6 +53,12 @@ data class AlbumItem(
     override val title: String,
     val artists: List<Artist>?,
     val year: Int? = null,
+    /**
+     * The type label YouTube prints first in the subtitle: "Album", "Single" or "EP".
+     * Worth keeping, because a "Single" that shares an album's name holds one or two
+     * tracks and picking it instead of the album looks like a broken album page.
+     */
+    val type: String? = null,
     override val thumbnail: String,
     override val explicit: Boolean = false,
 ) : YTItem() {

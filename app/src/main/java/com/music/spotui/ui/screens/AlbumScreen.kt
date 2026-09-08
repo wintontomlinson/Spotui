@@ -102,16 +102,22 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun AlbumScreen(navController: NavController, albumName: String, artist: String = "") {
+fun AlbumScreen(
+    navController: NavController,
+    albumName: String,
+    artist: String = "",
+    albumBrowseId: String = "",
+) {
 
 
     val albumViewModel : AlbumViewModel = hiltViewModel()
     val songs by albumViewModel.songs.collectAsState()
     val albums by albumViewModel.albums.collectAsState()
 
-    // Load this album's actual tracks from Spotify (by name, disambiguated by artist).
-    LaunchedEffect(albumName, artist) {
-        albumViewModel.loadAlbumSongs(albumName, artist)
+    // Load this album's real tracklist. When the exact album id is known it is used
+    // directly, otherwise the name and artist are resolved against YouTube Music.
+    LaunchedEffect(albumName, artist, albumBrowseId) {
+        albumViewModel.loadAlbumSongs(albumName, artist, albumBrowseId)
     }
 
     val context = LocalContext.current
