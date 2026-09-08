@@ -877,24 +877,26 @@ object SongPlayer {
             updateResolveStatus(true, "Checking saved cache...")
         }
         com.music.spotui.data.preferences.getCachedStream(appContext, song, expectedTier = expectedTier)?.let { (url, source, cachedQuality) ->
-            if (YTPlayerUtils.validateStatus(url)) {
-                // Promote back into the in-memory caches for this session.
-                streamCache[song] = url
-                sourceCache[song] = source
-                qualityCache[song] = cachedQuality
-                qualityTierCache[song] = expectedTier
-                if (forPlayback) {
-                    currentSource = source
-                    currentQuality = cachedQuality
-                    val note = if (cachedQuality.isNotBlank()) "Source: $source • Format: $cachedQuality (Loaded from disk cache)" else "Source: $source (Loaded from disk cache)"
-                    logResolution("✓ Stream served from persistent disk cache ($source, $cachedQuality)")
-                    boundState?.updateResolveDetailNote(note)
-                    updateResolveStatus(false)
-                }
-                return url
-            } else {
-                com.music.spotui.data.preferences.clearCachedStream(appContext, song)
+            // The disk cache only stores URLs together with the server expiry, and
+            // getCachedStream already treats anything near expiry as a miss, so the URL
+            // handed back here is still within its valid window. Probing it over the
+            // network first added a full round trip to every first play after a restart
+            // for no real safety: if the URL has genuinely gone bad, ExoPlayer reports it
+            // and the same track retry re-resolves a fresh one. Trust it and start now.
+            // This matches the in-memory cache path, which already skips the probe.
+            streamCache[song] = url
+            sourceCache[song] = source
+            qualityCache[song] = cachedQuality
+            qualityTierCache[song] = expectedTier
+            if (forPlayback) {
+                currentSource = source
+                currentQuality = cachedQuality
+                val note = if (cachedQuality.isNotBlank()) "Source: $source • Format: $cachedQuality (Loaded from disk cache)" else "Source: $source (Loaded from disk cache)"
+                logResolution("✓ Stream served from persistent disk cache ($source, $cachedQuality)")
+                boundState?.updateResolveDetailNote(note)
+                updateResolveStatus(false)
             }
+            return url
         }
         if (forPlayback) {
             updateResolveStatus(true, "Checking alternative source...")

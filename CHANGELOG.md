@@ -5,6 +5,32 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.8
+
+### 🛠 The Actual Fix: the Missing PoToken Asset
+
+The playback log named the cause outright:
+
+```
+potoken   failed: FileNotFoundException: po_token.html
+```
+
+The PoToken WebView loads `assets/po_token.html` to run YouTube's BotGuard client, but that file was
+never in this fork's assets, only `silent.mp3` was. So every PoToken attempt threw on its first line,
+`poToken` was always `no`, and the tracks YouTube now gates behind a PoToken were refused, usually
+part way through. That is the half play and skip.
+
+* **`po_token.html` is added**, from the upstream Metrolist project this player was ported from.
+  Verified it defines exactly the functions the WebView drives (`runBotGuard`, `createPoTokenMinter`,
+  `obtainPoToken`), that the request key matches, and that it is packaged inside the built APK.
+
+This is the piece the last two releases were missing. The 1.7.6 wait fix and the 1.7.7 same track
+retry made the app ask for a PoToken and reuse a track once a real URL arrives, but with no asset
+there was never a PoToken to obtain. With the file present, protected tracks can resolve with a
+PoToken and play through.
+
+---
+
 ## 🚀 Release v1.7.7
 
 ### 🛠 Don't Skip the Track You Chose

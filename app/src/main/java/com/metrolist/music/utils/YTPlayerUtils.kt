@@ -68,6 +68,22 @@ object YTPlayerUtils {
 
     private val poTokenGenerator = PoTokenGenerator()
 
+    /**
+     * Builds the PoToken generator ahead of the first play, so the WebView cold start and
+     * BotGuard handshake do not sit on the critical path of the first tapped track. It
+     * caches the generator internally for the session, so the first real resolution reuses
+     * what this warmed up. Safe to call before visitorData is ready: it no-ops and the
+     * first play falls back to building it then, exactly as before.
+     */
+    fun warmUpPoToken() {
+        val sessionId = if (YouTube.cookie != null) YouTube.dataSyncId else YouTube.visitorData
+        if (sessionId == null) return
+        runCatching { poTokenGenerator.getWebClientPoToken(WARMUP_VIDEO_ID, sessionId) }
+    }
+
+    /** A stable, always-available public video used only to warm the PoToken pipeline. */
+    private const val WARMUP_VIDEO_ID = "dQw4w9WgXcQ"
+
     private val MAIN_CLIENT: YouTubeClient = WEB_REMIX
 
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(

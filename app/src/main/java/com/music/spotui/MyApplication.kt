@@ -46,6 +46,9 @@ class MyApplication : Application(){
         )
         appScope.launch {
             YouTube.visitorData = YouTube.visitorData().getOrNull() ?: YouTube.visitorData
+            // With a session id in hand, build the PoToken generator now so the first
+            // tapped track does not pay for the WebView cold start and BotGuard handshake.
+            runCatching { com.metrolist.music.utils.YTPlayerUtils.warmUpPoToken() }
         }
         // YouTube playback runs anonymously; age-gated official audio falls back
         // to matching normal YouTube uploads instead of requiring sign-in.
