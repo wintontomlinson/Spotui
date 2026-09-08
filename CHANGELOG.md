@@ -5,6 +5,42 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.3
+
+### 🛠 Stream Resolution
+
+A playback log narrowed this down properly. Resolution succeeded and playback still failed at 0s:
+
+```
+resolve  2zY3OoqhCzs poToken=no sigTimestamp=true mainClient=skipped
+resolve  2zY3OoqhCzs ok via IOS, itag=251 audio/webm expires in 21540s, nTransform=not needed
+error    at 0s, ERROR_CODE_IO_BAD_HTTP_STATUS: Source error
+```
+
+`poToken=no` is the important part, and only 40ms passed before it was reported, so nothing was even
+attempted. A PoToken can only be minted against a session id, which logged out means visitorData.
+That is fetched in a background job at app startup, so tapping a track before it lands leaves it
+null, and the PoToken is skipped without a word.
+
+Checking that track live confirms why it matters: every logged out client, with the app's own
+versions, answers `Sign in to confirm you're not a bot` for it, while ordinary tracks resolve and
+play fine from all of them. For tracks like that a PoToken is not optional.
+
+* **visitorData is fetched on demand when it is missing**, right before resolution, so a track tapped
+  early no longer silently costs a PoToken.
+* **The log says why a PoToken is absent**, distinguishing no session id, not attempted, and
+  generation failed, so a failing WebView can be told apart from a missing session.
+* **The client chain is ordered by what actually serves audio.** Every client was tested against one
+  track: the VR clients and both iOS ones returned playable responses whose streams were served, and
+  MOBILE returned a playable response with no stream URLs, TVHTML5 was UNPLAYABLE, its embedded
+  variant errored, ANDROID_CREATOR wanted a login, and WEB was UNPLAYABLE. The VR clients now lead,
+  since they are the ones built to work without a PoToken. This matters beyond speed, because every
+  client tried is another request and a burst of them is what makes the host start refusing.
+* **Private tracks no longer jump to a hardcoded position** in that chain, which had long since
+  stopped being the client the comment claimed.
+
+---
+
 ## 🚀 Release v1.7.2
 
 ### 🛠 Playback Fixes

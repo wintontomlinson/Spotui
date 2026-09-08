@@ -63,17 +63,32 @@ object YTPlayerUtils {
 
     private val MAIN_CLIENT: YouTubeClient = WEB_REMIX
 
+    /**
+     * Ordered by what actually serves playable audio when logged out.
+     *
+     * Every client here was tested against the same track, with these exact versions and
+     * user agents. The VR clients and the two iOS ones returned playable responses whose
+     * stream URLs were served fine. The rest did not: MOBILE returned a playable response
+     * with no stream URLs at all, TVHTML5 was UNPLAYABLE, its embedded variant errored,
+     * ANDROID_CREATOR wanted a login, and WEB was UNPLAYABLE.
+     *
+     * The VR clients lead because they are the ones designed to work without a PoToken, and
+     * the iOS clients, while they do return streams, are the ones that get answered with
+     * "Sign in to confirm you're not a bot" on a fair number of tracks. Order matters for
+     * more than speed: every client tried is another request, and a burst of them is what
+     * makes the host start refusing.
+     */
     private val STREAM_FALLBACK_CLIENTS: Array<YouTubeClient> = arrayOf(
+        ANDROID_VR_1_61_48,
+        ANDROID_VR_1_43_32,
+        ANDROID_VR_NO_AUTH,
         IOS,
         IPADOS,
-        MOBILE,
         ANDROID_NO_SDK,
+        MOBILE,
         TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         TVHTML5,
-        ANDROID_VR_1_43_32,
-        ANDROID_VR_1_61_48,
         ANDROID_CREATOR,
-        ANDROID_VR_NO_AUTH,
         WEB,
         WEB_CREATOR
     )
@@ -120,6 +135,15 @@ object YTPlayerUtils {
         // independent and each takes 1-3s, so overlapping them nearly halves the
         // cold-start latency. Both are blocking calls, so we use Java futures on
         // the IO executor rather than coroutine async (runCatching is non-suspend).
+        // A PoToken can only be minted against a session id, and logged out that means
+        // visitorData. It is fetched in the background when the app starts, so tapping a
+        // track before that lands left it null, the PoToken was never even attempted, and
+        // the main client was skipped for want of one. Fetch it here when it is missing so
+        // that never silently costs a PoToken.
+        if (!isLoggedIn && YouTube.visitorData == null) {
+            runCatching { YouTube.visitorData = YouTube.visitorData().getOrNull() }
+            Timber.tag(TAG).d("visitorData fetched on demand: ${YouTube.visitorData != null}")
+        }
         val sessionId = if (isLoggedIn) YouTube.dataSyncId else YouTube.visitorData
         val mainClientNeedsPoToken = MAIN_CLIENT.useWebPoTokens
 
@@ -168,9 +192,14 @@ object YTPlayerUtils {
         }
         com.music.spotui.data.diagnostics.PlaybackLog.add(
             "resolve",
-            "$videoId poToken=${if (poToken != null) "yes" else "no"} " +
-                "sigTimestamp=${signatureTimestamp.timestamp != null} " +
-                "mainClient=${if (skipMainClient) "skipped" else MAIN_CLIENT.clientName}",
+            "$videoId poToken=" + when {
+                poToken != null -> "yes"
+                sessionId == null -> "no (no session id)"
+                potFuture == null -> "no (not attempted)"
+                else -> "no (generation failed)"
+            } +
+                " sigTimestamp=${signatureTimestamp.timestamp != null}" +
+                " mainClient=${if (skipMainClient) "skipped" else MAIN_CLIENT.clientName}",
         )
 
         var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else {
@@ -243,11 +272,13 @@ object YTPlayerUtils {
         // Check if this is a privately owned track (uploaded song)
         val isPrivateTrack = mainPlayerResponse?.videoDetails?.musicVideoType == "MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK"
 
-        // For private tracks: use TVHTML5 (index 1) with PoToken + n-transform
-        // For age-restricted: skip main client, start with fallbacks
-        // For normal content: standard order
+        // Age-restricted: skip the main client and start with the fallbacks.
+        // Normal content: try the main client's own streams first.
+        // Private tracks used to jump to a hardcoded index meant to be TVHTML5, which had
+        // long since stopped being that entry. They start at the top of the chain like
+        // everything else now rather than at whatever happens to sit at that index.
         val startIndex = when {
-            isPrivateTrack -> 1  // TVHTML5
+            isPrivateTrack -> 0
             isAgeRestricted -> 0
             skipMainClient -> 0  // MAIN_CLIENT streams unplayable without PoToken
             mainPlayerResponse == null || mainPlayerResponse.playabilityStatus.status != "OK" -> 0
