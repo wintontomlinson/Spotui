@@ -509,18 +509,14 @@ fun LibraryScreen(navController: NavController) {
                 val rawEntries = (entries as Response.Success).data
                 val filteredEntries = remember(rawEntries, selectedFilter, isDownloadedOnly, searchQuery, currentSort, isDescending, context) {
                     val filtered = rawEntries.filter { entry ->
-                        // Liked Songs and Downloads already have their own tiles in the
-                        // Quick access grid at the top, so drop the pinned pseudo-entries
-                        // from the list below to stop them appearing twice.
-                        if (entry.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
-                            entry.spotifyId == Api.HomeCache.DOWNLOADS_ID
-                        ) {
-                            return@filter false
-                        }
+                        // Everything the library has is shown, including the pinned Liked
+                        // Songs and Downloads rows, so nothing that used to appear here goes
+                        // missing. They also have quick access tiles at the top, which is
+                        // fine, the same way the Spotify app pins Liked Songs.
                         val matchesCategory = when (selectedFilter) {
                             LibraryFilterType.ALL -> true
                             LibraryFilterType.PLAYLISTS -> entry.isPlaylist
-                            LibraryFilterType.ALBUMS -> !entry.isPlaylist
+                            LibraryFilterType.ALBUMS -> !entry.isPlaylist && entry.spotifyId != Api.HomeCache.LIKED_SONGS_ID && entry.spotifyId != Api.HomeCache.DOWNLOADS_ID
                             LibraryFilterType.ARTISTS -> false
                         }
                         val matchesDownload = if (isDownloadedOnly) isLibraryEntryDownloaded(context, entry) else true
@@ -718,21 +714,17 @@ fun SumUpLibraryScreen(
         // Premium quick access grid for the destinations that always work.
         item { LibraryQuickAccess(navController) }
 
-        // A heading for the playlists/albums list, or a friendly empty state when the
-        // user has not made or saved anything yet, so the screen never looks broken with
-        // just the quick access tiles and nothing else.
-        if (entries.isEmpty()) {
-            item { LibraryEmptyState(navController) }
-        } else {
-            item {
-                Text(
-                    text = "Your playlists",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 8.dp),
-                )
-            }
+        // "Your library" heads the full list. When the only entries are the two pinned
+        // shortcuts (no playlists, albums or offline collections), also invite the user to
+        // start a collection so the space below does not look bare.
+        item {
+            Text(
+                text = "Your library",
+                color = Color.White,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 8.dp),
+            )
         }
         items(entries) { entry ->
             Row(
@@ -813,6 +805,14 @@ fun SumUpLibraryScreen(
                     }
                 }
             }
+        }
+        // When the only entries are the two pinned shortcuts, invite the user to start a
+        // collection so the space below the list is not bare.
+        val hasRealEntries = entries.any {
+            it.spotifyId != Api.HomeCache.LIKED_SONGS_ID && it.spotifyId != Api.HomeCache.DOWNLOADS_ID
+        }
+        if (!hasRealEntries && followedArtists.isEmpty()) {
+            item { LibraryEmptyState(navController) }
         }
         // ── Artists the user follows on Spotify ──
         if (followedArtists.isNotEmpty()) {
