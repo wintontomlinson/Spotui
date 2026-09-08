@@ -36,14 +36,20 @@ object LyricsApi {
     // A miss is cached too, but only for MISS_RETRY_MS, a "not found" is often just
     // a timeout / flaky network, not a fact, so it becomes retryable.
     private class Miss(val at: Long = System.currentTimeMillis())
-    private const val MISS_RETRY_MS = 120_000L
+
+    // Short enough that a flaky lookup fixes itself while the song is still playing. Two
+    // minutes covered most of a track, so one bad moment meant no lyrics for that play.
+    private const val MISS_RETRY_MS = 25_000L
 
     private val cache = java.util.concurrent.ConcurrentHashMap<String, Any>() // Lyrics | Miss
     private val prefetchScope =
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
+    // The key is built from the de-noised title WITHOUT the " - " split. It used to use
+    // the split title, which meant a track called "Tum Hi Ho - Aashiqui 2" was cached
+    // under "aashiqui 2", so the wrong entry was written and then read back forever.
     private fun cacheKey(title: String, artist: String) =
-        "${cleanTitle(title).lowercase()}|${cleanArtist(artist, title).lowercase()}"
+        "${stripNoise(title).lowercase()}|${cleanArtist(artist, title).lowercase()}"
 
     // Strip the noise Spotify puts in titles that LRCLIB doesn't know about:
     // "Song - 2011 Remaster", "Song (feat. X)", "Song [Bonus Track]".
@@ -74,16 +80,59 @@ object LyricsApi {
             .replace(bareNoiseTail, "")
             .trim()
 
-    private fun cleanTitle(title: String): String {
+    /**
+     * The titles worth searching for, best guess first.
+     *
+     * A dash in a title means two completely different things and there is no way to tell
+     * them apart from the string alone:
+     *
+     *   "Arijit Singh - Tum Hi Ho"     the artist, then the song
+     *   "Tum Hi Ho - Aashiqui 2"       the song, then the film or album
+     *
+     * The old code always kept the right-hand side, which turned the second shape into a
+     * search for the album. That did not merely fail: asking LRCLIB for "Aashiqui 2"
+     * returns "Aashiqui 2 Mashup", so the player showed a five minute mashup's lyrics
+     * against a four minute song. Every candidate is tried instead, and when the left side
+     * is the artist it is dropped, because then the right side really is the song.
+     */
+    private fun titleCandidates(title: String, artist: String): List<String> {
         val stripped = stripNoise(title)
-        // A YouTube title is commonly "Artist - Song". Blindly taking the part
-        // before " - " would keep the ARTIST and drop the song, so only split
-        // when it looks like that pattern, and keep the right-hand (song) side.
-        return if (stripped.contains(" - ")) {
-            stripped.substringAfter(" - ").trim().ifBlank { stripped.substringBefore(" - ").trim() }
+        val candidates = mutableListOf<String>()
+
+        val dash = stripped.indexOf(" - ")
+        if (dash > 0) {
+            val left = stripped.substring(0, dash).trim()
+            val right = stripped.substring(dash + 3).trim()
+            if (isArtistLike(left, artist)) {
+                // "Artist - Song": the song is on the right, the whole string is noise.
+                candidates += right
+                candidates += stripped
+            } else {
+                // "Song - Album", "Song - Live", "Song - Remix": the song leads. The full
+                // string is tried first because some catalogues index it verbatim.
+                candidates += stripped
+                candidates += left
+                candidates += right
+            }
         } else {
-            stripped
+            candidates += stripped
         }
+
+        candidates += title.trim()
+        // Capped, because each candidate costs a request against two providers and the
+        // whole chain is what the user waits on.
+        return candidates.filter { it.isNotBlank() }.distinct().take(3)
+    }
+
+    /** True when [text] names the same act as [artist], ignoring case and punctuation. */
+    private fun isArtistLike(text: String, artist: String): Boolean {
+        fun key(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+        val t = key(text)
+        if (t.isBlank()) return false
+        val a = key(artist)
+        if (a.isBlank()) return false
+        if (a == t || a.contains(t) || t.contains(a)) return true
+        return artist.split(",", "&").any { key(it).let { part -> part.isNotBlank() && part == t } }
     }
 
     // Clean an artist string too: YouTube "- Topic" auto-channels and "VEVO"
@@ -128,14 +177,31 @@ object LyricsApi {
             cache[key] = disk
             return
         }
-        prefetchScope.launch { runCatching { fetch(title, artist, album, durationSec) } }
+        // A prefetch must never record a miss. It runs the instant playback starts, when
+        // the network is often still busy resolving the stream, and a failure there used
+        // to block every real lookup for the next two minutes with no retry and no log:
+        // opening the lyrics a second later returned "not found" without a single request.
+        prefetchScope.launch {
+            runCatching { fetch(title, artist, album, durationSec, cacheMisses = false) }
+        }
     }
 
-    suspend fun fetch(title: String, artist: String, album: String, durationSec: Int): Lyrics? {
+    suspend fun fetch(
+        title: String,
+        artist: String,
+        album: String,
+        durationSec: Int,
+        cacheMisses: Boolean = true,
+    ): Lyrics? {
         val key = cacheKey(title, artist)
         when (val cached = cache[key]) {
             is Lyrics -> return cached
-            is Miss -> if (System.currentTimeMillis() - cached.at < MISS_RETRY_MS) return null
+            is Miss -> if (System.currentTimeMillis() - cached.at < MISS_RETRY_MS) {
+                // Logged, because a silent short-circuit here is indistinguishable from a
+                // provider that returned nothing when reading a device log.
+                Log.d("LyricsApi", "miss still fresh for \"$key\", not retrying yet")
+                return null
+            }
         }
 
         // 2nd-level cache: disk (survives process death). No expiry, lyrics are
@@ -147,7 +213,8 @@ object LyricsApi {
         }
 
         val primaryArtist = cleanArtist(artist, title)
-        val cleaned = cleanTitle(title)
+        val candidates = titleCandidates(title, artist)
+        val cleaned = candidates.first()
 
         // 1) Spotify's own color-lyrics, the exact synced lyrics the official app
         //    shows, keyed by track id, so no title/artist matching can go wrong.
@@ -165,16 +232,20 @@ object LyricsApi {
             }
             exact?.await()
                 ?: fuzzy.await()
-                ?: searchTitleOnly(cleaned, primaryArtist, durationSec)
-                // Many YouTube tracks resolve with a blank or noisy artist, so also try a
-                // title only search on the untouched title before giving up on LRCLIB.
-                ?: (if (title.trim() != cleaned) searchTitleOnly(title.trim(), primaryArtist, durationSec) else null)
-                // LRCLIB coverage is thin outside western pop, so fall back to KuGou,
-                // which carries a lot of Hindi, Punjabi and other regional catalogues.
-                ?: fromKuGou(cleaned, primaryArtist, durationSec)
-                // Last resort: retry KuGou with the untouched title, in case the
-                // cleaner removed something the catalogue actually indexes.
-                ?: fromKuGou(title.trim(), primaryArtist, durationSec)
+                // Every plausible reading of the title is tried, against LRCLIB first and
+                // then KuGou, which carries far more of the Hindi, Punjabi and other
+                // regional catalogue. A dash in a title is ambiguous, so guessing once and
+                // giving up is what left songs without lyrics.
+                ?: candidates.firstNotNullOfOrNull { candidate ->
+                    searchTitleOnly(candidate, primaryArtist, durationSec)
+                }
+                ?: candidates.firstNotNullOfOrNull { candidate ->
+                    fromKuGou(candidate, primaryArtist, durationSec)
+                }
+        }
+        if (result == null && !cacheMisses) {
+            // Leave no trace, so the next real lookup starts clean.
+            return null
         }
         cache[key] = result ?: when (cache[key]) {
             is Lyrics -> return cache[key] as Lyrics
@@ -184,6 +255,13 @@ object LyricsApi {
         // downloaded track) can serve lyrics without a network round-trip.
         if (result != null) {
             LyricsCachePref.put(ctx, key, result)
+            Log.d(
+                "LyricsApi",
+                "resolved \"$title\" by \"$artist\" via candidates $candidates " +
+                    "(${result.lines.size} lines, synced=${result.synced})",
+            )
+        } else {
+            Log.d("LyricsApi", "no lyrics for \"$title\" by \"$artist\", tried $candidates")
         }
         return result
     }

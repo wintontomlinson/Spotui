@@ -5,6 +5,47 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v2.0.0
+
+### 🛠 Lyrics
+
+* **The lyrics lookup was searching for the wrong song.** A dash in a title means two
+  different things: `Arijit Singh - Tum Hi Ho` is artist then song, but `Tum Hi Ho -
+  Aashiqui 2` is song then film. The code always kept the right-hand side, so the second
+  shape searched for the film. That did not just fail: asking for "Aashiqui 2" returns
+  "Aashiqui 2 Mashup", so **a five minute mashup's lyrics were shown against a four minute
+  song**. Every plausible reading of the title is now tried, and the artist decides which
+  side to drop. Verified against the real lyrics database:
+
+  | Title | Before | After |
+  |---|---|---|
+  | Tum Hi Ho - Aashiqui 2 | "Aashiqui 2 Mashup" | Tum Hi Ho |
+  | Kesariya - Brahmastra | nothing found | Kesariya |
+  | Channa Mereya - Ae Dil Hai Mushkil | nothing found | Channa Mereya |
+  | Believer - Kygo Remix | "Take on Me (Kygo Remix)" | Believer |
+  | Arijit Singh - Tum Hi Ho | Tum Hi Ho | Tum Hi Ho |
+
+* **One bad moment no longer blocks lyrics for the whole song.** Lyrics are prefetched the
+  instant playback starts, while the network is still busy resolving the stream. If that
+  prefetch failed it recorded a miss, and every real lookup for the next two minutes
+  returned "not found" **without making a single request**. Prefetches no longer record
+  misses, and the retry window is 25 seconds rather than 120.
+* **A "Try again" button** on the not-found screen, which clears the cached miss. Previously
+  the only way to retry was to change track and come back.
+* **The overlay no longer shows the previous song's lyrics.** Opening it skipped loading
+  whenever any lyrics were already loaded, without checking they belonged to the song now
+  playing, so after a skip you saw the old song's words scrolling against the new song.
+* **The first line is no longer lit during the intro.** The active line was clamped to zero
+  before the song reached the first timestamp, so line one looked like it was being sung
+  from the very start.
+* **The active line sits in the same place on every phone.** Its scroll position was a fixed
+  pixel value, so it was roughly centred on some screens and near the top on high density
+  ones.
+* Lyrics failures are now logged with the title and the variations tried, so a lookup that
+  goes wrong can be diagnosed instead of failing silently.
+
+---
+
 ## 🚀 Release v1.9.9
 
 ### 🛠 Delete Playlists, A Leaner Explore, And Sharper Artwork
