@@ -5,6 +5,27 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.9
+
+### ⚡ Faster First Play
+
+Two things stood between tapping a track and hearing it.
+
+* **No more probe on cached streams.** The disk cache validated every stored URL with a network
+  request before playing it, which added a full round trip to the first play of every track after a
+  restart. The cache already treats anything near expiry as a miss, so the URL is still valid, and
+  the in-memory cache had already dropped this same probe. Removed here too; a URL that has genuinely
+  expired is caught by the player and re-resolved by the same track retry from 1.7.7.
+* **The PoToken pipeline is warmed at startup.** It used to be built on the first tapped track, so
+  that track paid for the WebView cold start and BotGuard handshake, a second or two. It is now built
+  in the background right after startup and reused for the session, so the first tap does not wait
+  on it.
+
+Next track prefetch was already in place, so transitions within a queue were already seamless; this
+targets the very first tap.
+
+---
+
 ## 🚀 Release v1.7.8
 
 ### 🛠 The Actual Fix: the Missing PoToken Asset

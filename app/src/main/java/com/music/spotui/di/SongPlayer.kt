@@ -702,6 +702,11 @@ object SongPlayer {
                 "com.google.ios.youtube/21.03.1 (iPhone16,2; U; CPU iOS 18_2 like Mac OS X;)",
             )
             .setAllowCrossProtocolRedirects(true)
+            // Bound the connect and read waits so a stalled socket on a weak connection
+            // fails promptly and the resilient data source reconnects, instead of the
+            // default open ended wait that leaves playback frozen with no progress.
+            .setConnectTimeoutMs(15_000)
+            .setReadTimeoutMs(15_000)
         val upstream = androidx.media3.datasource.DefaultDataSource.Factory(context, http)
         return androidx.media3.datasource.cache.CacheDataSource.Factory()
             .setCache(mediaCache(context))
@@ -1865,12 +1870,37 @@ object SongPlayer {
                 ),
             )
             .setRenderersFactory(renderers)
+            .setLoadControl(buildLoadControl())
             .setAudioAttributes(buildAudioAttributes(), handleAudioFocus)
             .setHandleAudioBecomingNoisy(handleAudioFocus)
             .setWakeMode(androidx.media3.common.C.WAKE_MODE_NETWORK)
             .build()
         return p to filter
     }
+
+    /**
+     * Buffering tuned for audio on a slow or flaky connection.
+     *
+     * The stock LoadControl targets video, so it starts playback only after a large
+     * buffer and keeps it modest. For audio on a weak connection the better trade is to
+     * start sooner and then hold a much deeper buffer, so a slow link has room to fill
+     * ahead and a brief dropout does not stall the track.
+     *
+     * - Start playback after 2.5s buffered, and after a rebuffer resume at 5s, so audio
+     *   begins quickly instead of waiting on a video sized prebuffer.
+     * - Keep up to 2 minutes buffered, far more than the default, so on a slow link the
+     *   player keeps pulling ahead while it can and rides out dips without stalling.
+     */
+    private fun buildLoadControl(): androidx.media3.exoplayer.LoadControl =
+        androidx.media3.exoplayer.DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                /* minBufferMs = */ 30_000,
+                /* maxBufferMs = */ 120_000,
+                /* bufferForPlaybackMs = */ 2_500,
+                /* bufferForPlaybackAfterRebufferMs = */ 5_000,
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
 
     private fun ensurePlayer(context: Context) {
         appCtx = context.applicationContext
