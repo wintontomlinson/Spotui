@@ -5,6 +5,28 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.7.6
+
+### 🛠 PoToken
+
+The playback log pinned the half plays and skips: tracks resolved with `poToken=no` and then failed
+mid playback with `ERROR_CODE_IO_BAD_HTTP_STATUS`. Checked live, those exact tracks answer `Sign in
+to confirm you're not a bot` from every logged out client, while ordinary tracks play fine. YouTube
+now requires a PoToken for these tracks, and without one the stream is refused, often part way
+through, which is exactly the half play. So the cause is PoToken generation, not stream handling.
+
+* **The PoToken wait no longer races the generator.** The outer wait was 5 seconds, the same as the
+  generator's own internal 5 second budget, so this side could abandon a token the generator was
+  about to return, most likely on the first track of a session while the WebView cold starts. The
+  outer wait is now 12 seconds.
+* **PoToken outcomes are logged.** Success, timeout, a broken or unusable WebView, or the specific
+  error are all recorded now. Earlier every failure was swallowed into a null, so the log could only
+  say `poToken=no` with no reason. The reason is now visible.
+
+None of how playback reads a stream was touched.
+
+---
+
 ## 🚀 Release v1.7.5
 
 ### 🔍 Diagnosing the Half Plays

@@ -81,6 +81,11 @@ class PlaybackService : MediaLibraryService() {
     // through cannot bounce between recovery attempts forever.
     private var truncationRecoveryFor: String? = null
 
+    // Which track a mid playback error was already retried for, so a track that genuinely
+    // will not play is only retried once and then lets the queue move on. Cleared when a
+    // different track starts playing.
+    private var errorRetryFor: String? = null
+
     /**
      * Handles the case where playback reports it ended but the position is well short
      * of the track length, which means the stream ran out of data rather than the song
@@ -126,6 +131,9 @@ class PlaybackService : MediaLibraryService() {
                 val playing = currentSongState.songUrl.value
                 if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
                     truncationRecoveryFor = null
+                }
+                if (errorRetryFor != null && errorRetryFor != playing) {
+                    errorRetryFor = null
                 }
             }
             if (playbackState == Player.STATE_ENDED) {
@@ -227,6 +235,29 @@ class PlaybackService : MediaLibraryService() {
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
             val cur = queue.indexOfFirst { it.id == curId }
+            val songUrl = if (cur >= 0) queue[cur].url else currentSongState.songUrl.value
+
+            // The user chose this track, so do not skip straight to the next one on the
+            // first failure. Drop the stale stream, resolve a fresh URL and resume the same
+            // track from where it stopped. Only if the same track fails a second time is the
+            // queue allowed to advance, so a track that truly cannot play still moves on.
+            if (songUrl.isNotBlank() && errorRetryFor != songUrl) {
+                errorRetryFor = songUrl
+                val positionMs = (SongPlayer.exoPlayer?.currentPosition ?: 0L).coerceAtLeast(0L)
+                com.music.spotui.data.diagnostics.PlaybackLog.add(
+                    "error-retry",
+                    "re-resolving same track, resuming at ${positionMs / 1000}s",
+                )
+                com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
+                SongPlayer.invalidateResolvedStream(songUrl)
+                if (positionMs > 0L) SongPlayer.setRestorePoint(songUrl, positionMs)
+                SongPlayer.playSong(songUrl, applicationContext, "song/${currentSongState.songId.value}")
+                return
+            }
+
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "queue", "advancing after retry failed for the same track",
+            )
             if (cur >= 0) {
                 SongPlayer.invalidateResolvedStream(queue[cur].url)
             }
