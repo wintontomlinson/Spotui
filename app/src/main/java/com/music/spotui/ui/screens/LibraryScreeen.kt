@@ -717,8 +717,23 @@ fun SumUpLibraryScreen(
         item { Spacer(modifier = Modifier.height(10.dp)) }
         // Premium quick access grid for the destinations that always work.
         item { LibraryQuickAccess(navController) }
-        // Listening history and Local files are surfaced by the quick access grid
-        // above, so they are not repeated as flat rows here.
+
+        // A heading for the playlists/albums list, or a friendly empty state when the
+        // user has not made or saved anything yet, so the screen never looks broken with
+        // just the quick access tiles and nothing else.
+        if (entries.isEmpty()) {
+            item { LibraryEmptyState(navController) }
+        } else {
+            item {
+                Text(
+                    text = "Your playlists",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 20.dp, top = 18.dp, bottom = 8.dp),
+                )
+            }
+        }
         items(entries) { entry ->
             Row(
                 horizontalArrangement = Arrangement.Start,
@@ -1113,6 +1128,126 @@ private fun AccountRow(label: String, tint: Color = Color.White, onClick: () -> 
  * always work regardless of any account state, so they are surfaced as large,
  * tappable cards instead of being buried in the list below.
  */
+/**
+ * Shown below the quick access grid when the user has no playlists, albums or offline
+ * collections yet, so the Library never looks empty or broken. Invites creating a
+ * playlist and points at Explore to start adding music.
+ */
+@Composable
+private fun LibraryEmptyState(navController: NavController) {
+    val accent = com.music.spotui.ui.theme.Accent
+    val context = LocalContext.current
+    var showCreate by remember { mutableStateOf(false) }
+    if (showCreate) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCreate = false },
+            containerColor = Color(0xFF262019),
+            title = { Text("Create playlist", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text("Playlist name", color = Color.Gray) },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF352E24),
+                        unfocusedContainerColor = Color(0xFF352E24),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = accent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                )
+            },
+            confirmButton = {
+                Text(
+                    "Create", color = accent, fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            val n = name.trim().ifBlank { "My Playlist" }
+                            val created = LocalPlaylistPref.createPlaylist(context, n)
+                            Api.HomeCache.library = null
+                            showCreate = false
+                            navController.navigate(playlistRoute(created.id, created.name))
+                        }
+                        .padding(8.dp),
+                )
+            },
+            dismissButton = {
+                Text(
+                    "Cancel", color = Color.Gray,
+                    modifier = Modifier.clickable { showCreate = false }.padding(8.dp),
+                )
+            },
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.14f)),
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(30.dp),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Build your collection",
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Create a playlist, or like and download songs from Explore. They will all show up here.",
+            color = Color(0xFFB3B3B3),
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        Spacer(Modifier.height(18.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                "Create playlist",
+                color = Color(0xFF1A1206),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(accent)
+                    .clickable { showCreate = true }
+                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            )
+            Text(
+                "Explore",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF262019))
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(50))
+                    .clickable { navController.navigate(Routes.YtSearch.route) }
+                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            )
+        }
+    }
+}
+
 @Composable
 private fun LibraryQuickAccess(navController: NavController) {
     data class Tile(
