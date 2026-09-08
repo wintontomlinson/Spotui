@@ -2520,13 +2520,19 @@ fun YouTubeSearchView(
                 }
             }
 
+            // Snapshot the error into a local first. It is observable state a background
+            // resolution can clear, so testing it and then dereferencing with !! raced that
+            // clear and could crash with an NPE right as the error resolved itself.
             viewModel.error != null -> {
-                Text(
-                    text = viewModel.error!!,
-                    color = Color(0xFFE57373),
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                val errorText = viewModel.error
+                if (errorText != null) {
+                    Text(
+                        text = errorText,
+                        color = Color(0xFFE57373),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             }
 
             viewModel.searchResults.isEmpty() && viewModel.searchQuery.isNotBlank() -> {

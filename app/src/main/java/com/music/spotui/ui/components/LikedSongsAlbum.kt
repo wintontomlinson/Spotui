@@ -272,10 +272,16 @@ fun LikedSongsScreen(
             if(likedSongs.isNotEmpty()){
                 repeat(likedSongs.size) {song ->
 
-                    var isLiked by remember {
-                        mutableStateOf(isSongLiked(context, likedSongs[song].id.toString()))
+                    // Key the per row state to the track id, not the loop slot. Without a
+                    // key, remember binds to the composition position, so when the liked
+                    // list changes (a song removed or re-sorted) a row kept the previous
+                    // track's liked heart and could open the saved-in sheet for the wrong
+                    // song. Keying on the id moves the state with the track.
+                    val rowSongId = likedSongs[song].id
+                    var isLiked by remember(rowSongId) {
+                        mutableStateOf(isSongLiked(context, rowSongId.toString()))
                     }
-                    var showSavedIn by remember { mutableStateOf(false) }
+                    var showSavedIn by remember(rowSongId) { mutableStateOf(false) }
                     if (showSavedIn) {
                         SavedInSheet(
                             song = likedSongs[song],

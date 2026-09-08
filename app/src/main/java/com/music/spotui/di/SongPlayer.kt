@@ -581,14 +581,24 @@ object SongPlayer {
                         "track",
                         "$metaTitle, source=$currentSource quality=$currentQuality",
                     )
-                    player!!.setMediaItem(buildMediaItem(streamUrl, streamMimeType(streamUrl), song))
-                    player!!.prepare()
+                    // Take one local reference to the player. It is a nullable var that a
+                    // concurrent cache reset or service teardown can release, and chaining
+                    // player!! four times raced that release and crashed the resolve
+                    // coroutine. If it is gone, abandon this start quietly.
+                    val activePlayer = player
+                    if (activePlayer == null) {
+                        releaseWakeLock("spotui:playSong")
+                        updateResolveStatus(false)
+                        return@withContext
+                    }
+                    activePlayer.setMediaItem(buildMediaItem(streamUrl, streamMimeType(streamUrl), song))
+                    activePlayer.prepare()
                     // Restored session: continue from where the last run stopped.
                     if (song == restoreQuery && restorePositionMs > 0) {
-                        player!!.seekTo(restorePositionMs)
+                        activePlayer.seekTo(restorePositionMs)
                     }
                     restoreQuery = null
-                    player!!.playWhenReady = playWhenResolved
+                    activePlayer.playWhenReady = playWhenResolved
                     loadedQuery = song
                     updateResolveStatus(false)
                 }

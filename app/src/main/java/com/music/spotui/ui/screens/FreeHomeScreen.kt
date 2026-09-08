@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,13 +87,17 @@ fun FreeHomeScreen(navController: NavController) {
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
     val play: (List<SongsModel>, Int) -> Unit = { list, index ->
-        val song = list[index]
-        playerViewModel.updateQueue(list)
-        playerViewModel.updateSongState(
-            song.coverUri, song.title, song.singer, true, song.id, index, song.album,
-        )
-        SongPlayer.playSong(song.url, context, "song/${song.id}")
-        navController.navigate(Routes.Player.route)
+        // Guard the index: callers pass it from list iteration, but if the list is swapped
+        // for a shorter one before a tap's lambda runs, an unchecked list[index] would
+        // crash. getOrNull turns that race into a harmless no op.
+        list.getOrNull(index)?.let { song ->
+            playerViewModel.updateQueue(list)
+            playerViewModel.updateSongState(
+                song.coverUri, song.title, song.singer, true, song.id, index, song.album,
+            )
+            SongPlayer.playSong(song.url, context, "song/${song.id}")
+            navController.navigate(Routes.Player.route)
+        }
     }
 
     val openSearch: (String) -> Unit = { query ->
@@ -154,7 +157,7 @@ fun FreeHomeScreen(navController: NavController) {
     }
 }
 
-/** Greeting block with a compact search affordance on the right. */
+/** Premium greeting masthead: an amber accent bar, a gradient greeting, and a subtitle. */
 @Composable
 private fun HomeHeader() {
     Column(
