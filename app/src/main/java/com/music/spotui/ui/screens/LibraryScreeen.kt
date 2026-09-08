@@ -241,7 +241,7 @@ fun LibraryScreen(navController: NavController) {
         }
     }
 
-    var gridView by remember { mutableStateOf(isLibraryGridView(context)) }
+
     var showCreateDialog by remember { mutableStateOf(false) }
 
     if (showCreateDialog) {
@@ -358,26 +358,7 @@ fun LibraryScreen(navController: NavController) {
             }
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Grid/List View Toggle Button
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF262019))
-                    .clickable {
-                        gridView = !gridView
-                        setLibraryGridView(context, gridView)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(if (gridView) R.drawable.ic_view_list else R.drawable.ic_view_grid),
-                    contentDescription = if (gridView) "Show as list" else "Show as grid",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
+            // Grid/list toggle removed: the library is a single, consistent list view.
 
             // Profile / Settings Button
             Box(
@@ -549,25 +530,15 @@ fun LibraryScreen(navController: NavController) {
                 // tile in the list/grid is a duplicate. Turned off.
                 val showHistoryTile = false
 
-                if (gridView) {
-                    LibraryGridScreen(
-                        padding = PaddingValues(0.dp),
-                        entries = filteredEntries,
-                        followedArtists = filteredArtists,
-                        navController = navController,
-                        showHistoryTile = showHistoryTile,
-                        onClearFilters = { libraryViewModel.clearFilters() }
-                    )
-                } else {
-                    SumUpLibraryScreen(
-                        padding = PaddingValues(0.dp),
-                        entries = filteredEntries,
-                        followedArtists = filteredArtists,
-                        navController = navController,
-                        showHistoryTile = showHistoryTile,
-                        onClearFilters = { libraryViewModel.clearFilters() }
-                    )
-                }
+                // The library is list only now, so it always renders the list layout.
+                SumUpLibraryScreen(
+                    padding = PaddingValues(0.dp),
+                    entries = filteredEntries,
+                    followedArtists = filteredArtists,
+                    navController = navController,
+                    showHistoryTile = showHistoryTile,
+                    onClearFilters = { libraryViewModel.clearFilters() }
+                )
             }
             else -> Box(modifier = Modifier.padding(20.dp, 100.dp)) { Snackbar(showMessage = "Couldn't load your library") }
         }
