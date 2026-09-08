@@ -5,6 +5,24 @@ compared to the main Spotui repository.
 
 ---
 
+## 🚀 Release v1.9.3
+
+### 🛠 Library & Artists
+
+* **Liked Songs and Downloads only at the top now.** They stay as the quick access tiles and are no
+  longer repeated as rows in the list below, so the list holds just your real playlists, albums and
+  saved collections.
+* **Albums and playlists show up.** Opening an album or playlist already saves it, but the library
+  was being served from a stale cache so a freshly opened one never appeared. The library now
+  rebuilds live, so albums and playlists you open show in Library on the next visit.
+* **Artist pages work without a login.** They used to fail with a Spotify auth error, so the name,
+  photo and songs never loaded. An artist page now builds from YouTube instead: the artist's photo
+  and their top tracks, with no account needed.
+* **Follow works.** The Follow button saves the artist on your device, and followed artists appear in
+  the library's Artists you follow section.
+
+---
+
 ## 🚀 Release v1.9.2
 
 ### 🛠 One Library Heading
