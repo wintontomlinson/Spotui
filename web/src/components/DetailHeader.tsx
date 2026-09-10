@@ -33,7 +33,7 @@ export function DetailHeader({
   return (
     <header
       className="relative px-4 pb-4 pt-[max(env(safe-area-inset-top),12px)]"
-      style={{ backgroundImage: `linear-gradient(to bottom, ${accent}, #0B0B0F)` }}
+      style={{ backgroundImage: `linear-gradient(to bottom, ${accent}, #130824)` }}
     >
       <button
         type="button"
@@ -65,7 +65,7 @@ export function DetailHeader({
             <button
               type="button"
               onClick={onShuffle}
-              className="flex items-center gap-2 rounded-full border border-white/25 px-4 py-2 text-[13px] font-bold text-white transition-colors hover:border-white/60"
+              className="flex items-center gap-2 rounded-full border border-gold-500/40 px-4 py-2 text-[13px] font-bold text-gold-300 transition-colors hover:border-gold-400 hover:text-gold-200"
             >
               <ShuffleIcon size={18} />
               Shuffle
@@ -75,7 +75,7 @@ export function DetailHeader({
             <button
               type="button"
               onClick={onPlay}
-              className="flex items-center gap-2 rounded-full bg-spotify-green px-6 py-2.5 text-[14px] font-bold text-black transition-transform hover:scale-[1.03]"
+              className="flex items-center gap-2 rounded-full btn-gold px-6 py-2.5 text-[14px] font-bold transition-transform hover:scale-[1.03]"
             >
               <PlayIcon size={18} />
               Play

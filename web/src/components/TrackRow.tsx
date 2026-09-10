@@ -35,7 +35,7 @@ export function TrackRow({
     <div
       className={clsx(
         'group flex items-center gap-3 rounded-[4px] px-2 py-[6px] transition-colors',
-        'hover:bg-white/[0.07]',
+        'hover:bg-royal-800/40',
       )}
     >
       <button
@@ -60,7 +60,7 @@ export function TrackRow({
           <span
             className={clsx(
               'flex items-center truncate text-[15px] font-medium',
-              isCurrent ? 'text-spotify-green' : 'text-white',
+              isCurrent ? 'text-gold-400' : 'text-white',
             )}
           >
             <span className="truncate">{track.name}</span>
@@ -87,7 +87,7 @@ export function TrackRow({
         className="shrink-0 p-1 text-white/70 transition-colors hover:text-white"
       >
         {saved ? (
-          <CheckCircleIcon size={20} className="text-spotify-green" />
+          <CheckCircleIcon size={20} className="text-gold-400" />
         ) : (
           <PlusIcon size={20} />
         )}

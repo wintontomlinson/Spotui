@@ -9,15 +9,31 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ui/theme/Color.kt
-        'app-bg': '#0B0B0F',
-        'grid-bg': '#2A2A2A',
-        'app-palette': '#618DFF',
-        // literals used throughout the Compose screens
-        'spotify-green': '#1ED760',
-        'text-secondary': '#B3B3B3',
-        surface: '#121212',
-        'surface-dialog': '#1E1E1E',
+        // Royal Edition — deep royal purple base, gold accents.
+        'app-bg': '#130824',
+        'grid-bg': '#2B1D4A',
+        'app-palette': '#B794F6',
+        'royal-gold': '#D4AF37',
+        royal: {
+          200: '#DDD6FE',
+          300: '#C4B5FD',
+          400: '#A78BFA',
+          500: '#8B5CF6',
+          600: '#7C3AED',
+          700: '#6D28D9',
+          800: '#5B21B6',
+          900: '#4C1D95',
+        },
+        gold: {
+          200: '#F5E09A',
+          300: '#EFC960',
+          400: '#E9B537',
+          500: '#D4AF37',
+          600: '#B8892B',
+        },
+        'text-secondary': '#C4B5E0',
+        surface: '#1A0F30',
+        'surface-dialog': '#241540',
         'app-error': '#E22134',
       },
       fontFamily: {

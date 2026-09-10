@@ -22,7 +22,7 @@ export function BottomNav() {
 
   return (
     // Brush.verticalGradient(Transparent -> Black -> Black) so content scrolls under.
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-b from-transparent via-black to-black pt-6">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-b from-transparent via-[#130824]/95 to-[#0C0518] pt-6">
       <div className="pointer-events-auto">
         {hasTrack ? <MiniPlayer /> : null}
         <nav
@@ -38,7 +38,7 @@ export function BottomNav() {
                 aria-current={active ? 'page' : undefined}
                 className={clsx(
                   'flex flex-col items-center gap-1 py-1 transition-colors',
-                  active ? 'text-white' : 'text-[#8A8A8A] hover:text-white/80',
+                  active ? 'text-gold-400' : 'text-[#B4A8D6] hover:text-white/80',
                 )}
               >
                 <Icon size={24} />

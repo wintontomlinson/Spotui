@@ -70,8 +70,8 @@ export function PlayerOverlay() {
       className="fixed inset-0 z-40 flex flex-col"
       // Brush.verticalGradient(dominentColor -> Black, startY = 100f)
       style={{
-        backgroundImage: `linear-gradient(to bottom, ${palette.muted} 0%, #000000 85%)`,
-        backgroundColor: '#0B0B0F',
+        backgroundImage: `linear-gradient(to bottom, ${palette.muted} 0%, #130824 85%)`,
+        backgroundColor: '#130824',
       }}
       role="dialog"
       aria-label="Now playing"
@@ -86,7 +86,7 @@ export function PlayerOverlay() {
         >
           <ChevronDownIcon size={28} />
         </button>
-        <p className="min-w-0 flex-1 truncate px-3 text-center text-[12px] font-semibold uppercase tracking-wide text-white/80">
+        <p className="min-w-0 flex-1 truncate px-3 text-center text-[12px] font-semibold uppercase tracking-[0.2em] text-gold-400/90">
           {track.albumName}
         </p>
         <span className="w-[30px]" />
@@ -121,7 +121,7 @@ export function PlayerOverlay() {
               className="shrink-0 p-1 text-white/80 transition-colors hover:text-white"
             >
               {saved ? (
-                <CheckCircleIcon size={26} className="text-spotify-green" />
+                <CheckCircleIcon size={26} className="text-gold-400" />
               ) : (
                 <PlusIcon size={26} />
               )}
@@ -146,7 +146,7 @@ export function PlayerOverlay() {
               aria-pressed={shuffle}
               className={clsx(
                 'p-1 transition-colors',
-                shuffle ? 'text-spotify-green' : 'text-white hover:text-white/80',
+                shuffle ? 'text-gold-400' : 'text-white hover:text-white/80',
               )}
             >
               <ShuffleIcon size={25} />
@@ -161,15 +161,15 @@ export function PlayerOverlay() {
               <PreviousIcon size={35} />
             </button>
 
-            {/* requiredSize(64.dp) white circle with a black 30 dp icon */}
+            {/* Royal Edition: 64 dp gold-gradient disc instead of the white circle. */}
             <button
               type="button"
               onClick={() => void togglePlay()}
               aria-label={isPaused ? 'Play' : 'Pause'}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-black transition-transform hover:scale-[1.04]"
+              className="btn-gold flex h-16 w-16 items-center justify-center rounded-full text-[#241540] transition-transform hover:scale-[1.04]"
             >
               {isBuffering ? (
-                <span className="block h-[30px] w-[30px] animate-spin rounded-full border-[3px] border-black/25 border-t-black" />
+                <span className="block h-[30px] w-[30px] animate-spin rounded-full border-[3px] border-[#241540]/30 border-t-[#241540]" />
               ) : isPaused ? (
                 <PlayIcon size={30} />
               ) : (
@@ -192,7 +192,7 @@ export function PlayerOverlay() {
               aria-label={`Repeat: ${repeatMode}`}
               className={clsx(
                 'relative p-1 transition-colors',
-                repeatMode !== 'off' ? 'text-spotify-green' : 'text-white hover:text-white/80',
+                repeatMode !== 'off' ? 'text-gold-400' : 'text-white hover:text-white/80',
               )}
             >
               <RepeatIcon size={20} />
@@ -200,7 +200,7 @@ export function PlayerOverlay() {
                 <span className="absolute -right-0.5 -top-0.5 text-[9px] font-bold">1</span>
               ) : null}
               {repeatMode !== 'off' ? (
-                <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-spotify-green" />
+                <span className="absolute bottom-0 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-gold-400" />
               ) : null}
             </button>
           </div>
@@ -212,7 +212,7 @@ export function PlayerOverlay() {
               onClick={() => void becomeActiveDevice(false)}
               className={clsx(
                 'flex items-center gap-2 text-[12px] font-semibold transition-colors',
-                isActive ? 'text-spotify-green' : 'text-white/70 hover:text-white',
+                isActive ? 'text-gold-400' : 'text-white/70 hover:text-white',
               )}
             >
               <DevicesIcon size={18} />

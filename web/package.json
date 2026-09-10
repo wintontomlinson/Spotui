@@ -4,7 +4,7 @@
   "private": true,
   "description": "Web version of Spotui — a Spotify client built with Next.js, official Spotify OAuth (PKCE) and the Web Playback SDK.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 0.0.0.0 -p ${PORT:-3000}",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"

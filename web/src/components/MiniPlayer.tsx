@@ -57,7 +57,7 @@ export function MiniPlayer() {
   return (
     <div className="px-[13px]">
       <div
-        className="overflow-hidden rounded-[8px] transition-colors duration-500"
+        className="overflow-hidden rounded-[8px] ring-1 ring-gold-500/25 transition-colors duration-500"
         style={{ backgroundColor: palette.darkVibrant }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -89,7 +89,7 @@ export function MiniPlayer() {
               className="p-1 text-white transition-opacity hover:opacity-80"
             >
               {saved ? (
-                <CheckCircleIcon size={22} className="text-spotify-green" />
+                <CheckCircleIcon size={22} className="text-gold-400" />
               ) : (
                 <PlusIcon size={22} />
               )}

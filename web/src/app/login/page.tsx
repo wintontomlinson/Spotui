@@ -34,9 +34,12 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-app-bg px-6 py-12">
       <div className="w-full max-w-md">
-        <h1 className="text-[32px] font-extrabold leading-tight text-white">Spotui Web</h1>
+        <h1 className="text-[32px] font-extrabold leading-tight text-white">
+          Spotui <span className="gold-text">Royal</span>
+        </h1>
         <p className="mt-2 text-[14px] leading-relaxed text-text-secondary">
-          Sign in with Spotify to browse your library and play it in this browser.
+          Your Spotify, crowned in royal purple and gold — browse your library and play it in this
+          browser.
         </p>
 
         {!clientId ? (
@@ -88,7 +91,7 @@ export default function LoginPage() {
             type="button"
             onClick={() => void handleLogin()}
             disabled={busy}
-            className="mt-8 w-full rounded-full bg-spotify-green px-6 py-3 text-[15px] font-bold text-black transition-transform hover:scale-[1.02] disabled:opacity-60"
+            className="mt-8 w-full rounded-full btn-gold px-6 py-3 text-[15px] font-bold transition-transform hover:scale-[1.02] disabled:opacity-60"
           >
             {busy ? 'Redirecting…' : 'Continue with Spotify'}
           </button>

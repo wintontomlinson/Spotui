@@ -37,7 +37,7 @@ export function Seekbar({
     return (
       <div className="h-[3px] w-full overflow-hidden rounded-full bg-white/25" aria-hidden="true">
         <div
-          className="h-full rounded-full bg-white/90 transition-[width] duration-300 ease-linear"
+          className="h-full rounded-full bg-gradient-to-r from-royal-500 to-gold-400 transition-[width] duration-300 ease-linear"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -48,7 +48,10 @@ export function Seekbar({
     <div className="w-full">
       <div className="relative flex items-center">
         <div className="pointer-events-none absolute inset-x-0 h-1 overflow-hidden rounded-full bg-white/30">
-          <div className="h-full rounded-full bg-white" style={{ width: `${percent}%` }} />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-royal-500 to-gold-400"
+            style={{ width: `${percent}%` }}
+          />
         </div>
         <input
           type="range"

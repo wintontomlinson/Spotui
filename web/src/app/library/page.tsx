@@ -128,8 +128,8 @@ export default function LibraryPage() {
               className={clsx(
                 'shrink-0 rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors',
                 filter === chip.id
-                  ? 'bg-spotify-green text-black'
-                  : 'bg-white/[0.09] text-white hover:bg-white/[0.15]',
+                  ? 'btn-gold font-bold'
+                  : 'bg-royal-800/50 text-white hover:bg-royal-700/60',
               )}
             >
               {chip.label}
