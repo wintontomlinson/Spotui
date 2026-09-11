@@ -67,11 +67,13 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
+                        // Royal fade behind the floating bar so content scrolls into
+                        // the deep-purple canvas rather than a flat black.
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black,
-                                Color.Black
+                                Color(0xFF130824).copy(alpha = 0.85f),
+                                Color(0xFF130824)
                             ),
                             startY = 0f
                         )
@@ -108,16 +110,16 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 spotColor = Color.Black,
                             )
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
-                            // A warm amber tinted gradient so the nav bar carries the
-                            // app's colour instead of being a flat dark slab.
+                            // Royal Edition — a deep royal-purple gradient so the nav
+                            // bar carries the app's premium colour, with a gold hairline.
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color(0xFF2A2118), Color(0xFF1A160F)),
+                                    colors = listOf(Color(0xFF2B1D4A), Color(0xFF1A0F30)),
                                 )
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.18f),
+                                color = Color(0xFFD4AF37).copy(alpha = 0.28f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             ),
                         containerColor = Color.Transparent,
@@ -150,10 +152,15 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 },
                                 label = {
                                     if (currentTab == item.route) {
-                                        Text(color = Color(0xFFD4AF37), text = item.label, fontSize = 11.sp)
+                                        Text(
+                                            color = Color(0xFFD4AF37),
+                                            text = item.label,
+                                            fontSize = 11.sp,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        )
                                     } else {
                                         Text(
-                                            color = Color.Gray,
+                                            color = Color(0xFFB6A9D6),
                                             text = item.label,
                                             fontSize = 11.sp
                                         )
@@ -209,10 +216,10 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = Color(0xFFD4AF37),
-                                    unselectedIconColor = Color.Gray,
-                                    // A soft amber pill behind the active tab's icon, so
-                                    // the selection is clear at a glance without shouting.
-                                    indicatorColor = Color(0xFFD4AF37).copy(alpha = 0.16f),
+                                    unselectedIconColor = Color(0xFFB6A9D6),
+                                    // A gold pill behind the active tab's icon so the
+                                    // selection reads clearly on the royal-purple bar.
+                                    indicatorColor = Color(0xFFD4AF37).copy(alpha = 0.22f),
                                 )
                             )
 

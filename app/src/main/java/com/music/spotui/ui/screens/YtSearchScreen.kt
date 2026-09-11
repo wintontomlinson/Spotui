@@ -602,24 +602,32 @@ private fun DiscoverPane(
         }
 
         item {
-            Text(
-                text = "Browse all",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 12.dp),
-            )
+            Column(modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 14.dp)) {
+                Text(
+                    text = "Explore",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                )
+                Text(
+                    text = "Fresh picks, updated daily",
+                    color = Color(0xFFD4AF37),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
         }
         item {
-            // Two column grid of colourful browse tiles. Each is a rounded card in its own
-            // hue with the label bottom-left, the familiar premium browse layout, and each
-            // tap runs the seeded search.
+            // Two column grid of image-forward browse tiles. Each is a rounded card
+            // showing current cover art with a royal scrim + gold hairline, the label
+            // bottom-left, and each tap runs the seeded search.
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 BROWSE_CATEGORIES.chunked(2).forEach { pair ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },
                                 modifier = Modifier.weight(1f))
