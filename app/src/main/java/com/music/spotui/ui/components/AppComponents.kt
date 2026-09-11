@@ -102,7 +102,7 @@ fun Loader() {
                 .size(45.dp),
             // The app accent, not the old off brand purple, so every loading screen
             // stays on palette.
-            color = Color(0xFFF5A524),
+            color = Color(0xFFD4AF37),
             strokeWidth = 3.dp,
         )
     }
@@ -440,7 +440,7 @@ fun MiniPlayer(navController: NavHostController) {
                 if (isLiked) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        tint = Color(0xFFF5A524),
+                        tint = Color(0xFFD4AF37),
                         modifier = Modifier
                             .size(22.dp)
                             .clickable(
@@ -657,14 +657,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF5A524)) // accent
+                    .background(Color(0xFFD4AF37)) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_queue_add),
                     contentDescription = "Play next",
                     // Dark content on the light amber accent keeps the contrast strong.
-                    tint = Color(0xFF1A1206),
+                    tint = Color(0xFF241540),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -746,7 +746,7 @@ fun AppSearchBar(
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFFF5A524)
+                cursorColor = Color(0xFFD4AF37)
             ),
             singleLine = true,
             placeholder = {

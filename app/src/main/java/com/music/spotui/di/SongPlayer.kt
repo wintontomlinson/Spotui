@@ -503,6 +503,11 @@ object SongPlayer {
         runCatching {
             ensurePlayer(appContext)
             player?.pause()
+            // Always start a fresh track at full app-level volume. A crossfade
+            // lowers the primary player's gain, and an interrupted fade could
+            // otherwise leave the next manual play quieter than expected — this
+            // guarantees the default (1.0) every time.
+            player?.volume = 1f
         }
 
         // Podcast episodes are encoded as "episode:<id>" queries, play them via the

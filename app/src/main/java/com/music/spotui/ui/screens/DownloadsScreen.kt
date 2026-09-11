@@ -153,7 +153,7 @@ fun DownloadsScreen(navController: NavController) {
         }
     }
 
-    val accent = Color(0xFFF5A524)
+    val accent = Color(0xFFD4AF37)
 
     Surface(
         modifier = Modifier

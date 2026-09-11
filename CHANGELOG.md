@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 👑 Royal Edition (on v2.0.0)
+
+* **Royal premium theme:** Deep royal-purple canvas (`#130824`) with royal-gold accent (`#D4AF37`),
+  replacing the amber-on-near-black look. Layered royal-purple surfaces, gold highlights swept
+  across every screen; dynamic (wallpaper) colour stays off so the premium look is consistent.
+* **Smarter auto-queue:** Related songs are appended **earlier** (4 tracks before the end, up from
+  ~1) and seeded from the last **8** tracks, so autoplay never stalls waiting on a fetch.
+* **Trending, changing Home:** Trending block refreshes more often (15 min) and the curated shelves
+  rotate on a time bucket, so Home keeps changing through the day (on top of the existing
+  personalised "More like…" rows).
+* **Redesigned Explore:** Image-forward Browse tiles — full-bleed artwork with a royal gradient
+  scrim and a gold hairline, taller cards, and a royal-purple/gold palette led by Trending & Charts.
+* **Volume default fix:** Every track now starts at full app-level volume (1.0); an interrupted
+  crossfade can no longer leave the next track quieter than expected.
+* **Cleanup:** Removed the unused `web/` Next.js client and a stray out-of-tree copy of AndroidX's
+  `MediaSession.java`.
+
+---
+
 ## 🚀 Release v2.0.0
 
 ### 🛠 Lyrics
