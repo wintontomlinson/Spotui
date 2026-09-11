@@ -3,6 +3,7 @@ package com.music.spotui.data.api
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.AlbumItem
 import com.metrolist.innertube.models.PlaylistItem
+import com.metrolist.innertube.models.SongItem
 import com.music.spotui.ui.viewmodel.hiResThumbnail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,22 +31,34 @@ object BrowseTileImages {
 
         val url = withContext(Dispatchers.IO) {
             runCatching {
-                // Albums first, since album art is square and crops cleanly into the
-                // tile. Playlists are the fallback for queries with no album hits.
-                val albumArt = YouTube.search(genre, YouTube.SearchFilter.FILTER_ALBUM)
-                    .getOrNull()
-                    ?.items
-                    ?.filterIsInstance<AlbumItem>()
-                    ?.firstOrNull { it.thumbnail.isNotBlank() }
-                    ?.thumbnail
-                    ?: YouTube.search(genre, YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST)
-                        .getOrNull()
-                        ?.items
-                        ?.filterIsInstance<PlaylistItem>()
-                        ?.firstOrNull { !it.thumbnail.isNullOrBlank() }
-                        ?.thumbnail
-                // Requested large so the tile art stays sharp on high density screens.
-                hiResThumbnail(albumArt, size = 544)
+                // Bias the image search toward fresh/latest artwork so tiles show
+                // current covers rather than a decade-old album. Falls back to the
+                // plain genre if the "latest" query returns nothing.
+                val freshQuery = "$genre 2026 latest"
+
+                fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
+                    .getOrNull()?.items?.filterIsInstance<AlbumItem>()
+                    ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
+
+                fun playlistArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST)
+                    .getOrNull()?.items?.filterIsInstance<PlaylistItem>()
+                    ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
+
+                fun songArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
+                    .getOrNull()?.items?.filterIsInstance<SongItem>()
+                    ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
+
+                // Prefer fresh album art → fresh playlist art → plain-query album/
+                // playlist → song thumbnail, so a tile is never left blank.
+                val raw = albumArt(freshQuery)
+                    ?: playlistArt(freshQuery)
+                    ?: albumArt(genre)
+                    ?: playlistArt(genre)
+                    ?: songArt(genre)
+
+                // Requested extra large so the full-bleed tile art stays crisp on
+                // high-density screens (tiles are now image-forward, not thumbnails).
+                hiResThumbnail(raw, size = 720)
             }.getOrDefault("")
         }
 
