@@ -51,8 +51,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.music.spotui.util.DefaultLinkHelper
 import com.music.spotui.util.HandlerAppInfo
 
-private val SpotifyGreen = Color(0xFF1DB954)
-private val SpotifyDarkBg = Color(0xFF121212)
+private val SpotifyGreen = Color(0xFFB8892B)
+private val SpotifyDarkBg = Color(0xFF130824)
 private val SpotifyCardBg = Color(0xFF181818)
 private val SpotifySubtleBorder = Color(0xFF282828)
 private val SpotifyTextSecondary = Color(0xFFA7A7A7)

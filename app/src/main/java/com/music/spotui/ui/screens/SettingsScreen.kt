@@ -239,14 +239,14 @@ fun SettingsScreen(navController: NavController) {
                     Text("Audio Output Devices", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
                         com.music.spotui.ui.utils.AudioDeviceHelper.getCurrentAudioRouteName(context),
-                        color = Color(0xFF1ED760),
+                        color = Color(0xFFD4AF37),
                         fontSize = 12.sp,
                     )
                 }
                 Icon(
                     painter = painterResource(id = R.drawable.ic_devices),
                     contentDescription = "Devices",
-                    tint = Color(0xFF1ED760),
+                    tint = Color(0xFFD4AF37),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -1130,7 +1130,7 @@ private fun QualityPicker(
                         if (deezerConnected) {
                             Text(
                                 text = "✓ Deezer account connected (Lossless ready)",
-                                color = Color(0xFF1ED760),
+                                color = Color(0xFFD4AF37),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )

@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -792,44 +793,49 @@ fun SearchAlbumRow(album: com.music.spotui.data.entity.AlbumsModel, onClick: () 
     }
 }
 
-/** Spotify's "Browse all" categories: name + tile colour + the search query it runs. */
+/**
+ * "Browse all" categories: name + tile colour + the search query it runs.
+ * Royal Edition — every tile is tinted from the royal-purple / gold family so
+ * Explore reads as one premium palette instead of a rainbow. "Trending" and
+ * "Charts" lead the grid.
+ */
 private val browseCategories: List<Triple<String, Color, String>> = listOf(
-    Triple("Music", Color(0xFFDC148C), "Top hits"),
-    Triple("Podcasts", Color(0xFF1E3264), "Podcast"),
-    Triple("Made For You", Color(0xFF8768A8), "Discover weekly"),
-    Triple("New Releases", Color(0xFFE8115B), "New releases"),
-    Triple("Pop", Color(0xFF8D67AB), "Pop"),
-    Triple("Hip-Hop", Color(0xFF477D95), "Hip hop"),
-    Triple("Rock", Color(0xFFE61E32), "Rock"),
-    Triple("Latin", Color(0xFFE1118C), "Latin"),
-    Triple("Country", Color(0xFFD84000), "Country"),
-    Triple("R&B", Color(0xFFBA5D07), "R&B"),
-    Triple("K-Pop", Color(0xFF148A08), "K-pop"),
-    Triple("Indie", Color(0xFF608108), "Indie"),
-    Triple("Dance/Electronic", Color(0xFF056952), "Electronic dance"),
-    Triple("Metal", Color(0xFF777777), "Metal"),
-    Triple("Chill", Color(0xFF1E3264), "Chill"),
-    Triple("Charts", Color(0xFF8C1932), "Top charts"),
-    Triple("Workout", Color(0xFF777777), "Workout"),
+    Triple("Trending", Color(0xFF7C3AED), "Trending music"),
+    Triple("Charts", Color(0xFFB8892B), "Top charts"),
+    Triple("New Releases", Color(0xFF6D28D9), "New releases"),
+    Triple("Made For You", Color(0xFF8B5CF6), "Discover weekly"),
+    Triple("Pop", Color(0xFF9D4EDD), "Pop"),
+    Triple("Hip-Hop", Color(0xFF5B21B6), "Hip hop"),
+    Triple("Rock", Color(0xFF7B2D8E), "Rock"),
+    Triple("Latin", Color(0xFFA23E9C), "Latin"),
+    Triple("R&B", Color(0xFFC08A2E), "R&B"),
+    Triple("K-Pop", Color(0xFF8E44AD), "K-pop"),
+    Triple("Indie", Color(0xFF6247AA), "Indie"),
+    Triple("Dance/Electronic", Color(0xFF4C1D95), "Electronic dance"),
+    Triple("Chill", Color(0xFF5E3A8C), "Chill"),
+    Triple("Workout", Color(0xFF7C3AED), "Workout"),
     Triple("Jazz", Color(0xFF503750), "Jazz"),
+    Triple("Country", Color(0xFFA05A2C), "Country"),
+    Triple("Metal", Color(0xFF3D2C63), "Metal"),
+    Triple("Podcasts", Color(0xFF4A3B78), "Podcast"),
 )
 
 @Composable
 fun BrowseAllSection(onCategoryClick: (genre: String, title: String) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Browse all",
+            text = "Explore",
             color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 8.dp),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(16.dp, 14.dp, 16.dp, 10.dp),
         )
         browseCategories.chunked(2).forEach { rowItems ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp, 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(12.dp, 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 rowItems.forEach { (name, color, query) ->
                     BrowseCategoryTile(name, color, query, Modifier.weight(1f)) {
@@ -856,41 +862,55 @@ private fun BrowseCategoryTile(
     onClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    // Cover of the category's top playlist, shown tilted in the corner like
-    // Spotify web's browse tiles. Empty until resolved (cached per session).
+    // Cover of the category's top playlist. Royal Edition shows it edge-to-edge
+    // as the tile background with a purple gradient scrim, rather than a small
+    // tilted corner thumbnail — the artwork is the tile. Cached per session.
     val cover by androidx.compose.runtime.produceState(initialValue = "", key1 = query) {
         value = com.music.spotui.data.api.BrowseTileImages.coverFor(context, query)
     }
     Box(
         modifier = modifier
-            .height(96.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .height(128.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(color)
+            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(14.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) { onClick() },
     ) {
         if (cover.isNotBlank()) {
+            // Full-bleed artwork.
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(64.dp)
-                    .offset(x = 16.dp, y = 10.dp)
-                    .rotate(25f)
-                    .clip(RoundedCornerShape(4.dp)),
+                modifier = Modifier.matchParentSize(),
             )
         }
+        // Royal scrim so the title stays legible over any artwork, tinted with
+        // the tile's own colour at the top for a premium, cohesive look.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            color.copy(alpha = 0.55f),
+                            Color(0xCC130824),
+                        ),
+                    ),
+                ),
+        )
         Text(
             text = name,
             color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
             maxLines = 2,
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(14.dp),
         )
     }
 }

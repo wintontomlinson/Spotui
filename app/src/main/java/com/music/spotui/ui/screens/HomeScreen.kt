@@ -46,6 +46,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -138,6 +140,14 @@ fun HomeScreen(navController: NavController){
         val artistsList = (artists as? Response.Success)?.data.orEmpty()
         val songsList = (songs as? Response.Success)?.data.orEmpty()
 
+        val isRefreshing by homeViewModel.isRefreshing.collectAsState()
+        val pullState = rememberPullToRefreshState()
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { homeViewModel.refresh() },
+            state = pullState,
+            modifier = Modifier.fillMaxSize(),
+        ) {
         when (selectedFilter) {
             "Music" -> {
                 HomeMusicFeedContent(
@@ -220,7 +230,7 @@ fun HomeScreen(navController: NavController){
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(24.dp))
-                                        .background(Color(0xFF1ED760))
+                                        .background(Color(0xFFD4AF37))
                                         .clickable { navController.navigate(Routes.Login.route) }
                                         .padding(horizontal = 24.dp, vertical = 12.dp)
                                 ) {
@@ -247,6 +257,7 @@ fun HomeScreen(navController: NavController){
                 }
             }
         }
+        } // PullToRefreshBox
     }
 }
 
@@ -1059,7 +1070,7 @@ private fun HomeSongRow(
             modifier = Modifier
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF1ED760))
+                .background(Color(0xFFD4AF37))
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,

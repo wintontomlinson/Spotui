@@ -71,10 +71,31 @@ class HomeViewModel @Inject constructor(private val repository: AppRepository)  
         _isFollowingOnly.value = false
     }
 
-    private fun fetchHome() = viewModelScope.launch(Dispatchers.IO) {
-        repository.provideHomeFeed().collect { feed ->
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
+    private fun fetchHome(forceRefresh: Boolean = false) = viewModelScope.launch(Dispatchers.IO) {
+        repository.provideHomeFeed(forceRefresh).collect { feed ->
             _home.value = feed
         }
+    }
+
+    /**
+     * Pull-to-refresh: bypass the home cache and re-fetch, so the trending feed
+     * reorders and picks up fresh content. Also re-pulls the supporting rows.
+     */
+    fun refresh() = viewModelScope.launch(Dispatchers.IO) {
+        _isRefreshing.value = true
+        try {
+            repository.provideHomeFeed(forceRefresh = true).collect { feed ->
+                _home.value = feed
+            }
+        } finally {
+            _isRefreshing.value = false
+        }
+        fetchArtists()
+        fetchAlbums()
+        fetchSongs()
     }
 
     private fun fetchAlbums() = viewModelScope.launch(Dispatchers.IO) {
