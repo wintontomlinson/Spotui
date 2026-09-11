@@ -85,7 +85,7 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF121212),
+        containerColor = Color(0xFF130824),
         contentColor = Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
     ) {
@@ -107,7 +107,7 @@ fun DevicesSheet(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_devices),
                         contentDescription = null,
-                        tint = Color(0xFF1ED760),
+                        tint = Color(0xFFD4AF37),
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
@@ -156,7 +156,7 @@ fun DevicesSheet(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF1ED760))
+                            .background(Color(0xFFD4AF37))
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                             }
@@ -190,20 +190,20 @@ fun DevicesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFF1ED760).copy(alpha = 0.15f))
+                        .background(Color(0xFFD4AF37).copy(alpha = 0.15f))
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_devices),
                         contentDescription = null,
-                        tint = Color(0xFF1ED760),
+                        tint = Color(0xFFD4AF37),
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = activeDevice.name,
-                            color = Color(0xFF1ED760),
+                            color = Color(0xFFD4AF37),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -211,14 +211,14 @@ fun DevicesSheet(
                         )
                         Text(
                             text = "Listening on this device",
-                            color = Color(0xFF1ED760).copy(alpha = 0.8f),
+                            color = Color(0xFFD4AF37).copy(alpha = 0.8f),
                             fontSize = 12.sp
                         )
                     }
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Active",
-                        tint = Color(0xFF1ED760),
+                        tint = Color(0xFFD4AF37),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -311,8 +311,8 @@ private fun DeviceItemRow(
     item: AudioDeviceItem,
     onClick: () -> Unit
 ) {
-    val textColor = if (item.isActive) Color(0xFF1ED760) else Color.White
-    val iconColor = if (item.isActive) Color(0xFF1ED760) else Color.LightGray
+    val textColor = if (item.isActive) Color(0xFFD4AF37) else Color.White
+    val iconColor = if (item.isActive) Color(0xFFD4AF37) else Color.LightGray
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -368,7 +368,7 @@ private fun DeviceItemRow(
             }
             Text(
                 text = subText,
-                color = if (item.isActive) Color(0xFF1ED760).copy(alpha = 0.8f) else Color.Gray,
+                color = if (item.isActive) Color(0xFFD4AF37).copy(alpha = 0.8f) else Color.Gray,
                 fontSize = 11.sp
             )
         }
@@ -377,7 +377,7 @@ private fun DeviceItemRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Active",
-                tint = Color(0xFF1ED760),
+                tint = Color(0xFFD4AF37),
                 modifier = Modifier.size(18.dp)
             )
         }

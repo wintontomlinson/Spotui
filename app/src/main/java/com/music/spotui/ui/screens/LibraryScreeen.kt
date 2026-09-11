@@ -194,7 +194,7 @@ private fun LibraryChipItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) Color(0xFF1ED760) else Color(0xFF2A2A2A)
+    val backgroundColor = if (isSelected) Color(0xFFD4AF37) else Color(0xFF2A2A2A)
     val textColor = if (isSelected) Color.Black else Color.White
 
     Box(
@@ -259,7 +259,7 @@ fun LibraryScreen(navController: NavController) {
                         unfocusedContainerColor = Color(0xFF383838),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        cursorColor = Color(0xFF1ED760),
+                        cursorColor = Color(0xFFD4AF37),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -271,7 +271,7 @@ fun LibraryScreen(navController: NavController) {
             confirmButton = {
                 Text(
                     "Create",
-                    color = Color(0xFF1ED760),
+                    color = Color(0xFFD4AF37),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier
@@ -343,7 +343,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFF1ED760) else Color(0xFF2A2A2A))
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFD4AF37) else Color(0xFF2A2A2A))
                     .clickable { isSearchVisible = !isSearchVisible },
                 contentAlignment = Alignment.Center
             ) {
@@ -443,7 +443,7 @@ fun LibraryScreen(navController: NavController) {
                             fontWeight = FontWeight.Medium
                         ),
                         singleLine = true,
-                        cursorBrush = SolidColor(Color(0xFF1ED760)),
+                        cursorBrush = SolidColor(Color(0xFFD4AF37)),
                         decorationBox = { innerTextField ->
                             Box(contentAlignment = Alignment.CenterStart) {
                                 if (searchQuery.isEmpty()) {
@@ -605,13 +605,13 @@ fun LibraryScreen(navController: NavController) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(0xFF1ED760) else Color.White,
+                                tint = if (isSelected) Color(0xFFD4AF37) else Color.White,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == LibrarySortOption.RECENTS),
-                                color = if (isSelected) Color(0xFF1ED760) else Color.White,
+                                color = if (isSelected) Color(0xFFD4AF37) else Color.White,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -619,7 +619,7 @@ fun LibraryScreen(navController: NavController) {
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(0xFF1ED760),
+                                    tint = Color(0xFFD4AF37),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -679,7 +679,7 @@ fun SumUpLibraryScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF1ED760))
+                    .background(Color(0xFFD4AF37))
                     .clickable { onClearFilters() }
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
@@ -700,7 +700,7 @@ fun SumUpLibraryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFF0E0E13))
+                .background(Color(0xFF130824))
         ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
         if (showHistoryTile) {
@@ -791,7 +791,7 @@ fun SumUpLibraryScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_download),
                             contentDescription = "Downloaded",
-                            tint = Color(0xFF1ED760),
+                            tint = Color(0xFFD4AF37),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -833,7 +833,7 @@ fun SumUpLibraryScreen(
                             Icon(
                                 imageVector = Icons.Default.PhoneAndroid,
                                 contentDescription = "Local Storage",
-                                tint = Color(0xFF1ED760),
+                                tint = Color(0xFFD4AF37),
                                 modifier = Modifier
                                     .size(14.dp)
                                     .padding(end = 3.dp)
@@ -940,7 +940,7 @@ fun LibraryGridScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF1ED760))
+                    .background(Color(0xFFD4AF37))
                     .clickable { onClearFilters() }
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
@@ -959,7 +959,7 @@ fun LibraryGridScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF0E0E13)),
+            .background(Color(0xFF130824)),
         contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 130.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -1012,7 +1012,7 @@ fun LibraryGridScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_download),
                             contentDescription = "Downloaded",
-                            tint = Color(0xFF1ED760),
+                            tint = Color(0xFFD4AF37),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -1056,7 +1056,7 @@ fun LibraryGridScreen(
                         Icon(
                             imageVector = Icons.Default.PhoneAndroid,
                             contentDescription = "Local Storage",
-                            tint = Color(0xFF1ED760),
+                            tint = Color(0xFFD4AF37),
                             modifier = Modifier
                                 .size(12.dp)
                                 .padding(end = 3.dp)
@@ -1108,7 +1108,7 @@ private fun LibrarySkeleton(padding: PaddingValues) {
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF0E0E13))
+            .background(Color(0xFF130824))
     ) {
         Spacer(modifier = Modifier.height(10.dp))
         repeat(8) {

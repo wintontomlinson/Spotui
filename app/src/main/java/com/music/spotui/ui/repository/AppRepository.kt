@@ -7,7 +7,7 @@ class AppRepository @Inject constructor(private val api : Api) {
 
     suspend fun provideAlbums() = api.getAlbums()
 
-    suspend fun provideHomeFeed() = api.getHomeFeed()
+    suspend fun provideHomeFeed(forceRefresh: Boolean = false) = api.getHomeFeed(forceRefresh)
 
     suspend fun provideArtists() = api.getArtists()
 

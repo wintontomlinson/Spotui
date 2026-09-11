@@ -81,7 +81,7 @@ fun QueueSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF121212),
+        containerColor = Color(0xFF130824),
         contentColor = Color.White,
         dragHandle = null,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
@@ -102,7 +102,7 @@ fun QueueScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212))
+            .background(Color(0xFF130824))
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -150,7 +150,7 @@ fun QueueContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF121212))
+            .background(Color(0xFF130824))
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -297,7 +297,7 @@ private fun QueueRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF121212))
+            .background(Color(0xFF130824))
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

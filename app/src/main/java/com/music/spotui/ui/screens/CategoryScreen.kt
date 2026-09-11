@@ -58,7 +58,7 @@ fun CategoryScreen(navController: NavController, genre: String, title: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0E0E13))
+            .background(Color(0xFF130824))
             .statusBarsPadding()
     ) {
         Row(

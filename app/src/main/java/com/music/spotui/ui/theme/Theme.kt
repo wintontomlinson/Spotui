@@ -18,11 +18,18 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
+// Royal Edition — royal-purple primary with royal-gold accents on a deep
+// purple canvas. Kept deterministic (dynamicColor off) so the premium look is
+// consistent across devices instead of being replaced by the wallpaper palette.
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
+    primary = RoyalGold,
+    onPrimary = Color(0xFF241540),
+    secondary = RoyalPurpleLight,
+    tertiary = RoyalGoldLight,
     background = AppBackground,
+    surface = Color(0xFF1A0F30),
+    surfaceVariant = GridBackground,
+    primaryContainer = RoyalPurpleDeep,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -44,8 +51,9 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun SpotuiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Royal Edition ships a fixed premium palette; wallpaper-derived dynamic
+    // colour is off by default so the royal-purple/gold look is guaranteed.
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

@@ -189,7 +189,8 @@ class Api @Inject constructor(
      * landing page: "Your top mixes", "Jump back in", "Your favorite artists",
      * etc. Process-cached like the other home feeds for instant re-entry.
      */
-    suspend fun getHomeFeed(): Flow<Response<HomeFeedModel>> = flow {
+    suspend fun getHomeFeed(forceRefresh: Boolean = false): Flow<Response<HomeFeedModel>> = flow {
+        if (forceRefresh) HomeCache.home = null
         HomeCache.home?.let { emit(Response.Success(it)) } ?: emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
             if (HomeCache.home == null) emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
@@ -214,7 +215,12 @@ class Api @Inject constructor(
                     if (items.isEmpty()) null
                     else HomeSection(title = section.title ?: "", items = items)
                 }.distinctBy { it.title.lowercase().ifBlank { it.hashCode().toString() } }
-                val model = HomeFeedModel(greeting = feed.greeting ?: "", sections = sections)
+                // Trending rotation — keep the untitled shortcut grid pinned on
+                // top, then rotate the remaining titled shelves so Home surfaces
+                // different "trending" rows over time / on each refresh instead
+                // of showing the exact same order every visit.
+                val rotated = rotateTrendingSections(sections)
+                val model = HomeFeedModel(greeting = feed.greeting ?: "", sections = rotated)
                 HomeCache.home = model
                 emit(Response.Success(model))
             },
@@ -223,6 +229,35 @@ class Api @Inject constructor(
                 if (HomeCache.home == null) emit(Response.Error(it.message ?: "error"))
             },
         )
+    }
+
+    /**
+     * Rotate titled home shelves so the feed feels like it's tracking what's
+     * trending rather than showing the same fixed order forever. The first
+     * section is the untitled shortcut grid — it stays pinned on top. The
+     * remaining shelves are rotated by an offset derived from the current time
+     * bucket (changes a few times a day) so every refresh can reorder them.
+     * Sections whose titles read as "trending"/"charts"/"popular"/"new" are
+     * always floated to just under the grid.
+     */
+    private fun rotateTrendingSections(sections: List<HomeSection>): List<HomeSection> {
+        if (sections.size <= 2) return sections
+        val hasGrid = sections.first().title.isBlank()
+        val pinned = if (hasGrid) sections.take(1) else emptyList()
+        val rest = if (hasGrid) sections.drop(1) else sections
+        if (rest.size <= 1) return sections
+
+        val trendKeywords = listOf("trend", "chart", "popular", "hot", "new", "top")
+        val (trending, others) = rest.partition { s ->
+            trendKeywords.any { s.title.lowercase().contains(it) }
+        }
+        // Rotate the "others" by a slowly-changing offset so ordering varies.
+        val bucket = (System.currentTimeMillis() / (4L * 60 * 60 * 1000)).toInt() // 4h buckets
+        val rotatedOthers = if (others.isEmpty()) others else {
+            val off = ((bucket % others.size) + others.size) % others.size
+            others.drop(off) + others.take(off)
+        }
+        return pinned + trending + rotatedOthers
     }
 
     private fun SpotifyHomeFeedItem.toHomeItem(): HomeItem? = when (this) {

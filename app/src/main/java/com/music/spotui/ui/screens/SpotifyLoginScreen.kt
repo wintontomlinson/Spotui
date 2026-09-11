@@ -74,7 +74,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val USER_AGENT_DESKTOP =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
-private const val SPOTIFY_GREEN = 0xFF1ED760
+private const val SPOTIFY_GREEN = 0xFFD4AF37
 
 /**
  * Spotify authentication screen.
@@ -468,8 +468,8 @@ private fun ManualCookieDialog(
                         cursorColor = Color(SPOTIFY_GREEN),
                         focusedBorderColor = Color(SPOTIFY_GREEN),
                         unfocusedBorderColor = Color(0xFF727272),
-                        focusedContainerColor = Color(0xFF121212),
-                        unfocusedContainerColor = Color(0xFF121212),
+                        focusedContainerColor = Color(0xFF130824),
+                        unfocusedContainerColor = Color(0xFF130824),
                     ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth(),

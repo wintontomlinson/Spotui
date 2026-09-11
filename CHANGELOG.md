@@ -5,6 +5,41 @@ compared to the main Spotui repository.
 
 ---
 
+## 👑 Royal Edition
+
+### 🎨 Royal premium theme
+
+* **New palette:** Deep royal-purple canvas (`#130824`) with royal-gold accents (`#D4AF37`),
+  replacing the old near-black background and blue accent.
+* **Deterministic look:** Wallpaper-derived dynamic colour is now off by default so the premium
+  royal-purple/gold theme is consistent across devices.
+* **Accent sweep:** The Spotify-green highlights across every screen were re-tinted to royal gold.
+
+### 🔁 Smarter auto-queue (related songs)
+
+* Autoplay radio now tops up the queue **earlier** (4 tracks before the end, up from ~1) and seeds
+  from the last **8** tracks, so related songs are always appended automatically and playback never
+  stalls waiting on a fetch.
+
+### 🏠 Trending, refreshable Home
+
+* **Pull-to-refresh** on Home re-fetches the feed (bypassing the cache).
+* **Trending rotation:** "Trending / Charts / Popular / New" shelves float to the top and the
+  remaining shelves rotate on a time bucket, so Home changes over time instead of showing the same
+  order every visit.
+
+### 🧭 Redesigned Explore
+
+* Image-forward Browse tiles: full-bleed artwork with a royal gradient scrim and a gold hairline,
+  taller cards, and a royal-purple/gold category palette led by **Trending** and **Charts**.
+
+### 🧹 Cleanup
+
+* Removed a stray 2,666-line out-of-tree copy of AndroidX's `MediaSession.java` that was not part of
+  any build source set.
+
+---
+
 ## 🚀 Release v1.4.5
 
 ### 💾 Lossless & Stream Controls
