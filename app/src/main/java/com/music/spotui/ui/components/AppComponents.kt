@@ -496,29 +496,9 @@ fun MiniPlayer(navController: NavHostController) {
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
                                 ) {
-                                    if (songPlayingState) {
-                                        SongPlayer.pause()
-                                        miniPlayerViewModel.updateSongState(
-                                            songCoverUri,
-                                            songTitle,
-                                            songSinger,
-                                            false,
-                                            songId,
-                                            songIndex,
-                                            songAlbum
-                                        )
-                                    } else {
-                                        SongPlayer.play()
-                                        miniPlayerViewModel.updateSongState(
-                                            songCoverUri,
-                                            songTitle,
-                                            songSinger,
-                                            true,
-                                            songId,
-                                            songIndex,
-                                            songAlbum
-                                        )
-                                    }
+                                    // Single source of truth: toggle from the engine's
+                                    // real state so the mini-player icon never sticks.
+                                    miniPlayerViewModel.togglePlayPause()
                                 }
                         )
                     }

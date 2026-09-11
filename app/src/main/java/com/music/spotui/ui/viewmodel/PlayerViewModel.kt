@@ -404,6 +404,27 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         currentSongState.setPlaying(playing)
     }
 
+    /**
+     * Single, reliable play/pause toggle for the on-screen buttons. Decides the
+     * action from the engine's real state (falling back to the UI flag while a
+     * track is still resolving), performs it, then optimistically flips the UI so
+     * the icon responds instantly — the player listener's onIsPlayingChanged then
+     * reconciles it with reality. This replaces the old per-button logic that read
+     * a manual flag and could drift out of sync with the actual player.
+     */
+    fun togglePlayPause() {
+        val enginePlaying = com.music.spotui.di.SongPlayer.isPlaying()
+        val uiPlaying = currentSongState.playingState.value
+        val willPlay = !(enginePlaying || uiPlaying)
+        if (willPlay) {
+            com.music.spotui.di.SongPlayer.play()
+        } else {
+            com.music.spotui.di.SongPlayer.pause()
+        }
+        // Optimistic UI update; the ExoPlayer listener reconciles the true state.
+        currentSongState.setPlaying(willPlay)
+    }
+
     fun syncWithPlayer() {
         currentSongState.syncWithPlayer()
     }

@@ -1487,29 +1487,9 @@ fun PlayerFull(
                     )
                 )
                 .clickable {
-                    if (songPlayingState) {
-                        SongPlayer.pause()
-                        playerViewModel.updateSongState(
-                            playerViewModel.currentSongCoverUri.value,
-                            playerViewModel.currentSongTitle.value,
-                            playerViewModel.currentSongSinger.value,
-                            false,
-                            playerViewModel.currentSongId.value,
-                            playerViewModel.currentSongIndex.value,
-                            playerViewModel.currentSongAlbum.value
-                        )
-                    } else {
-                        SongPlayer.play()
-                        playerViewModel.updateSongState(
-                            playerViewModel.currentSongCoverUri.value,
-                            playerViewModel.currentSongTitle.value,
-                            playerViewModel.currentSongSinger.value,
-                            true,
-                            playerViewModel.currentSongId.value,
-                            playerViewModel.currentSongIndex.value,
-                            playerViewModel.currentSongAlbum.value
-                        )
-                    }
+                    // Single source of truth: toggle based on the engine's real
+                    // state so the button never gets stuck showing the wrong icon.
+                    playerViewModel.togglePlayPause()
                 },
             contentAlignment = Alignment.Center
         ) {
