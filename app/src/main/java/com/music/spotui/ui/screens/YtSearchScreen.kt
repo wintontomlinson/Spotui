@@ -86,18 +86,21 @@ private val TextFaint = Color(0xFF7A7A85)
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
-    BrowseCategory("Trending", "trending songs this week", Color(0xFFE0562B)),
-    BrowseCategory("New releases", "new songs this month", Color(0xFF1E7A54)),
-    BrowseCategory("Bollywood", "bollywood hits", Color(0xFFB4267A)),
+    // Royal Edition — every tile is tinted from the royal-purple / gold family so
+    // Explore reads as one premium palette. Trending & Charts lead the grid.
+    BrowseCategory("Trending", "trending songs this week", Color(0xFF7C3AED)),
+    BrowseCategory("Charts", "top charts this week", Color(0xFFB8892B)),
+    BrowseCategory("New releases", "new songs this month", Color(0xFF6D28D9)),
+    BrowseCategory("Bollywood", "bollywood hits", Color(0xFFA23E9C)),
     BrowseCategory("Punjabi", "punjabi hits", Color(0xFF6A4BA8)),
-    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF485AC4)),
-    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF537AA1)),
-    BrowseCategory("Workout", "workout songs", Color(0xFF9C4221)),
-    BrowseCategory("Romance", "romantic songs", Color(0xFFD84E76)),
-    BrowseCategory("Party", "party songs", Color(0xFF8768B0)),
-    BrowseCategory("Devotional", "devotional songs", Color(0xFFC7873B)),
-    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF3D6B7D)),
-    BrowseCategory("Sad songs", "sad songs", Color(0xFF3F5C7A)),
+    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF5B21B6)),
+    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF5E3A8C)),
+    BrowseCategory("Workout", "workout songs", Color(0xFF7C3AED)),
+    BrowseCategory("Romance", "romantic songs", Color(0xFF9D4EDD)),
+    BrowseCategory("Party", "party songs", Color(0xFF8E44AD)),
+    BrowseCategory("Devotional", "devotional songs", Color(0xFFC08A2E)),
+    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF6247AA)),
+    BrowseCategory("Sad songs", "sad songs", Color(0xFF4C1D95)),
 )
 
 /**
@@ -482,43 +485,45 @@ private fun BrowseTile(
 
     Box(
         modifier = modifier
-            .height(96.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        category.color,
-                        androidx.compose.ui.graphics.lerp(category.color, Color.Black, 0.35f),
-                    )
-                )
-            )
+            .height(128.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(category.color)
+            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
     ) {
+        // Royal Edition: the artwork fills the whole tile as a background, with a
+        // royal gradient scrim over it, instead of a small tilted corner thumbnail.
         if (cover.isNotBlank()) {
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    // Pushed past the corner and rotated, so the card is clipped through
-                    // it. This is the detail that makes the tile read as Spotify's.
-                    .offset(x = 12.dp, y = 12.dp)
-                    .size(62.dp)
-                    .graphicsLayer { rotationZ = 25f }
-                    .clip(RoundedCornerShape(3.dp)),
+                modifier = Modifier.matchParentSize(),
             )
         }
+        // Scrim: the tile's own hue at the top fading to the royal canvas, so the
+        // label stays legible over any artwork and the palette stays cohesive.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            category.color.copy(alpha = 0.55f),
+                            Color(0xCC130824),
+                        )
+                    )
+                ),
+        )
         Text(
             text = category.label,
             color = Color.White,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
             maxLines = 2,
             modifier = Modifier
-                .align(Alignment.TopStart)
-                // Leave room for the artwork so long labels do not run under it.
-                .padding(start = 14.dp, top = 14.dp, end = 46.dp, bottom = 8.dp),
+                .align(Alignment.BottomStart)
+                .padding(14.dp),
         )
     }
 }

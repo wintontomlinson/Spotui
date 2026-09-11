@@ -117,7 +117,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFF5A524).copy(alpha = 0.18f),
+                                color = Color(0xFFD4AF37).copy(alpha = 0.18f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             ),
                         containerColor = Color.Transparent,
@@ -150,7 +150,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 },
                                 label = {
                                     if (currentTab == item.route) {
-                                        Text(color = Color(0xFFF5A524), text = item.label, fontSize = 11.sp)
+                                        Text(color = Color(0xFFD4AF37), text = item.label, fontSize = 11.sp)
                                     } else {
                                         Text(
                                             color = Color.Gray,
@@ -208,11 +208,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 alwaysShowLabel = true,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFFF5A524),
+                                    selectedIconColor = Color(0xFFD4AF37),
                                     unselectedIconColor = Color.Gray,
                                     // A soft amber pill behind the active tab's icon, so
                                     // the selection is clear at a glance without shouting.
-                                    indicatorColor = Color(0xFFF5A524).copy(alpha = 0.16f),
+                                    indicatorColor = Color(0xFFD4AF37).copy(alpha = 0.16f),
                                 )
                             )
 

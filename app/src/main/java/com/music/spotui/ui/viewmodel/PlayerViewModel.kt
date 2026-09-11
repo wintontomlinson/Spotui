@@ -122,11 +122,16 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     var autoplayRadioEnabled = true
     @Volatile private var radioLoading = false
 
+    // How many tracks before the end we start topping up the queue. A larger
+    // buffer means related songs are appended well ahead of time, so playback
+    // never stalls waiting on a fetch — the queue keeps filling automatically.
+    private val radioPrefetchBuffer = 4
+
     private fun maybeExtendRadio(queueSongs: List<SongsModel>, cur: Int) {
         if (!autoplayRadioEnabled || radioLoading) return
-        // Only start fetching when we're within one track of the end.
-        if (cur < queueSongs.size - 2) return
-        val seeds = queueSongs.takeLast(5)
+        // Start fetching well before the end so related tracks are ready in time.
+        if (cur < queueSongs.size - radioPrefetchBuffer) return
+        val seeds = queueSongs.takeLast(8)
             .mapNotNull { it.spotifyTrackId.ifBlank { null } }
             .distinct()
         radioLoading = true

@@ -40,22 +40,34 @@ class FreeHomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Evergreen fallback sections, also shown when there is no history yet. Trending
-    // is not in here because it leads the screen as its own block.
+    // is not in here because it leads the screen as its own block. The list is
+    // rotated by a time bucket on each rebuild so Home surfaces different shelves
+    // over the day instead of always showing the same order.
     private val curated = listOf(
         "New releases" to "new songs this week",
         "Today's biggest hits" to "top hits this week",
+        "Trending now" to "trending music now",
         "Bollywood hits" to "latest bollywood songs",
         "Chill and Lo-Fi" to "lofi chill beats",
         "Workout energy" to "workout gym music",
+        "Party anthems" to "party dance hits",
         "Throwback classics" to "throwback hits playlist",
     )
+
+    /** Rotate the curated list by a slowly-changing offset so the order varies. */
+    private fun rotatedCurated(): List<Pair<String, String>> {
+        if (curated.isEmpty()) return curated
+        val bucket = (System.currentTimeMillis() / TRENDING_REFRESH_MS).toInt()
+        val off = ((bucket % curated.size) + curated.size) % curated.size
+        return curated.drop(off) + curated.take(off)
+    }
 
     /** Query behind the trending block that leads Home. */
     private val trendingQuery = "trending songs this week"
 
     /** When trending was last pulled, and how long before Home re-pulls it. */
     private var lastTrendingTs = 0L
-    private val TRENDING_REFRESH_MS = 30 * 60 * 1000L
+    private val TRENDING_REFRESH_MS = 15 * 60 * 1000L
 
     private val _rows = mutableStateOf<List<HomeRow>>(emptyList())
     val rows: State<List<HomeRow>> get() = _rows
@@ -186,8 +198,9 @@ class FreeHomeViewModel @Inject constructor(
             }
         }
 
-        // Curated rows always follow (and are the whole list on first launch).
-        return personalized + curated
+        // Curated rows always follow (and are the whole list on first launch),
+        // rotated so the trending mix on Home changes through the day.
+        return personalized + rotatedCurated()
     }
 
     private fun fetchRow(index: Int, query: String) {
