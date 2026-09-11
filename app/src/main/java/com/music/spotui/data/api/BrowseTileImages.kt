@@ -7,34 +7,53 @@ import com.metrolist.innertube.models.SongItem
 import com.music.spotui.ui.viewmodel.hiResThumbnail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Cover art for the Explore "Browse all" tiles, the way Spotify shows them: each
- * coloured box carries a real cover, tilted into its corner, instead of being a flat
+ * Cover art for the Explore "Browse all" tiles. Each tile shows a real, current
+ * cover pulled from YouTube Music (so it works with no login) instead of a flat
  * block of colour.
  *
- * The cover comes from YouTube Music so it works without any login, which the earlier
- * Spotify backed version did not: it returned an empty string whenever there was no
- * session, so every tile was permanently blank. One search per category, resolved
- * lazily on first display and cached for the app session.
+ * Design goals:
+ *  • FRESH — the search is biased toward the current year / "latest", and the
+ *    cache is refreshed once a day so the grid keeps showing new artwork over time
+ *    rather than freezing on whatever loaded first.
+ *  • NEVER BLANK — a chain of fallbacks (album → playlist → video → song) means a
+ *    tile always resolves to something.
+ *  • CHEAP — resolved covers are cached; transient failures are negatively cached
+ *    for a short window so a flaky network doesn't trigger a search on every scroll.
  */
 object BrowseTileImages {
 
-    private val cache = ConcurrentHashMap<String, String>()
+    private data class Entry(val url: String, val ts: Long)
+
+    private val cache = ConcurrentHashMap<String, Entry>()
+
+    // Successful covers refresh once a day so Explore keeps updating its imagery.
+    private const val SUCCESS_TTL_MS = 24L * 60 * 60 * 1000
+    // Failures are remembered briefly so we don't hammer the network on every
+    // recomposition/scroll, but still retry reasonably soon.
+    private const val FAILURE_TTL_MS = 2L * 60 * 1000
+
+    private fun fresh(entry: Entry?): Boolean {
+        if (entry == null) return false
+        val age = System.currentTimeMillis() - entry.ts
+        return if (entry.url.isNotBlank()) age < SUCCESS_TTL_MS else age < FAILURE_TTL_MS
+    }
 
     /** Already resolved cover, so a tile scrolled back into view draws it immediately. */
-    fun cachedFor(genre: String): String = cache[genre].orEmpty()
+    fun cachedFor(genre: String): String = cache[genre]?.takeIf { it.url.isNotBlank() }?.url.orEmpty()
 
     suspend fun coverFor(genre: String): String {
-        cache[genre]?.let { return it }
+        cache[genre]?.let { if (fresh(it)) return it.url }
 
         val url = withContext(Dispatchers.IO) {
             runCatching {
-                // Bias the image search toward fresh/latest artwork so tiles show
-                // current covers rather than a decade-old album. Falls back to the
-                // plain genre if the "latest" query returns nothing.
-                val freshQuery = "$genre 2026 latest"
+                // Bias toward current, trending artwork. Uses the real current year
+                // (not a hardcoded one) so this stays fresh in future years too.
+                val year = Calendar.getInstance().get(Calendar.YEAR)
+                val freshQuery = "$genre $year"
 
                 fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
                     .getOrNull()?.items?.filterIsInstance<AlbumItem>()
@@ -48,21 +67,24 @@ object BrowseTileImages {
                     .getOrNull()?.items?.filterIsInstance<SongItem>()
                     ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
 
-                // Prefer fresh album art → fresh playlist art → plain-query album/
-                // playlist → song thumbnail, so a tile is never left blank.
+                // Fresh (year-biased) album → fresh playlist → plain album →
+                // plain playlist → song, so a tile is never left blank.
                 val raw = albumArt(freshQuery)
                     ?: playlistArt(freshQuery)
                     ?: albumArt(genre)
                     ?: playlistArt(genre)
+                    ?: songArt(freshQuery)
                     ?: songArt(genre)
 
-                // Requested extra large so the full-bleed tile art stays crisp on
-                // high-density screens (tiles are now image-forward, not thumbnails).
+                // Extra large so the full-bleed tile art stays crisp on high-density
+                // screens (tiles are image-forward, not small thumbnails).
                 hiResThumbnail(raw, size = 720)
             }.getOrDefault("")
         }
 
-        if (url.isNotBlank()) cache[genre] = url
+        // Cache success (day-long) or failure (short) so scrolling is cheap and the
+        // grid still refreshes its imagery over time.
+        cache[genre] = Entry(url, System.currentTimeMillis())
         return url
     }
 }
