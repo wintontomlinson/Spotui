@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -96,7 +97,9 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private val _songs : MutableStateFlow<Response<List<SongsModel>>> = MutableStateFlow(Response.Loading())
     val songs : StateFlow<Response<List<SongsModel>>> = _songs
 
-    val playingArtist by mutableStateOf(currentSongSinger.value)
+    // NOTE: removed a dead `playingArtist` field — it snapshotted the singer once
+    // at construction (always blank then) and was never updated. UI reads
+    // currentSongSinger directly, so this only ever exposed a stale value.
 
     init {
         fetchSongs()
@@ -120,7 +123,10 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // playing and append them, so music keeps going like Spotify's autoplay instead of
     // looping the same list. On by default; can be turned off via [autoplayRadioEnabled].
     var autoplayRadioEnabled = true
-    @Volatile private var radioLoading = false
+    // AtomicBoolean (not a plain @Volatile flag): the check-and-set must be atomic
+    // so two concurrent autoplay triggers can't both pass the guard and launch
+    // duplicate radio fetches.
+    private val radioLoading = AtomicBoolean(false)
 
     // How many tracks before the end we start topping up the queue. A larger
     // buffer means related songs are appended well ahead of time, so playback
@@ -128,13 +134,14 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private val radioPrefetchBuffer = 4
 
     private fun maybeExtendRadio(queueSongs: List<SongsModel>, cur: Int) {
-        if (!autoplayRadioEnabled || radioLoading) return
+        if (!autoplayRadioEnabled) return
         // Start fetching well before the end so related tracks are ready in time.
         if (cur < queueSongs.size - radioPrefetchBuffer) return
         val seeds = queueSongs.takeLast(8)
             .mapNotNull { it.spotifyTrackId.ifBlank { null } }
             .distinct()
-        radioLoading = true
+        // Atomic check-and-set: only the first concurrent caller proceeds.
+        if (!radioLoading.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val existing = currentSongState.queue.value
@@ -149,7 +156,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                 }
                 if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
             } finally {
-                radioLoading = false
+                radioLoading.set(false)
             }
         }
     }
@@ -183,7 +190,9 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
             }.getOrElse { emptyList() }
             for (item in results) {
                 val model = SongsModel(
-                    id = item.id.hashCode(),
+                    // Same stable, non-negative id derivation as toSongsModel so the
+                    // same YouTube track always matches in the queue (de-dup / next-prev).
+                    id = com.music.spotui.ui.viewmodel.youtubeStableId(item.id),
                     title = cleanTrackTitle(item.title),
                     album = item.album?.name.orEmpty(),
                     singer = resolveArtist(item.artists.map { it.name }, item.title),
@@ -297,27 +306,33 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         }
     }
 
-    @Volatile private var awaitingRadioContinue = false
+    private val awaitingRadioContinue = AtomicBoolean(false)
 
     /** Waits (max ~10s) for the autoplay radio to extend the queue past
      *  [queueSongs] and plays the first appended track; falls back to looping
      *  the queue if no radio tracks arrive. */
     private fun continueIntoRadio(queueSongs: List<SongsModel>, context: Context) {
-        if (awaitingRadioContinue) return
-        awaitingRadioContinue = true
+        if (queueSongs.isEmpty()) return
+        // Atomic check-and-set so a burst of end-of-track events starts only one waiter.
+        if (!awaitingRadioContinue.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 repeat(40) {
                     val q = currentSongState.queue.value
-                    if (q.size > queueSongs.size) {
-                        val next = q[queueSongs.size]
+                    // Re-resolve the first NOT-already-in-old-queue track by identity
+                    // rather than trusting index queueSongs.size, which could point at
+                    // the wrong track if the queue was edited while we waited.
+                    val oldIds = queueSongs.map { it.id }.toSet()
+                    val nextIdx = q.indexOfFirst { it.id !in oldIds }
+                    if (nextIdx >= 0) {
+                        val next = q[nextIdx]
                         withContext(Dispatchers.Main) {
-                            updateSongState(next.coverUri, next.title, next.singer, true, next.id, queueSongs.size, next.album)
+                            updateSongState(next.coverUri, next.title, next.singer, true, next.id, nextIdx, next.album)
                             SongPlayer.playSong(next.url, context, "song/${next.id}")
                         }
                         return@launch
                     }
-                    if (!radioLoading) {
+                    if (!radioLoading.get()) {
                         if (currentSongState.repeat.value == RepeatMode.ALL) {
                             val first = queueSongs.first()
                             withContext(Dispatchers.Main) {
@@ -338,7 +353,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                     }
                 }
             } finally {
-                awaitingRadioContinue = false
+                awaitingRadioContinue.set(false)
             }
         }
     }
@@ -380,8 +395,10 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private fun fetchSongs() = viewModelScope.launch(Dispatchers.IO) {
 
         repository.provideSongs().collect { songs ->
-            _songs.value = songs as Response<List<SongsModel>>
-
+            // provideSongs()/getSongs() is already Flow<Response<List<SongsModel>>>,
+            // so the previous unchecked `as` cast was redundant and only masked
+            // type errors — assign directly.
+            _songs.value = songs
         }
     }
     fun formatDuration(durationMillis: Long): String {

@@ -264,6 +264,16 @@ data class PlaylistResult(
 )
 
 /**
+ * Stable, non-negative [SongsModel.id] for a YouTube video id. Used everywhere a
+ * YouTube-sourced track is turned into a SongsModel (search, autoplay radio,
+ * login-free Home) so the SAME video always maps to the SAME id. Previously some
+ * paths used raw `hashCode()` (which can be negative) and others masked it, so the
+ * same track got two different ids — breaking queue de-dup and "current track"
+ * matching (next/prev could jump to the wrong song). The mask matches Api.stableId.
+ */
+fun youtubeStableId(videoId: String): Int = videoId.hashCode() and 0x7fffffff
+
+/**
  * Maps a YouTube [SongItem] to a [SongsModel]. The [SongsModel.url] is set to the
  * raw YouTube video id, so [com.music.spotui.di.SongPlayer.playSong] accepts an
  * 11 character id directly and resolves the stream anonymously. [spotifyTrackId] is
@@ -275,7 +285,7 @@ fun SongItem.toSongsModel(): SongsModel {
     // "Something - " may only be dropped once we know it really is the artist.
     val artist = resolveArtist(artists.map { it.name }, title)
     return SongsModel(
-        id = id.hashCode(),
+        id = youtubeStableId(id),
         title = cleanTrackTitle(title, artist),
         album = album?.name.orEmpty(),
         singer = artist,

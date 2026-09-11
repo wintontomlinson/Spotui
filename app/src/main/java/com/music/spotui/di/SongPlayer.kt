@@ -40,7 +40,12 @@ import kotlin.math.sin
 object SongPlayer {
     private const val TAG = "SongPlayer"
     private const val SPOTIFY_TRACK_PREFIX = "spotify:track:"
-    private var player: ExoPlayer? = null
+    // @Volatile: the active player is reassigned on the main thread during a
+    // crossfade promotion (player = incoming) and in release()/ensurePlayer(),
+    // while background IO coroutines (playSong, position watcher, quality change)
+    // read it. Without volatile there is no happens-before guarantee, so a stale
+    // or half-published reference could be read and used after release → crash.
+    @Volatile private var player: ExoPlayer? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var wakeLock: PowerManager.WakeLock? = null

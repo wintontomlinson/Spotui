@@ -1,5 +1,7 @@
 package com.music.spotui.di
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +17,25 @@ enum class RepeatMode {
 
 @Singleton
 class CurrentSongState @Inject constructor() {
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * Compose snapshot state (mutableStateOf) must only be WRITTEN from the main
+     * thread. Several callers mutate this state from background coroutines
+     * (autoplay-radio queue top-up on Dispatchers.IO, the media service, player
+     * callbacks), which could crash or lose updates. This runs [block] inline
+     * when already on the main thread, otherwise posts it there.
+     */
+    private inline fun runOnMain(crossinline block: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) block()
+        else mainHandler.post { block() }
+    }
+
+    /** Guards the play-generation counters, which are touched from the UI thread
+     *  and from background player callbacks. */
+    private val playGenLock = Any()
+
     private val _title: MutableState<String> = mutableStateOf("")
     val title: State<String> get() = _title
 
@@ -58,7 +79,7 @@ class CurrentSongState @Inject constructor() {
     private val _queue: MutableState<List<SongsModel>> = mutableStateOf(emptyList())
     val queue: State<List<SongsModel>> get() = _queue
 
-    fun updateQueue(songs: List<SongsModel>) {
+    fun updateQueue(songs: List<SongsModel>) = runOnMain {
         _queue.value = songs
         // Seed the lossless resolver: map each track's play query → its Spotify id so
         // SongPlayer can resolve a FLAC stream from a play site that only has the query.
@@ -103,8 +124,8 @@ class CurrentSongState @Inject constructor() {
      * is and the rest follow in random order. (Skipping used to re-shuffle the
      * whole list on every tap, which could repeat or skip songs.)
      */
-    fun updateShuffleState(newShuffleState: Boolean) {
-        if (newShuffleState == shuffle.value) return
+    fun updateShuffleState(newShuffleState: Boolean) = runOnMain {
+        if (newShuffleState == shuffle.value) return@runOnMain
         shuffle.value = newShuffleState
         val q = _queue.value
         if (newShuffleState) {
@@ -142,12 +163,16 @@ class CurrentSongState @Inject constructor() {
      */
     fun startShuffled(songs: List<SongsModel>): SongsModel? {
         if (songs.isEmpty()) return null
-        updateQueue(songs.shuffled())
+        // Compute the shuffled order locally so the returned first track does not
+        // depend on the queue state write (which may be marshalled to the main
+        // thread) having landed yet.
+        val shuffled = songs.shuffled()
+        updateQueue(shuffled)
         unshuffledQueue = songs
-        shuffle.value = true
-        return _queue.value.firstOrNull()
+        runOnMain { shuffle.value = true }
+        return shuffled.firstOrNull()
     }
-    fun updateRepeatState(newRepeatState : RepeatMode){
+    fun updateRepeatState(newRepeatState : RepeatMode) = runOnMain {
         repeat.value = newRepeatState
         com.music.spotui.data.preferences.saveRepeatMode(com.music.spotui.MyApplication.instance, newRepeatState)
     }
@@ -167,15 +192,15 @@ class CurrentSongState @Inject constructor() {
     private val _resolveDetailNote: MutableState<String?> = mutableStateOf(null)
     val resolveDetailNote: State<String?> get() = _resolveDetailNote
 
-    fun updateResolveError(error: String?) {
+    fun updateResolveError(error: String?) = runOnMain {
         _resolveError.value = error
     }
 
-    fun updateResolveDetailNote(note: String?) {
+    fun updateResolveDetailNote(note: String?) = runOnMain {
         _resolveDetailNote.value = note
     }
 
-    fun updateResolveState(isResolving: Boolean, status: String = "") {
+    fun updateResolveState(isResolving: Boolean, status: String = "") = runOnMain {
         _isResolving.value = isResolving
         _resolveStatus.value = status
         if (isResolving) {
@@ -183,7 +208,7 @@ class CurrentSongState @Inject constructor() {
         }
     }
 
-    fun updateBufferingState(isBuffering: Boolean) {
+    fun updateBufferingState(isBuffering: Boolean) = runOnMain {
         _isBuffering.value = isBuffering
     }
 
@@ -192,11 +217,13 @@ class CurrentSongState @Inject constructor() {
      *  guarantee that if audio is physically playing in the player engine, the UI
      *  play/pause button immediately shows Pause (is playing = true) and never
      *  gets stuck displaying Play (is playing = false). */
-    fun syncWithPlayer() {
+    fun syncWithPlayer() = runOnMain {
         val realIsPlaying = SongPlayer.isPlaying()
         if (_playingState.value != realIsPlaying) {
-            _playGen++
-            if (realIsPlaying) _lastPlayGen = _playGen
+            synchronized(playGenLock) {
+                _playGen++
+                if (realIsPlaying) _lastPlayGen = _playGen
+            }
             _playingState.value = realIsPlaying
         }
     }
@@ -211,11 +238,13 @@ class CurrentSongState @Inject constructor() {
      *  _lastPlayGen un-updated, permanently locking out all future background play
      *  events until a manual UI play tap. Syncing generation counters when audio plays
      *  prevents UI desynchronization permanently. */
-    fun updatePlayingState(playing: Boolean) {
+    fun updatePlayingState(playing: Boolean) = runOnMain {
         val realIsPlaying = SongPlayer.isPlaying()
         if (playing || realIsPlaying) {
-            _playGen++
-            _lastPlayGen = _playGen
+            synchronized(playGenLock) {
+                _playGen++
+                _lastPlayGen = _playGen
+            }
             _playingState.value = true
         } else {
             if (!realIsPlaying) {
@@ -226,17 +255,19 @@ class CurrentSongState @Inject constructor() {
 
     /** User-initiated play/pause toggle from album/liked/playlist screens.
      *  Bumps the generation counter and updates the UI playingState. */
-    fun setPlaying(playing: Boolean) {
-        _playGen++
-        if (playing) _lastPlayGen = _playGen
+    fun setPlaying(playing: Boolean) = runOnMain {
+        synchronized(playGenLock) {
+            _playGen++
+            if (playing) _lastPlayGen = _playGen
+        }
         _playingState.value = playing
     }
 
-    fun updateLikeState(newLikeState : Boolean){
+    fun updateLikeState(newLikeState : Boolean) = runOnMain {
         likeState.value = newLikeState
     }
 
-    fun updateSongState(coverUri: String, title: String, singer: String, playingState: Boolean, songId : Int, songIndex : Int, album : String, artistIds: String = "") {
+    fun updateSongState(coverUri: String, title: String, singer: String, playingState: Boolean, songId : Int, songIndex : Int, album : String, artistIds: String = "") = runOnMain {
         _coverUri.value = coverUri
         _title.value = title
         _album.value = album
@@ -249,8 +280,10 @@ class CurrentSongState @Inject constructor() {
             val queueSong = _queue.value.firstOrNull { it.id == songId }
             _artistIds.value = queueSong?.artistIds.orEmpty()
         }
-        _playGen++
-        if (playingState) _lastPlayGen = _playGen
+        synchronized(playGenLock) {
+            _playGen++
+            if (playingState) _lastPlayGen = _playGen
+        }
         val actualIndex = _queue.value.indexOfFirst { it.id == songId }
         _songIndex.value = if (actualIndex >= 0) actualIndex else songIndex
         _songId.value = songId

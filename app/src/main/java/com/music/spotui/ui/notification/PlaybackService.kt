@@ -122,6 +122,10 @@ class PlaybackService : MediaLibraryService() {
         return true
     }
 
+    /** The player our [playerListener] is currently attached to, so a crossfade
+     *  swap can detach it from the old player before attaching to the new one. */
+    private var listenerPlayer: Player? = null
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
@@ -337,13 +341,27 @@ class PlaybackService : MediaLibraryService() {
 
         // When a crossfade promotes a new ExoPlayer instance, re-bind the session to it
         // (runs on the main thread; setPlayer is the supported way to swap a session's player).
+        // Track which player currently carries our listener so we can move it
+        // cleanly on a swap. Without this the listener was added to each new
+        // player but never removed from the old one, so a crossfade could leave
+        // it registered on multiple players → duplicate onPlaybackStateChanged /
+        // onPlayerError callbacks (double queue-advances, double error retries).
+        listenerPlayer = base
         SongPlayer.onPlayerCreated = { newPlayer ->
             if (!showingWeb) mediaSession?.player = wrap(newPlayer)
-            newPlayer.addListener(playerListener)
+            if (listenerPlayer !== newPlayer) {
+                listenerPlayer?.removeListener(playerListener)
+                newPlayer.addListener(playerListener)
+                listenerPlayer = newPlayer
+            }
         }
         SongPlayer.onPlayerSwapped = { newPlayer ->
             if (!showingWeb) mediaSession?.player = wrap(newPlayer)
-            newPlayer.addListener(playerListener)
+            if (listenerPlayer !== newPlayer) {
+                listenerPlayer?.removeListener(playerListener)
+                newPlayer.addListener(playerListener)
+                listenerPlayer = newPlayer
+            }
         }
 
         // Keep the notification's repeat icon in sync whenever the repeat mode
@@ -649,9 +667,14 @@ class PlaybackService : MediaLibraryService() {
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
                 "ACTION_CLOSE" -> {
-                    // exit the player and kill the process directly to terminate the app cleanly
+                    // Stop playback and shut the service down gracefully. This runs
+                    // onDestroy (unregister receiver, release WebView/ExoPlayer/session,
+                    // detach listeners) instead of killProcess, which bypassed all of
+                    // that and could leave a stuck notification / leaked WebView on
+                    // some OEMs.
                     SongPlayer.pause()
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    SongPlayer.stop()
+                    stopSelf()
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
 
@@ -942,8 +965,15 @@ class PlaybackService : MediaLibraryService() {
     override fun onDestroy() {
         serviceScope.cancel()
         runCatching { unregisterReceiver(mediaControlReceiver) }
+        // Detach the listener from whichever player currently holds it (may be a
+        // crossfade-promoted instance, not exoPlayer) and clear BOTH swap
+        // callbacks. onPlayerCreated was previously left set, retaining a lambda
+        // that captured this destroyed service (mediaSession/this) → a leak.
+        listenerPlayer?.removeListener(playerListener)
         SongPlayer.exoPlayer?.removeListener(playerListener)
+        listenerPlayer = null
         SongPlayer.onPlayerSwapped = null
+        SongPlayer.onPlayerCreated = null
         SpotifyWebPlayer.onStateChanged = null
         webPlayer?.release()
         webPlayer = null

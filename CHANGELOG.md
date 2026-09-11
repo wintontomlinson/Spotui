@@ -22,6 +22,28 @@ compared to the main Spotui repository.
 * **Cleanup:** Removed the unused `web/` Next.js client and a stray out-of-tree copy of AndroidX's
   `MediaSession.java`.
 
+### 🐞 Stability & bug fixes
+
+* **Play/pause never sticks:** both the full player and the mini-player toggle from the engine's
+  real state through a single `togglePlayPause()`, so the icon can't drift out of sync after
+  buffering, auto-advance, notification/Bluetooth controls, or an audio-focus change.
+* **No more duplicate queue advances / error retries:** the media `Player.Listener` was left
+  attached to old ExoPlayer instances across a crossfade swap (and re-added to the same one),
+  causing doubled callbacks. It's now moved cleanly on each swap.
+* **Service leak fixed:** the crossfade `onPlayerCreated` callback was never cleared on service
+  destroy, retaining a reference to the destroyed service. Both swap callbacks are now cleared and
+  the listener detached.
+* **Fewer intermittent crashes:** the active `ExoPlayer` is now `@Volatile` (swapped on the main
+  thread during a crossfade while background coroutines read it), and all `CurrentSongState` UI-state
+  writes are marshalled to the main thread with the play-state counters synchronized.
+* **Correct next/previous & de-dup:** YouTube tracks get one consistent, non-negative id everywhere
+  (search, autoplay radio, Home), so the queue can no longer match or drop the wrong track. Autoplay's
+  "continue into radio" re-resolves the next track by identity instead of a fragile index.
+* **Graceful close:** the notification's close action stops the service cleanly instead of
+  hard-killing the process (which skipped cleanup and could leave a stuck notification).
+* **Duplicate-fetch guards:** autoplay radio top-up and "continue into radio" use atomic
+  check-and-set, so concurrent triggers can't launch duplicate fetches.
+
 ---
 
 ## 🚀 Release v2.0.0
