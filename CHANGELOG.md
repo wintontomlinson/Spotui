@@ -5,7 +5,7 @@ compared to the main Spotui repository.
 
 ---
 
-## 👑 Royal Edition
+## 🚀 Release v1.9.0 — 👑 Royal Edition
 
 ### 🎨 Royal premium theme
 
