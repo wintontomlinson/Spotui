@@ -56,6 +56,7 @@ import com.music.spotui.R
 import com.music.spotui.data.entity.SongsModel
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
+import com.music.spotui.ui.navigation.navBarScroll
 import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -63,8 +64,8 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
 private val OnAccent = com.music.spotui.ui.theme.OnAccent
-private val Surface = Color(0xFF1C1C21)
-private val SurfaceHigh = Color(0xFF26262E)
+private val Surface = Color(0xFF0B3A44)
+private val SurfaceHigh = Color(0xFF0F4A57)
 private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 
@@ -115,7 +116,8 @@ fun FreeHomeScreen(navController: NavController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(com.music.spotui.ui.theme.AppBackgroundBrush)
+            .navBarScroll()
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
     ) {

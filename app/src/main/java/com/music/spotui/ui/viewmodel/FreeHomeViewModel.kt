@@ -12,6 +12,8 @@ import com.music.spotui.data.preferences.getListeningHistory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -94,6 +96,22 @@ class FreeHomeViewModel @Inject constructor(
     // Timestamp of the newest history entry the current Home was built from, so we
     // can rebuild only when the user has actually played something new.
     private var builtFromHistoryTs = 0L
+
+    init {
+        // Keep "Trending now" genuinely live: silently re-pull it every
+        // TRENDING_REFRESH_MS in the background for as long as Home is alive,
+        // so the newest songs keep rotating in on their own without the user
+        // reopening the tab or pulling to refresh. fetchTrending() is
+        // silent-safe — it only replaces the shown list when the pull returns
+        // something, so a failed refresh never blanks the block. The loop lives
+        // on viewModelScope and is cancelled automatically when the VM clears.
+        viewModelScope.launch {
+            while (isActive) {
+                delay(TRENDING_REFRESH_MS)
+                fetchTrending()
+            }
+        }
+    }
 
     fun loadOnce() {
         if (loaded) return

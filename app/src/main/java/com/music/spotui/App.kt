@@ -46,6 +46,11 @@ fun App() {
                 else -> playerState.isNotEmpty()
             }
         }
+        // Reset the navbar to fully expanded whenever the route changes, so it
+        // never stays compressed after leaving a scrolled screen.
+        if (currentRoute != lastRoute) {
+            com.music.spotui.ui.navigation.NavBarScrollState.reset()
+        }
         lastRoute = currentRoute
     }
 

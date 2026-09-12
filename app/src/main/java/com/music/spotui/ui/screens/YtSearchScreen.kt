@@ -66,6 +66,7 @@ import com.music.spotui.R
 import com.music.spotui.data.entity.SongsModel
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
+import com.music.spotui.ui.navigation.navBarScroll
 import com.music.spotui.ui.viewmodel.AlbumResult
 import com.music.spotui.ui.viewmodel.ArtistResult
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -76,8 +77,8 @@ import com.music.spotui.ui.viewmodel.formatDurationMs
 
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
-private val Surface = Color(0xFF1C1C21)
-private val SurfaceHigh = Color(0xFF26262E)
+private val Surface = Color(0xFF0B3A44)
+private val SurfaceHigh = Color(0xFF0F4A57)
 private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 private val TextFaint = Color(0xFF7A7A85)
@@ -86,21 +87,22 @@ private val TextFaint = Color(0xFF7A7A85)
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
-    // Royal Edition — every tile is tinted from the royal-purple / gold family so
-    // Explore reads as one premium palette. Trending & Charts lead the grid.
-    BrowseCategory("Trending", "trending songs this week", Color(0xFF7C3AED)),
-    BrowseCategory("Charts", "top charts this week", Color(0xFFB8892B)),
-    BrowseCategory("New releases", "new songs this month", Color(0xFF6D28D9)),
-    BrowseCategory("Bollywood", "bollywood hits", Color(0xFFA23E9C)),
-    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF6A4BA8)),
-    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF5B21B6)),
-    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF5E3A8C)),
-    BrowseCategory("Workout", "workout songs", Color(0xFF7C3AED)),
-    BrowseCategory("Romance", "romantic songs", Color(0xFF9D4EDD)),
-    BrowseCategory("Party", "party songs", Color(0xFF8E44AD)),
-    BrowseCategory("Devotional", "devotional songs", Color(0xFFC08A2E)),
-    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF6247AA)),
-    BrowseCategory("Sad songs", "sad songs", Color(0xFF4C1D95)),
+    // Cyan + Gold Edition — every tile is tinted from the teal/cyan family with a
+    // couple of warm gold accents so Explore reads as one cohesive premium
+    // palette. Trending & Charts lead the grid.
+    BrowseCategory("Trending", "trending songs this week", Color(0xFF0E7C8C)),
+    BrowseCategory("Charts", "top charts this week", Color(0xFFC79A2B)),
+    BrowseCategory("New releases", "new songs this month", Color(0xFF12909F)),
+    BrowseCategory("Bollywood", "bollywood hits", Color(0xFF1AA6B0)),
+    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF0B6A78)),
+    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF0A5866)),
+    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF167E88)),
+    BrowseCategory("Workout", "workout songs", Color(0xFF0E7C8C)),
+    BrowseCategory("Romance", "romantic songs", Color(0xFF1E9FA8)),
+    BrowseCategory("Party", "party songs", Color(0xFF15A0B4)),
+    BrowseCategory("Devotional", "devotional songs", Color(0xFFC79A2B)),
+    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF0B6A78)),
+    BrowseCategory("Sad songs", "sad songs", Color(0xFF0A5866)),
 )
 
 /**
@@ -159,7 +161,8 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(com.music.spotui.ui.theme.AppBackgroundBrush)
+            .navBarScroll()
             .statusBarsPadding(),
     ) {
         SearchField(
@@ -485,35 +488,58 @@ private fun BrowseTile(
 
     Box(
         modifier = modifier
-            .height(128.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(category.color)
-            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(14.dp))
+            .height(150.dp)
+            .clip(RoundedCornerShape(18.dp))
+            // Soft diagonal wash of the tile's cyan hue so it looks intentional
+            // even before (or if) the artwork loads.
+            .background(
+                Brush.linearGradient(
+                    listOf(category.color, category.color.copy(alpha = 0.7f)),
+                )
+            )
+            .border(1.dp, Color(0x33E8C24A), RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
     ) {
-        // Royal Edition: the artwork fills the whole tile as a background, with a
-        // royal gradient scrim over it, instead of a small tilted corner thumbnail.
+        // Cyan + Gold Edition: the artwork fills the whole tile as a background,
+        // with a cinematic diagonal scrim over it (crossfaded in with a
+        // placeholder) instead of a small tilted corner thumbnail.
         if (cover.isNotBlank()) {
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
+                loading = placeholder(R.drawable.placeholder),
+                failure = placeholder(R.drawable.placeholder),
             )
         }
-        // Scrim: the tile's own hue at the top fading to the royal canvas, so the
+        // Diagonal scrim: the tile's own hue at the top-left, transparent in the
+        // middle, fading into the deep cyan canvas at the bottom-right so the
         // label stays legible over any artwork and the palette stays cohesive.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            category.color.copy(alpha = 0.55f),
-                            Color(0xCC130824),
-                        )
+                    Brush.linearGradient(
+                        colors = listOf(
+                            category.color.copy(alpha = 0.35f),
+                            Color(0x00041418),
+                            Color(0xE6041418),
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset.Infinite,
                     )
                 ),
+        )
+        // Thin gold accent bar above the label — a small premium flourish.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 14.dp, bottom = 44.dp)
+                .height(3.dp)
+                .width(26.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Accent),
         )
         Text(
             text = category.label,
@@ -603,10 +629,10 @@ private fun DiscoverPane(
 
         item {
             Text(
-                text = "Browse all",
+                text = "Explore",
                 color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 12.dp),
             )
         }

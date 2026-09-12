@@ -1,9 +1,12 @@
 package com.music.spotui.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -62,16 +65,32 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         content = {
+            // How compressed the bar should be, driven by content scrolling.
+            // 0f = fully expanded (idle / at top), 1f = compressed (scrolling down).
+            val compression by animateFloatAsState(
+                targetValue = NavBarScrollState.compression,
+                label = "navBarCompression",
+            )
+            // As the user scrolls down, the floating bar shrinks toward the bottom,
+            // fades out, and slides down a touch so the content is unobstructed —
+            // and springs back up the moment they scroll up.
+            val barScale = 1f - 0.14f * compression
+            val barAlpha = 1f - 0.85f * compression
+            val barTranslateY = 40f * compression
+
             Box(
                 contentAlignment = Alignment.BottomCenter,
                 modifier = Modifier
                     .fillMaxWidth()
+                    // A translucent cyan-tinted scrim so the bar reads as
+                    // transparent (content shows through) and only settles into a
+                    // darker base at the very bottom.
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black,
-                                Color.Black
+                                Color(0x66041418),
+                                Color(0xCC020A0C),
                             ),
                             startY = 0f
                         )
@@ -97,6 +116,14 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 6.dp)
                             .fillMaxWidth()
+                            // Compress on scroll: shrink, fade and slide down as the
+                            // user scrolls into the content, spring back on scroll up.
+                            .graphicsLayer {
+                                scaleX = barScale
+                                scaleY = barScale
+                                translationY = barTranslateY
+                                alpha = barAlpha
+                            }
                             // A floating, rounded nav bar that reads as a raised control
                             // surface over the content, rather than icons sitting loose on
                             // the gradient.
@@ -108,16 +135,19 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 spotColor = Color.Black,
                             )
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
-                            // A warm amber tinted gradient so the nav bar carries the
-                            // app's colour instead of being a flat dark slab.
+                            // A translucent cyan-tinted glass gradient so the bar carries
+                            // the app's colour while staying see-through over content.
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color(0xFF2A2118), Color(0xFF1A160F)),
+                                    colors = listOf(
+                                        Color(0xCC0B3A44),
+                                        Color(0xCC072A31),
+                                    ),
                                 )
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.18f),
+                                color = Color(0xFFE8C24A).copy(alpha = 0.22f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             ),
                         containerColor = Color.Transparent,
@@ -150,7 +180,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 },
                                 label = {
                                     if (currentTab == item.route) {
-                                        Text(color = Color(0xFFD4AF37), text = item.label, fontSize = 11.sp)
+                                        Text(color = Color(0xFFE8C24A), text = item.label, fontSize = 11.sp)
                                     } else {
                                         Text(
                                             color = Color.Gray,
@@ -208,11 +238,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 alwaysShowLabel = true,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFFD4AF37),
+                                    selectedIconColor = Color(0xFFE8C24A),
                                     unselectedIconColor = Color.Gray,
                                     // A soft amber pill behind the active tab's icon, so
                                     // the selection is clear at a glance without shouting.
-                                    indicatorColor = Color(0xFFD4AF37).copy(alpha = 0.16f),
+                                    indicatorColor = Color(0xFFE8C24A).copy(alpha = 0.16f),
                                 )
                             )
 

@@ -103,7 +103,7 @@ fun UpdatePrompt() {
                 }
                 update = null
             }) {
-                Text("Update", color = Color(0xFFD4AF37))
+                Text("Update", color = Color(0xFFE8C24A))
             }
         },
         dismissButton = {
@@ -245,7 +245,7 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
 @Composable
 private fun RenderMarkdown(markdown: String) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    val linkColor = Color(0xFFD4AF37)
+    val linkColor = Color(0xFFE8C24A)
     val headingColor = Color.White
     val bodyColor = Color(0xFFB3B3B3)
 

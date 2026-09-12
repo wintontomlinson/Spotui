@@ -102,7 +102,7 @@ fun Loader() {
                 .size(45.dp),
             // The app accent, not the old off brand purple, so every loading screen
             // stays on palette.
-            color = Color(0xFFD4AF37),
+            color = Color(0xFFE8C24A),
             strokeWidth = 3.dp,
         )
     }
@@ -440,7 +440,7 @@ fun MiniPlayer(navController: NavHostController) {
                 if (isLiked) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        tint = Color(0xFFD4AF37),
+                        tint = Color(0xFFE8C24A),
                         modifier = Modifier
                             .size(22.dp)
                             .clickable(
@@ -637,7 +637,7 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFD4AF37)) // accent
+                    .background(Color(0xFFE8C24A)) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
@@ -726,7 +726,7 @@ fun AppSearchBar(
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFFD4AF37)
+                cursorColor = Color(0xFFE8C24A)
             ),
             singleLine = true,
             placeholder = {

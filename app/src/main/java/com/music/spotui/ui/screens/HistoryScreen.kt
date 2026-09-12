@@ -88,7 +88,7 @@ import java.util.Date
 
 private val CardBg = Color(0xFF18181C)
 private val BarTrack = Color(0xFF2A2A2A)
-private val SpotifyGreen = Color(0xFFD4AF37)
+private val SpotifyGreen = Color(0xFFE8C24A)
 private val MutedText = Color(0xFFB3B3B3)
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)

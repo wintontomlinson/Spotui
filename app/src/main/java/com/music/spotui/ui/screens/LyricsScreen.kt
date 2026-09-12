@@ -460,7 +460,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
             Icon(
                 imageVector = Icons.Default.Translate,
                 contentDescription = "Translate",
-                tint = if (vm.showLanguageBar) Color(0xFFD4AF37) else Color.White,
+                tint = if (vm.showLanguageBar) Color(0xFFE8C24A) else Color.White,
                 modifier = Modifier.size(24.dp),
             )
         }
@@ -822,9 +822,9 @@ private fun LanguagePickerBottomSheet(
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color.White.copy(alpha = 0.05f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
-                    focusedBorderColor = Color(0xFFD4AF37), // Spotify Green
+                    focusedBorderColor = Color(0xFFE8C24A), // Spotify Green
                     unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                    cursorColor = Color(0xFFD4AF37)
+                    cursorColor = Color(0xFFE8C24A)
                 ),
                 singleLine = true,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
@@ -864,7 +864,7 @@ private fun LanguagePickerBottomSheet(
                         ) {
                             Text(
                                 text = name,
-                                color = if (isSelected) Color(0xFFD4AF37) else Color.White,
+                                color = if (isSelected) Color(0xFFE8C24A) else Color.White,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
@@ -873,7 +873,7 @@ private fun LanguagePickerBottomSheet(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Selected",
-                                    tint = Color(0xFFD4AF37),
+                                    tint = Color(0xFFE8C24A),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }
