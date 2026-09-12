@@ -102,23 +102,26 @@ private val BROWSE_CATEGORIES = listOf(
     // Each category has its own vibrant hue plus a name-matched `imageQuery`, so
     // the full-bleed tile artwork clearly reflects the label. `query` is what
     // actually runs on tap.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "trending music"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "top music charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new music release album"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "feel good playlist"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "bollywood movie songs"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "punjabi music singer"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "hip hop rap"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "pop music"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi chill beats"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "gym workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romantic love song"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "party dance club"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "devotional bhajan"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "90s retro music"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad emotional song"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "english pop music"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "instrumental music"),
+    // imageQuery points at recognisable, current hit albums/artists so each tile
+    // shows relatable, latest cover art (resolved to a square album cover) rather
+    // than a random generic result.
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "top hits 2026 album"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "billboard hot 100 hits album"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new album 2026"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "feel good hits 2026 album"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "arijit singh hit songs album"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "diljit dosanjh album"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "drake album"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "taylor swift album"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi hip hop beats album"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "beast mode workout album"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romantic love songs album"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "dance party hits album"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "krishna bhajan album"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "90s bollywood hits album"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad songs album"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "the weeknd album"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "peaceful piano instrumental album"),
 )
 
 /**

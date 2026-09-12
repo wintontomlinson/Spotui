@@ -60,9 +60,15 @@ object BrowseTileImages {
                     .getOrNull()?.items?.filterIsInstance<PlaylistItem>()
                     ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
 
-                // Album cover first (cleanest), then a playlist cover. No song/video
-                // thumbnail fallback, so no wallpaper-style stills leak in.
-                val raw = albumArt(genre) ?: playlistArt(genre)
+                // Bias toward the CURRENT year first so tiles show fresh, relatable
+                // covers, then fall back to the plain genre. Album cover is
+                // preferred (cleanest square art), playlist cover second. Never a
+                // song/video still, so no wallpaper frames leak in.
+                val year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+                val raw = albumArt("$genre $year")
+                    ?: albumArt(genre)
+                    ?: playlistArt("$genre $year")
+                    ?: playlistArt(genre)
 
                 // Extra large so the full-bleed tile art stays crisp on high-density
                 // screens (tiles are image-forward, not small thumbnails).
