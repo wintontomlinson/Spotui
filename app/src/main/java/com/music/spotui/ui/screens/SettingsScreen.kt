@@ -764,7 +764,7 @@ private fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 // Amber is a light accent, so the thumb goes dark when active.
-                checkedThumbColor = Color(0xFF241540),
+                checkedThumbColor = Color(0xFF16224A),
                 checkedTrackColor = SettingsAccent,
                 uncheckedThumbColor = Color(0xFFB3B3B3),
                 uncheckedTrackColor = Color(0xFF2A2A32),

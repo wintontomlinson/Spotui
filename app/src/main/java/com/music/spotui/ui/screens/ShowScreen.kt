@@ -295,7 +295,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Column(modifier = Modifier.padding(start = 12.dp)) {
                                 Text(
                                     ep.title,
-                                    color = if (ep.id == vm.currentSongId.value) Color(0xFFD4AF37) else Color.White,
+                                    color = if (ep.id == vm.currentSongId.value) Color(0xFFE8C15A) else Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 2,

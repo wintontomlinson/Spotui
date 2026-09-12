@@ -199,7 +199,7 @@ private fun LibraryRowMenu(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            containerColor = Color(0xFF241540),
+            containerColor = Color(0xFF16224A),
             title = {
                 Text(
                     text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
@@ -288,7 +288,7 @@ fun LibraryFilterChips(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF16224A))
                         .clickable { onClearFilters() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -344,8 +344,8 @@ private fun LibraryChipItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) Color(0xFFD4AF37) else Color(0xFF1C1C21)
-    val textColor = if (isSelected) Color(0xFF241540) else Color.White
+    val backgroundColor = if (isSelected) Color(0xFFE8C15A) else Color(0xFF1C1C21)
+    val textColor = if (isSelected) Color(0xFF16224A) else Color.White
 
     Box(
         modifier = Modifier
@@ -413,7 +413,7 @@ fun LibraryScreen(navController: NavController) {
                         unfocusedContainerColor = Color(0xFF383838),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
-                        cursorColor = Color(0xFFD4AF37),
+                        cursorColor = Color(0xFFE8C15A),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -425,7 +425,7 @@ fun LibraryScreen(navController: NavController) {
             confirmButton = {
                 Text(
                     "Create",
-                    color = Color(0xFFD4AF37),
+                    color = Color(0xFFE8C15A),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier
@@ -484,7 +484,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF241540))
+                    .background(Color(0xFF16224A))
                     .clickable { showCreateDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -497,7 +497,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFD4AF37) else Color(0xFF241540))
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFE8C15A) else Color(0xFF16224A))
                     .clickable { isSearchVisible = !isSearchVisible },
                 contentAlignment = Alignment.Center
             ) {
@@ -575,7 +575,7 @@ fun LibraryScreen(navController: NavController) {
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .height(36.dp)
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF16224A))
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
@@ -595,7 +595,7 @@ fun LibraryScreen(navController: NavController) {
                             fontWeight = FontWeight.Medium
                         ),
                         singleLine = true,
-                        cursorBrush = SolidColor(Color(0xFFD4AF37)),
+                        cursorBrush = SolidColor(Color(0xFFE8C15A)),
                         decorationBox = { innerTextField ->
                             Box(contentAlignment = Alignment.CenterStart) {
                                 if (searchQuery.isEmpty()) {
@@ -629,7 +629,7 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier
                         .height(36.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF16224A))
                         .clickable { showSortSheet = true }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -730,7 +730,7 @@ fun LibraryScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF241540))
+                    HorizontalDivider(color = Color(0xFF16224A))
                     Spacer(modifier = Modifier.height(4.dp))
                     LibrarySortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -759,13 +759,13 @@ fun LibraryScreen(navController: NavController) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(0xFFD4AF37) else Color.White,
+                                tint = if (isSelected) Color(0xFFE8C15A) else Color.White,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == LibrarySortOption.RECENTS),
-                                color = if (isSelected) Color(0xFFD4AF37) else Color.White,
+                                color = if (isSelected) Color(0xFFE8C15A) else Color.White,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -773,7 +773,7 @@ fun LibraryScreen(navController: NavController) {
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(0xFFD4AF37),
+                                    tint = Color(0xFFE8C15A),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -834,13 +834,13 @@ fun SumUpLibraryScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFFD4AF37))
+                    .background(Color(0xFFE8C15A))
                     .clickable { onClearFilters() }
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = "Clear filters",
-                    color = Color(0xFF241540),
+                    color = Color(0xFF16224A),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -890,7 +890,7 @@ fun SumUpLibraryScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_download),
                             contentDescription = "Downloaded",
-                            tint = Color(0xFFD4AF37),
+                            tint = Color(0xFFE8C15A),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -932,7 +932,7 @@ fun SumUpLibraryScreen(
                             Icon(
                                 imageVector = Icons.Default.PhoneAndroid,
                                 contentDescription = "Local Storage",
-                                tint = Color(0xFFD4AF37),
+                                tint = Color(0xFFE8C15A),
                                 modifier = Modifier
                                     .size(14.dp)
                                     .padding(end = 3.dp)
@@ -1060,13 +1060,13 @@ fun LibraryGridScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFD4AF37))
+                        .background(Color(0xFFE8C15A))
                         .clickable { onClearFilters() }
                         .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Clear filters",
-                        color = Color(0xFF241540),
+                        color = Color(0xFF16224A),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1133,7 +1133,7 @@ fun LibraryGridScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_download),
                             contentDescription = "Downloaded",
-                            tint = Color(0xFFD4AF37),
+                            tint = Color(0xFFE8C15A),
                             modifier = Modifier.size(32.dp)
                         )
                     }
@@ -1177,7 +1177,7 @@ fun LibraryGridScreen(
                         Icon(
                             imageVector = Icons.Default.PhoneAndroid,
                             contentDescription = "Local Storage",
-                            tint = Color(0xFFD4AF37),
+                            tint = Color(0xFFE8C15A),
                             modifier = Modifier
                                 .size(12.dp)
                                 .padding(end = 3.dp)
@@ -1283,7 +1283,7 @@ private fun LibraryEmptyState(navController: NavController) {
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            containerColor = Color(0xFF241540),
+            containerColor = Color(0xFF16224A),
             title = { Text("Create playlist", color = Color.White, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(
@@ -1364,7 +1364,7 @@ private fun LibraryEmptyState(navController: NavController) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 "Create playlist",
-                color = Color(0xFF241540),
+                color = Color(0xFF16224A),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -1380,7 +1380,7 @@ private fun LibraryEmptyState(navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF241540))
+                    .background(Color(0xFF16224A))
                     .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(50))
                     .clickable { navController.navigate(Routes.YtSearch.route) }
                     .padding(horizontal = 20.dp, vertical = 11.dp),
@@ -1427,7 +1427,7 @@ private fun LibraryQuickAccess(navController: NavController) {
         Tile(
             "Liked songs", caption(counts[0], "Tap the heart on any song"),
             Icons.Default.Favorite,
-            Color(0xFFD4AF37), Color(0xFFC87F0A),
+            Color(0xFFE8C15A), Color(0xFFC87F0A),
             Routes.Liked.route,
         ),
         Tile(
@@ -1460,8 +1460,8 @@ private fun LibraryQuickAccess(navController: NavController) {
                 pair.forEach { tile ->
                     // The Liked tile is the amber one, so its content is dark for contrast;
                     // the dark tiles use an amber icon and white text.
-                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF241540) else Color.White
-                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF241540) else accent
+                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF16224A) else Color.White
+                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF16224A) else accent
                     Column(
                         modifier = Modifier
                             .weight(1f)

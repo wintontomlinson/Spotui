@@ -1917,12 +1917,53 @@ object SongPlayer {
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
+    // ── Loudness boost ──
+    // Many YouTube/FLAC sources play noticeably quieter than other apps, so on top
+    // of the player's full software volume (1.0) we attach an Android
+    // LoudnessEnhancer to the audio session and apply a fixed gain. This makes the
+    // app feel as loud as the rest of the system at the same device volume.
+    // Gain is in millibels (mB): 800 mB ≈ +8 dB, a solid, non-distorting lift.
+    @Volatile private var loudnessGainMb = 800
+    @Volatile private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
+    @Volatile private var loudnessSessionId = 0
+
+    /** Attach (or re-attach) the LoudnessEnhancer to [sessionId] and enable the boost. */
+    private fun attachLoudness(sessionId: Int) {
+        if (sessionId == 0 || sessionId == android.media.AudioManager.ERROR) return
+        if (loudnessEnhancer != null && loudnessSessionId == sessionId) return
+        runCatching {
+            loudnessEnhancer?.release()
+            loudnessEnhancer = android.media.audiofx.LoudnessEnhancer(sessionId).apply {
+                setTargetGain(loudnessGainMb)
+                enabled = true
+            }
+            loudnessSessionId = sessionId
+        }
+    }
+
+    /** Adjust the loudness boost at runtime (e.g. from a settings slider). */
+    fun setLoudnessGainMb(mb: Int) {
+        loudnessGainMb = mb.coerceIn(0, 2000)
+        runCatching { loudnessEnhancer?.setTargetGain(loudnessGainMb) }
+    }
+
     private fun ensurePlayer(context: Context) {
         appCtx = context.applicationContext
         if (player == null) {
             val (p, filter) = createPlayerWithFilter(context, handleAudioFocus = true)
             player = p
             currentPlayerFilter = filter
+            // Boost loudness once the audio session exists, and re-apply if the
+            // session id changes (e.g. output device switch).
+            runCatching { attachLoudness(p.audioSessionId) }
+            p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+                override fun onAudioSessionIdChanged(
+                    eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                    audioSessionId: Int,
+                ) {
+                    attachLoudness(audioSessionId)
+                }
+            })
             onPlayerCreated?.invoke(p)
         }
     }
@@ -2118,6 +2159,9 @@ object SongPlayer {
         positionWatchJob?.cancel()
         cancelCrossfade()
         releaseWakeLock("spotui:release")
+        runCatching { loudnessEnhancer?.release() }
+        loudnessEnhancer = null
+        loudnessSessionId = 0
         player?.release()
         player = null
         loadedQuery = null

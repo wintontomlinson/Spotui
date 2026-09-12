@@ -86,21 +86,23 @@ private val TextFaint = Color(0xFF7A7A85)
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
-    // Royal Edition — every tile is tinted from the royal-purple / gold family so
+    // Royal Edition — every tile is tinted from the royal-BLUE / gold family so
     // Explore reads as one premium palette. Trending & Charts lead the grid.
-    BrowseCategory("Trending", "trending songs this week", Color(0xFF7C3AED)),
-    BrowseCategory("Charts", "top charts this week", Color(0xFFB8892B)),
-    BrowseCategory("New releases", "new songs this month", Color(0xFF6D28D9)),
-    BrowseCategory("Bollywood", "bollywood hits", Color(0xFFA23E9C)),
-    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF6A4BA8)),
-    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF5B21B6)),
-    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF5E3A8C)),
-    BrowseCategory("Workout", "workout songs", Color(0xFF7C3AED)),
-    BrowseCategory("Romance", "romantic songs", Color(0xFF9D4EDD)),
-    BrowseCategory("Party", "party songs", Color(0xFF8E44AD)),
-    BrowseCategory("Devotional", "devotional songs", Color(0xFFC08A2E)),
-    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF6247AA)),
-    BrowseCategory("Sad songs", "sad songs", Color(0xFF4C1D95)),
+    // Queries are tuned so each tile's cover art is relatable to the category
+    // (e.g. official playlists / this-year mixes) rather than a random result.
+    BrowseCategory("Trending", "trending music hits playlist", Color(0xFF1E3A8C)),
+    BrowseCategory("Charts", "top 50 global chart songs", Color(0xFFB8892B)),
+    BrowseCategory("New releases", "new music this week playlist", Color(0xFF2447A8)),
+    BrowseCategory("Bollywood", "bollywood top hits playlist", Color(0xFF3A5BBF)),
+    BrowseCategory("Punjabi", "punjabi top hits playlist", Color(0xFF1B4D8C)),
+    BrowseCategory("Hip-Hop", "hip hop rap hits playlist", Color(0xFF13294F)),
+    BrowseCategory("Chill & Lo-Fi", "lofi chill beats to relax playlist", Color(0xFF29527A)),
+    BrowseCategory("Workout", "workout gym motivation playlist", Color(0xFF2C6E8F)),
+    BrowseCategory("Romance", "romantic love songs playlist", Color(0xFF4A5CB8)),
+    BrowseCategory("Party", "party dance hits playlist", Color(0xFF3F51B5)),
+    BrowseCategory("Devotional", "devotional bhajan songs playlist", Color(0xFFC08A2E)),
+    BrowseCategory("90s & Retro", "90s retro classic hits playlist", Color(0xFF34477A)),
+    BrowseCategory("Sad songs", "sad emotional songs playlist", Color(0xFF1F2E5C)),
 )
 
 /**
@@ -510,7 +512,7 @@ private fun BrowseTile(
                     Brush.verticalGradient(
                         listOf(
                             category.color.copy(alpha = 0.55f),
-                            Color(0xCC130824),
+                            Color(0xCC0A1128),
                         )
                     )
                 ),
@@ -611,7 +613,7 @@ private fun DiscoverPane(
                 )
                 Text(
                     text = "Fresh picks, updated daily",
-                    color = Color(0xFFD4AF37),
+                    color = Color(0xFFE8C15A),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 2.dp),

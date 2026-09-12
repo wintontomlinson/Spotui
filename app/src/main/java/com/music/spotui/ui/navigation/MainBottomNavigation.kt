@@ -72,8 +72,8 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color(0xFF130824).copy(alpha = 0.85f),
-                                Color(0xFF130824)
+                                Color(0xFF0A1128).copy(alpha = 0.85f),
+                                Color(0xFF0A1128)
                             ),
                             startY = 0f
                         )
@@ -114,12 +114,12 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                             // bar carries the app's premium colour, with a gold hairline.
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color(0xFF2B1D4A), Color(0xFF1A0F30)),
+                                    colors = listOf(Color(0xFF16224A), Color(0xFF101A3A)),
                                 )
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFD4AF37).copy(alpha = 0.28f),
+                                color = Color(0xFFE8C15A).copy(alpha = 0.28f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
                             ),
                         containerColor = Color.Transparent,
@@ -153,14 +153,14 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 label = {
                                     if (currentTab == item.route) {
                                         Text(
-                                            color = Color(0xFFD4AF37),
+                                            color = Color(0xFFE8C15A),
                                             text = item.label,
                                             fontSize = 11.sp,
                                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                                         )
                                     } else {
                                         Text(
-                                            color = Color(0xFFB6A9D6),
+                                            color = Color(0xFF9FB0D8),
                                             text = item.label,
                                             fontSize = 11.sp
                                         )
@@ -215,11 +215,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 alwaysShowLabel = true,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFFD4AF37),
-                                    unselectedIconColor = Color(0xFFB6A9D6),
+                                    selectedIconColor = Color(0xFFE8C15A),
+                                    unselectedIconColor = Color(0xFF9FB0D8),
                                     // A gold pill behind the active tab's icon so the
                                     // selection reads clearly on the royal-purple bar.
-                                    indicatorColor = Color(0xFFD4AF37).copy(alpha = 0.22f),
+                                    indicatorColor = Color(0xFFE8C15A).copy(alpha = 0.22f),
                                 )
                             )
 
