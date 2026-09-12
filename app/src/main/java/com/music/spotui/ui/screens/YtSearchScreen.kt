@@ -94,14 +94,14 @@ private val BROWSE_CATEGORIES = listOf(
     // Colours are only a neutral placeholder shown until the cover art loads —
     // the tiles are NOT gold-tinted (the artwork sits full-bleed under a plain
     // dark scrim). Queries are tuned to fetch DIFFERENT, category-relatable art.
-    BrowseCategory("Trending", "trending hits mix", Color(0xFF1A1A1C)),
-    BrowseCategory("Charts", "top 100 songs global chart", Color(0xFF1A1A1C)),
-    BrowseCategory("New releases", "brand new songs this week", Color(0xFF1A1A1C)),
+    BrowseCategory("Trending", "viral hits today", Color(0xFF1A1A1C)),
+    BrowseCategory("Charts", "top hits chart playlist", Color(0xFF1A1A1C)),
+    BrowseCategory("New releases", "fresh new music friday", Color(0xFF1A1A1C)),
     BrowseCategory("Bollywood", "bollywood latest hindi songs", Color(0xFF1A1A1C)),
     BrowseCategory("Punjabi", "latest punjabi songs 2026", Color(0xFF1A1A1C)),
     BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF1A1A1C)),
     BrowseCategory("Chill & Lo-Fi", "lofi beats to study relax", Color(0xFF1A1A1C)),
-    BrowseCategory("Workout", "workout gym motivation songs mix", Color(0xFF1A1A1C)),
+    BrowseCategory("Workout", "beast mode gym workout", Color(0xFF1A1A1C)),
     BrowseCategory("Romance", "romantic love songs mix", Color(0xFF1A1A1C)),
     BrowseCategory("Party", "party club dance anthems", Color(0xFF1A1A1C)),
     BrowseCategory("Devotional", "bhakti devotional songs", Color(0xFF1A1A1C)),
