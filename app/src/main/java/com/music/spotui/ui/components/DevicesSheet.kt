@@ -85,7 +85,7 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF130824),
+        containerColor = Color(0xFF121212),
         contentColor = Color.White,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
     ) {

@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -100,8 +102,14 @@ private fun rememberPlaybackPositionMs(): State<Long> {
     return pos
 }
 
+/**
+ * Index of the line that should be lit, or -1 when the song has not reached the first one.
+ *
+ * The result is deliberately allowed to be -1. It used to be coerced up to 0, which lit and
+ * scrolled to the first line all through the intro, as though it were already being sung.
+ */
 private fun activeIndexFor(lyrics: Lyrics, positionMs: Long): Int =
-    if (lyrics.synced) lyrics.lines.indexOfLast { it.timeMs <= positionMs + 250 }.coerceAtLeast(0)
+    if (lyrics.synced) lyrics.lines.indexOfLast { it.timeMs <= positionMs + 250 }
     else -1
 
 /** Seek to a tapped synced line and make sure we're playing. */
@@ -245,8 +253,18 @@ fun LyricsScreen(
     }
 
     LaunchedEffect(title, artist) {
-        if (vm.state.value is LyricsViewModel.State.Loaded) return@LaunchedEffect
-        val durationSec = (SongPlayer.getDuration() / 1000).toInt()
+        // No "already loaded, skip" guard here. The ViewModel is shared with the inline
+        // card and keys its own work by title and artist, so this guard only managed to
+        // suppress the reload after a track change: opening the overlay then showed the
+        // PREVIOUS song's lyrics, scrolled against the new song's position.
+        //
+        // ExoPlayer usually reports no duration for a moment after a track change, and the
+        // duration is what tells two same-titled recordings apart, so give it a beat.
+        var durationSec = (SongPlayer.getDuration() / 1000).toInt()
+        if (durationSec <= 0) {
+            delay(300L)
+            durationSec = (SongPlayer.getDuration() / 1000).toInt()
+        }
         vm.load(title, artist, album, durationSec)
     }
     val state by vm.state.collectAsState()
@@ -271,7 +289,7 @@ fun LyricsScreen(
                 translationY = offsetY
                 alpha = (1f - (offsetY / screenHeight)).coerceIn(0f, 1f)
             }
-            .background(Color(0xFF130824))
+            .background(Color(0xFF121212))
             .background(
                 Brush.verticalGradient(
                     colors = listOf(accentColor, accentColor.copy(alpha = 0.55f), Color.Black),
@@ -314,11 +332,36 @@ fun LyricsScreen(
                         CircularProgressIndicator(color = Color.White)
                     }
                 is LyricsViewModel.State.NotFound ->
-                    Box(
+                    Column(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-                        contentAlignment = Alignment.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        Text("Couldn't find lyrics for this track", color = Color.White.copy(alpha = 0.7f), fontSize = 15.sp)
+                        Text(
+                            "Couldn't find lyrics for this track",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 15.sp,
+                        )
+                        Spacer(Modifier.height(14.dp))
+                        // A lookup can fail for a reason that has nothing to do with the
+                        // song, such as a provider timing out. Without this the only way to
+                        // try again was to change track and come back.
+                        Text(
+                            text = "Try again",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color.White.copy(alpha = 0.16f))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
+                                    vm.retry(title, artist, album)
+                                }
+                                .padding(horizontal = 22.dp, vertical = 10.dp),
+                        )
                     }
                 is LyricsViewModel.State.Loaded -> {
                     val lyrics = s.lyrics
@@ -326,9 +369,14 @@ fun LyricsScreen(
                     val listState = rememberLazyListState()
                     val translated = vm.translatedLines
                     val showTranslations = vm.translationsVisible
+                    // The offset was a flat -260 pixels. animateScrollToItem takes pixels,
+                    // not dp, so the active line landed in a different place on every
+                    // screen density: roughly centred on a mid density phone and near the
+                    // top on a dense one. Converting from dp keeps it consistent.
+                    val activeLineOffsetPx = with(density) { -160.dp.roundToPx() }
                     LaunchedEffect(activeIndex) {
                         if (activeIndex >= 0) {
-                            listState.animateScrollToItem(activeIndex.coerceAtLeast(0), scrollOffset = -260)
+                            listState.animateScrollToItem(activeIndex, scrollOffset = activeLineOffsetPx)
                         }
                     }
                     LazyColumn(
@@ -412,7 +460,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
             Icon(
                 imageVector = Icons.Default.Translate,
                 contentDescription = "Translate",
-                tint = if (vm.showLanguageBar) Color(0xFFB8892B) else Color.White,
+                tint = if (vm.showLanguageBar) Color(0xFFD4AF37) else Color.White,
                 modifier = Modifier.size(24.dp),
             )
         }
@@ -774,9 +822,9 @@ private fun LanguagePickerBottomSheet(
                     unfocusedTextColor = Color.White,
                     focusedContainerColor = Color.White.copy(alpha = 0.05f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
-                    focusedBorderColor = Color(0xFFB8892B), // Spotify Green
+                    focusedBorderColor = Color(0xFFD4AF37), // Spotify Green
                     unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                    cursorColor = Color(0xFFB8892B)
+                    cursorColor = Color(0xFFD4AF37)
                 ),
                 singleLine = true,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
@@ -816,7 +864,7 @@ private fun LanguagePickerBottomSheet(
                         ) {
                             Text(
                                 text = name,
-                                color = if (isSelected) Color(0xFFB8892B) else Color.White,
+                                color = if (isSelected) Color(0xFFD4AF37) else Color.White,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
@@ -825,7 +873,7 @@ private fun LanguagePickerBottomSheet(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Selected",
-                                    tint = Color(0xFFB8892B),
+                                    tint = Color(0xFFD4AF37),
                                     modifier = Modifier.size(18.dp)
                                 )
                             }

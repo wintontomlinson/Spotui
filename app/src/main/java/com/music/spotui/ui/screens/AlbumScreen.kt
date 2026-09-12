@@ -94,7 +94,6 @@ import com.music.spotui.ui.components.SavedInSheet
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -103,16 +102,22 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun AlbumScreen(navController: NavController, albumName: String, artist: String = "") {
+fun AlbumScreen(
+    navController: NavController,
+    albumName: String,
+    artist: String = "",
+    albumBrowseId: String = "",
+) {
 
 
     val albumViewModel : AlbumViewModel = hiltViewModel()
     val songs by albumViewModel.songs.collectAsState()
     val albums by albumViewModel.albums.collectAsState()
 
-    // Load this album's actual tracks from Spotify (by name, disambiguated by artist).
-    LaunchedEffect(albumName, artist) {
-        albumViewModel.loadAlbumSongs(albumName, artist)
+    // Load this album's real tracklist. When the exact album id is known it is used
+    // directly, otherwise the name and artist are resolved against YouTube Music.
+    LaunchedEffect(albumName, artist, albumBrowseId) {
+        albumViewModel.loadAlbumSongs(albumName, artist, albumBrowseId)
     }
 
     val context = LocalContext.current
@@ -125,7 +130,7 @@ fun AlbumScreen(navController: NavController, albumName: String, artist: String 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(AppBackground.toArgb()))
     ) {
         val albumsResponse = (albums as? Response.Success)?.data.orEmpty()
         val songsResponse = (songs as? Response.Success)?.data.orEmpty()
@@ -175,7 +180,7 @@ fun SumUpAlbumScreen(
 
     val albumByName : Map<String, List<AlbumsModel>> = albums.groupBy { it.name }
     // The album may not be in the cached new-releases list (e.g. opened from
-    // search) — fall back to a model built from the album's first track.
+    // search), fall back to a model built from the album's first track.
     val album : List<AlbumsModel> = albumByName[albumName]
         ?: listOf(
             AlbumsModel(
@@ -302,7 +307,7 @@ fun SumUpAlbumScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier
                 .fillMaxSize()
-                .background(AppBackgroundBrush)
+                .background(Color(AppBackground.toArgb()))
                 .verticalScroll(scrollState)
             ) {
 
@@ -384,7 +389,7 @@ fun SumUpAlbumScreen(
                             Snackbar(showMessage = snackbarMessage)
                         }
                     else{
-                        // Let the action icons take their natural width — a fixed
+                        // Let the action icons take their natural width, a fixed
                         // 75dp squeezed the add + download buttons together.
                         Row(horizontalArrangement = Arrangement.spacedBy(18.dp),
                             verticalAlignment = Alignment.CenterVertically,

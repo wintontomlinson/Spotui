@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec
  * every 3rd 2048-byte chunk is Blowfish-CBC encrypted with a per-track key.
  *
  * Ported 1:1 from ReFreezer's native `DeezerDecryptor.java`
- * (github.com/DJDoubleD/refreezer) — the key derivation (MD5 of the track id
+ * (github.com/DJDoubleD/refreezer), the key derivation (MD5 of the track id
  * XOR-folded with a fixed secret) and the Blowfish/CBC/NoPadding scheme are the
  * Deezer protocol and must match byte-for-byte.
  */

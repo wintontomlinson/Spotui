@@ -5,8 +5,12 @@ import com.metrolist.innertube.models.YouTubeClient.Companion.WEB_REMIX
 import com.metrolist.innertube.models.YouTubeLocale
 import com.metrolist.innertube.models.getContinuation
 import com.metrolist.innertube.models.getItems
+import com.metrolist.innertube.models.response.BrowseResponse
 import com.metrolist.innertube.models.response.PlayerResponse
 import com.metrolist.innertube.models.response.SearchResponse
+import com.metrolist.innertube.pages.ArtistPage
+import com.metrolist.innertube.pages.BrowseParser
+import com.metrolist.innertube.pages.BrowsePage
 import com.metrolist.innertube.pages.SearchPage
 import com.metrolist.innertube.pages.SearchResult
 import io.ktor.client.call.body
@@ -113,7 +117,83 @@ object YouTube {
         companion object {
             val FILTER_SONG = SearchFilter("EgWKAQIIAWoKEAkQBRAKEAMQBA%3D%3D")
             val FILTER_VIDEO = SearchFilter("EgWKAQIQAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_ALBUM = SearchFilter("EgWKAQIYAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_ARTIST = SearchFilter("EgWKAQIgAWoKEAkQChAFEAMQBA%3D%3D")
+            val FILTER_COMMUNITY_PLAYLIST = SearchFilter("EgeKAQQoAEABagoQAxAEEAoQCRAF")
         }
+    }
+
+    /**
+     * An album's tracklist, in order.
+     *
+     * [browseId] is an album id such as "MPREb_xxxxxxxxx", which is what album search
+     * results carry. Search alone cannot list an album's tracks, so this goes through
+     * the browse endpoint.
+     */
+    suspend fun album(browseId: String): Result<BrowsePage> = runCatching {
+        collection(browseId = browseId, id = browseId)
+    }
+
+    /**
+     * A playlist's tracklist. Accepts either a bare playlist id ("PL...", "OLAK5uy_...")
+     * or one that already carries the "VL" browse prefix.
+     */
+    suspend fun playlist(playlistId: String): Result<BrowsePage> = runCatching {
+        collection(
+            browseId = if (playlistId.startsWith("VL")) playlistId else "VL$playlistId",
+            id = playlistId.removePrefix("VL"),
+        )
+    }
+
+    /**
+     * An artist's page: their picture, their releases, and their full song list.
+     *
+     * [channelId] is a YouTube channel id ("UC..."), which artist search results carry.
+     * The page's own songs shelf shows only about five tracks, so the playlist it links
+     * to is followed for the complete list.
+     */
+    suspend fun artist(channelId: String): Result<ArtistPage> = runCatching {
+        val response = innerTube.browse(WEB_REMIX, browseId = channelId).body<BrowseResponse>()
+        val page = BrowseParser.parseArtist(channelId, response)
+            ?: error("Artist $channelId could not be read")
+
+        val playlistId = page.songsPlaylistId ?: return@runCatching page
+        val full = runCatching { collection("VL$playlistId", playlistId) }.getOrNull()
+        if (full != null && full.songs.size > page.songs.size) {
+            page.copy(songs = full.songs)
+        } else {
+            page
+        }
+    }
+
+    /** Upper bound on how many tracks one collection may load, to keep paging sane. */
+    private const val MAX_COLLECTION_SONGS = 500
+
+    /**
+     * Fetches an album or playlist page and keeps following continuations until the
+     * tracklist is complete. YouTube serves long playlists a hundred tracks at a time, so
+     * without the follow-up requests a big playlist simply stopped at a hundred.
+     */
+    private suspend fun collection(browseId: String, id: String): BrowsePage {
+        val first = innerTube.browse(WEB_REMIX, browseId = browseId).body<BrowseResponse>()
+        val page = BrowseParser.parse(id, first) ?: error("$browseId has no tracklist")
+
+        val songs = page.songs.toMutableList()
+        var token = page.continuation
+        var pages = 0
+        while (token != null && songs.size < MAX_COLLECTION_SONGS && pages < 8) {
+            pages++
+            val next = innerTube.browse(WEB_REMIX, continuation = token).body<BrowseResponse>()
+            val (more, nextToken) = BrowseParser.parseContinuation(next, page)
+            if (more.isEmpty()) break
+            songs += more
+            token = nextToken
+        }
+
+        return page.copy(
+            songs = songs.distinctBy { it.id }.take(MAX_COLLECTION_SONGS),
+            continuation = null,
+        )
     }
 
     private val VISITOR_DATA_REGEX = Regex("^Cg[t|s]")

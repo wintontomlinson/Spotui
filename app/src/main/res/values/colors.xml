@@ -8,5 +8,8 @@
     <color name="ic_launcher_background">#FFF4F4F4</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="splash_background">#181818</color>
+    <!-- Amber to match the launcher icon's plate. The splash icon is the dark waveform
+         foreground, so a dark grey splash background made it nearly invisible; on amber it
+         reads exactly like the icon the user tapped. -->
+    <color name="splash_background">#F5A524</color>
 </resources>

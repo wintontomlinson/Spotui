@@ -81,7 +81,6 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import java.text.DateFormat
@@ -157,7 +156,7 @@ fun HistoryScreen(navController: NavController) {
             .take(5)
     }
     val topTracks = remember(history) {
-        history.groupingBy { "${it.title} — ${it.singer}" }
+        history.groupingBy { "${it.title}, ${it.singer}" }
             .eachCount().entries
             .sortedByDescending { it.value }
             .take(5)
@@ -173,7 +172,7 @@ fun HistoryScreen(navController: NavController) {
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppBackgroundBrush)
+                    .background(Color(AppBackground.toArgb()))
                     .statusBarsPadding()
             ) {
                 item {
@@ -217,7 +216,7 @@ fun HistoryScreen(navController: NavController) {
                 if (history.isEmpty()) {
                     item {
                         Text(
-                            "Nothing here yet — play something!",
+                            "Nothing here yet, play something!",
                             color = Color.Gray,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(16.dp, 32.dp),
@@ -299,12 +298,12 @@ fun HistoryScreen(navController: NavController) {
                         }
                         items(topTracks.size) { i ->
                             val entry = topTracks[i]
-                            val parts = entry.key.split(" — ", limit = 2)
+                            val parts = entry.key.split(", ", limit = 2)
                             val trackTitle = parts.getOrElse(0) { entry.key }
                             val trackArtist = parts.getOrElse(1) { "" }
                             val trackImage = remember(entry.key, history) {
                                 history.lastOrNull {
-                                    "${it.title} — ${it.singer}" == entry.key
+                                    "${it.title}, ${it.singer}" == entry.key
                                 }?.image ?: ""
                             }
                             TopTrackRow(
@@ -316,7 +315,7 @@ fun HistoryScreen(navController: NavController) {
                                 imageUrl = trackImage,
                             ) {
                                 val latest = history.lastOrNull {
-                                    "${it.title} — ${it.singer}" == entry.key
+                                    "${it.title}, ${it.singer}" == entry.key
                                 }
                                 if (latest != null) playEntry(latest)
                             }

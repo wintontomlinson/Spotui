@@ -1,57 +1,90 @@
 package com.music.spotui.data.api
 
-import android.content.Context
-import com.metrolist.spotify.Spotify
+import com.metrolist.innertube.YouTube
+import com.metrolist.innertube.models.AlbumItem
+import com.metrolist.innertube.models.PlaylistItem
+import com.metrolist.innertube.models.SongItem
+import com.music.spotui.ui.viewmodel.hiResThumbnail
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Cover art for the Search "Explore" tiles, like Spotify web shows: each
- * category box carries the cover of a top playlist for that genre, rendered
- * full-bleed behind a royal scrim.
+ * Cover art for the Explore "Browse all" tiles. Each tile shows a real, current
+ * cover pulled from YouTube Music (so it works with no login) instead of a flat
+ * block of colour.
  *
- * Resolved lazily (a small playlist search per category) and cached for the app
- * session. For a professional look we deliberately:
- *   1. Pull a handful of top playlists (not just one) so a hit that happens to
- *      have no artwork doesn't leave the tile blank.
- *   2. Choose the *highest-resolution* image Spotify offers for that playlist,
- *      so the full-bleed tile stays crisp instead of upscaling a thumbnail.
+ * Design goals:
+ *  • FRESH — the search is biased toward the current year / "latest", and the
+ *    cache is refreshed once a day so the grid keeps showing new artwork over time
+ *    rather than freezing on whatever loaded first.
+ *  • NEVER BLANK — a chain of fallbacks (album → playlist → video → song) means a
+ *    tile always resolves to something.
+ *  • CHEAP — resolved covers are cached; transient failures are negatively cached
+ *    for a short window so a flaky network doesn't trigger a search on every scroll.
  */
 object BrowseTileImages {
 
-    private val cache = ConcurrentHashMap<String, String>()
+    private data class Entry(val url: String, val ts: Long)
 
-    suspend fun coverFor(context: Context, genre: String): String {
-        cache[genre]?.let { return it }
-        if (!SpotifyTokenProvider.ensureToken(context.applicationContext)) return ""
+    private val cache = ConcurrentHashMap<String, Entry>()
 
-        val playlists = Spotify.search(genre, types = listOf("playlist"), limit = 6)
-            .getOrNull()
-            ?.playlists?.items
-            .orEmpty()
+    // Successful covers refresh once a day so Explore keeps updating its imagery.
+    private const val SUCCESS_TTL_MS = 24L * 60 * 60 * 1000
+    // Failures are remembered briefly so we don't hammer the network on every
+    // recomposition/scroll, but still retry reasonably soon.
+    private const val FAILURE_TTL_MS = 2L * 60 * 1000
 
-        // First playlist (in relevance order) that actually has artwork.
-        val url = playlists
-            .asSequence()
-            .mapNotNull { it.images.bestQualityUrl() }
-            .firstOrNull()
-            .orEmpty()
-
-        if (url.isNotBlank()) cache[genre] = url
-        return url
+    private fun fresh(entry: Entry?): Boolean {
+        if (entry == null) return false
+        val age = System.currentTimeMillis() - entry.ts
+        return if (entry.url.isNotBlank()) age < SUCCESS_TTL_MS else age < FAILURE_TTL_MS
     }
 
-    /**
-     * Spotify returns a playlist's images in an unspecified size order; pick the
-     * largest by area so the full-bleed Explore tile is sharp. Falls back to the
-     * first entry when dimensions are missing.
-     */
-    private fun List<com.metrolist.spotify.models.SpotifyImage>.bestQualityUrl(): String? {
-        if (isEmpty()) return null
-        val best = maxByOrNull { img ->
-            val w = img.width ?: 0
-            val h = img.height ?: 0
-            w.toLong() * h.toLong()
-        } ?: first()
-        return best.url.takeIf { it.isNotBlank() } ?: firstOrNull { it.url.isNotBlank() }?.url
+    /** Already resolved cover, so a tile scrolled back into view draws it immediately. */
+    fun cachedFor(genre: String): String = cache[genre]?.takeIf { it.url.isNotBlank() }?.url.orEmpty()
+
+    suspend fun coverFor(genre: String): String {
+        cache[genre]?.let { if (fresh(it)) return it.url }
+
+        val url = withContext(Dispatchers.IO) {
+            runCatching {
+                // Bias toward current, trending artwork. Uses the real current year
+                // (not a hardcoded one) so this stays fresh in future years too.
+                val year = Calendar.getInstance().get(Calendar.YEAR)
+                val freshQuery = "$genre $year"
+
+                fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
+                    .getOrNull()?.items?.filterIsInstance<AlbumItem>()
+                    ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
+
+                fun playlistArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST)
+                    .getOrNull()?.items?.filterIsInstance<PlaylistItem>()
+                    ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
+
+                fun songArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
+                    .getOrNull()?.items?.filterIsInstance<SongItem>()
+                    ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
+
+                // Fresh (year-biased) album → fresh playlist → plain album →
+                // plain playlist → song, so a tile is never left blank.
+                val raw = albumArt(freshQuery)
+                    ?: playlistArt(freshQuery)
+                    ?: albumArt(genre)
+                    ?: playlistArt(genre)
+                    ?: songArt(freshQuery)
+                    ?: songArt(genre)
+
+                // Extra large so the full-bleed tile art stays crisp on high-density
+                // screens (tiles are image-forward, not small thumbnails).
+                hiResThumbnail(raw, size = 720)
+            }.getOrDefault("")
+        }
+
+        // Cache success (day-long) or failure (short) so scrolling is cheap and the
+        // grid still refreshes its imagery over time.
+        cache[genre] = Entry(url, System.currentTimeMillis())
+        return url
     }
 }

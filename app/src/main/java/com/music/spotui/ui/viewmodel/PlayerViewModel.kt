@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -96,7 +97,9 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private val _songs : MutableStateFlow<Response<List<SongsModel>>> = MutableStateFlow(Response.Loading())
     val songs : StateFlow<Response<List<SongsModel>>> = _songs
 
-    val playingArtist by mutableStateOf(currentSongSinger.value)
+    // NOTE: removed a dead `playingArtist` field — it snapshotted the singer once
+    // at construction (always blank then) and was never updated. UI reads
+    // currentSongSinger directly, so this only ever exposed a stale value.
 
     init {
         fetchSongs()
@@ -120,7 +123,10 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // playing and append them, so music keeps going like Spotify's autoplay instead of
     // looping the same list. On by default; can be turned off via [autoplayRadioEnabled].
     var autoplayRadioEnabled = true
-    @Volatile private var radioLoading = false
+    // AtomicBoolean (not a plain @Volatile flag): the check-and-set must be atomic
+    // so two concurrent autoplay triggers can't both pass the guard and launch
+    // duplicate radio fetches.
+    private val radioLoading = AtomicBoolean(false)
 
     // How many tracks before the end we start topping up the queue. A larger
     // buffer means related songs are appended well ahead of time, so playback
@@ -128,25 +134,81 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private val radioPrefetchBuffer = 4
 
     private fun maybeExtendRadio(queueSongs: List<SongsModel>, cur: Int) {
-        if (!autoplayRadioEnabled || radioLoading) return
+        if (!autoplayRadioEnabled) return
         // Start fetching well before the end so related tracks are ready in time.
         if (cur < queueSongs.size - radioPrefetchBuffer) return
         val seeds = queueSongs.takeLast(8)
             .mapNotNull { it.spotifyTrackId.ifBlank { null } }
             .distinct()
-        if (seeds.isEmpty()) return
-        radioLoading = true
+        // Atomic check-and-set: only the first concurrent caller proceeds.
+        if (!radioLoading.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val recs = repository.provideRecommendations(seeds)
                 val existing = currentSongState.queue.value
                 val existingIds = existing.map { it.id }.toSet()
-                val fresh = recs.filter { it.id !in existingIds }
+                val fresh = if (seeds.isNotEmpty()) {
+                    // Spotify-backed queue: use Spotify recommendations.
+                    repository.provideRecommendations(seeds).filter { it.id !in existingIds }
+                } else {
+                    // Login-free / YouTube queue: fetch related songs from YouTube,
+                    // seeded by what's playing (title + artist), so autoplay keeps going.
+                    fetchYoutubeRelated(queueSongs).filter { it.id !in existingIds }
+                }
                 if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
             } finally {
-                radioLoading = false
+                radioLoading.set(false)
             }
         }
+    }
+
+    /**
+     * Login-free autoplay "algorithm": builds a continuation queue from YouTube by
+     * searching for songs related to the recently played tracks (title + artist).
+     * Used when there is no Spotify seed (the whole point of the free experience).
+     */
+    private suspend fun fetchYoutubeRelated(
+        queueSongs: List<SongsModel>,
+    ): List<SongsModel> {
+        val playedIds = queueSongs.map { it.id }.toSet()
+        val playedUrls = queueSongs.map { it.url }.toSet()
+        // Seed from the last couple of tracks so the mix stays on-theme.
+        val seedTracks = queueSongs.takeLast(2)
+        val out = LinkedHashMap<String, SongsModel>()
+        for (seed in seedTracks) {
+            val artist = seed.singer.substringBefore(",").trim()
+            val query = listOf(seed.title, artist, "mix")
+                .filter { it.isNotBlank() }
+                .joinToString(" ")
+            val results = runCatching {
+                com.metrolist.innertube.YouTube
+                    .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)
+                    .getOrNull()
+                    ?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                    ?.take(10)
+                    .orEmpty()
+            }.getOrElse { emptyList() }
+            for (item in results) {
+                val model = SongsModel(
+                    // Same stable, non-negative id derivation as toSongsModel so the
+                    // same YouTube track always matches in the queue (de-dup / next-prev).
+                    id = com.music.spotui.ui.viewmodel.youtubeStableId(item.id),
+                    title = cleanTrackTitle(item.title),
+                    album = item.album?.name.orEmpty(),
+                    singer = resolveArtist(item.artists.map { it.name }, item.title),
+                    coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(item.thumbnail),
+                    url = item.id,
+                    spotifyTrackId = "",
+                    explicit = item.explicit,
+                    durationMs = (item.duration ?: 0) * 1000,
+                )
+                // Skip anything already in the queue (by id or by videoId).
+                if (model.id !in playedIds && model.url !in playedUrls) {
+                    out.putIfAbsent(model.url, model)
+                }
+            }
+        }
+        return out.values.toList()
     }
 
     // End-of-track autoplay fires from the UI on every recomposition while the
@@ -165,16 +227,16 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // Function to play the next song in the album
     fun playNextSongs(queueSongs : List<SongsModel>, context: Context) {
         if (queueSongs.isEmpty()) return
-        // A crossfade is already advancing the queue itself — don't double-skip.
+        // A crossfade is already advancing the queue itself, don't double-skip.
         if (SongPlayer.isCrossfadeActive()) return
         val cur = currentPositionIn(queueSongs)
         // Top up the queue with Spotify recommendations as we approach the end.
-        // Don't append radio tracks when repeat-ALL is on — we want to loop the exact queue.
+        // Don't append radio tracks when repeat-ALL is on, we want to loop the exact queue.
         if (currentSongState.repeat.value != RepeatMode.ALL && currentSongState.repeat.value != RepeatMode.ONE) {
             maybeExtendRadio(queueSongs, cur)
         }
         if (cur >= queueSongs.size - 1 && autoplayRadioEnabled && currentSongState.repeat.value == RepeatMode.OFF) {
-            // End of the queue (e.g. a single). Don't loop back to the start —
+            // End of the queue (e.g. a single). Don't loop back to the start -
             // wait for the radio fetch kicked off above to append tracks and
             // continue into them, like Spotify's autoplay.
             continueIntoRadio(queueSongs, context)
@@ -244,27 +306,33 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         }
     }
 
-    @Volatile private var awaitingRadioContinue = false
+    private val awaitingRadioContinue = AtomicBoolean(false)
 
     /** Waits (max ~10s) for the autoplay radio to extend the queue past
      *  [queueSongs] and plays the first appended track; falls back to looping
      *  the queue if no radio tracks arrive. */
     private fun continueIntoRadio(queueSongs: List<SongsModel>, context: Context) {
-        if (awaitingRadioContinue) return
-        awaitingRadioContinue = true
+        if (queueSongs.isEmpty()) return
+        // Atomic check-and-set so a burst of end-of-track events starts only one waiter.
+        if (!awaitingRadioContinue.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 repeat(40) {
                     val q = currentSongState.queue.value
-                    if (q.size > queueSongs.size) {
-                        val next = q[queueSongs.size]
+                    // Re-resolve the first NOT-already-in-old-queue track by identity
+                    // rather than trusting index queueSongs.size, which could point at
+                    // the wrong track if the queue was edited while we waited.
+                    val oldIds = queueSongs.map { it.id }.toSet()
+                    val nextIdx = q.indexOfFirst { it.id !in oldIds }
+                    if (nextIdx >= 0) {
+                        val next = q[nextIdx]
                         withContext(Dispatchers.Main) {
-                            updateSongState(next.coverUri, next.title, next.singer, true, next.id, queueSongs.size, next.album)
+                            updateSongState(next.coverUri, next.title, next.singer, true, next.id, nextIdx, next.album)
                             SongPlayer.playSong(next.url, context, "song/${next.id}")
                         }
                         return@launch
                     }
-                    if (!radioLoading) {
+                    if (!radioLoading.get()) {
                         if (currentSongState.repeat.value == RepeatMode.ALL) {
                             val first = queueSongs.first()
                             withContext(Dispatchers.Main) {
@@ -276,7 +344,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                     }
                     delay(250L)
                 }
-                // Radio never arrived (offline / no seed id) — loop only if repeat is ALL.
+                // Radio never arrived (offline / no seed id), loop only if repeat is ALL.
                 if (currentSongState.repeat.value == RepeatMode.ALL) {
                     val first = queueSongs.first()
                     withContext(Dispatchers.Main) {
@@ -285,7 +353,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                     }
                 }
             } finally {
-                awaitingRadioContinue = false
+                awaitingRadioContinue.set(false)
             }
         }
     }
@@ -327,8 +395,10 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     private fun fetchSongs() = viewModelScope.launch(Dispatchers.IO) {
 
         repository.provideSongs().collect { songs ->
-            _songs.value = songs as Response<List<SongsModel>>
-
+            // provideSongs()/getSongs() is already Flow<Response<List<SongsModel>>>,
+            // so the previous unchecked `as` cast was redundant and only masked
+            // type errors — assign directly.
+            _songs.value = songs
         }
     }
     fun formatDuration(durationMillis: Long): String {
@@ -349,6 +419,27 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     fun setPlaying(playing: Boolean) {
         if (playing) com.music.spotui.di.SongPlayer.play() else com.music.spotui.di.SongPlayer.pause()
         currentSongState.setPlaying(playing)
+    }
+
+    /**
+     * Single, reliable play/pause toggle for the on-screen buttons. Decides the
+     * action from the engine's real state (falling back to the UI flag while a
+     * track is still resolving), performs it, then optimistically flips the UI so
+     * the icon responds instantly — the player listener's onIsPlayingChanged then
+     * reconciles it with reality. This replaces the old per-button logic that read
+     * a manual flag and could drift out of sync with the actual player.
+     */
+    fun togglePlayPause() {
+        val enginePlaying = com.music.spotui.di.SongPlayer.isPlaying()
+        val uiPlaying = currentSongState.playingState.value
+        val willPlay = !(enginePlaying || uiPlaying)
+        if (willPlay) {
+            com.music.spotui.di.SongPlayer.play()
+        } else {
+            com.music.spotui.di.SongPlayer.pause()
+        }
+        // Optimistic UI update; the ExoPlayer listener reconciles the true state.
+        currentSongState.setPlaying(willPlay)
     }
 
     fun syncWithPlayer() {

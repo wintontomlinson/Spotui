@@ -49,6 +49,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.lerp
+import kotlin.math.absoluteValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -60,7 +63,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
@@ -180,7 +185,7 @@ fun PlayerScreen(navController: NavController) {
                 offsetY = this.value
             }
         } catch (_: kotlinx.coroutines.CancellationException) {
-            // Animation was cancelled — offsetY is wherever the Animatable stopped.
+            // Animation was cancelled, offsetY is wherever the Animatable stopped.
         }
     }
 
@@ -209,7 +214,7 @@ fun PlayerScreen(navController: NavController) {
     // make a Compose Navigation dialog draw behind system bars (known unfixed
     // issue).  The proven workaround is to copy the Activity window's
     // LayoutParams onto the dialog window and resize the dialog's parent view
-    // to fill the screen — see https://stackoverflow.com/a/75768025
+    // to fill the screen, see https://stackoverflow.com/a/75768025
     val view = androidx.compose.ui.platform.LocalView.current
     androidx.compose.runtime.SideEffect {
         // Walk up the view tree to find the dialog window.
@@ -303,11 +308,11 @@ fun PlayerScreen(navController: NavController) {
                 if (source == NestedScrollSource.Drag) {
                     cancelRunningAnimation()
                 }
-                // Unconsumed downward scroll (delta > 0) — translate the sheet
+                // Unconsumed downward scroll (delta > 0), translate the sheet
                 // down ONLY when the user is physically dragging OR the sheet is
                 // already partially offset.  During a fling, if the list just
                 // reached its top, the leftover velocity must NOT start dragging
-                // the sheet — it should stop here.
+                // the sheet, it should stop here.
                 if (delta > 0f && (source == NestedScrollSource.Drag || offsetY > 0f)) {
                     offsetY = (offsetY + delta).coerceIn(0f, screenHeight)
                     return Offset(0f, delta)
@@ -459,7 +464,7 @@ fun PlayerScreen(navController: NavController) {
     }
 
     // The queue is whatever list the user actually started playing (album tracks,
-    // search results, liked songs) — stored when the song was tapped. Falling back
+    // search results, liked songs), stored when the song was tapped. Falling back
     // to the global top-tracks feed used to crash / be empty (it's rate-limited).
     val queueSongs by playerViewModel.queue
 
@@ -527,7 +532,7 @@ fun PlayerScreen(navController: NavController) {
     // Load the current track's Spotify Canvas (full-screen looping video background).
     LaunchedEffect(songId, queueSongs) {
         val track = queueSongs.firstOrNull { it.id == songId }
-        // Downloaded tracks are meant for offline use — skip the Canvas video
+        // Downloaded tracks are meant for offline use, skip the Canvas video
         // (which needs network to stream) and always show the squared artwork.
         val downloaded = track != null &&
             com.music.spotui.data.preferences.isDownloaded(context, track.id.toString())
@@ -585,9 +590,17 @@ fun PlayerScreen(navController: NavController) {
                 alpha = (1f - (offsetY / screenHeight)).coerceIn(0f, 1f)
             }
             .background(
+                // A richer three stop blend: the artwork's dominant colour at the top,
+                // eased through a darkened version of itself, into near black at the
+                // bottom, so the screen reads as one deep gradient rather than a hard
+                // colour to black cut.
                 Brush.verticalGradient(
-                    colors = listOf(dominentColor, Color.Black),
-                    startY = 100f
+                    colors = listOf(
+                        dominentColor,
+                        lerp(dominentColor, Color.Black, 0.55f),
+                        Color(0xFF0A0A0C),
+                    ),
+                    startY = 0f,
                 )
             )
     ) {
@@ -634,6 +647,8 @@ fun PlayerScreen(navController: NavController) {
                         navController = navController,
                         onMenuClick = { showMenu = true },
                         contextName = playerViewModel.currentSongAlbum.value,
+                        onLyricsClick = { showLyrics = true },
+                        onQueueClick = { navController.navigate(Routes.Queue.route) },
                         onBackClick = { dismissPlayer() }
                     )
                     //Spacer(modifier = Modifier.padding(16.dp))
@@ -642,7 +657,7 @@ fun PlayerScreen(navController: NavController) {
                     // change with the track (Spotify's now-playing gesture) instead of an abrupt
                     // swipe-then-switch. When the queue is empty fall back to a static image.
                     // When a Canvas is playing it fills the screen behind this column, so the
-                    // artwork is hidden (alpha 0) rather than removed — the pager stays in
+                    // artwork is hidden (alpha 0) rather than removed, the pager stays in
                     // the layout so the swipe-to-skip gesture keeps working over the video.
                     // The artwork is the FLEXIBLE part of the screen (weight), capped at its
                     // old 385dp size. On short/scaled displays the fixed-size version pushed
@@ -659,8 +674,15 @@ fun PlayerScreen(navController: NavController) {
                                 modifier = Modifier
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f)
-                                    .padding(20.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .padding(16.dp)
+                                    .shadow(
+                                        elevation = 24.dp,
+                                        shape = RoundedCornerShape(20.dp),
+                                        clip = false,
+                                        ambientColor = Color.Black,
+                                        spotColor = Color.Black,
+                                    )
+                                    .clip(RoundedCornerShape(20.dp))
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -673,11 +695,31 @@ fun PlayerScreen(navController: NavController) {
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f),
                             ) { page ->
+                                // The playing page sits full size with a soft drop shadow
+                                // for a premium, lifted feel; neighbouring pages scale down
+                                // slightly so the current artwork clearly stands out as the
+                                // finger drags between tracks.
+                                val pageOffset = (
+                                    (artworkPagerState.currentPage - page) +
+                                        artworkPagerState.currentPageOffsetFraction
+                                    ).absoluteValue.coerceIn(0f, 1f)
+                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset)
                                 GlideImage(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(20.dp)
-                                        .clip(RoundedCornerShape(10.dp))
+                                        .padding(16.dp)
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                        }
+                                        .shadow(
+                                            elevation = 24.dp,
+                                            shape = RoundedCornerShape(20.dp),
+                                            clip = false,
+                                            ambientColor = Color.Black,
+                                            spotColor = Color.Black,
+                                        )
+                                        .clip(RoundedCornerShape(20.dp))
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -694,7 +736,7 @@ fun PlayerScreen(navController: NavController) {
                             .padding(bottom = 8.dp)
                     ) {
                         // Reads each 300ms tick (songProgress recomposition) so it reflects
-                        // the current engine — Spotify vs Lossless (SpotiFLAC) vs YouTube.
+                        // the current engine, Spotify vs Lossless (SpotiFLAC) vs YouTube.
                         PlayerInfo(
                             songTitle, songSinger, songId, context, isLiked,
                             source = SongPlayer.currentSource,
@@ -726,7 +768,7 @@ fun PlayerScreen(navController: NavController) {
                         )
 
                         // Smooth scrubbing: while dragging, the thumb follows the finger
-                        // locally (no seek per delta — that fired a web seek on every pixel
+                        // locally (no seek per delta, that fired a web seek on every pixel
                         // and fought the polled position, making it jerky). We seek ONCE on
                         // release.
                         var isDragging by remember { mutableStateOf(false) }
@@ -865,6 +907,8 @@ fun PlayerTopBar(
     onMenuClick: () -> Unit,
     contextName: String = "",
     onBackClick: () -> Unit,
+    onLyricsClick: (() -> Unit)? = null,
+    onQueueClick: (() -> Unit)? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -889,9 +933,10 @@ fun PlayerTopBar(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "PLAYING FROM",
-                color = Color(0xFFB3B3B3),
+                color = Color(0xFFD4AF37),
                 fontSize = 9.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
             )
             Text(
                 text = contextName.ifBlank { "Now Playing" },
@@ -904,6 +949,38 @@ fun PlayerTopBar(
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // Lyrics is a primary action, so it gets its own always visible button
+            // instead of being buried at the bottom of the scrolling content.
+            if (onLyricsClick != null) {
+                Icon(
+                    imageVector = Icons.Default.Lyrics,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onLyricsClick() },
+                    contentDescription = "Lyrics"
+                )
+                Spacer(Modifier.width(18.dp))
+            }
+            // Up next gives direct access to the queue, which previously had no
+            // entry point from the now playing screen.
+            if (onQueueClick != null) {
+                Icon(
+                    imageVector = Icons.Default.QueueMusic,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(23.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onQueueClick() },
+                    contentDescription = "Up next"
+                )
+                Spacer(Modifier.width(18.dp))
+            }
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 tint = Color.White,
@@ -997,7 +1074,7 @@ fun PlayerInfo(
                                 .fillMaxWidth()
                                 .heightIn(max = 220.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF130824))
+                                .background(Color(0xFF0C0C10))
                                 .padding(10.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
@@ -1076,17 +1153,20 @@ fun PlayerInfo(
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                             text = songTitle,
                             color = Color.White,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
+                            fontSize = 23.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.4).sp,
                             maxLines = 1,
                             softWrap = false,
                         )
                     }
+                    Spacer(Modifier.height(3.dp))
                     Text(
                         text = songSinger,
-                        color = Color.Gray,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFC4C4CC),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = if (onArtistClick != null) Modifier.clickable(
@@ -1149,7 +1229,7 @@ fun PlayerInfo(
                         indication = null,
                         onClick = {
                             if (isLiked.value && onShowSavedIn != null) {
-                                // Already saved — second tap opens the Spotify-style
+                                // Already saved, second tap opens the Spotify-style
                                 // "Saved in" sheet (Liked Songs + playlists) instead of
                                 // silently unliking.
                                 onShowSavedIn()
@@ -1159,7 +1239,14 @@ fun PlayerInfo(
                                 removeLikedSongId(context, songId.toString())
                                 snackbarMessage = "Removed from Liked Songs"
                             } else {
-                                addLikedSongId(context, songId.toString())
+                                // Save the whole track when it is in the queue, so Liked
+                                // Songs can show it without any account.
+                                val song = SongPlayer.queuedSong(songId)
+                                if (song != null) {
+                                    com.music.spotui.data.preferences.addLikedSong(context, song)
+                                } else {
+                                    addLikedSongId(context, songId.toString())
+                                }
                                 snackbarMessage = "Added to Liked Songs"
                             }
                             snackbarVisible = true
@@ -1275,19 +1362,19 @@ fun CustomSlider(
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active (played) track
+            // Active (played) track, YouTube Music red
             drawLine(
-                color = Color.White,
+                color = Color(0xFFD4AF37),
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Thumb dot — only visible while dragging
-            if (thumbAlpha > 0f) {
+            // Thumb dot, always visible (YT Music shows it), pops larger while dragging
+            run {
                 drawCircle(
-                    color = Color.White.copy(alpha = thumbAlpha),
-                    radius = thumbRadiusPx,
+                    color = Color(0xFFD4AF37),
+                    radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
                     center = Offset(thumbX, trackY)
                 )
             }
@@ -1370,7 +1457,7 @@ fun PlayerFull(
                     indication = null
                 ) {
                     // The queue itself is already in shuffled order when shuffle
-                    // is on (reordered once at toggle) — never re-shuffle per tap.
+                    // is on (reordered once at toggle), never re-shuffle per tap.
                     playerViewModel.playPreviousSong(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
@@ -1381,35 +1468,28 @@ fun PlayerFull(
         )
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                // requiredSize forces an exact 64×64 square even if the parent Column
-                // constrains height — .size() alone let it get squished into an ellipse.
-                .requiredSize(64.dp)
+                // requiredSize forces an exact 68×68 square even if the parent Column
+                // constrains height, .size() alone let it get squished into an ellipse.
+                .requiredSize(68.dp)
+                // A soft amber glow under the play button so it reads as the primary
+                // control, in the app's accent rather than a flat white disc.
+                .shadow(
+                    elevation = 18.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = Color(0xFFD4AF37),
+                    spotColor = Color(0xFFD4AF37),
+                )
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFFFFC760), Color(0xFFD4AF37)),
+                    )
+                )
                 .clickable {
-                    if (songPlayingState) {
-                        SongPlayer.pause()
-                        playerViewModel.updateSongState(
-                            playerViewModel.currentSongCoverUri.value,
-                            playerViewModel.currentSongTitle.value,
-                            playerViewModel.currentSongSinger.value,
-                            false,
-                            playerViewModel.currentSongId.value,
-                            playerViewModel.currentSongIndex.value,
-                            playerViewModel.currentSongAlbum.value
-                        )
-                    } else {
-                        SongPlayer.play()
-                        playerViewModel.updateSongState(
-                            playerViewModel.currentSongCoverUri.value,
-                            playerViewModel.currentSongTitle.value,
-                            playerViewModel.currentSongSinger.value,
-                            true,
-                            playerViewModel.currentSongId.value,
-                            playerViewModel.currentSongIndex.value,
-                            playerViewModel.currentSongAlbum.value
-                        )
-                    }
+                    // Single source of truth: toggle based on the engine's real
+                    // state so the button never gets stuck showing the wrong icon.
+                    playerViewModel.togglePlayPause()
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -1674,6 +1754,7 @@ fun ArtistsSheet(
                     artistImages[name] = cachedUrl
                     if (!cachedId.isNullOrBlank()) resolvedIds[name] = cachedId
                 } else {
+                    var found = false
                     if (com.music.spotui.data.api.SpotifyTokenProvider.ensureToken(context)) {
                         com.metrolist.spotify.Spotify.search(name, types = listOf("artist"), limit = 1).getOrNull()
                             ?.artists?.items?.firstOrNull()?.let { artist ->
@@ -1683,7 +1764,36 @@ fun ArtistsSheet(
                                 artistImageCache[artist.id] = url
                                 artistImages[name] = url
                                 resolvedIds[name] = artist.id
+                                found = url.isNotBlank()
                             }
+                    }
+                    // Login free fallback: with no Spotify token the lookup above never
+                    // runs, so ask YouTube. A song search for the artist name returns an
+                    // ArtistItem carrying a channel avatar; use its thumbnail so the sheet
+                    // shows a real photo instead of the grey placeholder.
+                    if (!found) {
+                        runCatching {
+                            com.metrolist.innertube.YouTube.search(
+                                name,
+                                com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG,
+                            ).getOrNull()
+                        }.getOrNull()?.let { result ->
+                            val artistThumb = result.items
+                                .filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                                .firstOrNull { !it.thumbnail.isNullOrBlank() }
+                                ?.thumbnail
+                            val songThumb = result.items
+                                .filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                                .firstOrNull()
+                                ?.thumbnail
+                            val url = com.music.spotui.ui.viewmodel.hiResThumbnail(
+                                artistThumb ?: songThumb
+                            )
+                            if (url.isNotBlank()) {
+                                artistImageCache[name] = url
+                                artistImages[name] = url
+                            }
+                        }
                     }
                 }
             }
@@ -1781,7 +1891,7 @@ fun ArtistsSheet(
                                     RoundedCornerShape(20.dp),
                                 )
                                 .background(
-                                    if (following) Color(0xFFB8892B) else Color.Transparent,
+                                    if (following) Color(0xFFD4AF37) else Color.Transparent,
                                     RoundedCornerShape(20.dp),
                                 )
                                 .clickable {
@@ -1856,7 +1966,7 @@ fun PlayerOptionsSheet(
     val album by playerViewModel.currentSongAlbum
     val songId by playerViewModel.currentSongId
     val currentQueue by playerViewModel.queue
-    // The full track model (spotify id, real album, stream url) — the state above
+    // The full track model (spotify id, real album, stream url), the state above
     // only carries display strings, and `album` is the *context* name (playlist…).
     val currentSong = currentQueue.firstOrNull { it.id == songId }
     var downloaded by remember(songId) {
@@ -2085,7 +2195,14 @@ fun PlayerOptionsSheet(
                     if (isLiked.value) {
                         removeLikedSongId(context, songId.toString())
                     } else {
-                        addLikedSongId(context, songId.toString())
+                        // Save the whole track when we have it, so Liked Songs can show
+                        // it without any account behind the scenes.
+                        val song = currentSong
+                        if (song != null) {
+                            com.music.spotui.data.preferences.addLikedSong(context, song)
+                        } else {
+                            addLikedSongId(context, songId.toString())
+                        }
                     }
                     isLiked.value = isSongLiked(context, songId.toString())
                     // Mirror the like to the real Spotify account.
@@ -2110,7 +2227,7 @@ fun PlayerOptionsSheet(
                     onOpenQueue()
                 }
                 // Use the track's REAL album (currentSongAlbum is the playing
-                // context — a playlist name would resolve to garbage).
+                // context, a playlist name would resolve to garbage).
                 val realAlbum = currentSong?.album?.ifBlank { null } ?: album
                 PlayerMenuRow(
                     icon = Icons.Default.PlayArrow,
@@ -2413,13 +2530,19 @@ fun YouTubeSearchView(
                 }
             }
 
+            // Snapshot the error into a local first. It is observable state a background
+            // resolution can clear, so testing it and then dereferencing with !! raced that
+            // clear and could crash with an NPE right as the error resolved itself.
             viewModel.error != null -> {
-                Text(
-                    text = viewModel.error!!,
-                    color = Color(0xFFE57373),
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                val errorText = viewModel.error
+                if (errorText != null) {
+                    Text(
+                        text = errorText,
+                        color = Color(0xFFE57373),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             }
 
             viewModel.searchResults.isEmpty() && viewModel.searchQuery.isNotBlank() -> {
@@ -2635,7 +2758,7 @@ private fun CanvasVideo(url: String, modifier: Modifier = Modifier, onError: (()
             androidx.media3.ui.PlayerView(ctx).apply {
                 player = exo
                 // Strip ALL chrome: no controller, no buffering spinner, and no
-                // artwork/placeholder icon (that "play icon" overlay) — just video.
+                // artwork/placeholder icon (that "play icon" overlay), just video.
                 useController = false
                 controllerAutoShow = false
                 setShowBuffering(androidx.media3.ui.PlayerView.SHOW_BUFFERING_NEVER)

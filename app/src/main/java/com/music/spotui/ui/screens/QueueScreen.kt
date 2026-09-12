@@ -7,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.music.spotui.ui.components.SongOptionsSheet
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,7 +81,7 @@ fun QueueSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF130824),
+        containerColor = Color(0xFF121212),
         contentColor = Color.White,
         dragHandle = null,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
@@ -103,7 +102,7 @@ fun QueueScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(0xFF121212))
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -115,7 +114,7 @@ fun QueueScreen(navController: NavController) {
 }
 
 /**
- * The core queue UI — the track that's playing now plus everything coming up.
+ * The core queue UI, the track that's playing now plus everything coming up.
  * Tapping an upcoming track jumps straight to it; dragging the handle reorders it;
  * swiping a row removes it.
  */
@@ -151,7 +150,7 @@ fun QueueContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(0xFF121212))
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -298,7 +297,7 @@ private fun QueueRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF130824))
+            .background(Color(0xFF121212))
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

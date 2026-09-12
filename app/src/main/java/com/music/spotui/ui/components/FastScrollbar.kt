@@ -42,9 +42,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-private val SpotifyGreen = Color(0xFFB8892B)
+private val SpotifyGreen = Color(0xFFD4AF37)
 
-// Fixed thumb height — never changes during scroll
+// Fixed thumb height, never changes during scroll
 private val THUMB_HEIGHT = 48.dp
 
 /**
@@ -184,7 +184,7 @@ fun FastScrollbarForLazyList(
                     }
                 }
 
-                // Scrollbar Thumb — fixed height, never stretches or shrinks
+                // Scrollbar Thumb, fixed height, never stretches or shrinks
                 val thumbWidth = if (isDragging) 6.dp else 4.dp
                 Box(
                     modifier = Modifier
@@ -323,7 +323,7 @@ fun FastScrollbarForScrollState(
                     }
                 }
 
-                // Scrollbar Thumb — fixed height, never stretches or shrinks
+                // Scrollbar Thumb, fixed height, never stretches or shrinks
                 val thumbWidth = if (isDragging) 6.dp else 4.dp
                 Box(
                     modifier = Modifier

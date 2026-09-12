@@ -28,7 +28,7 @@ fun getCachedStream(
     val expiresAt = prefs.getLong(query + SUFFIX_EXPIRES, 0L)
     // Treat as expired 60s early to avoid edge-of-expiry failures.
     if (System.currentTimeMillis() >= expiresAt - 60_000L) {
-        // Lazy cleanup — the entry is stale.
+        // Lazy cleanup, the entry is stale.
         prefs.edit()
             .remove(query + SUFFIX_URL)
             .remove(query + SUFFIX_SOURCE)

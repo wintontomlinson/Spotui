@@ -14,12 +14,31 @@ android {
         applicationId = "com.music.spotui"
         minSdk = 26
         targetSdk = 37
-        versionCode = 202608170
-        versionName = "2.0.9"
+        versionCode = 2026081910
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        // The ML Kit translate and language-id native libraries are the biggest thing in
+        // the APK, and they ship one copy per CPU architecture. Keep only the resources
+        // for languages actually used in the UI so unused string translations pulled in by
+        // dependencies are dropped.
+        resourceConfigurations += listOf("en", "hi")
+    }
+
+    // Build one APK per CPU architecture instead of a single universal APK carrying all
+    // four. Each device only needs its own, so the download drops by roughly the combined
+    // size of the other three architectures' native libraries. A universal APK is still
+    // produced as a fallback for sideloading onto an unknown device.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -75,7 +94,15 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("Spotui_v${android.defaultConfig.versionName}.apk")
+            // With ABI splits each output needs a distinct name. The universal APK (the
+            // one with no ABI filter) keeps the plain name so existing download links and
+            // sideloading still resolve to an install-anywhere build; per-ABI outputs get
+            // the architecture appended.
+            val abi = (output as? com.android.build.api.variant.impl.VariantOutputImpl)
+                ?.filters?.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }
+                ?.identifier
+            val suffix = if (abi != null) "_$abi" else ""
+            output.outputFileName.set("Spotui_v${android.defaultConfig.versionName}$suffix.apk")
         }
     }
 }

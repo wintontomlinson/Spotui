@@ -10,6 +10,7 @@ import com.music.spotui.data.entity.AlbumsModel
 import com.music.spotui.data.entity.PodcastModel
 import com.music.spotui.data.entity.ArtistOverviewModel
 import com.music.spotui.data.entity.ArtistTrackUi
+import com.music.spotui.ui.viewmodel.toSongsModel
 import com.metrolist.spotify.models.SpotifyHomeFeedItem
 import com.music.spotui.data.entity.ArtistsModel
 import com.music.spotui.data.entity.HomeFeedModel
@@ -21,6 +22,8 @@ import com.music.spotui.data.preferences.PlaylistSortOption
 import com.music.spotui.data.preferences.getPlaylistSortOption
 import com.music.spotui.data.preferences.isPlaylistSortDescending
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -130,7 +133,7 @@ class Api @Inject constructor(
     suspend fun getAlbums(): Flow<Response<List<AlbumsModel>>> = flow {
         HomeCache.albums?.let { emit(Response.Success(it)) } ?: emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            if (HomeCache.albums == null) emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+            if (HomeCache.albums == null) emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
             return@flow
         }
         Spotify.newReleases(limit = 20).fold(
@@ -157,7 +160,7 @@ class Api @Inject constructor(
     suspend fun getArtists(): Flow<Response<List<ArtistsModel>>> = flow {
         HomeCache.artists?.let { emit(Response.Success(it)) } ?: emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            if (HomeCache.artists == null) emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+            if (HomeCache.artists == null) emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
             return@flow
         }
         Spotify.topArtists(limit = 20).fold(
@@ -176,7 +179,7 @@ class Api @Inject constructor(
     suspend fun getSongs(): Flow<Response<List<SongsModel>>> = flow {
         emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         Spotify.topTracks(limit = 50).fold(
             onSuccess = { paging -> emit(Response.Success(paging.items.map { it.toSongModel() })) },
@@ -185,22 +188,21 @@ class Api @Inject constructor(
     }
 
     /**
-     * Personalized Spotify home feed (the `home` GQL operation) — the real
+     * Personalized Spotify home feed (the `home` GQL operation), the real
      * landing page: "Your top mixes", "Jump back in", "Your favorite artists",
      * etc. Process-cached like the other home feeds for instant re-entry.
      */
-    suspend fun getHomeFeed(forceRefresh: Boolean = false): Flow<Response<HomeFeedModel>> = flow {
-        if (forceRefresh) HomeCache.home = null
+    suspend fun getHomeFeed(): Flow<Response<HomeFeedModel>> = flow {
         HomeCache.home?.let { emit(Response.Success(it)) } ?: emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            if (HomeCache.home == null) emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+            if (HomeCache.home == null) emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
             return@flow
         }
         Spotify.home(sectionItemsLimit = 20).fold(
             onSuccess = { feed ->
                 val sections = feed.sections.mapNotNull { section ->
                     // The GQL feed can repeat an item inside one section (and
-                    // repeat whole sections, e.g. two "New releases" rows) —
+                    // repeat whole sections, e.g. two "New releases" rows) -
                     // that showed up as duplicated album cards on Home.
                     val items = section.items
                         .distinctBy { it.uri }
@@ -215,12 +217,7 @@ class Api @Inject constructor(
                     if (items.isEmpty()) null
                     else HomeSection(title = section.title ?: "", items = items)
                 }.distinctBy { it.title.lowercase().ifBlank { it.hashCode().toString() } }
-                // Trending rotation — keep the untitled shortcut grid pinned on
-                // top, then rotate the remaining titled shelves so Home surfaces
-                // different "trending" rows over time / on each refresh instead
-                // of showing the exact same order every visit.
-                val rotated = rotateTrendingSections(sections)
-                val model = HomeFeedModel(greeting = feed.greeting ?: "", sections = rotated)
+                val model = HomeFeedModel(greeting = feed.greeting ?: "", sections = sections)
                 HomeCache.home = model
                 emit(Response.Success(model))
             },
@@ -229,38 +226,6 @@ class Api @Inject constructor(
                 if (HomeCache.home == null) emit(Response.Error(it.message ?: "error"))
             },
         )
-    }
-
-    /**
-     * Rotate titled home shelves so the feed feels like it's tracking what's
-     * trending rather than showing the same fixed order forever. The first
-     * section is the untitled shortcut grid — it stays pinned on top. The
-     * remaining shelves are rotated by an offset derived from the current time
-     * bucket (changes a few times a day) so every refresh can reorder them.
-     * Sections whose titles read as "trending"/"charts"/"popular"/"new" are
-     * always floated to just under the grid.
-     */
-    private fun rotateTrendingSections(sections: List<HomeSection>): List<HomeSection> {
-        if (sections.size <= 2) return sections
-        val hasGrid = sections.first().title.isBlank()
-        val pinned = if (hasGrid) sections.take(1) else emptyList()
-        val rest = if (hasGrid) sections.drop(1) else sections
-        if (rest.size <= 1) return sections
-
-        val trendKeywords = listOf("trend", "chart", "popular", "hot", "new", "top")
-        val (trending, others) = rest.partition { s ->
-            trendKeywords.any { s.title.lowercase().contains(it) }
-        }
-        // Rotate the "others" by a slowly-changing offset so ordering varies.
-        // A 1-hour bucket keeps the feed feeling live across background
-        // auto-refreshes and pull-to-refreshes without reshuffling on every
-        // single re-entry.
-        val bucket = (System.currentTimeMillis() / (60L * 60 * 1000)).toInt() // 1h buckets
-        val rotatedOthers = if (others.isEmpty()) others else {
-            val off = ((bucket % others.size) + others.size) % others.size
-            others.drop(off) + others.take(off)
-        }
-        return pinned + trending + rotatedOthers
     }
 
     private fun SpotifyHomeFeedItem.toHomeItem(): HomeItem? = when (this) {
@@ -293,7 +258,7 @@ class Api @Inject constructor(
             emit(Response.Success(emptyList())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         Spotify.search(query, types = listOf("track"), limit = 30).fold(
             onSuccess = { res -> emit(Response.Success(res.tracks?.items.orEmpty().map { it.toSongModel() })) },
@@ -312,11 +277,11 @@ class Api @Inject constructor(
             emit(Response.Success(SearchResults())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         Spotify.search(query, types = listOf("track", "album", "artist"), limit = 20).fold(
             onSuccess = { res ->
-                // Podcasts come from the REST catalog search (best-effort — a failure
+                // Podcasts come from the REST catalog search (best-effort, a failure
                 // there must not blank out the music results).
                 val podcasts = Spotify.searchPodcasts(query, limit = 12)
                     .onFailure { Log.e("Api", "searchPodcasts FAILED: ${it.message}", it) }
@@ -338,7 +303,7 @@ class Api @Inject constructor(
     suspend fun getShowEpisodes(showId: String): Flow<Response<List<SongsModel>>> = flow {
         emit(Response.Loading())
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         val show = Spotify.show(showId).getOrNull()
         Spotify.showEpisodes(showId, limit = 50).fold(
@@ -377,7 +342,7 @@ class Api @Inject constructor(
     /**
      * Spotify's recommendation engine: given a few seed track ids (the tracks the
      * user is currently/recently playing), returns a list of recommended tracks to
-     * extend the queue with — i.e. the "autoplay radio" that keeps music going once
+     * extend the queue with, i.e. the "autoplay radio" that keeps music going once
      * a playlist/album ends. Up to 5 seeds are allowed by Spotify; we cap there.
      * Returns an empty list on failure so callers can simply fall back to looping.
      */
@@ -386,32 +351,32 @@ class Api @Inject constructor(
         if (seeds.isEmpty()) return emptyList()
         if (!SpotifyTokenProvider.ensureToken(context)) return emptyList()
         val seedId = seeds.last()
-        // Primary: the exact radio the Spotify web player queues after this track —
+        // Primary: the exact radio the Spotify web player queues after this track -
         // the inspiredby-mix station playlist. This IS Spotify's real queue, so the
         // continuation matches what open.spotify.com would play next.
         Spotify.trackRadio(seedId).getOrNull()
             ?.filter { it.id != seedId }
             ?.takeIf { it.isNotEmpty() }
             ?.let { radio -> return radio.map { it.toSongModel() } }
-        Log.w("Api", "track radio empty — trying native recommender")
+        Log.w("Api", "track radio empty, trying native recommender")
         // Fallback 1: Spotify's own recommender (the SEO "recommended tracks" GQL op).
         // Still Spotify's real backend, so it beats any local heuristic when available.
         Spotify.recommendedTracks(seedId).getOrNull()?.takeIf { it.isNotEmpty() }?.let { native ->
             return native.map { it.toSongModel() }
         }
-        Log.w("Api", "native recommender empty — trying artist radio")
+        Log.w("Api", "native recommender empty, trying artist radio")
         val seedTrack = Spotify.track(seedId).getOrNull()
             ?: return emptyList<SongsModel>().also { Log.w("Api", "getRecommendations: seed track unresolved") }
 
         // Fallback 2: artist radio built purely from GQL endpoints (seed artist top
         // tracks + related artists' top tracks). Unlike the heuristic engine this does
         // NOT depend on me/top/tracks|artists, which are frequently HTTP 429 rate-limited
-        // with the web token — so it keeps working when the profile-based engine can't.
+        // with the web token, so it keeps working when the profile-based engine can't.
         artistRadio(seedTrack).takeIf { it.isNotEmpty() }?.let { radio ->
             return radio.map { it.toSongModel() }
         }
 
-        Log.w("Api", "artist radio empty — falling back to heuristic engine")
+        Log.w("Api", "artist radio empty, falling back to heuristic engine")
         // Fallback 3: profile-based heuristic engine (best-personalized but needs top data).
         return com.music.spotui.data.recommendation.SpotifyRecommendationEngine
             .getRecommendations(seedTrack, limit = 25)
@@ -447,7 +412,7 @@ class Api @Inject constructor(
     /**
      * Loads the curated playlists for a Browse category/genre. Real Spotify opens
      * a genre catalogue (a page of playlists) rather than running a keyword song
-     * search — we approximate that by searching playlists for the genre name and
+     * search, we approximate that by searching playlists for the genre name and
      * presenting them as a grid the user can open. Returns LibraryEntry rows so
      * the Category screen can reuse the existing playlist row/tile rendering.
      */
@@ -457,7 +422,7 @@ class Api @Inject constructor(
             emit(Response.Success(emptyList())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         Spotify.search(genre, types = listOf("playlist"), limit = 24).fold(
             onSuccess = { res ->
@@ -487,7 +452,7 @@ class Api @Inject constructor(
             emit(Response.Success(emptyList())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            emit(Response.Error("Spotify not authenticated, set sp_dc cookie")); return@flow
         }
         val artist = Spotify.search(artistName, types = listOf("artist"), limit = 1).getOrNull()
             ?.artists?.items?.firstOrNull()
@@ -500,7 +465,7 @@ class Api @Inject constructor(
             onSuccess = { resp ->
                 emit(Response.Success(resp.tracks.map { track ->
                     val song = track.toSongModel()
-                    // GQL top-tracks often omit album art — fall back to the artist image.
+                    // GQL top-tracks often omit album art, fall back to the artist image.
                     if (song.coverUri.isBlank()) song.copy(coverUri = artistCover) else song
                 }))
             },
@@ -512,7 +477,7 @@ class Api @Inject constructor(
      * Loads the full Spotify-style artist page (header, monthly listeners, bio,
      * popular tracks with play counts, discography, related artists) in one GQL
      * round-trip. When the caller knows the exact Spotify artist id it is used
-     * directly; otherwise the name is resolved via search (fuzzy — a query like
+     * directly; otherwise the name is resolved via search (fuzzy, a query like
      * "RAM" may resolve to "Rammstein", so ids are strongly preferred).
      */
     suspend fun getArtistOverview(artistName: String, knownArtistId: String = ""): Flow<Response<ArtistOverviewModel>> = flow {
@@ -521,13 +486,54 @@ class Api @Inject constructor(
             emit(Response.Success(ArtistOverviewModel(name = artistName))); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            emit(Response.Error("Spotify not authenticated — set sp_dc cookie")); return@flow
+            // Login free: Spotify's artist overview is unavailable, so the artist's own
+            // YouTube Music page is read instead. That page carries the whole catalogue,
+            // which the previous version could not reach: it only ran a song search and
+            // kept ten results, so every artist looked like they had a handful of tracks.
+            val fromArtistPage = runCatching { youtubeArtistOverview(artistName) }.getOrNull()
+            if (fromArtistPage != null) {
+                emit(Response.Success(fromArtistPage))
+                return@flow
+            }
+
+            // No artist page could be found, so fall back to a song search. Fewer songs
+            // and no discography, but better than an empty screen.
+            val ytOverview = runCatching {
+                val res = com.metrolist.innertube.YouTube.search(
+                    artistName,
+                    com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG,
+                ).getOrNull()
+                val artistThumb = res?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                    ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
+                val songs = res?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                    .orEmpty()
+                val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(
+                    artistThumb ?: songs.firstOrNull()?.thumbnail
+                )
+                val topTracks = songs.distinctBy { it.id }.map { s ->
+                    val song = s.toSongsModel()
+                    ArtistTrackUi(
+                        song = if (song.coverUri.isBlank()) song.copy(coverUri = avatar) else song,
+                        playcount = null,
+                    )
+                }
+                ArtistOverviewModel(
+                    name = artistName,
+                    headerImage = avatar,
+                    avatarImage = avatar,
+                    topTracks = topTracks,
+                )
+            }.getOrNull() ?: ArtistOverviewModel(name = artistName)
+            emit(Response.Success(ytOverview))
+            return@flow
         }
         val knownId = if (knownArtistId.isNotBlank()) knownArtistId
                       else if (artistName.matches(Regex("^[a-zA-Z0-9]{22}$"))) artistName
                       else ""
         val artist = if (knownId.isBlank()) {
-            // Prefer an EXACT name match among the top hits — the first fuzzy
+            // Prefer an EXACT name match among the top hits, the first fuzzy
             // hit for a short name like "RAM" can be a different artist entirely.
             val hits = Spotify.search(artistName, types = listOf("artist"), limit = 5).getOrNull()
                 ?.artists?.items.orEmpty()
@@ -608,20 +614,29 @@ class Api @Inject constructor(
      * (the real Spotify id is lost during mapping), so we resolve the album via
      * search, then fetch its tracks. Uses GraphQL endpoints (not rate-limited).
      */
-    suspend fun getAlbumSongs(albumName: String, artist: String = ""): Flow<Response<List<SongsModel>>> = flow {
+    suspend fun getAlbumSongs(
+        albumName: String,
+        artist: String = "",
+        albumBrowseId: String = "",
+    ): Flow<Response<List<SongsModel>>> = flow {
         emit(Response.Loading())
         if (albumName.isBlank()) {
             emit(Response.Success(emptyList())); return@flow
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
+            // Login free. Show whatever was already saved for this album straight away so
+            // the screen is never blank, then replace it with the real YouTube Music
+            // tracklist once that arrives.
             val col = com.music.spotui.data.preferences.OfflineCollectionsPref.getCollection(context, "album:$albumName|$artist")
-            if (col != null) {
-                val downloadedSongs = col.songs.filter {
-                    com.music.spotui.data.preferences.isDownloaded(context, it.id.toString())
-                }
-                emit(Response.Success(downloadedSongs))
-            } else {
-                emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+            val saved = col?.songs.orEmpty()
+            if (saved.isNotEmpty()) emit(Response.Success(saved))
+
+            val youtubeSongs = youtubeAlbumSongs(albumName, artist, albumBrowseId)
+            when {
+                youtubeSongs.isNotEmpty() -> emit(Response.Success(youtubeSongs))
+                // Nothing online and nothing saved: an empty album reads better than an
+                // error about a Spotify cookie this build no longer uses.
+                saved.isEmpty() -> emit(Response.Success(emptyList()))
             }
             return@flow
         }
@@ -656,7 +671,7 @@ class Api @Inject constructor(
     /**
      * Loads the real track list for a playlist by its Spotify id (daily mixes,
      * Discover Weekly, personalized playlists, etc). Uses the fetchPlaylist GQL
-     * endpoint directly — keyed by id, so it returns the *actual* playlist
+     * endpoint directly, keyed by id, so it returns the *actual* playlist
      * content rather than a best-effort name search.
      *
      * Supports Reverse Offset Fetching: when sorted by "Date added (newest to oldest)"
@@ -686,13 +701,23 @@ class Api @Inject constructor(
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
             val col = com.music.spotui.data.preferences.OfflineCollectionsPref.getCollection(context, clean)
-            if (col != null) {
-                val downloadedSongs = col.songs.filter {
-                    com.music.spotui.data.preferences.isDownloaded(context, it.id.toString())
+            val saved = col?.songs.orEmpty()
+            if (saved.isNotEmpty()) emit(Response.Success(saved))
+
+            // Login free: a YouTube Music playlist can be read straight from the browse
+            // endpoint. Spotify ids are 22 character base62 and cannot be read at all
+            // without a session, so those simply fall through to whatever was saved.
+            val youtubeSongs = if (looksLikeYouTubePlaylistId(clean)) {
+                youtubePlaylistSongs(clean)
+            } else {
+                emptyList()
+            }
+            when {
+                youtubeSongs.isNotEmpty() -> {
+                    HomeCache.setPlaylistSongs(clean, youtubeSongs)
+                    emit(Response.Success(youtubeSongs))
                 }
-                emit(Response.Success(downloadedSongs))
-            } else if (cached == null) {
-                emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+                saved.isEmpty() && cached == null -> emit(Response.Success(emptyList()))
             }
             return@flow
         }
@@ -799,7 +824,7 @@ class Api @Inject constructor(
     }
 
     /**
-     * "Your Library" — the user's actual saved Spotify albums plus their
+     * "Your Library", the user's actual saved Spotify albums plus their
      * playlists (followed + created), merged into one list. Uses the libraryV3
      * GQL endpoint (not rate-limited). Process-cached for instant re-entry.
      */
@@ -825,37 +850,56 @@ class Api @Inject constructor(
             emit(Response.Loading())
         }
         if (!SpotifyTokenProvider.ensureToken(context)) {
-            if (HomeCache.library == null) {
-                val liked = com.music.spotui.data.entity.LibraryEntry(
-                    spotifyId = LIKED_SONGS_ID,
-                    name = "Liked Songs",
-                    subtitle = "Playlist • Liked songs",
-                    coverUri = "https://misc.scdn.co/liked-songs/liked-songs-640.png",
-                    isPlaylist = true,
-                )
-                val downloaded = com.music.spotui.data.entity.LibraryEntry(
-                    spotifyId = DOWNLOADS_ID,
-                    name = "Downloaded",
-                    subtitle = "Available offline",
-                    coverUri = "",
-                    isPlaylist = true,
-                )
-                val offlineEntries = com.music.spotui.data.preferences.OfflineCollectionsPref.getOfflineCollections(context).map { col ->
+            // Login free: the library is always rebuilt from what is on the device right
+            // now, not from a possibly stale cache. This is what makes an album or playlist
+            // you just opened (saved as an offline collection) show up in the library on the
+            // next visit, instead of being hidden behind an old cached list.
+            val liked = com.music.spotui.data.entity.LibraryEntry(
+                spotifyId = LIKED_SONGS_ID,
+                name = "Liked Songs",
+                subtitle = "Playlist • Liked songs",
+                coverUri = "https://misc.scdn.co/liked-songs/liked-songs-640.png",
+                isPlaylist = true,
+            )
+            val downloaded = com.music.spotui.data.entity.LibraryEntry(
+                spotifyId = DOWNLOADS_ID,
+                name = "Downloaded",
+                subtitle = "Available offline",
+                coverUri = "",
+                isPlaylist = true,
+            )
+            // Every saved collection, not only the downloaded ones. Filtering on downloads
+            // meant an album or playlist you had opened never reached your library unless
+            // you had also downloaded a track from it.
+            val savedEntries = com.music.spotui.data.preferences.OfflineCollectionsPref
+                .getAllCollections(context)
+                .map { col ->
+                    val offline = com.music.spotui.data.preferences.OfflineCollectionsPref
+                        .isDownloadedCollection(context, col)
+                    val kind = if (col.isPlaylist) "Playlist" else "Album"
+                    val parts = listOfNotNull(
+                        kind,
+                        col.artists.takeIf { it.isNotBlank() && !col.isPlaylist },
+                        "Available offline".takeIf { offline },
+                    )
                     com.music.spotui.data.entity.LibraryEntry(
                         spotifyId = col.id,
                         name = col.name,
-                        subtitle = if (col.isPlaylist) "Playlist • Available offline" else "Album • ${col.artists} • Available offline",
+                        subtitle = parts.joinToString(" • "),
                         coverUri = col.coverUri,
                         isPlaylist = col.isPlaylist,
                         artists = col.artists,
                     )
                 }
-                val offlineLibrary = deduplicateLibraryEntries(listOf(liked, downloaded) + localEntries + offlineEntries)
-                HomeCache.library = offlineLibrary
-                emit(Response.Success(offlineLibrary))
-            } else {
-                emit(Response.Success(HomeCache.library!!))
-            }
+
+            // Rows the user has removed stay removed, including derived ones that would
+            // otherwise reappear on the next rebuild.
+            val hidden = com.music.spotui.data.preferences.LibraryHiddenPref.hiddenIds(context)
+            val offlineLibrary = deduplicateLibraryEntries(
+                listOf(liked, downloaded) + localEntries + savedEntries + derivedAlbumEntries()
+            ).filterNot { it.spotifyId in hidden }
+            HomeCache.library = offlineLibrary
+            emit(Response.Success(offlineLibrary))
             return@flow
         }
         val albums = fetchAllPages { offset -> Spotify.myAlbums(limit = 50, offset = offset) }.map { a ->
@@ -920,7 +964,7 @@ class Api @Inject constructor(
 
     /**
      * The looping Spotify Canvas video URL for a track (or null). Process-cached
-     * per track id — including negative results — so the player only fetches once.
+     * per track id, including negative results, so the player only fetches once.
      */
     suspend fun getCanvasUrl(trackId: String): String? {
         if (trackId.isBlank()) return null
@@ -1027,8 +1071,30 @@ class Api @Inject constructor(
                     time = "Available offline",
                 )
                 emit(Response.Success(model))
-            } else if (cached == null) {
-                emit(Response.Error("Spotify not authenticated — set sp_dc cookie"))
+                return@flow
+            }
+            // Login free, a YouTube Music playlist still has a real title and cover, so
+            // read them from the playlist page. Emitting Success rather than an error is
+            // also what lets the playlist screen save the playlist into the library.
+            if (looksLikeYouTubePlaylistId(clean)) {
+                val page = runCatching {
+                    com.metrolist.innertube.YouTube.playlist(clean).getOrNull()
+                }.getOrNull()
+                if (page != null) {
+                    val model = AlbumsModel(
+                        id = stableId("playlist:$clean"),
+                        artists = page.artist,
+                        coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(page.thumbnail),
+                        name = page.title,
+                        time = "",
+                    )
+                    HomeCache.setPlaylistDetail(clean, model)
+                    emit(Response.Success(model))
+                    return@flow
+                }
+            }
+            if (cached == null) {
+                emit(Response.Error("Spotify not authenticated, set sp_dc cookie"))
             }
             return@flow
         }
@@ -1053,7 +1119,7 @@ class Api @Inject constructor(
 
     /**
      * Spotify playlist descriptions come as HTML (e.g. `<a href=spotify:...>Rickey
-     * F</a>, …`). Render to plain text — keep the link labels, drop the tags —
+     * F</a>, …`). Render to plain text, keep the link labels, drop the tags -
      * and decode entities so the UI doesn't show raw markup.
      */
     private fun stripHtml(raw: String?): String {
@@ -1089,5 +1155,350 @@ class Api @Inject constructor(
             ?: candidates.firstOrNull { artistMatches(it) }
             ?: nameMatches.firstOrNull()
             ?: candidates.first()
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────
+    // Login free album and playlist loading, straight from YouTube Music.
+    //
+    // The app navigates to an album by display name because that is all the older
+    // Spotify mapping preserved. So the name is resolved to a YouTube album id
+    // first, and only then is the real tracklist fetched. A plain song search can
+    // find tracks that mention the album but it cannot give the album's actual
+    // contents or their order, which is why the browse endpoint is used.
+    // ────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Albums the user has actually played or liked.
+     *
+     * Login free there is no "saved albums" list to read, which is why the library's
+     * Albums filter used to be permanently empty: the only album entries came from
+     * offline collections, and those are written only after an album screen has already
+     * loaded. So the album shelf is derived from what is on the device instead. Every
+     * distinct album named by a liked song or a history entry becomes an entry, newest
+     * first, and tapping it opens the real album page.
+     */
+    private fun derivedAlbumEntries(): List<com.music.spotui.data.entity.LibraryEntry> {
+        val byName = LinkedHashMap<String, com.music.spotui.data.entity.LibraryEntry>()
+
+        fun add(rawName: String, artists: String, cover: String) {
+            val name = rawName.trim()
+            if (name.isBlank()) return
+            val key = name.lowercase()
+            val existing = byName[key]
+            if (existing == null) {
+                byName[key] = com.music.spotui.data.entity.LibraryEntry(
+                    spotifyId = "album:$name|$artists",
+                    name = name,
+                    subtitle = if (artists.isBlank()) "Album" else "Album • $artists",
+                    coverUri = cover,
+                    isPlaylist = false,
+                    artists = artists,
+                )
+            } else if (existing.coverUri.isBlank() && cover.isNotBlank()) {
+                // A later mention may carry the artwork the first one lacked.
+                byName[key] = existing.copy(coverUri = cover)
+            }
+        }
+
+        runCatching {
+            com.music.spotui.data.preferences.getListeningHistory(context)
+                .forEach { add(it.album, it.singer, it.image) }
+        }
+        runCatching {
+            com.music.spotui.data.preferences.getLikedSongs(context)
+                .forEach { add(it.album, it.singer, it.coverUri) }
+        }
+
+        return byName.values.take(60)
+    }
+
+    /** Strips punctuation and case so "Kesariya (From Brahmastra)" compares sanely. */
+    private fun normaliseTitle(value: String): String =
+        value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+
+    /**
+     * Builds an artist overview from the artist's own YouTube Music page.
+     *
+     * Two steps: find the artist's channel by name, then read their page. The page's
+     * visible songs shelf holds about five tracks but links to a playlist with the full
+     * catalogue, and the innertube layer follows that link, so this returns the artist's
+     * real song list rather than a handful of search hits. Albums and singles come back as
+     * the discography, each carrying its exact album id so opening one is not a guess.
+     *
+     * Returns null when no matching channel exists, so the caller can fall back.
+     */
+    private suspend fun youtubeArtistOverview(artistName: String): ArtistOverviewModel? {
+        if (artistName.isBlank()) return null
+        val want = normaliseTitle(artistName)
+
+        val hits = runCatching {
+            com.metrolist.innertube.YouTube
+                .search(artistName, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ARTIST)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<com.metrolist.innertube.models.ArtistItem>()
+                .orEmpty()
+        }.getOrElse { emptyList() }
+
+        // An exact name match first. A fuzzy top hit for a short name is often somebody
+        // else entirely, which is how "RAM" used to open "Rammstein".
+        val channel = hits.firstOrNull { normaliseTitle(it.title) == want }
+            ?: hits.firstOrNull { normaliseTitle(it.title).contains(want) }
+            ?: return null
+
+        val page = runCatching {
+            com.metrolist.innertube.YouTube.artist(channel.id).getOrNull()
+        }.getOrNull() ?: return null
+        if (page.songs.isEmpty() && page.albums.isEmpty()) return null
+
+        // The avatar has to come from the square search thumbnail. The artist page's own
+        // picture is a wide banner, and squaring that off pads it into a box with bars
+        // down the sides, which is what made artist avatars look wrong. The banner is
+        // still used, as the wide header it actually is.
+        val avatar = com.music.spotui.ui.viewmodel.hiResThumbnail(channel.thumbnail, size = 720)
+        val header = page.banner.orEmpty().ifBlank { avatar }
+
+        val topTracks = page.songs.map { item ->
+            val song = item.toSongsModel()
+            ArtistTrackUi(
+                song = if (song.coverUri.isBlank()) song.copy(coverUri = avatar) else song,
+                playcount = null,
+            )
+        }
+
+        val releases = page.albums.map { album ->
+            AlbumsModel(
+                id = stableId("ytalbum:${album.browseId}"),
+                artists = page.name.ifBlank { artistName },
+                coverUri = com.music.spotui.ui.viewmodel.hiResThumbnail(album.thumbnail),
+                name = album.title,
+                time = album.year?.toString().orEmpty(),
+                type = album.type.orEmpty().lowercase(),
+                browseId = album.browseId,
+            )
+        }
+
+        return ArtistOverviewModel(
+            name = page.name.ifBlank { artistName },
+            headerImage = header,
+            avatarImage = avatar,
+            topTracks = topTracks,
+            popularReleases = releases,
+        )
+    }
+
+    /**
+     * How closely a search hit's name matches the album asked for. Negative means the
+     * names are unrelated, so it cannot be this album whatever else lines up.
+     */
+    private fun titleAffinity(candidateTitle: String, albumName: String): Int {
+        val want = normaliseTitle(albumName)
+        val have = normaliseTitle(candidateTitle)
+        return when {
+            want.isBlank() -> -1
+            have == want -> 60
+            // "Brahmastra" must still match "Brahmastra (Original Motion Picture
+            // Soundtrack)", which is how albums are usually titled on YouTube Music.
+            have.contains(want) || want.contains(have) -> 35
+            else -> -1
+        }
+    }
+
+    /**
+     * A "Single" sharing an album's name holds one or two tracks, and choosing it over the
+     * album is exactly what made album pages look truncated.
+     */
+    private fun albumTypeBonus(type: String?): Int = when (type?.lowercase()) {
+        "album" -> 10
+        "ep" -> 5
+        else -> 0
+    }
+
+    private enum class ArtistAffinity {
+        /** The credited artist is the one asked for. */
+        MATCH,
+
+        /** Credited to "Various Artists", which is how many soundtracks are credited. */
+        VARIOUS,
+
+        /** No artist was asked for, so there is nothing to disagree with. */
+        UNCONSTRAINED,
+
+        /** The credited artist is somebody else. Not proof of a mismatch, see below. */
+        OTHER,
+    }
+
+    private fun artistAffinity(
+        candidate: com.metrolist.innertube.models.AlbumItem,
+        wantArtists: List<String>,
+    ): ArtistAffinity {
+        if (wantArtists.isEmpty()) return ArtistAffinity.UNCONSTRAINED
+        val names = normaliseTitle(candidate.artists?.joinToString(" ") { it.name }.orEmpty())
+        return when {
+            wantArtists.any { names.contains(it) } -> ArtistAffinity.MATCH
+            names.contains("various artists") -> ArtistAffinity.VARIOUS
+            else -> ArtistAffinity.OTHER
+        }
+    }
+
+    /** True when any track on the page is credited to one of [wantArtists]. */
+    private fun creditsArtist(
+        page: com.metrolist.innertube.pages.BrowsePage,
+        wantArtists: List<String>,
+    ): Boolean {
+        if (wantArtists.isEmpty()) return true
+        return page.songs.any { song ->
+            val names = normaliseTitle(song.artists.joinToString(" ") { it.name })
+            wantArtists.any { names.contains(it) }
+        }
+    }
+
+    /**
+     * Resolves an album and returns its real tracklist.
+     *
+     * [albumBrowseId] is used directly when the caller already knows it, for example an
+     * album opened from Explore, which skips the guessing entirely.
+     *
+     * Otherwise the album has to be found from a name and an artist, and that is harder
+     * than it sounds. Dozens of unrelated albums are called "Rockstar" or "Animal", so a
+     * name match alone proves nothing. Worse, the artist the app knows is usually the
+     * singer of one track while the album is credited to its composer: an "Aashiqui 2"
+     * entry remembered as an Arijit Singh record is credited on YouTube to Jeet Gannguli,
+     * Ankit Tiwari and Mithoon. So there are two passes:
+     *
+     *  1. Hits whose credited artist agrees (or that are credited to "Various Artists").
+     *     The best two are fetched and the fullest wins, which is how a twenty seven track
+     *     soundtrack beats the two track single of the same name.
+     *  2. Failing that, the name-matching hits are taken in YouTube's own search order for
+     *     the artist-qualified query, fetched, and kept only if the requested artist
+     *     actually appears somewhere in the tracklist. That is what recovers the singer
+     *     versus composer case, and it is proof rather than a guess.
+     *
+     * If nothing survives, the result is a plain song search. On-topic songs are honest;
+     * some unrelated album's tracklist is not, and that is what the previous version did.
+     */
+    private suspend fun youtubeAlbumSongs(
+        albumName: String,
+        artist: String,
+        albumBrowseId: String = "",
+    ): List<SongsModel> {
+        fun render(page: com.metrolist.innertube.pages.BrowsePage?): List<SongsModel> {
+            val songs = page?.songs.orEmpty()
+            if (songs.isEmpty()) return emptyList()
+            val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(page?.thumbnail)
+            return songs.map { item ->
+                val song = item.toSongsModel()
+                if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
+            }
+        }
+
+        suspend fun browse(browseId: String) = runCatching {
+            com.metrolist.innertube.YouTube.album(browseId).getOrNull()
+        }.getOrNull()
+
+        /** Fetches several albums at once, so verifying candidates costs one round trip. */
+        suspend fun browseAll(ids: List<String>): List<com.metrolist.innertube.pages.BrowsePage> =
+            coroutineScope {
+                ids
+                    .map { id -> async { browse(id) } }
+                    .mapNotNull { deferred -> deferred.await() }
+            }
+
+        // The exact album is known: no searching, no guessing.
+        if (albumBrowseId.startsWith("MPRE")) {
+            val exact = render(browse(albumBrowseId))
+            if (exact.isNotEmpty()) return exact
+        }
+
+        val wantArtists = artist.split(",", "&", "/")
+            .map { normaliseTitle(it) }
+            .filter { it.isNotBlank() }
+
+        // Search order is kept deliberately. YouTube's own ranking for "album + artist" is
+        // a strong signal, and it is what puts the right soundtrack at the top even when
+        // the album is credited to a composer the app has never heard of.
+        val queries = if (artist.isBlank()) listOf(albumName) else listOf("$albumName $artist", albumName)
+        val candidates = LinkedHashMap<String, com.metrolist.innertube.models.AlbumItem>()
+        for (query in queries) {
+            runCatching {
+                com.metrolist.innertube.YouTube
+                    .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_ALBUM)
+                    .getOrNull()
+                    ?.items
+                    ?.filterIsInstance<com.metrolist.innertube.models.AlbumItem>()
+                    .orEmpty()
+            }.getOrNull()?.forEach { candidates.putIfAbsent(it.browseId, it) }
+        }
+
+        val related = candidates.values.filter { titleAffinity(it.title, albumName) > 0 }
+
+        // Pass 1: the credited artist agrees.
+        val confident = related
+            .mapNotNull { candidate ->
+                val artistBonus = when (artistAffinity(candidate, wantArtists)) {
+                    ArtistAffinity.MATCH -> 80
+                    ArtistAffinity.VARIOUS, ArtistAffinity.UNCONSTRAINED -> 40
+                    ArtistAffinity.OTHER -> return@mapNotNull null
+                }
+                val score = titleAffinity(candidate.title, albumName) +
+                    artistBonus + albumTypeBonus(candidate.type)
+                candidate to score
+            }
+            .sortedByDescending { it.second }
+            .take(2)
+            .map { it.first.browseId }
+
+        if (confident.isNotEmpty()) {
+            val fullest = browseAll(confident).maxByOrNull { it.songs.size }
+            val songs = render(fullest)
+            if (songs.isNotEmpty()) return songs
+        }
+
+        // Pass 2: nothing agreed on the credit, so let the tracklists decide.
+        val unconfirmed = related
+            .filter { artistAffinity(it, wantArtists) == ArtistAffinity.OTHER }
+            .take(4)
+            .map { it.browseId }
+
+        if (unconfirmed.isNotEmpty()) {
+            val verified = browseAll(unconfirmed)
+                .filter { creditsArtist(it, wantArtists) }
+                .maxByOrNull { it.songs.size }
+            val songs = render(verified)
+            if (songs.isNotEmpty()) return songs
+        }
+
+        val query = if (artist.isBlank()) albumName else "$albumName $artist"
+        return runCatching {
+            com.metrolist.innertube.YouTube
+                .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)
+                .getOrNull()
+                ?.items
+                ?.filterIsInstance<com.metrolist.innertube.models.SongItem>()
+                .orEmpty()
+                .distinctBy { it.id }
+                .take(40)
+                .map { it.toSongsModel() }
+        }.getOrElse { emptyList() }
+    }
+
+    /**
+     * True for ids that YouTube Music can browse. Spotify playlist ids are exactly 22
+     * base62 characters, so anything longer or carrying a known YouTube prefix is
+     * treated as a YouTube playlist.
+     */
+    private fun looksLikeYouTubePlaylistId(id: String): Boolean =
+        id.startsWith("VL") || id.startsWith("OLAK") || id.startsWith("RD") ||
+            id.startsWith("PL") || id.startsWith("LL") || id.length > 22
+
+    private suspend fun youtubePlaylistSongs(playlistId: String): List<SongsModel> {
+        val page = runCatching {
+            com.metrolist.innertube.YouTube.playlist(playlistId).getOrNull()
+        }.getOrNull() ?: return emptyList()
+        val cover = com.music.spotui.ui.viewmodel.hiResThumbnail(page.thumbnail)
+        return page.songs.map { item ->
+            val song = item.toSongsModel()
+            if (song.coverUri.isBlank()) song.copy(coverUri = cover) else song
+        }
     }
 }

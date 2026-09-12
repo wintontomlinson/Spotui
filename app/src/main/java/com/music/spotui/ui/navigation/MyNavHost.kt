@@ -11,8 +11,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import com.music.spotui.data.api.SpotifySession
-import com.music.spotui.ui.screens.SpotifyLoginScreen
+import com.music.spotui.ui.screens.FreeHomeScreen
+import com.music.spotui.ui.screens.YtSearchScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -23,29 +23,24 @@ import androidx.compose.ui.window.DialogProperties
 import com.music.spotui.ui.screens.AlbumScreen
 import com.music.spotui.ui.screens.ArtistReleasesScreen
 import com.music.spotui.ui.screens.ArtistScreen
-import com.music.spotui.ui.screens.CategoryScreen
 import com.music.spotui.ui.screens.DownloadsScreen
 import com.music.spotui.ui.screens.HistoryScreen
-import com.music.spotui.ui.screens.HomeScreen
 import com.music.spotui.ui.screens.LibraryScreen
 import com.music.spotui.ui.screens.LikedSongsScreen
 import com.music.spotui.ui.screens.PlayerScreen
 import com.music.spotui.ui.screens.PlaylistScreen
 import com.music.spotui.ui.screens.ShowScreen
 import com.music.spotui.ui.screens.QueueScreen
-import com.music.spotui.ui.screens.SearchScreen
 import com.music.spotui.ui.screens.SettingsScreen
-import com.music.spotui.ui.screens.DeezerIntroScreen
-import com.music.spotui.ui.screens.DeezerLoginScreen
+
 import com.music.spotui.ui.screens.LocalFilesScreen
-import com.music.spotui.ui.screens.SpotiflacVerifyScreen
+
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun MyNavHost(
     navHostController: NavHostController,
-    searchFocusTrigger: Int = 0,
 ) {
 
     val playerViewModel : PlayerViewModel = hiltViewModel()
@@ -58,12 +53,9 @@ fun MyNavHost(
 //    player = ExoPlayer.Builder(context).build()
 
     val context = LocalContext.current
-    // First launch (no Spotify session) lands on the login screen.
-    val startDestination = if (SpotifySession.spDc(context).isBlank()) {
-        Routes.Login.route
-    } else {
-        Routes.Home.route
-    }
+    // The app always opens on Home, which is the login free YouTube powered screen.
+    // Explore is a tab the user chooses, not the landing screen.
+    val startDestination = Routes.Home.route
 
     // Restore the last session: put the track back into the mini player (paused)
     // and arm the player to resume from the saved position on the first play tap.
@@ -97,14 +89,17 @@ fun MyNavHost(
         popEnterTransition = { fadeIn(animationSpec = tween(150)) },
         popExitTransition = { fadeOut(animationSpec = tween(150)) },
     ){
-        composable(Routes.Login.route){
-            SpotifyLoginScreen(navHostController)
-        }
         composable(Routes.Home.route){
-            HomeScreen(navHostController)
+            // Home is the login-free, YouTube-powered screen, the old Spotify
+            // home (and its "session expired / log in" prompt) is never shown.
+            FreeHomeScreen(navHostController)
         }
-        composable(Routes.Search.route){
-            SearchScreen(navHostController, searchFocusTrigger = searchFocusTrigger)
+        composable(
+            "${Routes.YtSearch.route}?q={q}",
+            arguments = listOf(navArgument("q") { defaultValue = "" }),
+        ) { navBackStackEntry ->
+            val q = navBackStackEntry.arguments?.getString("q").orEmpty()
+            YtSearchScreen(navHostController, initialQuery = q)
         }
         composable(Routes.Library.route) {
             LibraryScreen(navHostController)
@@ -145,45 +140,26 @@ fun MyNavHost(
             LocalFilesScreen(navHostController)
         }
 
-        composable(Routes.DeezerIntro.route) {
-            DeezerIntroScreen(navHostController)
-        }
 
         composable(
-            "${Routes.DeezerLogin.route}?next={next}",
-            arguments = listOf(navArgument("next") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val next = navBackStackEntry.arguments?.getString("next").orEmpty()
-            DeezerLoginScreen(navHostController, next = next)
-        }
-
-        composable(
-            "${Routes.SpotiflacVerify.route}?next={next}",
-            arguments = listOf(navArgument("next") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val next = navBackStackEntry.arguments?.getString("next").orEmpty()
-            SpotiflacVerifyScreen(navHostController, next = next)
-        }
-
-        composable(
-            "${Routes.Category.route}/{genre}?title={title}",
-            arguments = listOf(navArgument("title") { defaultValue = "" }),
-        ) { navBackStackEntry ->
-            val genre = navBackStackEntry.arguments?.getString("genre").orEmpty()
-            val title = navBackStackEntry.arguments?.getString("title").orEmpty()
-            CategoryScreen(navHostController, genre = genre, title = title.ifBlank { genre })
-        }
-
-        composable(
-            "${Routes.Album.route}/{uString}?artist={artist}",
-            arguments = listOf(navArgument("artist") { defaultValue = "" }),
+            "${Routes.Album.route}/{uString}?artist={artist}&id={albumId}",
+            arguments = listOf(
+                navArgument("artist") { defaultValue = "" },
+                navArgument("albumId") { defaultValue = "" },
+            ),
         ) { navBackStackEntry ->
             /* Extracting the id from the route */
             val uId = navBackStackEntry.arguments?.getString("uString")
             val artist = navBackStackEntry.arguments?.getString("artist").orEmpty()
+            val albumId = navBackStackEntry.arguments?.getString("albumId").orEmpty()
             /* We check if it's not null */
             uId?.let { id->
-                AlbumScreen(navController = navHostController, albumName = id, artist = artist)
+                AlbumScreen(
+                    navController = navHostController,
+                    albumName = id,
+                    artist = artist,
+                    albumBrowseId = albumId,
+                )
             }
         }
 

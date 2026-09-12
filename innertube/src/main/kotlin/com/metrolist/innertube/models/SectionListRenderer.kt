@@ -44,5 +44,7 @@ data class SectionListRenderer(
         val musicCardShelfRenderer: MusicCardShelfRenderer?,
         val musicPlaylistShelfRenderer: MusicPlaylistShelfRenderer?,
         val gridRenderer: GridRenderer?,
+        // Album and playlist pages put their title, cover and artist here.
+        val musicResponsiveHeaderRenderer: MusicResponsiveHeaderRenderer? = null,
     )
 }

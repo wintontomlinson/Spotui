@@ -32,6 +32,10 @@ class PoTokenGenerator {
         Timber.tag(TAG).d("WebView state: supported=$webViewSupported, badImpl=$webViewBadImpl")
         if (!webViewSupported || webViewBadImpl) {
             Timber.tag(TAG).d("WebView not available: supported=$webViewSupported, badImpl=$webViewBadImpl")
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "potoken",
+                "skipped: WebView unusable (supported=$webViewSupported, badImpl=$webViewBadImpl)",
+            )
             return null
         }
 
@@ -48,14 +52,25 @@ class PoTokenGenerator {
             when (e) {
                 is BadWebViewException -> {
                     Timber.tag(TAG).e(e, "Could not obtain poToken because WebView is broken")
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "potoken", "failed: WebView broken (${e.message})",
+                    )
                     webViewBadImpl = true
                     null
                 }
                 is kotlinx.coroutines.TimeoutCancellationException -> {
                     Timber.tag(TAG).w("PoToken generation timed out for videoId=$videoId")
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "potoken", "failed: timed out after ${POTOKEN_TIMEOUT_MS}ms",
+                    )
                     null
                 }
-                else -> null
+                else -> {
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "potoken", "failed: ${e.javaClass.simpleName}: ${e.message}",
+                    )
+                    null
+                }
             }
         }
     }
@@ -132,6 +147,7 @@ class PoTokenGenerator {
         }
 
         Timber.tag(TAG).d("poToken generated successfully: player=${playerPot.take(20)}..., streaming=${streamingPot.take(20)}...")
+        com.music.spotui.data.diagnostics.PlaybackLog.add("potoken", "generated ok")
 
         return PoTokenResult(playerPot, streamingPot)
     }

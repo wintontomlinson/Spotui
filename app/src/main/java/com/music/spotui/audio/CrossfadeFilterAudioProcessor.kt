@@ -64,7 +64,7 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    // NOTE: do NOT override isActive() to true — onConfigure returns NOT_SET for
+    // NOTE: do NOT override isActive() to true, onConfigure returns NOT_SET for
     // non-16-bit input (e.g. 24-bit hi-res FLAC), and claiming to be active with an
     // unset format broke the audio pipeline: lossless downloads played silently.
     // BaseAudioProcessor's isActive() correctly deactivates us so such streams
@@ -108,10 +108,14 @@ class CrossfadeFilterAudioProcessor : BaseAudioProcessor() {
             dst.limit(size)
             return
         }
+        // Bulk copy. This runs for every audio buffer whenever the filter is idle,
+        // which is the normal case, so copying byte by byte here was pure overhead
+        // and could starve the audio thread on slower devices.
         val pos = src.position()
-        for (i in 0 until size) {
-            dst.put(src.get(pos + i))
-        }
+        val limit = src.limit()
+        src.limit(pos + size)
+        dst.put(src)
+        src.limit(limit)
         src.position(pos + size)
     }
 

@@ -74,7 +74,6 @@ import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.ShowViewModel
@@ -125,7 +124,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppBackgroundBrush)
+                .background(Color(AppBackground.toArgb()))
                 .statusBarsPadding(),
         ) {
             item {

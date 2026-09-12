@@ -48,8 +48,15 @@ object YTPlayerUtils {
     private const val TAG = "YTPlayerUtils"
     /** Max seconds to wait for signature-timestamp resolution before giving up. */
     private const val SIG_FUTURE_TIMEOUT_SEC = 5L
-    /** Max seconds to wait for PoToken generation before giving up. */
-    private const val POT_FUTURE_TIMEOUT_SEC = 5L
+    /**
+     * Max seconds to wait for PoToken generation before giving up.
+     *
+     * The generator has its own 5s internal budget (POTOKEN_TIMEOUT_MS). This outer wait
+     * has to be longer than that, or the two race and this side can abandon a PoToken the
+     * generator was about to return, which is most likely on the first track of a session
+     * when the WebView is cold starting. Give the generator its full budget plus headroom.
+     */
+    private const val POT_FUTURE_TIMEOUT_SEC = 12L
 
     private val httpClient = OkHttpClient.Builder()
         .proxy(YouTube.proxy)
@@ -60,6 +67,22 @@ object YTPlayerUtils {
         .build()
 
     private val poTokenGenerator = PoTokenGenerator()
+
+    /**
+     * Builds the PoToken generator ahead of the first play, so the WebView cold start and
+     * BotGuard handshake do not sit on the critical path of the first tapped track. It
+     * caches the generator internally for the session, so the first real resolution reuses
+     * what this warmed up. Safe to call before visitorData is ready: it no-ops and the
+     * first play falls back to building it then, exactly as before.
+     */
+    fun warmUpPoToken() {
+        val sessionId = if (YouTube.cookie != null) YouTube.dataSyncId else YouTube.visitorData
+        if (sessionId == null) return
+        runCatching { poTokenGenerator.getWebClientPoToken(WARMUP_VIDEO_ID, sessionId) }
+    }
+
+    /** A stable, always-available public video used only to warm the PoToken pipeline. */
+    private const val WARMUP_VIDEO_ID = "dQw4w9WgXcQ"
 
     private val MAIN_CLIENT: YouTubeClient = WEB_REMIX
 
@@ -110,10 +133,17 @@ object YTPlayerUtils {
         val isLoggedIn = YouTube.cookie != null
         Timber.tag(TAG).d("Authentication status: ${if (isLoggedIn) "LOGGED_IN" else "ANONYMOUS"}")
 
-        // Run signature-timestamp and PoToken generation in parallel — they are
+        // Run signature-timestamp and PoToken generation in parallel, they are
         // independent and each takes 1-3s, so overlapping them nearly halves the
         // cold-start latency. Both are blocking calls, so we use Java futures on
         // the IO executor rather than coroutine async (runCatching is non-suspend).
+        // A PoToken can only be minted against a session id, which logged out means
+        // visitorData. That is fetched by a background job at startup, so a track tapped
+        // before it lands would leave it null and the PoToken would be skipped without a
+        // word. Fetch it here when it is missing so the attempt is never silently lost.
+        if (!isLoggedIn && YouTube.visitorData == null) {
+            runCatching { YouTube.visitorData = YouTube.visitorData().getOrNull() }
+        }
         val sessionId = if (isLoggedIn) YouTube.dataSyncId else YouTube.visitorData
         val mainClientNeedsPoToken = MAIN_CLIENT.useWebPoTokens
 
@@ -158,7 +188,7 @@ object YTPlayerUtils {
         // Skip it and go straight to the fallback chain.
         val skipMainClient = mainClientNeedsPoToken && poToken == null
         if (skipMainClient) {
-            Timber.tag(TAG).w("PoToken unavailable — skipping MAIN_CLIENT and using fallback chain directly")
+            Timber.tag(TAG).w("PoToken unavailable, skipping MAIN_CLIENT and using fallback chain directly")
         }
 
         var mainPlayerResponse: PlayerResponse? = if (skipMainClient) null else {
@@ -283,7 +313,7 @@ object YTPlayerUtils {
             if (returnedVideoId != null && returnedVideoId != videoId) {
                 Timber.tag(TAG).w(
                     "Client ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName} " +
-                        "returned WRONG video: $returnedVideoId != $videoId — skipping",
+                        "returned WRONG video: $returnedVideoId != $videoId, skipping",
                 )
                 continue
             }
@@ -292,14 +322,29 @@ object YTPlayerUtils {
             if (streamPlayerResponse?.playabilityStatus?.status == "OK") {
                 Timber.tag(logTag).d("Player response status OK for client: ${if (clientIndex == -1) MAIN_CLIENT.clientName else STREAM_FALLBACK_CLIENTS[clientIndex].clientName}")
 
-                // Skip NewPipe for age-restricted content (NewPipe doesn't use our auth)
-                val responseToUse = if (wasOriginallyAgeRestricted) {
-                    Timber.tag(logTag).d("Skipping NewPipe for age-restricted content")
-                    streamPlayerResponse
-                } else {
-                    // Try to get streams using newPipePlayer method
-                    val newPipeResponse = YouTube.newPipePlayer(videoId, streamPlayerResponse)
-                    newPipeResponse ?: streamPlayerResponse
+                // NewPipe extraction fetches and parses YouTube's web player, which costs
+                // a noticeable chunk of the time between tapping play and hearing audio.
+                // It is only needed when this response cannot give us a playable audio
+                // URL on its own, so check for a ready to use format first.
+                val hasDirectAudioUrl = streamPlayerResponse.streamingData
+                    ?.adaptiveFormats
+                    ?.any { it.isAudio && !it.url.isNullOrBlank() } == true
+
+                val responseToUse = when {
+                    wasOriginallyAgeRestricted -> {
+                        // NewPipe does not use our auth, so it cannot help here.
+                        Timber.tag(logTag).d("Skipping NewPipe for age-restricted content")
+                        streamPlayerResponse
+                    }
+                    hasDirectAudioUrl -> {
+                        Timber.tag(logTag).d("Skipping NewPipe: response already has a direct audio URL")
+                        streamPlayerResponse
+                    }
+                    else -> {
+                        // No direct URL, the formats are ciphered or missing. Let NewPipe try.
+                        Timber.tag(logTag).d("No direct audio URL, falling back to NewPipe extraction")
+                        YouTube.newPipePlayer(videoId, streamPlayerResponse) ?: streamPlayerResponse
+                    }
                 }
 
                 format =
@@ -467,6 +512,11 @@ object YTPlayerUtils {
         }
 
         Timber.tag(logTag).d("Successfully obtained playback data with format: ${format.mimeType}, bitrate: ${format.bitrate}")
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "resolve",
+            "$videoId ok, itag=${format.itag} ${format.mimeType?.substringBefore(';')} " +
+                "poToken=${if (poToken != null) "yes" else "no"} expires in ${streamExpiresInSeconds}s",
+        )
         if (isUploadedTrack) {
             println("[PLAYBACK_DEBUG] SUCCESS: Got playback data for uploaded track - format=${format.mimeType}, streamUrl=${streamUrl.take(100)}...")
         }
@@ -480,6 +530,10 @@ object YTPlayerUtils {
         )
     }.onFailure { e ->
         println("[PLAYBACK_DEBUG] EXCEPTION during playback for videoId=$videoId: ${e::class.simpleName}: ${e.message}")
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "resolve",
+            "$videoId FAILED: ${e::class.simpleName}: ${e.message}",
+        )
         e.printStackTrace()
     }
     /**
@@ -501,26 +555,57 @@ object YTPlayerUtils {
         audioQuality: AudioQuality,
         connectivityManager: ConnectivityManager,
     ): PlayerResponse.StreamingData.Format? {
-        Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: ${connectivityManager.isActiveNetworkMetered}")
+        val metered = connectivityManager.isActiveNetworkMetered
+        Timber.tag(logTag).d("Finding format with audioQuality: $audioQuality, network metered: $metered")
 
-        val format = playerResponse.streamingData?.adaptiveFormats
-            ?.filter { it.isAudio && it.isOriginal }
-            ?.maxByOrNull {
-                it.bitrate * when (audioQuality) {
-                    AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                    AudioQuality.HIGH -> 1
-                    AudioQuality.LOW -> -1
-                } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-            }
-
-        if (format != null) {
-            Timber.tag(logTag).d("Selected format: ${format.mimeType}, bitrate: ${format.bitrate}")
-        } else {
+        val all = playerResponse.streamingData?.adaptiveFormats.orEmpty()
+        // Prefer the original audio track. Auto dubbed tracks are re-encoded and sound
+        // worse. If filtering leaves nothing, fall back to any audio format so we never
+        // end up with no stream at all.
+        var candidates = all.filter { it.isAudio && it.isOriginal }
+        if (candidates.isEmpty()) candidates = all.filter { it.isAudio }
+        if (candidates.isEmpty()) {
             Timber.tag(logTag).d("No suitable audio format found")
+            return null
         }
 
+        // Opus (served in a webm container) sounds better than AAC at the same bitrate,
+        // so it wins ties. Sample rate is the final tiebreaker.
+        val bestFirst = compareByDescending<PlayerResponse.StreamingData.Format> { it.bitrate }
+            .thenByDescending { if (it.mimeType.startsWith("audio/webm")) 1 else 0 }
+            .thenByDescending { it.audioSampleRate ?: 0 }
+
+        val format = when (audioQuality) {
+            // Always take the best available stream.
+            AudioQuality.HIGH -> candidates.sortedWith(bestFirst).first()
+
+            // Data saver: the smallest stream that is still listenable.
+            AudioQuality.LOW -> candidates
+                .sortedWith(
+                    compareBy<PlayerResponse.StreamingData.Format> { it.bitrate }
+                        .thenByDescending { if (it.mimeType.startsWith("audio/webm")) 1 else 0 }
+                )
+                .first()
+
+            // Automatic: full quality on unmetered networks. On mobile data pick the
+            // best stream up to a moderate ceiling rather than the worst one available,
+            // which is what the previous scoring did.
+            AudioQuality.AUTO -> if (!metered) {
+                candidates.sortedWith(bestFirst).first()
+            } else {
+                val capped = candidates.filter { it.bitrate <= METERED_BITRATE_CEILING }
+                (capped.ifEmpty { candidates }).sortedWith(bestFirst).first()
+            }
+        }
+
+        Timber.tag(logTag).d(
+            "Selected format: ${format.mimeType}, bitrate: ${format.bitrate}, sampleRate: ${format.audioSampleRate}"
+        )
         return format
     }
+
+    /** Upper bitrate bound used by automatic quality on a metered connection. */
+    private const val METERED_BITRATE_CEILING = 160_000
     /**
      * Checks if the stream url returns a successful status.
      *
@@ -553,7 +638,7 @@ object YTPlayerUtils {
             return accepted
         } catch (e: java.io.IOException) {
             // Network timeout / reset while probing. The stream URL itself may still
-            // be fine — let ExoPlayer attempt GET rather than burning a fallback client.
+            // be fine, let ExoPlayer attempt GET rather than burning a fallback client.
             Timber.tag(logTag).w(e, "Stream URL probe failed (IO); accepting optimistically")
             return true
         } catch (e: Exception) {

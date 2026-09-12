@@ -74,6 +74,17 @@ class LyricsViewModel @Inject constructor(
 
     val translationsVisible: Boolean get() = translatedLines != null
 
+    /**
+     * Forces a fresh lookup for a track that came back empty, clearing the cached miss so
+     * the providers are actually asked again rather than short-circuited.
+     */
+    fun retry(title: String, artist: String, album: String) {
+        LyricsApi.removeFromCache(title, artist)
+        loadedKey = null
+        val durationSec = (com.music.spotui.di.SongPlayer.getDuration() / 1000).toInt()
+        load(title, artist, album, durationSec)
+    }
+
     fun load(title: String, artist: String, album: String, durationSec: Int) {
         val key = "$title|$artist"
         if (loadedKey == key && _state.value !is State.NotFound) return
@@ -179,7 +190,7 @@ class LyricsViewModel @Inject constructor(
                 Log.d(TAG, "Translation complete: $translatedCount/${result.size} lines translated")
                 withContext(Dispatchers.Main) {
                     if (translatedCount == 0) {
-                        translationError = "Translation failed — no lines were translated."
+                        translationError = "Translation failed, no lines were translated."
                     } else {
                         translatedLines = result
                         // Persist to disk so it auto-shows on next load.

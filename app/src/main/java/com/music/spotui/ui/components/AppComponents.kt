@@ -2,6 +2,8 @@ package com.music.spotui.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -98,7 +100,10 @@ fun Loader() {
         CircularProgressIndicator(
             modifier = Modifier
                 .size(45.dp),
-            color = Color(0xFF4A4AC4)
+            // The app accent, not the old off brand purple, so every loading screen
+            // stays on palette.
+            color = Color(0xFFD4AF37),
+            strokeWidth = 3.dp,
         )
     }
 
@@ -213,9 +218,31 @@ fun MiniPlayer(navController: NavHostController) {
                 translationY = swipeOffsetY
                 alpha = (1f + swipeOffsetY / 150f).coerceIn(0f, 1f)
             }
-            .clip(RoundedCornerShape(8.dp))
-            .background(darkVibrantColor)
-            .padding(8.dp, 0.dp)
+            // Premium mini player: a lifted pill with a soft shadow, a gradient drawn
+            // from the artwork's colour into a darker version of itself for depth, and a
+            // hairline edge so it separates cleanly from the content scrolling behind it.
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(16.dp),
+                clip = false,
+                ambientColor = Color.Black,
+                spotColor = Color.Black,
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        darkVibrantColor,
+                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Color.Black, 0.45f),
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                color = Color.White.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(16.dp),
+            )
+            .padding(8.dp, 2.dp)
 
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween,
@@ -469,29 +496,9 @@ fun MiniPlayer(navController: NavHostController) {
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
                                 ) {
-                                    if (songPlayingState) {
-                                        SongPlayer.pause()
-                                        miniPlayerViewModel.updateSongState(
-                                            songCoverUri,
-                                            songTitle,
-                                            songSinger,
-                                            false,
-                                            songId,
-                                            songIndex,
-                                            songAlbum
-                                        )
-                                    } else {
-                                        SongPlayer.play()
-                                        miniPlayerViewModel.updateSongState(
-                                            songCoverUri,
-                                            songTitle,
-                                            songSinger,
-                                            true,
-                                            songId,
-                                            songIndex,
-                                            songAlbum
-                                        )
-                                    }
+                                    // Single source of truth: toggle from the engine's
+                                    // real state so the mini-player icon never sticks.
+                                    miniPlayerViewModel.togglePlayPause()
                                 }
                         )
                     }
@@ -630,13 +637,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFB8892B)) // Spotify Green
+                    .background(Color(0xFFD4AF37)) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_queue_add),
                     contentDescription = "Play next",
-                    tint = Color.White,
+                    // Dark content on the light amber accent keeps the contrast strong.
+                    tint = Color(0xFF241540),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -668,11 +676,11 @@ fun AppSearchBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .border(1.dp, Color(0xFF383838), RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF1C1C21))
+            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
             .height(height)
-            .background(Color(0xFF242424))
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 14.dp)
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_search_big),

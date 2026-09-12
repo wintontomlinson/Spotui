@@ -72,7 +72,6 @@ import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.ArtistViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -93,7 +92,7 @@ fun ArtistScreen(navController: NavController, artistName: String, artistId: Str
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(AppBackground.toArgb()))
     ) {
         when (val state = overview) {
             is Response.Loading -> Loader()
@@ -119,6 +118,10 @@ private fun ArtistOverviewContent(
 ) {
     val context = LocalContext.current
     val tracks = overview.topTracks
+    // Both lists start short and expand in place, so the whole catalogue is reachable
+    // without leaving the page.
+    var showAllTracks by remember(artistName) { mutableStateOf(false) }
+    var showAllReleases by remember(artistName) { mutableStateOf(false) }
     val displayName = overview.name.ifBlank { artistName }
 
     // Warm the stream cache for the top tracks so the first tap plays instantly.
@@ -162,7 +165,7 @@ private fun ArtistOverviewContent(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppBackgroundBrush)
+                .background(Color(AppBackground.toArgb()))
         ) {
         // ── Header: big artist image with scrim + name ──
         item {
@@ -321,17 +324,21 @@ private fun ArtistOverviewContent(
         }
 
         // ── Popular tracks ──
+        // Only five were ever rendered, no matter how many the artist had, so every
+        // artist looked like they had five songs. The list now expands to the whole
+        // catalogue, still starting short so the discography stays reachable.
         if (tracks.isNotEmpty()) {
             item {
                 Text(
-                    text = "Popular",
+                    text = "Songs",
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 4.dp),
                 )
             }
-            itemsIndexed(tracks.take(5)) { index, item ->
+            val visibleTracks = if (showAllTracks) tracks else tracks.take(8)
+            itemsIndexed(visibleTracks) { index, item ->
                 PopularTrackRow(
                     item = item,
                     index = index,
@@ -340,21 +347,39 @@ private fun ArtistOverviewContent(
                     onLongClick = { menuSong = item.song },
                 )
             }
+            if (tracks.size > 8) {
+                item {
+                    ShowAllButton(
+                        label = if (showAllTracks) "Show less" else "Show all ${tracks.size} songs",
+                    ) { showAllTracks = !showAllTracks }
+                }
+            }
         }
 
-        // ── Popular releases (discography) — vertical list, first few + "Show all" ──
+        // ── Popular releases (discography), vertical list, first few + "Show all" ──
         if (overview.popularReleases.isNotEmpty()) {
             item { SectionHeader("Popular releases") }
-            itemsIndexed(overview.popularReleases.take(4)) { _, album ->
+            val visibleReleases =
+                if (showAllReleases) overview.popularReleases else overview.popularReleases.take(4)
+            itemsIndexed(visibleReleases) { _, album ->
                 ReleaseRow(album) {
-                    navController.navigate(albumRoute(album.name, album.artists.ifBlank { displayName }))
+                    // The exact album id travels with the link when it is known, so the
+                    // album page opens this release rather than resolving its name.
+                    navController.navigate(
+                        albumRoute(
+                            album.name,
+                            album.artists.ifBlank { displayName },
+                            album.browseId,
+                        )
+                    )
                 }
             }
             if (overview.popularReleases.size > 4) {
                 item {
-                    ShowAllButton {
-                        navController.navigate("${Routes.ArtistReleases.route}/$artistName")
-                    }
+                    ShowAllButton(
+                        label = if (showAllReleases) "Show less"
+                        else "Show all ${overview.popularReleases.size} releases",
+                    ) { showAllReleases = !showAllReleases }
                 }
             }
         }
@@ -677,7 +702,7 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ShowAllButton(onClick: () -> Unit) {
+private fun ShowAllButton(label: String = "Show all", onClick: () -> Unit) {
     Box(modifier = Modifier
         .padding(16.dp, 10.dp, 16.dp, 4.dp)
         .clip(RoundedCornerShape(20.dp))
@@ -688,7 +713,7 @@ private fun ShowAllButton(onClick: () -> Unit) {
         ) { onClick() }
         .padding(20.dp, 8.dp),
     ) {
-        Text(text = "Show all", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -706,7 +731,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(AppBackground.toArgb()))
     ) {
         val data = (overview as? Response.Success)?.data
         val releases = data?.popularReleases ?: emptyList()
@@ -726,7 +751,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(AppBackgroundBrush)
+                .background(Color(AppBackground.toArgb()))
         ) {
             item {
                 Row(

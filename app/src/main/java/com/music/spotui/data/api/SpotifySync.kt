@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Fire-and-forget mirroring of local library actions to the user's REAL Spotify
  * account (web-player token): liking a song, saving an album or following an
- * artist here shows up in Spotify itself. Failures are logged, never surfaced —
+ * artist here shows up in Spotify itself. Failures are logged, never surfaced -
  * the local action already succeeded.
  */
 object SpotifySync {
@@ -34,7 +34,7 @@ object SpotifySync {
         val app = context.applicationContext
         scope.launch {
             if (!SpotifyTokenProvider.ensureToken(app)) {
-                Log.w(TAG, "no token — skipped syncing $uri saved=$saved")
+                Log.w(TAG, "no token, skipped syncing $uri saved=$saved")
                 return@launch
             }
             val result =

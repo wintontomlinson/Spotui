@@ -56,13 +56,16 @@ class AlbumViewModel @Inject constructor(private val repository: AppRepository, 
 
     private var albumKey: String? = null
 
-    /** Loads the tracks for a specific album (resolved via Spotify search). */
-    fun loadAlbumSongs(name: String, artist: String = "") {
-        val key = "$name|$artist"
+    /**
+     * Loads the tracks for a specific album. [albumBrowseId] is the exact YouTube Music
+     * album id when the caller knows it, which avoids resolving an ambiguous name.
+     */
+    fun loadAlbumSongs(name: String, artist: String = "", albumBrowseId: String = "") {
+        val key = "$name|$artist|$albumBrowseId"
         if (albumKey == key) return
         albumKey = key
         viewModelScope.launch(Dispatchers.IO) {
-            repository.provideAlbumSongs(name, artist).collect { songs ->
+            repository.provideAlbumSongs(name, artist, albumBrowseId).collect { songs ->
                 _songs.value = songs as Response<List<SongsModel>>
             }
         }

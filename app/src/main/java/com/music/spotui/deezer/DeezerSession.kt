@@ -134,7 +134,7 @@ internal object DeezerSession {
                             for (j in 0 until errors.length()) {
                                 val code = errors.getJSONObject(j).optInt("code")
                                 if (code == 2001 && refreshAttempt < 1) {
-                                    // Expired track token — refresh once and retry.
+                                    // Expired track token, refresh once and retry.
                                     trackTokens(tokens.id)?.let { fresh ->
                                         return getTrackUrl(fresh, quality, refreshAttempt + 1)
                                     }
@@ -183,7 +183,7 @@ internal object DeezerSession {
                 licenseToken = options.getString("license_token")
                 entitledQuality = qufrom(options)
                 authorized = true
-            }.onFailure { Log.w(TAG, "No license token — account may be logged out: $it") }
+            }.onFailure { Log.w(TAG, "No license token, account may be logged out: $it") }
         }
         return out
     }

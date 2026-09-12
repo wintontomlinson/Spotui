@@ -9,7 +9,8 @@ sealed class Routes(
     val route : String
 ) {
     object Home : Routes(icon = R.drawable.ic_home_filled, label = "Home", route = "home")
-    object Search : Routes(icon = R.drawable.ic_search_big, label = "Search", route = "search")
+    // Login-free YouTube search & play: works without any Spotify session.
+    object YtSearch : Routes(icon = R.drawable.ic_search_big, label = "Explore", route = "ytsearch")
     object Library : Routes(icon = R.drawable.ic_library_big, label = "Library", route = "library")
     object Album : Routes(0, "Album", "album")
     object Player : Routes(0, "Player", "player")
@@ -21,13 +22,9 @@ sealed class Routes(
     object Liked : Routes(0, "Liked", "liked")
     object Downloads : Routes(0, "Downloads", "downloads")
     object Category : Routes(0, "Category", "category")
-    object Login : Routes(0, "Login", "login")
     object Settings : Routes(0, "Settings", "settings")
     object History : Routes(0, "History", "history")
     object LocalFiles : Routes(0, "LocalFiles", "localfiles")
-    object DeezerIntro : Routes(0, "DeezerIntro", "deezerintro")
-    object DeezerLogin : Routes(0, "DeezerLogin", "deezerlogin")
-    object SpotiflacVerify : Routes(0, "SpotiflacVerify", "spotiflacverify")
 }
 
 
@@ -58,8 +55,19 @@ fun artistRoute(name: String, id: String = ""): String {
  * Builds an album route, optionally carrying the artist so same-named albums by
  * different artists resolve to the right one. The artist value is URL-encoded.
  */
-fun albumRoute(name: String, artist: String = ""): String {
-    val base = "${Routes.Album.route}/$name"
-    return if (artist.isBlank()) base
-    else "$base?artist=${android.net.Uri.encode(artist)}"
+fun albumRoute(name: String, artist: String = "", id: String = ""): String {
+    // The name has to be encoded. Real album titles contain "?", "/", "#" and quotes,
+    // for example 'Kesariya (From "Brahmastra")', and an unencoded "?" turned the rest
+    // of the title into query arguments so the album screen opened with a truncated
+    // name and found nothing.
+    //
+    // [id] is a YouTube Music album id ("MPREb_...") when the caller already knows
+    // exactly which album this is, which lets the album screen skip resolving the name
+    // by search. Names are ambiguous: many unrelated albums are called "Rockstar".
+    val base = "${Routes.Album.route}/${android.net.Uri.encode(name)}"
+    val args = buildList {
+        if (artist.isNotBlank()) add("artist=${android.net.Uri.encode(artist)}")
+        if (id.isNotBlank()) add("id=${android.net.Uri.encode(id)}")
+    }
+    return if (args.isEmpty()) base else "$base?${args.joinToString("&")}"
 }

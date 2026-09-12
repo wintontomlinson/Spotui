@@ -80,19 +80,25 @@ fun LikedSongsScreen(
     val playerViewModel : PlayerViewModel = hiltViewModel()
 
 
-    val album = albums.filter { it.name == "Liked Songs" }
-    val likesSongIds = getLikedSongIds(context)
-    var likedSongs  by remember { mutableStateOf(emptyList<SongsModel>()) }
+    // There is no guarantee a "Liked Songs" entry exists in the album list, and
+    // indexing it blindly crashed this screen whenever the list was empty.
+    val likedAlbumCover = albums.firstOrNull { it.name == "Liked Songs" }?.coverUri
+    var likedSongs by remember { mutableStateOf(emptyList<SongsModel>()) }
 
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
-    Palette().extractSecondColorFromCoverUrl(context = context, album[0].coverUri){ color ->
-        dominentColor = color
+    if (!likedAlbumCover.isNullOrBlank()) {
+        Palette().extractSecondColorFromCoverUrl(context = context, likedAlbumCover) { color ->
+            dominentColor = color
+        }
     }
     val likeState = albumViewModel.likeState.value
-    LaunchedEffect(likeState) {
-        likedSongs = getSongsByIds(likesSongIds, songs).sortedBy { it.title }
+    LaunchedEffect(likeState, songs) {
+        // Resolve from the catalogue when it is available, and fall back to the copies
+        // saved at like time so this works with no account at all.
+        likedSongs = com.music.spotui.data.preferences.resolveLikedSongs(context, songs)
+            .sortedBy { it.title }
     }
 
 
@@ -154,7 +160,9 @@ fun LikedSongsScreen(
                 ) {
                     GlideImage(
                         modifier = Modifier.size(180.dp),
-                        model = album[0].coverUri,
+                        // Fall back to the first liked track's art when the library has
+                        // no Liked Songs entry to take a cover from.
+                        model = likedAlbumCover ?: likedSongs.firstOrNull()?.coverUri,
                         failure = placeholder(R.drawable.placeholder),
                         //loading = placeholder(R.drawable.album),
                         //contentScale = ContentScale.Crop,
@@ -226,17 +234,22 @@ fun LikedSongsScreen(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
                                      ) {
-                                        albumViewModel.updateQueue(likedSongs)
-                                        albumViewModel.updateSongState(
-                                            likedSongs[0].coverUri,
-                                            likedSongs[0].title,
-                                            likedSongs[0].singer,
-                                            true,
-                                            likedSongs[0].id,
-                                            0,
-                                            "Liked Songs"
-                                        )
-                                        SongPlayer.playSong(likedSongs[0].url, context, "song/${likedSongs[0].id}")
+                                        // Nothing liked yet means nothing to play, and
+                                        // indexing the empty list here crashed the screen.
+                                        val first = likedSongs.firstOrNull()
+                                        if (first != null) {
+                                            albumViewModel.updateQueue(likedSongs)
+                                            albumViewModel.updateSongState(
+                                                first.coverUri,
+                                                first.title,
+                                                first.singer,
+                                                true,
+                                                first.id,
+                                                0,
+                                                "Liked Songs"
+                                            )
+                                            SongPlayer.playSong(first.url, context, "song/${first.id}")
+                                        }
                                     }
                             ) {
                                 Icon(
@@ -259,10 +272,16 @@ fun LikedSongsScreen(
             if(likedSongs.isNotEmpty()){
                 repeat(likedSongs.size) {song ->
 
-                    var isLiked by remember {
-                        mutableStateOf(isSongLiked(context, likedSongs[song].id.toString()))
+                    // Key the per row state to the track id, not the loop slot. Without a
+                    // key, remember binds to the composition position, so when the liked
+                    // list changes (a song removed or re-sorted) a row kept the previous
+                    // track's liked heart and could open the saved-in sheet for the wrong
+                    // song. Keying on the id moves the state with the track.
+                    val rowSongId = likedSongs[song].id
+                    var isLiked by remember(rowSongId) {
+                        mutableStateOf(isSongLiked(context, rowSongId.toString()))
                     }
-                    var showSavedIn by remember { mutableStateOf(false) }
+                    var showSavedIn by remember(rowSongId) { mutableStateOf(false) }
                     if (showSavedIn) {
                         SavedInSheet(
                             song = likedSongs[song],

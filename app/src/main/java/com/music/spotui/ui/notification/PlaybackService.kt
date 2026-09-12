@@ -54,7 +54,7 @@ import javax.inject.Inject
  * lazily per track), so we advance the queue ourselves rather than via a playlist.
  *
  * It is a [MediaLibraryService] (not just a session service) so Android Auto can
- * browse the library — Liked Songs, Downloads, playlists and albums — and start
+ * browse the library, Liked Songs, Downloads, playlists and albums, and start
  * playback from the car.
  */
 @AndroidEntryPoint
@@ -77,18 +77,94 @@ class PlaybackService : MediaLibraryService() {
     private var webPlayer: WebMediaPlayer? = null
     private var showingWeb = false
 
+    // Guards the truncated stream recovery so a track that genuinely refuses to play
+    // through cannot bounce between recovery attempts forever.
+    private var truncationRecoveryFor: String? = null
+
+    // Which track a mid playback error was already retried for, so a track that genuinely
+    // will not play is only retried once and then lets the queue move on. Cleared when a
+    // different track starts playing.
+    private var errorRetryFor: String? = null
+
+    /**
+     * Handles the case where playback reports it ended but the position is well short
+     * of the track length, which means the stream ran out of data rather than the song
+     * finishing. Drops the cached URL, re-resolves the same track and resumes from the
+     * point the audio stopped. Returns true when a recovery was started, so the caller
+     * should not advance the queue.
+     */
+    private fun recoverFromTruncatedStream(): Boolean {
+        val player = SongPlayer.exoPlayer ?: return false
+        val duration = player.duration
+        val position = player.currentPosition
+        // Only meaningful with a known duration, and only when a real chunk is missing.
+        if (duration <= 0L || position <= 0L) return false
+        if (position >= (duration * 9) / 10) return false
+
+        val songUrl = currentSongState.songUrl.value
+        if (songUrl.isBlank()) return false
+        // One attempt per track, cleared whenever a different track starts.
+        if (truncationRecoveryFor == songUrl) return false
+        truncationRecoveryFor = songUrl
+
+        android.util.Log.w(
+            "PlaybackService",
+            "Stream ended early at ${position}ms of ${duration}ms, re-resolving and resuming",
+        )
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "recover",
+            "stream ended early at ${position / 1000}s of ${duration / 1000}s, re-resolving",
+        )
+        com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
+        SongPlayer.invalidateResolvedStream(songUrl)
+        SongPlayer.setRestorePoint(songUrl, position)
+        SongPlayer.playSong(songUrl, applicationContext, currentSongState.songId.value.let { "song/$it" })
+        return true
+    }
+
+    /** The player our [playerListener] is currently attached to, so a crossfade
+     *  swap can detach it from the old player before attaching to the new one. */
+    private var listenerPlayer: Player? = null
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
                 SongPlayer.releaseWakeLock()
+                // A different track is playing, so allow it its own recovery attempt.
+                val playing = currentSongState.songUrl.value
+                if (truncationRecoveryFor != null && truncationRecoveryFor != playing) {
+                    truncationRecoveryFor = null
+                }
+                if (errorRetryFor != null && errorRetryFor != playing) {
+                    errorRetryFor = null
+                }
             }
             if (playbackState == Player.STATE_ENDED) {
+                SongPlayer.exoPlayer?.let { p ->
+                    // The decisive numbers for a track ending early: where it stopped, how
+                    // long the player thinks it is, and how long the catalogue said it is.
+                    // If position is well short of either, the stream ran out, it did not
+                    // finish.
+                    val known = currentSongState.queue.value
+                        .firstOrNull { it.id == currentSongState.songId.value }
+                        ?.durationMs ?: 0
+                    com.music.spotui.data.diagnostics.PlaybackLog.add(
+                        "ended",
+                        "at ${p.currentPosition / 1000}s, player says ${p.duration / 1000}s, " +
+                            "catalogue says ${known / 1000}s, crossfading=${SongPlayer.isCrossfadeActive()}",
+                    )
+                }
                 if (SongPlayer.isCrossfadeActive()) {
                     // Ignore the old player's STATE_ENDED event during an active crossfade.
                     // The crossfade routine itself handles the transition and promotes the new player.
                     return
                 }
+                // A stream can run out of data well before the real end of the track,
+                // and ExoPlayer reports that as a normal end. Skipping to the next song
+                // there loses the rest of the track, so re-resolve a fresh URL once and
+                // resume from where the audio stopped.
+                if (recoverFromTruncatedStream()) return
                 SongPlayer.acquireWakeLock(applicationContext, "spotui:advance", 60_000L)
                 when (currentSongState.repeat.value) {
                     RepeatMode.ONE -> {
@@ -154,10 +230,38 @@ class PlaybackService : MediaLibraryService() {
                 "Player error during playback: ${error.message}",
                 error
             )
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "error",
+                "at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s, " +
+                    "${error.errorCodeName}: ${error.message}",
+            )
             SongPlayer.acquireWakeLock(applicationContext, "spotui:error_advance", 60_000L)
             val queue = currentSongState.queue.value
             val curId = currentSongState.songId.value
             val cur = queue.indexOfFirst { it.id == curId }
+            val songUrl = if (cur >= 0) queue[cur].url else currentSongState.songUrl.value
+
+            // The user chose this track, so do not skip straight to the next one on the
+            // first failure. Drop the stale stream, resolve a fresh URL and resume the same
+            // track from where it stopped. Only if the same track fails a second time is the
+            // queue allowed to advance, so a track that truly cannot play still moves on.
+            if (songUrl.isNotBlank() && errorRetryFor != songUrl) {
+                errorRetryFor = songUrl
+                val positionMs = (SongPlayer.exoPlayer?.currentPosition ?: 0L).coerceAtLeast(0L)
+                com.music.spotui.data.diagnostics.PlaybackLog.add(
+                    "error-retry",
+                    "re-resolving same track, resuming at ${positionMs / 1000}s",
+                )
+                com.music.spotui.data.preferences.clearCachedStream(applicationContext, songUrl)
+                SongPlayer.invalidateResolvedStream(songUrl)
+                if (positionMs > 0L) SongPlayer.setRestorePoint(songUrl, positionMs)
+                SongPlayer.playSong(songUrl, applicationContext, "song/${currentSongState.songId.value}")
+                return
+            }
+
+            com.music.spotui.data.diagnostics.PlaybackLog.add(
+                "queue", "advancing after retry failed for the same track",
+            )
             if (cur >= 0) {
                 SongPlayer.invalidateResolvedStream(queue[cur].url)
             }
@@ -237,13 +341,27 @@ class PlaybackService : MediaLibraryService() {
 
         // When a crossfade promotes a new ExoPlayer instance, re-bind the session to it
         // (runs on the main thread; setPlayer is the supported way to swap a session's player).
+        // Track which player currently carries our listener so we can move it
+        // cleanly on a swap. Without this the listener was added to each new
+        // player but never removed from the old one, so a crossfade could leave
+        // it registered on multiple players → duplicate onPlaybackStateChanged /
+        // onPlayerError callbacks (double queue-advances, double error retries).
+        listenerPlayer = base
         SongPlayer.onPlayerCreated = { newPlayer ->
             if (!showingWeb) mediaSession?.player = wrap(newPlayer)
-            newPlayer.addListener(playerListener)
+            if (listenerPlayer !== newPlayer) {
+                listenerPlayer?.removeListener(playerListener)
+                newPlayer.addListener(playerListener)
+                listenerPlayer = newPlayer
+            }
         }
         SongPlayer.onPlayerSwapped = { newPlayer ->
             if (!showingWeb) mediaSession?.player = wrap(newPlayer)
-            newPlayer.addListener(playerListener)
+            if (listenerPlayer !== newPlayer) {
+                listenerPlayer?.removeListener(playerListener)
+                newPlayer.addListener(playerListener)
+                listenerPlayer = newPlayer
+            }
         }
 
         // Keep the notification's repeat icon in sync whenever the repeat mode
@@ -413,6 +531,11 @@ class PlaybackService : MediaLibraryService() {
 
     /** Advance the in-app queue one step in the given direction and start it. */
     private fun advance(forward: Boolean) {
+        com.music.spotui.data.diagnostics.PlaybackLog.add(
+            "queue",
+            (if (forward) "next" else "previous") +
+                " at ${(SongPlayer.exoPlayer?.currentPosition ?: 0L) / 1000}s",
+        )
         if (forward) SongPlayer.next(applicationContext) else SongPlayer.previous(applicationContext)
     }
 
@@ -462,7 +585,7 @@ class PlaybackService : MediaLibraryService() {
     private inner class LibraryCallback : MediaLibrarySession.Callback {
 
         /**
-         * Intercept media button events at the earliest point — BEFORE the session
+         * Intercept media button events at the earliest point, BEFORE the session
          * checks command availability or calls onPlayerCommandRequest. This ensures
          * next/previous work even when MacroDroid dispatches a key event without
          * being a connected MediaController.
@@ -544,9 +667,14 @@ class PlaybackService : MediaLibraryService() {
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
                 "ACTION_CLOSE" -> {
-                    // exit the player and kill the process directly to terminate the app cleanly
+                    // Stop playback and shut the service down gracefully. This runs
+                    // onDestroy (unregister receiver, release WebView/ExoPlayer/session,
+                    // detach listeners) instead of killProcess, which bypassed all of
+                    // that and could leave a stuck notification / leaked WebView on
+                    // some OEMs.
                     SongPlayer.pause()
-                    android.os.Process.killProcess(android.os.Process.myPid())
+                    SongPlayer.stop()
+                    stopSelf()
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
 
@@ -837,8 +965,15 @@ class PlaybackService : MediaLibraryService() {
     override fun onDestroy() {
         serviceScope.cancel()
         runCatching { unregisterReceiver(mediaControlReceiver) }
+        // Detach the listener from whichever player currently holds it (may be a
+        // crossfade-promoted instance, not exoPlayer) and clear BOTH swap
+        // callbacks. onPlayerCreated was previously left set, retaining a lambda
+        // that captured this destroyed service (mediaSession/this) → a leak.
+        listenerPlayer?.removeListener(playerListener)
         SongPlayer.exoPlayer?.removeListener(playerListener)
+        listenerPlayer = null
         SongPlayer.onPlayerSwapped = null
+        SongPlayer.onPlayerCreated = null
         SpotifyWebPlayer.onStateChanged = null
         webPlayer?.release()
         webPlayer = null

@@ -16,15 +16,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
-    <!-- Package visibility queries for Android 11+ to detect Spotify and link handler apps -->
-    <queries>
-        <package android:name="com.spotify.music" />
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https" android:host="open.spotify.com" />
-        </intent>
-    </queries>
-
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
@@ -50,35 +41,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.APP_MUSIC" />
-            </intent-filter>
-
-            <!-- Spotify Web Deep Links -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="open.spotify.com" />
-                <data android:host="spotify.com" />
-                <data android:host="www.spotify.com" />
-                <data android:host="spotify.link" />
-                <data android:host="spotify.app.link" />
-                <data android:host="spotify-alternate.app.link" />
-                <data android:host="spotify.test-app.link" />
-                <data android:host="spotify-alternate.test-app.link" />
-            </intent-filter>
-
-            <!-- Spotify Custom Scheme Deep Links (spotify:) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="spotify" />
             </intent-filter>
         </activity>
 

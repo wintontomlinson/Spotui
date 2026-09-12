@@ -1,46 +1,36 @@
-# Spotui [![Downloads](https://img.shields.io/github/downloads/H4zh4n/Spotui/total?style=for-the-badge&labelColor=0d1117)](https://github.com/H4zh4n/Spotui/releases)
+# Spotu
 
-A Spotify clone for Android, built with Jetpack Compose.
-
-## 💖 Sponsor this project
-
-If you enjoy using this app and want to support its continued development, consider buying me a coffee! 
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/hazhan)
-
-_____________
+A Spotify-style music player for Android, built with Jetpack Compose.
 
 ## Features
 
-It connects to your real Spotify account and mirrors the Spotify experience.
+- 🎵 **Free YouTube search & play** — search any song and play it instantly, **no login required**
+- 🔓 **Login-free by default** — the app opens straight into free mode; connecting a Spotify account is optional
+- 📀 **Spotify integration (optional)** — sign in to browse your playlists, liked songs, followed artists, history and recommendations
+- 📝 **Lyrics** — synced lyrics with a live preview on the player and a full-screen view
+- 🎧 **High-quality audio** — direct audio streaming (ad-free), including lossless FLAC via community providers
+- 🎚️ Crossfade / DJ-style mixing, downloads and offline caching
 
-- 🎵 **Playlists** — browse, play, add/remove tracks, create new playlists, all synced with your Spotify account
-- 📝 **Lyrics** — Spotify's own synced lyrics, with a live preview on the player and a full-screen view
-- 📻 **Spotify recommendations** — the queue continues with Spotify's real track radio (autoplay), so "up next" matches what open.spotify.com would play
-- ❤️ Liked songs, followed artists, listening history and downloads (including lossless FLAC)
+## Install
 
-## Screenshot
+Grab the latest `Spotu_v*.apk` from the build output and sideload it onto your device (Android 8.0+). Enable "install from unknown sources" when prompted.
 
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/dfd41cd7-92a8-46d5-800d-a4ecfddfeef8" width="32%" alt="Screenshot_2026-07-13-21-03-36-065_com music spotui" />
-  <img src="https://github.com/user-attachments/assets/64e1a3d7-fef0-422e-aa80-276e5b66d874" width="32%" alt="Screenshot_2026-07-13-21-01-15-466_com music spotui" />
-  <img src="https://github.com/user-attachments/assets/a64f54b3-f69c-4073-970d-d189d5ed5da5" width="32%" alt="Screenshot_2026-07-13-20-43-45-056_com music spotui" />
-</p>
+## Usage
+
+1. Open the app — it starts in the **Free** tab.
+2. Search for any song and tap to play. That's it.
+3. (Optional) Go to **Settings → Log in to Spotify** to unlock Home, Search and your library.
 
 ## Credits
 
-spotui builds on the work of several open-source projects:
+Spotu builds on the work of several open-source projects:
 
-- [Meld](https://github.com/) — Spotify metadata + YouTube streaming layer
 - [Neptune](https://github.com/navneet851/spotify-clone-jetpack-compose) — the original Jetpack Compose Spotify clone this app started from
 - [SpotiFLAC](https://github.com/spotbye/SpotiFLAC) — lossless (FLAC) track resolving
 - [SimpMusic](https://github.com/maxrave-dev/SimpMusic) — crossfade / DJ-style audio filter processing
 
+Maintained by **SATYAN SHARMA**.
+
 ## Disclaimer
 
-This project is for educational purposes only. Spotify is a trademark of Spotify AB.
-
-
-### 🌟 What's Different in This Fork?
-This fork includes a completely overhauled lossless audio engine, offline caching, and various UI improvements over the main project.
-➡️ **[Click here to read the full list of features and differences](CHANGELOG.md)**
+This project is for educational purposes only. Spotify is a trademark of Spotify AB and YouTube is a trademark of Google LLC.

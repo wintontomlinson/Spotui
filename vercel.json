@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "mkdir -p public && printf '%s' '<!doctype html><meta charset=\"utf-8\"><title>Spotui</title><body style=\"font-family:system-ui;background:#130824;color:#fff;display:grid;place-items:center;height:100vh;margin:0;text-align:center\"><div><h1 style=\"color:#D4AF37\">Spotui</h1><p>Spotui is an Android app. There is no web deployment.</p><p><a style=\"color:#D4AF37\" href=\"https://github.com/wintontomlinson/Spotui\">View the project on GitHub</a></p></div>' > public/index.html",
+  "outputDirectory": "public",
+  "framework": null,
+  "installCommand": "echo \"no install needed\""
+}

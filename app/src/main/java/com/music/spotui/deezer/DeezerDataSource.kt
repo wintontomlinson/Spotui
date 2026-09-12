@@ -200,12 +200,18 @@ private class DispatchingDataSource(
     }
 
     override fun open(dataSpec: DataSpec): Long {
-        active = if (dataSpec.uri.scheme == DeezerDataSource.SCHEME) deezer else default
-        return active!!.open(dataSpec)
+        val chosen = if (dataSpec.uri.scheme == DeezerDataSource.SCHEME) deezer else default
+        active = chosen
+        return chosen.open(dataSpec)
     }
 
-    override fun read(buffer: ByteArray, offset: Int, length: Int): Int =
-        active!!.read(buffer, offset, length)
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+        // read() must never be called before a successful open(), but guard it anyway: a
+        // bare active!! turned a contract violation or a read after close() into a crash,
+        // where a plain IOException lets the player surface the error and recover.
+        val current = active ?: throw java.io.IOException("DeezerDataSource read before open")
+        return current.read(buffer, offset, length)
+    }
 
     override fun getUri(): Uri? = active?.uri
 

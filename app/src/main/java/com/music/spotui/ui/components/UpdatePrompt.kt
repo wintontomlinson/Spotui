@@ -76,7 +76,7 @@ fun UpdatePrompt() {
         containerColor = Color(0xFF1A1A1A),
         titleContentColor = Color.White,
         title = {
-            Text("Update available — ${info.version}")
+            Text("Update available, ${info.version}")
         },
         text = {
             Column(
@@ -88,7 +88,7 @@ fun UpdatePrompt() {
                     RenderMarkdown(info.releaseBody)
                 } else {
                     Text(
-                        "A new version of Spotui is available.",
+                        "A new version of SOLO is available.",
                         color = Color(0xFFB3B3B3),
                     )
                 }
@@ -103,7 +103,7 @@ fun UpdatePrompt() {
                 }
                 update = null
             }) {
-                Text("Update", color = Color(0xFFB8892B))
+                Text("Update", color = Color(0xFFD4AF37))
             }
         },
         dismissButton = {
@@ -245,7 +245,7 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
 @Composable
 private fun RenderMarkdown(markdown: String) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    val linkColor = Color(0xFFB8892B)
+    val linkColor = Color(0xFFD4AF37)
     val headingColor = Color.White
     val bodyColor = Color(0xFFB3B3B3)
 

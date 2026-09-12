@@ -148,7 +148,7 @@ class AlternativeSearchViewModel @Inject constructor(
                     .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
                     .setUsage(androidx.media3.common.C.USAGE_MEDIA)
                     .build(),
-                false, // don't handle audio focus — this is transient preview
+                false, // don't handle audio focus, this is transient preview
             )
             .setHandleAudioBecomingNoisy(false)
             .build()

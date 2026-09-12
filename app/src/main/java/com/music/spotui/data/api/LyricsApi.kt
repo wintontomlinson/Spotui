@@ -15,7 +15,7 @@ import java.net.URLEncoder
 
 /**
  * Synced lyrics. Primary source is Spotify's own color-lyrics endpoint (the
- * exact synced lyrics the official client shows, fetched by track id) — with
+ * exact synced lyrics the official client shows, fetched by track id), with
  * LRCLIB (lrclib.net, free + key-less) as the fallback for tracks Spotify has
  * no lyrics for or when the track id isn't known.
  *
@@ -23,32 +23,129 @@ import java.net.URLEncoder
  */
 object LyricsApi {
     private const val BASE = "https://lrclib.net/api"
-    private const val UA = "SpotuiSpotifyClone (https://github.com/)"
+
+    // LRCLIB sits behind Cloudflare and rejects generic or placeholder user agents
+    // with a 520. The previous value ended in a bare "https://github.com/" and was
+    // blocked outright, which is why every lookup silently failed. Keep this a real
+    // descriptive agent with a working project URL.
+    private const val UA = "SOLO/1.6.0 (https://github.com/wintontomlinson/Spotui)"
 
     // In-memory cache keyed by "title|artist" so re-opening the lyrics view (or the
     // inline card + full-screen view, which both request the same track) is instant
     // and we never re-hit the network for a track we already resolved this session.
-    // A miss is cached too, but only for MISS_RETRY_MS — a "not found" is often just
+    // A miss is cached too, but only for MISS_RETRY_MS, a "not found" is often just
     // a timeout / flaky network, not a fact, so it becomes retryable.
     private class Miss(val at: Long = System.currentTimeMillis())
-    private const val MISS_RETRY_MS = 120_000L
+
+    // Short enough that a flaky lookup fixes itself while the song is still playing. Two
+    // minutes covered most of a track, so one bad moment meant no lyrics for that play.
+    private const val MISS_RETRY_MS = 25_000L
 
     private val cache = java.util.concurrent.ConcurrentHashMap<String, Any>() // Lyrics | Miss
     private val prefetchScope =
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
+    // The key is built from the de-noised title WITHOUT the " - " split. It used to use
+    // the split title, which meant a track called "Tum Hi Ho - Aashiqui 2" was cached
+    // under "aashiqui 2", so the wrong entry was written and then read back forever.
     private fun cacheKey(title: String, artist: String) =
-        "${cleanTitle(title).lowercase()}|${artist.substringBefore(",").trim().lowercase()}"
+        "${stripNoise(title).lowercase()}|${cleanArtist(artist, title).lowercase()}"
 
     // Strip the noise Spotify puts in titles that LRCLIB doesn't know about:
     // "Song - 2011 Remaster", "Song (feat. X)", "Song [Bonus Track]".
     private val featTag = Regex("""\s*[(\[][^)\]]*(feat\.?|ft\.?|with )[^)\]]*[)\]]""", RegexOption.IGNORE_CASE)
     private val bracketTag = Regex("""\s*[(\[][^)\]]*(remaster|remastered|live|version|edit|mono|stereo|deluxe|bonus)[^)\]]*[)\]]""", RegexOption.IGNORE_CASE)
-    private fun cleanTitle(title: String) =
-        title.substringBefore(" - ")
+    // YouTube titles add a lot of noise LRCLIB does not know about, e.g.
+    // "Song (Official Video)", "Song [Official Music Video]", "Song | Lyrics",
+    // "Song (Audio)", "Song 4K", "Song HD", "Song (Slowed + Reverb)".
+    private val ytNoiseBracket = Regex(
+        """\s*[(\[][^)\]]*(official|music video|lyric|lyrics|audio|visualizer|video|hd|4k|hq|full song|slowed|reverb|remix|cover|performance|mv)[^)\]]*[)\]]""",
+        RegexOption.IGNORE_CASE,
+    )
+    // Anything after a pipe "|" is almost always channel/label promo noise.
+    private val pipeTail = Regex("""\s*\|.*$""")
+    // Bare trailing tokens like "Official Video", "Lyrics", "4K" without brackets.
+    private val bareNoiseTail = Regex(
+        """\s*[-\u2013\u2014]?\s*(official\s*(music\s*)?video|official\s*audio|lyric\s*video|lyrics|full\s*video|full\s*audio|audio|visualizer|hd|4k|hq)\s*$""",
+        RegexOption.IGNORE_CASE,
+    )
+    // Remove all the noise from a raw title WITHOUT splitting on " - " (the split
+    // is handled separately, because YouTube titles are often "Artist - Song").
+    private fun stripNoise(title: String) =
+        title
             .replace(featTag, "")
             .replace(bracketTag, "")
+            .replace(ytNoiseBracket, "")
+            .replace(pipeTail, "")
+            .replace(bareNoiseTail, "")
             .trim()
+
+    /**
+     * The titles worth searching for, best guess first.
+     *
+     * A dash in a title means two completely different things and there is no way to tell
+     * them apart from the string alone:
+     *
+     *   "Arijit Singh - Tum Hi Ho"     the artist, then the song
+     *   "Tum Hi Ho - Aashiqui 2"       the song, then the film or album
+     *
+     * The old code always kept the right-hand side, which turned the second shape into a
+     * search for the album. That did not merely fail: asking LRCLIB for "Aashiqui 2"
+     * returns "Aashiqui 2 Mashup", so the player showed a five minute mashup's lyrics
+     * against a four minute song. Every candidate is tried instead, and when the left side
+     * is the artist it is dropped, because then the right side really is the song.
+     */
+    private fun titleCandidates(title: String, artist: String): List<String> {
+        val stripped = stripNoise(title)
+        val candidates = mutableListOf<String>()
+
+        val dash = stripped.indexOf(" - ")
+        if (dash > 0) {
+            val left = stripped.substring(0, dash).trim()
+            val right = stripped.substring(dash + 3).trim()
+            if (isArtistLike(left, artist)) {
+                // "Artist - Song": the song is on the right, the whole string is noise.
+                candidates += right
+                candidates += stripped
+            } else {
+                // "Song - Album", "Song - Live", "Song - Remix": the song leads. The full
+                // string is tried first because some catalogues index it verbatim.
+                candidates += stripped
+                candidates += left
+                candidates += right
+            }
+        } else {
+            candidates += stripped
+        }
+
+        candidates += title.trim()
+        // Capped, because each candidate costs a request against two providers and the
+        // whole chain is what the user waits on.
+        return candidates.filter { it.isNotBlank() }.distinct().take(3)
+    }
+
+    /** True when [text] names the same act as [artist], ignoring case and punctuation. */
+    private fun isArtistLike(text: String, artist: String): Boolean {
+        fun key(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim()
+        val t = key(text)
+        if (t.isBlank()) return false
+        val a = key(artist)
+        if (a.isBlank()) return false
+        if (a == t || a.contains(t) || t.contains(a)) return true
+        return artist.split(",", "&").any { key(it).let { part -> part.isNotBlank() && part == t } }
+    }
+
+    // Clean an artist string too: YouTube "- Topic" auto-channels and "VEVO"
+    // suffixes confuse the artist match.
+    private val artistNoise = Regex("""\s*-\s*topic$|\s*vevo$""", RegexOption.IGNORE_CASE)
+    private fun cleanArtist(artist: String, title: String = ""): String {
+        val a = artist.substringBefore(",").trim().replace(artistNoise, "").trim()
+        if (a.isNotBlank()) return a
+        // No usable artist (common for YouTube). If the title is "Artist - Song",
+        // recover the artist from the left-hand side.
+        val stripped = stripNoise(title)
+        return if (stripped.contains(" - ")) stripped.substringBefore(" - ").trim() else a
+    }
 
     // Play-queue registry: "title|artist" → Spotify track id, seeded by
     // CurrentSongState.updateQueue so we can hit Spotify's own lyrics endpoint
@@ -75,22 +172,39 @@ object LyricsApi {
         val cached = cache[key]
         if (cached is Lyrics) return
         if (cached is Miss && System.currentTimeMillis() - cached.at < MISS_RETRY_MS) return
-        // Disk cache is already warm — populate in-memory cache without network.
+        // Disk cache is already warm, populate in-memory cache without network.
         LyricsCachePref.get(MyApplication.instance, key)?.let { disk ->
             cache[key] = disk
             return
         }
-        prefetchScope.launch { runCatching { fetch(title, artist, album, durationSec) } }
+        // A prefetch must never record a miss. It runs the instant playback starts, when
+        // the network is often still busy resolving the stream, and a failure there used
+        // to block every real lookup for the next two minutes with no retry and no log:
+        // opening the lyrics a second later returned "not found" without a single request.
+        prefetchScope.launch {
+            runCatching { fetch(title, artist, album, durationSec, cacheMisses = false) }
+        }
     }
 
-    suspend fun fetch(title: String, artist: String, album: String, durationSec: Int): Lyrics? {
+    suspend fun fetch(
+        title: String,
+        artist: String,
+        album: String,
+        durationSec: Int,
+        cacheMisses: Boolean = true,
+    ): Lyrics? {
         val key = cacheKey(title, artist)
         when (val cached = cache[key]) {
             is Lyrics -> return cached
-            is Miss -> if (System.currentTimeMillis() - cached.at < MISS_RETRY_MS) return null
+            is Miss -> if (System.currentTimeMillis() - cached.at < MISS_RETRY_MS) {
+                // Logged, because a silent short-circuit here is indistinguishable from a
+                // provider that returned nothing when reading a device log.
+                Log.d("LyricsApi", "miss still fresh for \"$key\", not retrying yet")
+                return null
+            }
         }
 
-        // 2nd-level cache: disk (survives process death). No expiry — lyrics are
+        // 2nd-level cache: disk (survives process death). No expiry, lyrics are
         // static content that never change for a given song.
         val ctx = MyApplication.instance
         LyricsCachePref.get(ctx, key)?.let { disk ->
@@ -98,23 +212,40 @@ object LyricsApi {
             return disk
         }
 
-        val primaryArtist = artist.substringBefore(",").trim()
-        val cleaned = cleanTitle(title)
+        val primaryArtist = cleanArtist(artist, title)
+        val candidates = titleCandidates(title, artist)
+        val cleaned = candidates.first()
 
-        // 1) Spotify's own color-lyrics — the exact synced lyrics the official app
+        // 1) Spotify's own color-lyrics, the exact synced lyrics the official app
         //    shows, keyed by track id, so no title/artist matching can go wrong.
         // 2) LRCLIB fallback: exact get + fuzzy search fired CONCURRENTLY, then a
         //    title-only search. Serial fallbacks used to stack 3 × 5s timeouts.
         val result = fromSpotify(key) ?: kotlinx.coroutines.coroutineScope {
-            val exact = async(kotlinx.coroutines.Dispatchers.IO) {
-                getExact(cleaned, primaryArtist, album, durationSec)
-            }
+            // getExact needs an artist to match on, so it only helps when we have one.
+            val exact = if (primaryArtist.isNotBlank()) {
+                async(kotlinx.coroutines.Dispatchers.IO) {
+                    getExact(cleaned, primaryArtist, album, durationSec)
+                }
+            } else null
             val fuzzy = async(kotlinx.coroutines.Dispatchers.IO) {
                 search(cleaned, primaryArtist, durationSec)
             }
-            exact.await()
+            exact?.await()
                 ?: fuzzy.await()
-                ?: searchTitleOnly(cleaned, primaryArtist, durationSec)
+                // Every plausible reading of the title is tried, against LRCLIB first and
+                // then KuGou, which carries far more of the Hindi, Punjabi and other
+                // regional catalogue. A dash in a title is ambiguous, so guessing once and
+                // giving up is what left songs without lyrics.
+                ?: candidates.firstNotNullOfOrNull { candidate ->
+                    searchTitleOnly(candidate, primaryArtist, durationSec)
+                }
+                ?: candidates.firstNotNullOfOrNull { candidate ->
+                    fromKuGou(candidate, primaryArtist, durationSec)
+                }
+        }
+        if (result == null && !cacheMisses) {
+            // Leave no trace, so the next real lookup starts clean.
+            return null
         }
         cache[key] = result ?: when (cache[key]) {
             is Lyrics -> return cache[key] as Lyrics
@@ -124,13 +255,20 @@ object LyricsApi {
         // downloaded track) can serve lyrics without a network round-trip.
         if (result != null) {
             LyricsCachePref.put(ctx, key, result)
+            Log.d(
+                "LyricsApi",
+                "resolved \"$title\" by \"$artist\" via candidates $candidates " +
+                    "(${result.lines.size} lines, synced=${result.synced})",
+            )
+        } else {
+            Log.d("LyricsApi", "no lyrics for \"$title\" by \"$artist\", tried $candidates")
         }
         return result
     }
 
     private suspend fun fromSpotify(key: String): Lyrics? {
         val trackId = trackIds[key] ?: return null
-        // The web token expires hourly — refresh before hitting color-lyrics.
+        // The web token expires hourly, refresh before hitting color-lyrics.
         runCatching {
             SpotifyTokenProvider.ensureToken(com.music.spotui.MyApplication.instance)
         }
@@ -146,6 +284,21 @@ object LyricsApi {
                 null
             },
         )
+    }
+
+    /**
+     * KuGou fallback. It returns a raw LRC document, which is parsed with the same
+     * parser used for LRCLIB synced lyrics.
+     */
+    private suspend fun fromKuGou(title: String, artist: String, durationSec: Int): Lyrics? {
+        if (title.isBlank()) return null
+        val lrc = runCatching {
+            com.music.spotui.lyrics.KuGouLyricsProvider.getLyrics(title, artist, durationSec)
+        }.getOrNull() ?: return null
+        val lines = parseLrc(lrc)
+        if (lines.isEmpty()) return null
+        Log.d("LyricsApi", "KuGou hit for \"$title\" by \"$artist\" (${lines.size} lines)")
+        return Lyrics(lines, synced = true)
     }
 
     private fun getExact(title: String, artist: String, album: String, durationSec: Int): Lyrics? {

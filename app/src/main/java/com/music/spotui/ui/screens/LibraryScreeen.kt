@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +40,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -99,7 +103,6 @@ import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.viewmodel.LibraryFilterType
 import com.music.spotui.ui.viewmodel.LibraryViewModel
 
@@ -117,10 +120,154 @@ fun isLibraryEntryDownloaded(context: android.content.Context, entry: LibraryEnt
     }
 }
 
+/**
+ * Per-row overflow menu. A local playlist can be deleted outright; anything else is
+ * removed from the library, which is recorded so derived rows do not come straight back.
+ */
+@Composable
+private fun LibraryRowMenu(
+    entry: com.music.spotui.data.entity.LibraryEntry,
+    onChanged: () -> Unit,
+) {
+    val context = LocalContext.current
+    var showSheet by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val accent = com.music.spotui.ui.theme.Accent
+    val isLocalPlaylist = entry.spotifyId.startsWith("local_pl_")
+
+    Icon(
+        imageVector = Icons.Default.MoreVert,
+        contentDescription = "More options for ${entry.name}",
+        tint = Color.Gray,
+        modifier = Modifier
+            .size(34.dp)
+            .clip(CircleShape)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+            ) { showSheet = true }
+            .padding(7.dp),
+    )
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            containerColor = Color(0xFF1A1A1A),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 8.dp),
+            ) {
+                Text(
+                    text = entry.name,
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp),
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            showSheet = false
+                            confirmDelete = true
+                        }
+                        .padding(20.dp, 14.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = Color(0xFFE0562B),
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = if (isLocalPlaylist) "Delete playlist" else "Remove from library",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        modifier = Modifier.padding(start = 16.dp),
+                    )
+                }
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            containerColor = Color(0xFF241540),
+            title = {
+                Text(
+                    text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = if (isLocalPlaylist) {
+                        "\"${entry.name}\" and the songs you added to it will be deleted. " +
+                            "This cannot be undone."
+                    } else {
+                        "\"${entry.name}\" will be taken out of your library. " +
+                            "You can always open it again from search."
+                    },
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                )
+            },
+            confirmButton = {
+                Text(
+                    text = if (isLocalPlaylist) "Delete" else "Remove",
+                    color = Color(0xFFE0562B),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            if (isLocalPlaylist) {
+                                LocalPlaylistPref.deletePlaylist(context, entry.spotifyId)
+                            }
+                            // Also drop any saved copy, and record the removal so a row
+                            // rebuilt from history does not reappear.
+                            com.music.spotui.data.preferences.OfflineCollectionsPref
+                                .removeCollection(context, entry.spotifyId)
+                            com.music.spotui.data.preferences.LibraryHiddenPref
+                                .hide(context, entry.spotifyId)
+                            Api.HomeCache.library = null
+                            confirmDelete = false
+                            onChanged()
+                        }
+                        .padding(8.dp),
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = "Cancel",
+                    color = accent,
+                    modifier = Modifier
+                        .clickable { confirmDelete = false }
+                        .padding(8.dp),
+                )
+            },
+        )
+    }
+}
+
+/** Which library filters currently have anything behind them. */
+data class LibraryChipAvailability(
+    val hasPlaylists: Boolean = false,
+    val hasAlbums: Boolean = false,
+    val hasDownloads: Boolean = false,
+)
+
 @Composable
 fun LibraryFilterChips(
     selectedFilter: LibraryFilterType,
     isDownloadedOnly: Boolean,
+    availability: LibraryChipAvailability = LibraryChipAvailability(true, true, true),
     onFilterSelected: (LibraryFilterType) -> Unit,
     onToggleDownloaded: () -> Unit,
     onClearFilters: () -> Unit
@@ -141,7 +288,7 @@ fun LibraryFilterChips(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF241540))
                         .clickable { onClearFilters() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -155,36 +302,38 @@ fun LibraryFilterChips(
             }
         }
 
-        item {
-            LibraryChipItem(
-                label = "Playlists",
-                isSelected = selectedFilter == LibraryFilterType.PLAYLISTS,
-                onClick = { onFilterSelected(LibraryFilterType.PLAYLISTS) }
-            )
+        if (availability.hasPlaylists || selectedFilter == LibraryFilterType.PLAYLISTS) {
+            item {
+                LibraryChipItem(
+                    label = "Playlists",
+                    isSelected = selectedFilter == LibraryFilterType.PLAYLISTS,
+                    onClick = { onFilterSelected(LibraryFilterType.PLAYLISTS) }
+                )
+            }
         }
 
-        item {
-            LibraryChipItem(
-                label = "Albums",
-                isSelected = selectedFilter == LibraryFilterType.ALBUMS,
-                onClick = { onFilterSelected(LibraryFilterType.ALBUMS) }
-            )
+        if (availability.hasAlbums || selectedFilter == LibraryFilterType.ALBUMS) {
+            item {
+                LibraryChipItem(
+                    label = "Albums",
+                    isSelected = selectedFilter == LibraryFilterType.ALBUMS,
+                    onClick = { onFilterSelected(LibraryFilterType.ALBUMS) }
+                )
+            }
         }
 
-        item {
-            LibraryChipItem(
-                label = "Artists",
-                isSelected = selectedFilter == LibraryFilterType.ARTISTS,
-                onClick = { onFilterSelected(LibraryFilterType.ARTISTS) }
-            )
-        }
+        // The Artists filter is dropped: it hides every library entry and only shows
+        // followed artists, which do not exist on this login free build, so it always
+        // produced an empty screen.
 
-        item {
-            LibraryChipItem(
-                label = "Downloaded",
-                isSelected = isDownloadedOnly,
-                onClick = { onToggleDownloaded() }
-            )
+        if (availability.hasDownloads || isDownloadedOnly) {
+            item {
+                LibraryChipItem(
+                    label = "Downloaded",
+                    isSelected = isDownloadedOnly,
+                    onClick = { onToggleDownloaded() }
+                )
+            }
         }
     }
 }
@@ -195,16 +344,20 @@ private fun LibraryChipItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) Color(0xFFD4AF37) else Color(0xFF2A2A2A)
-    val textColor = if (isSelected) Color.Black else Color.White
+    val backgroundColor = if (isSelected) Color(0xFFD4AF37) else Color(0xFF1C1C21)
+    val textColor = if (isSelected) Color(0xFF241540) else Color.White
 
     Box(
         modifier = Modifier
-            .height(32.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(34.dp)
+            .clip(RoundedCornerShape(17.dp))
             .background(backgroundColor)
+            .then(
+                if (isSelected) Modifier
+                else Modifier.border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(17.dp))
+            )
             .clickable { onClick() }
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 15.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -240,7 +393,7 @@ fun LibraryScreen(navController: NavController) {
         }
     }
 
-    var gridView by remember { mutableStateOf(isLibraryGridView(context)) }
+
     var showCreateDialog by remember { mutableStateOf(false) }
 
     if (showCreateDialog) {
@@ -303,7 +456,7 @@ fun LibraryScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AppBackgroundBrush)
+            .background(Color(AppBackground.toArgb()))
             .statusBarsPadding()
     ) {
         var searchQuery by remember { mutableStateOf("") }
@@ -331,7 +484,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2A2A2A))
+                    .background(Color(0xFF241540))
                     .clickable { showCreateDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -344,7 +497,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFD4AF37) else Color(0xFF2A2A2A))
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFD4AF37) else Color(0xFF241540))
                     .clickable { isSearchVisible = !isSearchVisible },
                 contentAlignment = Alignment.Center
             ) {
@@ -357,33 +510,14 @@ fun LibraryScreen(navController: NavController) {
             }
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Grid/List View Toggle Button
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF2A2A2A))
-                    .clickable {
-                        gridView = !gridView
-                        setLibraryGridView(context, gridView)
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(if (gridView) R.drawable.ic_view_list else R.drawable.ic_view_grid),
-                    contentDescription = if (gridView) "Show as list" else "Show as grid",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
+            // Grid/list toggle removed: the library is a single, consistent list view.
 
             // Profile / Settings Button
             Box(
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF3A3A3A))
+                    .background(Color(0xFF352E24))
                     .clickable { navController.navigate(Routes.Settings.route) },
                 contentAlignment = Alignment.Center
             ) {
@@ -396,10 +530,27 @@ fun LibraryScreen(navController: NavController) {
             }
         }
 
+        // A filter chip that can only ever lead to a blank screen is worse than no chip
+        // at all, so each one is offered only when it actually has something behind it.
+        // The chip currently in use always stays, otherwise selecting it would make it
+        // vanish along with the only way to switch back.
+        val availableFilters = remember(entries, isDownloadedOnly, context) {
+            val rows = ((entries as? Response.Success)?.data).orEmpty().filterNot {
+                it.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
+                    it.spotifyId == Api.HomeCache.DOWNLOADS_ID
+            }
+            LibraryChipAvailability(
+                hasPlaylists = rows.any { it.isPlaylist },
+                hasAlbums = rows.any { !it.isPlaylist },
+                hasDownloads = rows.any { isLibraryEntryDownloaded(context, it) },
+            )
+        }
+
         // Library Filter Chips bar
         LibraryFilterChips(
             selectedFilter = selectedFilter,
             isDownloadedOnly = isDownloadedOnly,
+            availability = availableFilters,
             onFilterSelected = { libraryViewModel.setFilterType(it) },
             onToggleDownloaded = { libraryViewModel.toggleDownloadedOnly() },
             onClearFilters = { libraryViewModel.clearFilters() }
@@ -424,7 +575,7 @@ fun LibraryScreen(navController: NavController) {
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .height(36.dp)
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF241540))
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
@@ -478,7 +629,7 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier
                         .height(36.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF2A2A2A))
+                        .background(Color(0xFF241540))
                         .clickable { showSortSheet = true }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -508,10 +659,19 @@ fun LibraryScreen(navController: NavController) {
                 val rawEntries = (entries as Response.Success).data
                 val filteredEntries = remember(rawEntries, selectedFilter, isDownloadedOnly, searchQuery, currentSort, isDescending, context) {
                     val filtered = rawEntries.filter { entry ->
+                        // Liked Songs and Downloads live in the quick access grid at the
+                        // top, so drop the pinned rows from the list below to avoid showing
+                        // them twice. The list then holds only real playlists, albums and
+                        // saved collections.
+                        if (entry.spotifyId == Api.HomeCache.LIKED_SONGS_ID ||
+                            entry.spotifyId == Api.HomeCache.DOWNLOADS_ID
+                        ) {
+                            return@filter false
+                        }
                         val matchesCategory = when (selectedFilter) {
                             LibraryFilterType.ALL -> true
                             LibraryFilterType.PLAYLISTS -> entry.isPlaylist
-                            LibraryFilterType.ALBUMS -> !entry.isPlaylist && entry.spotifyId != Api.HomeCache.LIKED_SONGS_ID && entry.spotifyId != Api.HomeCache.DOWNLOADS_ID
+                            LibraryFilterType.ALBUMS -> !entry.isPlaylist
                             LibraryFilterType.ARTISTS -> false
                         }
                         val matchesDownload = if (isDownloadedOnly) isLibraryEntryDownloaded(context, entry) else true
@@ -535,27 +695,20 @@ fun LibraryScreen(navController: NavController) {
                         }
                     }
                 }
-                val showHistoryTile = selectedFilter == LibraryFilterType.ALL && !isDownloadedOnly && searchQuery.isBlank()
+                // Recently played already has a Quick access tile, so the separate history
+                // tile in the list/grid is a duplicate. Turned off.
+                val showHistoryTile = false
 
-                if (gridView) {
-                    LibraryGridScreen(
-                        padding = PaddingValues(0.dp),
-                        entries = filteredEntries,
-                        followedArtists = filteredArtists,
-                        navController = navController,
-                        showHistoryTile = showHistoryTile,
-                        onClearFilters = { libraryViewModel.clearFilters() }
-                    )
-                } else {
-                    SumUpLibraryScreen(
-                        padding = PaddingValues(0.dp),
-                        entries = filteredEntries,
-                        followedArtists = filteredArtists,
-                        navController = navController,
-                        showHistoryTile = showHistoryTile,
-                        onClearFilters = { libraryViewModel.clearFilters() }
-                    )
-                }
+                // The library is list only now, so it always renders the list layout.
+                SumUpLibraryScreen(
+                    padding = PaddingValues(0.dp),
+                    entries = filteredEntries,
+                    followedArtists = filteredArtists,
+                    navController = navController,
+                    showHistoryTile = showHistoryTile,
+                    onClearFilters = { libraryViewModel.clearFilters() },
+                    onLibraryChanged = { libraryViewModel.load() },
+                )
             }
             else -> Box(modifier = Modifier.padding(20.dp, 100.dp)) { Snackbar(showMessage = "Couldn't load your library") }
         }
@@ -577,7 +730,7 @@ fun LibraryScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    HorizontalDivider(color = Color(0xFF241540))
                     Spacer(modifier = Modifier.height(4.dp))
                     LibrarySortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -652,7 +805,8 @@ fun SumUpLibraryScreen(
     followedArtists: List<com.music.spotui.data.entity.ArtistsModel>,
     navController: NavController,
     showHistoryTile: Boolean = true,
-    onClearFilters: () -> Unit = {}
+    onClearFilters: () -> Unit = {},
+    onLibraryChanged: () -> Unit = {},
 ) {
     if (entries.isEmpty() && followedArtists.isEmpty()) {
         Column(
@@ -663,15 +817,15 @@ fun SumUpLibraryScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "No items found",
+                text = "Nothing else here yet",
                 color = Color.White,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Try clearing your active filters or adding more items to your library.",
+                text = "Songs you save and playlists you create will appear here.",
                 color = Color.Gray,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
@@ -686,7 +840,7 @@ fun SumUpLibraryScreen(
             ) {
                 Text(
                     text = "Clear filters",
-                    color = Color.Black,
+                    color = Color(0xFF241540),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -701,70 +855,14 @@ fun SumUpLibraryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(AppBackgroundBrush)
+                .background(Color(0xFF0E0E13))
         ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
-        if (showHistoryTile) {
-            // Listening history & stats entry.
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp, 6.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { navController.navigate(Routes.History.route) }
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(55.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFF27856A)),
-                    ) {
-                        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
-                    }
-                    Column(modifier = Modifier.padding(start = 12.dp)) {
-                        Text(text = "Listening history", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Your plays and stats", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                    }
-                }
-            }
-        }
-        // Local files (imported device audio) entry.
-        item {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp, 6.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { navController.navigate(Routes.LocalFiles.route) }
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(55.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color(0xFF3B5BA5)),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_library_big),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp),
-                    )
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(text = "Local files", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "Music imported from this device", color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                }
-            }
-        }
+        // Premium quick access grid for the destinations that always work.
+        item { LibraryQuickAccess(navController) }
+
+        // The screen already has a "Your Library" title at the top, so the list starts
+        // straight after the quick access grid without a second heading.
         items(entries) { entry ->
             Row(
                 horizontalArrangement = Arrangement.Start,
@@ -827,7 +925,7 @@ fun SumUpLibraryScreen(
                         contentDescription = ""
                     )
                 }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(text = entry.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (entry.isLocal) {
@@ -843,7 +941,19 @@ fun SumUpLibraryScreen(
                         Text(text = entry.subtitle, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
+                // Deleting a playlist used to mean opening it and finding a small icon in
+                // the header, so most people never found it. Every row now carries its own
+                // menu, right where the playlist is.
+                LibraryRowMenu(entry = entry, onChanged = onLibraryChanged)
             }
+        }
+        // When the only entries are the two pinned shortcuts, invite the user to start a
+        // collection so the space below the list is not bare.
+        val hasRealEntries = entries.any {
+            it.spotifyId != Api.HomeCache.LIKED_SONGS_ID && it.spotifyId != Api.HomeCache.DOWNLOADS_ID
+        }
+        if (!hasRealEntries && followedArtists.isEmpty()) {
+            item { LibraryEmptyState(navController) }
         }
         // ── Artists the user follows on Spotify ──
         if (followedArtists.isNotEmpty()) {
@@ -916,41 +1026,51 @@ fun LibraryGridScreen(
     onClearFilters: () -> Unit = {}
 ) {
     if (entries.isEmpty() && followedArtists.isEmpty()) {
+        // Keep quick access reachable even with an empty library, otherwise the grid
+        // view becomes a dead end.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp, vertical = 60.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(padding)
+                .background(Color(0xFF0E0E13)),
         ) {
-            Text(
-                text = "No items found",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Try clearing your active filters or adding more items to your library.",
-                color = Color.Gray,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Box(
+            Spacer(modifier = Modifier.height(10.dp))
+            LibraryQuickAccess(navController)
+            Column(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFFD4AF37))
-                    .clickable { onClearFilters() }
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp, vertical = 36.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "Clear filters",
-                    color = Color.Black,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Nothing else here yet",
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Songs you save and playlists you create will appear here.",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFFD4AF37))
+                        .clickable { onClearFilters() }
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "Clear filters",
+                        color = Color(0xFF241540),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
         return
@@ -960,7 +1080,7 @@ fun LibraryGridScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(AppBackgroundBrush),
+            .background(Color(0xFF0E0E13)),
         contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 130.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -1109,7 +1229,7 @@ private fun LibrarySkeleton(padding: PaddingValues) {
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(AppBackgroundBrush)
+            .background(Color(0xFF0E0E13))
     ) {
         Spacer(modifier = Modifier.height(10.dp))
         repeat(8) {
@@ -1141,4 +1261,254 @@ private fun AccountRow(label: String, tint: Color = Color.White, onClick: () -> 
             .clickable { onClick() }
             .padding(20.dp, 16.dp)
     )
+}
+
+
+/**
+ * Premium quick access grid at the top of the Library. These four destinations
+ * always work regardless of any account state, so they are surfaced as large,
+ * tappable cards instead of being buried in the list below.
+ */
+/**
+ * Shown below the quick access grid when the user has no playlists, albums or offline
+ * collections yet, so the Library never looks empty or broken. Invites creating a
+ * playlist and points at Explore to start adding music.
+ */
+@Composable
+private fun LibraryEmptyState(navController: NavController) {
+    val accent = com.music.spotui.ui.theme.Accent
+    val context = LocalContext.current
+    var showCreate by remember { mutableStateOf(false) }
+    if (showCreate) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showCreate = false },
+            containerColor = Color(0xFF241540),
+            title = { Text("Create playlist", color = Color.White, fontWeight = FontWeight.Bold) },
+            text = {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text("Playlist name", color = Color.Gray) },
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF352E24),
+                        unfocusedContainerColor = Color(0xFF352E24),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = accent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                )
+            },
+            confirmButton = {
+                Text(
+                    "Create", color = accent, fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            val n = name.trim().ifBlank { "My Playlist" }
+                            val created = LocalPlaylistPref.createPlaylist(context, n)
+                            Api.HomeCache.library = null
+                            showCreate = false
+                            navController.navigate(playlistRoute(created.id, created.name))
+                        }
+                        .padding(8.dp),
+                )
+            },
+            dismissButton = {
+                Text(
+                    "Cancel", color = Color.Gray,
+                    modifier = Modifier.clickable { showCreate = false }.padding(8.dp),
+                )
+            },
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.14f)),
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(30.dp),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Build your collection",
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Create a playlist, or like and download songs from Explore. They will all show up here.",
+            color = Color(0xFFB3B3B3),
+            fontSize = 13.sp,
+            lineHeight = 18.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        Spacer(Modifier.height(18.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                "Create playlist",
+                color = Color(0xFF241540),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(accent)
+                    .clickable { showCreate = true }
+                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            )
+            Text(
+                "Explore",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF241540))
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(50))
+                    .clickable { navController.navigate(Routes.YtSearch.route) }
+                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LibraryQuickAccess(navController: NavController) {
+    data class Tile(
+        val label: String,
+        val caption: String,
+        val icon: androidx.compose.ui.graphics.vector.ImageVector,
+        val start: Color,
+        val end: Color,
+        val route: String,
+    )
+
+    // One cohesive palette instead of the old blue/teal/purple mix. Liked songs leads in
+    // the amber accent; the rest are graded dark surfaces with an amber tinted icon, so
+    // the grid reads as one premium set rather than four unrelated colours.
+    // Each tile states how much is actually in it. A tile captioned "Saved offline" that
+    // opens an empty screen is a dead end; a live count sets the expectation up front and
+    // makes the tiles worth glancing at.
+    val tileContext = LocalContext.current
+    val counts = remember {
+        listOf(
+            runCatching { com.music.spotui.data.preferences.getLikedSongs(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getListeningHistory(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getDownloadedSongs(tileContext).size }.getOrDefault(0),
+            runCatching { com.music.spotui.data.preferences.getLocalTracks(tileContext).size }.getOrDefault(0),
+        )
+    }
+
+    /** "12 songs", or a nudge when there is nothing there yet. */
+    fun caption(count: Int, empty: String, noun: String = "song"): String = when (count) {
+        0 -> empty
+        1 -> "1 $noun"
+        else -> "$count ${noun}s"
+    }
+
+    val tiles = listOf(
+        Tile(
+            "Liked songs", caption(counts[0], "Tap the heart on any song"),
+            Icons.Default.Favorite,
+            Color(0xFFD4AF37), Color(0xFFC87F0A),
+            Routes.Liked.route,
+        ),
+        Tile(
+            "Recently played", caption(counts[1], "Nothing played yet", "play"),
+            Icons.Default.DateRange,
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Routes.History.route,
+        ),
+        Tile(
+            "Downloads", caption(counts[2], "Nothing saved offline"),
+            Icons.Default.Add,
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Routes.Downloads.route,
+        ),
+        Tile(
+            "Local files", caption(counts[3], "Music on this device", "track"),
+            Icons.Default.PhoneAndroid,
+            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Routes.LocalFiles.route,
+        ),
+    )
+    val accent = com.music.spotui.ui.theme.Accent
+
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        tiles.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                pair.forEach { tile ->
+                    // The Liked tile is the amber one, so its content is dark for contrast;
+                    // the dark tiles use an amber icon and white text.
+                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF241540) else Color.White
+                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF241540) else accent
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(16.dp),
+                                clip = false,
+                                ambientColor = Color.Black,
+                                spotColor = Color.Black,
+                            )
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                androidx.compose.ui.graphics.Brush.linearGradient(
+                                    listOf(tile.start, tile.end)
+                                )
+                            )
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { navController.navigate(tile.route) }
+                            .padding(16.dp),
+                    ) {
+                        Icon(
+                            tile.icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.height(18.dp))
+                        Text(
+                            text = tile.label,
+                            color = onTile,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = tile.caption,
+                            color = onTile.copy(alpha = 0.72f),
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

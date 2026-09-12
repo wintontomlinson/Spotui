@@ -5,19 +5,21 @@ import android.net.ConnectivityManager
 import com.metrolist.music.constants.AudioQuality
 
 /**
- * User-facing audio quality tiers (Spotify-style). Each maps to the YouTube format
- * selector ([AudioQuality]) and whether to attempt a lossless FLAC source first.
+ * User facing audio quality tiers, each mapping to the YouTube format selector.
+ *
+ * There is no lossless tier. The lossless providers identified tracks by Spotify id
+ * or ISRC, neither of which exists on the login free path, and YouTube itself only
+ * serves lossy audio. Keeping the tier meant every play waited for those providers
+ * to fail before falling back, which cost startup time and delivered nothing.
  */
 enum class StreamQuality(
     val label: String,
     val detail: String,
     val audioQuality: AudioQuality,
-    val lossless: Boolean,
 ) {
-    LOW("Low", "Data saver — smallest size", AudioQuality.LOW, false),
-    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO, false),
-    HIGH("High", "Best compressed quality", AudioQuality.HIGH, false),
-    LOSSLESS("Lossless", "FLAC when available, else High", AudioQuality.HIGH, true),
+    LOW("Low", "Data saver, smallest size", AudioQuality.LOW),
+    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO),
+    HIGH("High", "Best available quality", AudioQuality.HIGH),
 }
 
 private const val PREF = "settings_prefs"
@@ -48,7 +50,11 @@ private fun readQ(c: Context, key: String, def: StreamQuality): StreamQuality =
 private fun writeQ(c: Context, key: String, q: StreamQuality) =
     prefs(c).edit().putString(key, q.name).apply()
 
-fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.HIGH)
+// Default is Normal (the automatic selector). This is safe now that AUTO no longer
+// picks the lowest bitrate on a metered network: findFormat's AUTO branch takes the
+// best stream under a 160 kbps ceiling on cellular and the full best on wifi, so
+// Normal means good quality that adapts to the connection rather than poor mobile audio.
+fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.NORMAL)
 fun setWifiQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_WIFI_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
@@ -60,7 +66,7 @@ fun setCellularQuality(c: Context, q: StreamQuality) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getDownloadQuality(c: Context): StreamQuality = readQ(c, KEY_DL_Q, StreamQuality.LOSSLESS)
+fun getDownloadQuality(c: Context): StreamQuality = readQ(c, KEY_DL_Q, StreamQuality.HIGH)
 fun setDownloadQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_DL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
@@ -77,7 +83,7 @@ fun setPreloadEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_P
 /**
  * YouTube account cookie (captured from an in-app WebView login). Passed to the
  * InnerTube client so age-restricted / login-required videos resolve. Empty when
- * not signed in — the app then uses anonymous YouTube access.
+ * not signed in, the app then uses anonymous YouTube access.
  */
 private const val KEY_YT_COOKIE = "youtube_cookie"
 fun getYoutubeCookie(c: Context): String = prefs(c).getString(KEY_YT_COOKIE, "").orEmpty()
@@ -86,7 +92,7 @@ fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPIS
 
 /**
  * Play audio through Spotify's own web player in a hidden WebView (real Spotify
- * streaming, no decryption/bypass). DEFAULT OFF (and hidden from Settings) — the
+ * streaming, no decryption/bypass). DEFAULT OFF (and hidden from Settings), the
  * YouTube/FLAC engine is the primary source; this path is real-time only with no
  * download/crossfade support.
  */
@@ -103,6 +109,14 @@ fun setVideoFallbackEnabled(c: Context, v: Boolean) =
 /**
  * Crossfade overlap length in ms (0 = off). When > 0, the end of each track is blended
  * into the start of the next over this window.
+ */
+/**
+ * Crossfade is opt in, matching every mainstream player.
+ *
+ * It was briefly enabled by default, which turned out to be unsafe: the crossfade
+ * watcher advances the queue itself once the remaining time drops below the
+ * crossfade window, so any stream whose duration is under reported cuts the track
+ * short and jumps to the next one. Users who want it can set it in Settings.
  */
 fun getCrossfadeMs(c: Context): Int = prefs(c).getInt(KEY_CROSSFADE_MS, 0)
 fun setCrossfadeMs(c: Context, ms: Int) =

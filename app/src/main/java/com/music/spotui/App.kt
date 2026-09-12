@@ -34,18 +34,15 @@ fun App() {
     val playerViewModel: com.music.spotui.ui.viewmodel.PlayerViewModel = hiltViewModel()
     val playerState by playerViewModel.currentSongTitle
     var lastRoute by remember { mutableStateOf<String?>(null) }
-    // Incremented each time the user re-taps the Search bottom-nav icon while
-    // already on the search route, so SearchScreen can focus its text field.
-    var searchFocusTrigger by remember { mutableStateOf(0) }
 
     LaunchedEffect(currentRoute, playerState) {
         if (currentRoute != Routes.Player.route) {
             bottomBarState.value = when (currentRoute) {
-                Routes.Login.route, Routes.Queue.route -> false
+                Routes.Queue.route -> false
                 else -> true
             }
             bottomBarPlayerState.value = when (currentRoute) {
-                Routes.Login.route, Routes.Queue.route -> false
+                Routes.Queue.route -> false
                 else -> playerState.isNotEmpty()
             }
         }
@@ -85,11 +82,10 @@ fun App() {
                 navController = navController,
                 bottomBarState = bottomBarState,
                 bottomBarPlayerState,
-                onSearchReselected = { searchFocusTrigger++ }
             )
         }
     ) {
-        MyNavHost(navHostController = navController, searchFocusTrigger = searchFocusTrigger)
+        MyNavHost(navHostController = navController)
     }
 }
 

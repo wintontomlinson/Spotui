@@ -14,7 +14,7 @@ import kotlin.math.abs
 object KuGouLyricsProvider {
     private const val SEARCH_API = "https://krcs.kugou.com/search"
     private const val DOWNLOAD_API = "https://krcs.kugou.com/download"
-    private const val USER_AGENT = "Spotui-Android/1.0"
+    private const val USER_AGENT = "SOLO/1.6.0 (https://github.com/wintontomlinson/Spotui)"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(6, TimeUnit.SECONDS)
