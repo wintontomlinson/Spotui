@@ -60,6 +60,13 @@ jobs:
         run: |
           mkdir -p artifacts
           find app/build/outputs/apk -name '*.apk' -exec cp {} artifacts/ \;
+          # Also publish a stable, version-independent copy so a single
+          # "latest" download link always works:
+          #   https://github.com/<owner>/<repo>/releases/latest/download/Spotui-latest.apk
+          RELEASE_APK="$(find app/build/outputs/apk/release -name '*.apk' | head -n1)"
+          if [ -n "$RELEASE_APK" ]; then
+            cp "$RELEASE_APK" artifacts/Spotui-latest.apk
+          fi
           ls -lh artifacts
 
       - name: Upload APK artifact
