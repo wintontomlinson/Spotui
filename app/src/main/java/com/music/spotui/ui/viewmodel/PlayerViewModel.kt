@@ -218,6 +218,27 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                 queries += "songs like $artist"
             }
         }
+        // ── Interest-based seeds ──
+        // Mix in the user's most-played artists from listening history so the
+        // auto-queue reflects their actual taste, not only the track that's
+        // playing right now. This makes the continuation feel personalised.
+        runCatching {
+            val history = com.music.spotui.data.preferences.getListeningHistory(
+                com.music.spotui.MyApplication.instance,
+            )
+            history
+                .mapNotNull { it.singer.substringBefore(",").trim().ifBlank { null } }
+                .map { it.removeSuffix(" - Topic").trim() }
+                .groupingBy { it }
+                .eachCount()
+                .entries
+                .sortedByDescending { it.value }   // most-played artists first
+                .take(3)
+                .forEach { (topArtist, _) ->
+                    queries += "$topArtist top songs"
+                    queries += "songs like $topArtist"
+                }
+        }
         // Last-resort net so autoplay always has *something* to continue with.
         queries += "popular trending songs 2026"
         for (query in queries) {

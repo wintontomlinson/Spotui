@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.graphicsLayer
@@ -88,25 +89,27 @@ private val TextFaint = Color(0xFF7A7A85)
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
-    // Cyan + Gold Edition — every tile is tinted from the teal/cyan family with a
-    // couple of warm gold accents so Explore reads as one cohesive premium
-    // palette. Queries lean on recognisable, current playlist-style phrasing so
-    // the live cover art that loads onto each tile is fresh and relatable.
-    BrowseCategory("Trending", "trending hits 2026 official", Color(0xFF0E7C8C)),
-    BrowseCategory("Top Charts", "global top 50 songs official video", Color(0xFFC79A2B)),
-    BrowseCategory("New Releases", "new music this week official", Color(0xFF12909F)),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF1AA6B0)),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF0B6A78)),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF0A5866)),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF167E88)),
-    BrowseCategory("Workout", "gym workout motivation music 2026", Color(0xFF0E7C8C)),
-    BrowseCategory("Romance", "love songs 2026 romantic hits", Color(0xFF1E9FA8)),
-    BrowseCategory("Party", "party dance club anthems 2026", Color(0xFF15A0B4)),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFC79A2B)),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF0B6A78)),
-    BrowseCategory("Sad songs", "sad emotional songs 2026", Color(0xFF0A5866)),
-    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF17B0C4)),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF0E7C8C)),
+    // Spotify-style Explore: each category gets its OWN vibrant hue (like the real
+    // Search page) instead of one flat family, and the queries are tuned to pull
+    // fresh, recognisable cover art onto every tile.
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954)),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300)),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF)),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264)),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B)),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900)),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08)),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C)),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC)),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632)),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896)),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB)),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8)),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750)),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95)),
+    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF509BF5)),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952)),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777)),
 )
 
 /**
@@ -612,10 +615,10 @@ private fun BrowseTile(
                 contentDescription = null,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 0.dp)
-                    .size(66.dp)
-                    .offset(x = 12.dp, y = 8.dp)
+                    .size(72.dp)
+                    .offset(x = 14.dp, y = 6.dp)
                     .rotate(28f)
+                    .shadow(10.dp, RoundedCornerShape(6.dp), clip = false)
                     .clip(RoundedCornerShape(6.dp)),
                 loading = placeholder(R.drawable.placeholder),
                 failure = placeholder(R.drawable.placeholder),
