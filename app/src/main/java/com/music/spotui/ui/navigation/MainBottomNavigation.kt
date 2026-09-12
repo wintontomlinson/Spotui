@@ -72,11 +72,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                 label = "navBarCompression",
             )
             // As the user scrolls down, the floating bar shrinks toward the bottom,
-            // fades out, and slides down a touch so the content is unobstructed —
-            // and springs back up the moment they scroll up.
-            val barScale = 1f - 0.14f * compression
-            val barAlpha = 1f - 0.85f * compression
-            val barTranslateY = 40f * compression
+            // shrinks a little and stays fully visible so the tabs are always
+            // reachable — it never fades away. Springs back to full size on scroll up.
+            val barScale = 1f - 0.12f * compression
+            val barAlpha = 1f - 0.12f * compression
+            val barTranslateY = 8f * compression
 
             Box(
                 contentAlignment = Alignment.BottomCenter,

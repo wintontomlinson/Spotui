@@ -313,7 +313,7 @@ fun SettingsScreen(navController: NavController) {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                    .background(Color(0xFF1E1E24))
+                    .background(Color(0xFF0F4A57))
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -668,8 +668,8 @@ fun SettingsScreen(navController: NavController) {
 
 // Shared surfaces so every settings group reads as one consistent card system.
 private val SettingsAccent = com.music.spotui.ui.theme.Accent
-private val SettingsCard = Color(0xFF1C1C21)
-private val SettingsHairline = Color(0x14FFFFFF)
+private val SettingsCard = Color(0xFF082C34)
+private val SettingsHairline = Color(0x1AE8C24A)
 private val SettingsTextDim = Color(0xFFB3B3B3)
 
 /**
@@ -764,7 +764,7 @@ private fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 // Amber is a light accent, so the thumb goes dark when active.
-                checkedThumbColor = Color(0xFF241540),
+                checkedThumbColor = Color(0xFF042027),
                 checkedTrackColor = SettingsAccent,
                 uncheckedThumbColor = Color(0xFFB3B3B3),
                 uncheckedTrackColor = Color(0xFF2A2A32),
@@ -843,7 +843,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF181818),
+        containerColor = Color(0xFF082C34),
         title = {
             Text(
                 "Playback log",

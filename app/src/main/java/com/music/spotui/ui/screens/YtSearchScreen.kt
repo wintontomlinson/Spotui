@@ -89,20 +89,23 @@ private data class BrowseCategory(val label: String, val query: String, val colo
 private val BROWSE_CATEGORIES = listOf(
     // Cyan + Gold Edition — every tile is tinted from the teal/cyan family with a
     // couple of warm gold accents so Explore reads as one cohesive premium
-    // palette. Trending & Charts lead the grid.
-    BrowseCategory("Trending", "trending songs this week", Color(0xFF0E7C8C)),
-    BrowseCategory("Charts", "top charts this week", Color(0xFFC79A2B)),
-    BrowseCategory("New releases", "new songs this month", Color(0xFF12909F)),
-    BrowseCategory("Bollywood", "bollywood hits", Color(0xFF1AA6B0)),
-    BrowseCategory("Punjabi", "punjabi hits", Color(0xFF0B6A78)),
-    BrowseCategory("Hip-Hop", "hip hop hits", Color(0xFF0A5866)),
-    BrowseCategory("Chill & Lo-Fi", "lofi chill beats", Color(0xFF167E88)),
-    BrowseCategory("Workout", "workout songs", Color(0xFF0E7C8C)),
-    BrowseCategory("Romance", "romantic songs", Color(0xFF1E9FA8)),
-    BrowseCategory("Party", "party songs", Color(0xFF15A0B4)),
-    BrowseCategory("Devotional", "devotional songs", Color(0xFFC79A2B)),
-    BrowseCategory("90s & Retro", "90s hit songs", Color(0xFF0B6A78)),
-    BrowseCategory("Sad songs", "sad songs", Color(0xFF0A5866)),
+    // palette. Queries lean on recognisable, current playlist-style phrasing so
+    // the live cover art that loads onto each tile is fresh and relatable.
+    BrowseCategory("Trending", "trending hits 2026 official", Color(0xFF0E7C8C)),
+    BrowseCategory("Top Charts", "global top 50 songs official video", Color(0xFFC79A2B)),
+    BrowseCategory("New Releases", "new music this week official", Color(0xFF12909F)),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF1AA6B0)),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF0B6A78)),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF0A5866)),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF167E88)),
+    BrowseCategory("Workout", "gym workout motivation music 2026", Color(0xFF0E7C8C)),
+    BrowseCategory("Romance", "love songs 2026 romantic hits", Color(0xFF1E9FA8)),
+    BrowseCategory("Party", "party dance club anthems 2026", Color(0xFF15A0B4)),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFC79A2B)),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF0B6A78)),
+    BrowseCategory("Sad songs", "sad emotional songs 2026", Color(0xFF0A5866)),
+    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF17B0C4)),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF0E7C8C)),
 )
 
 /**
@@ -155,6 +158,8 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
             song.coverUri, song.title, song.singer, true, song.id, index, song.album,
         )
         SongPlayer.playSong(song.url, context, "song/${song.id}")
+        // Fill out the queue with related tracks so autoplay/Queue never stalls.
+        playerViewModel.ensureRadioQueue()
         navController.navigate(Routes.Player.route)
     }
 

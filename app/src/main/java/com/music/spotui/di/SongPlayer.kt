@@ -1922,12 +1922,43 @@ object SongPlayer {
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
+    // A LoudnessEnhancer makes output noticeably louder than plain unity gain.
+    // It attaches to the player's audio session id (which ExoPlayer may assign
+    // asynchronously), so we (re)attach whenever the session id changes.
+    @Volatile private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
+    // Boost in millibels (100 mB = 1 dB). ~7 dB is clearly louder while staying
+    // safe from hard clipping on most tracks.
+    private const val LOUDNESS_TARGET_MB = 700
+
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+    private fun attachLoudness(sessionId: Int) {
+        if (sessionId == androidx.media3.common.C.AUDIO_SESSION_ID_UNSET) return
+        runCatching {
+            loudnessEnhancer?.release()
+            loudnessEnhancer = android.media.audiofx.LoudnessEnhancer(sessionId).apply {
+                setTargetGain(LOUDNESS_TARGET_MB)
+                enabled = true
+            }
+        }.onFailure { Log.w(TAG, "LoudnessEnhancer attach failed", it) }
+    }
+
     private fun ensurePlayer(context: Context) {
         appCtx = context.applicationContext
         if (player == null) {
             val (p, filter) = createPlayerWithFilter(context, handleAudioFocus = true)
             player = p
             currentPlayerFilter = filter
+            // Attach the loudness boost now and again if ExoPlayer swaps the
+            // audio session id later.
+            attachLoudness(p.audioSessionId)
+            p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
+                override fun onAudioSessionIdChanged(
+                    eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
+                    audioSessionId: Int,
+                ) {
+                    attachLoudness(audioSessionId)
+                }
+            })
             onPlayerCreated?.invoke(p)
         }
     }
@@ -2123,6 +2154,8 @@ object SongPlayer {
         positionWatchJob?.cancel()
         cancelCrossfade()
         releaseWakeLock("spotui:release")
+        runCatching { loudnessEnhancer?.release() }
+        loudnessEnhancer = null
         player?.release()
         player = null
         loadedQuery = null

@@ -133,6 +133,36 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // never stalls waiting on a fetch — the queue keeps filling automatically.
     private val radioPrefetchBuffer = 4
 
+    /**
+     * Proactively fill a short queue with related tracks the moment playback
+     * starts, so the Queue screen and autoplay are never stuck on a single song.
+     * Safe to call on every play — it no-ops when the queue is already healthy or
+     * a fetch is already in flight.
+     */
+    fun ensureRadioQueue() {
+        if (!autoplayRadioEnabled) return
+        val q = currentSongState.queue.value
+        if (q.isEmpty() || q.size >= 5) return
+        if (!radioLoading.compareAndSet(false, true)) return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val existing = currentSongState.queue.value
+                val existingIds = existing.map { it.id }.toSet()
+                val seeds = existing.takeLast(8)
+                    .mapNotNull { it.spotifyTrackId.ifBlank { null } }
+                    .distinct()
+                val fresh = if (seeds.isNotEmpty()) {
+                    repository.provideRecommendations(seeds).filter { it.id !in existingIds }
+                } else {
+                    fetchYoutubeRelated(existing).filter { it.id !in existingIds }
+                }
+                if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
+            } finally {
+                radioLoading.set(false)
+            }
+        }
+    }
+
     private fun maybeExtendRadio(queueSongs: List<SongsModel>, cur: Int) {
         if (!autoplayRadioEnabled) return
         // Start fetching well before the end so related tracks are ready in time.
@@ -171,14 +201,28 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     ): List<SongsModel> {
         val playedIds = queueSongs.map { it.id }.toSet()
         val playedUrls = queueSongs.map { it.url }.toSet()
-        // Seed from the last couple of tracks so the mix stays on-theme.
+        // Seed from the last couple of tracks so the mix stays on-theme. Each seed
+        // gets a couple of query variants (artist mix, then a broader artist-only
+        // and finally a generic "popular songs" net) so a single failing search
+        // never leaves the queue stuck at one track.
         val seedTracks = queueSongs.takeLast(2)
         val out = LinkedHashMap<String, SongsModel>()
+        val queries = LinkedHashSet<String>()
         for (seed in seedTracks) {
             val artist = seed.singer.substringBefore(",").trim()
-            val query = listOf(seed.title, artist, "mix")
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
+            if (seed.title.isNotBlank()) {
+                queries += listOf(seed.title, artist, "mix").filter { it.isNotBlank() }.joinToString(" ")
+            }
+            if (artist.isNotBlank()) {
+                queries += "$artist songs"
+                queries += "songs like $artist"
+            }
+        }
+        // Last-resort net so autoplay always has *something* to continue with.
+        queries += "popular trending songs 2026"
+        for (query in queries) {
+            // Stop once we have a healthy buffer of continuation tracks.
+            if (out.size >= 15) break
             val results = runCatching {
                 com.metrolist.innertube.YouTube
                     .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)

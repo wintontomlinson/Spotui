@@ -97,6 +97,9 @@ fun FreeHomeScreen(navController: NavController) {
                 song.coverUri, song.title, song.singer, true, song.id, index, song.album,
             )
             SongPlayer.playSong(song.url, context, "song/${song.id}")
+            // Kick off autoplay-radio fill so a short list (e.g. a single tapped
+            // trending track) grows into a full queue right away.
+            playerViewModel.ensureRadioQueue()
             navController.navigate(Routes.Player.route)
         }
     }
@@ -234,6 +237,17 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                     ) { onPlay(tracks, index) }
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             ) {
+                // Chart-style rank number so the block reads as a real "top" list.
+                Text(
+                    text = "${index + 1}",
+                    color = if (index < 3) Accent else TextDim,
+                    fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
+                    fontSize = if (index < 3) 18.sp else 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.width(24.dp),
+                )
+                Spacer(Modifier.width(8.dp))
                 GlideImage(
                     modifier = Modifier
                         .size(50.dp)
@@ -287,13 +301,27 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 13.dp),
-    )
+    ) {
+        // A short gold tick before each section title ties the shelves to the
+        // app's accent and gives Home a consistent, premium rhythm.
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Accent),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = title,
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
 }
 
 private val MOODS = listOf(
