@@ -147,6 +147,26 @@ class FreeHomeViewModel @Inject constructor(
 
     fun retry() = refresh()
 
+    // Drives the pull-to-refresh spinner on Home.
+    private val _isRefreshing = androidx.compose.runtime.mutableStateOf(false)
+    val isRefreshing: State<Boolean> get() = _isRefreshing
+
+    /**
+     * Pull-to-refresh entry point: force a full rebuild (fresh trending + rows)
+     * and keep the spinner up briefly so the gesture feels responsive, then hide it.
+     */
+    fun pullRefresh() {
+        _isRefreshing.value = true
+        loaded = true
+        rebuild()
+        viewModelScope.launch {
+            // Give the trending + first rows a moment to come back before hiding
+            // the spinner, so a refresh visibly does something.
+            delay(1200)
+            _isRefreshing.value = false
+        }
+    }
+
     private fun rebuild() {
         val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
         builtFromHistoryTs = history.firstOrNull()?.ts ?: 0L

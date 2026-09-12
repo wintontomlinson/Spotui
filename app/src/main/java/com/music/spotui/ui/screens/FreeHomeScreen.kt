@@ -84,6 +84,7 @@ fun FreeHomeScreen(navController: NavController) {
     val recentlyPlayed by vm.recentlyPlayed
     val trending by vm.trending
     val trendingLoading by vm.trendingLoading
+    val isRefreshing by vm.isRefreshing
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -116,10 +117,16 @@ fun FreeHomeScreen(navController: NavController) {
         }
     }
 
+    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { vm.pullRefresh() },
+        modifier = Modifier
+            .fillMaxSize()
+            .background(com.music.spotui.ui.theme.AppBackgroundBrush),
+    ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(com.music.spotui.ui.theme.AppBackgroundBrush)
             .navBarScroll()
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
@@ -160,6 +167,7 @@ fun FreeHomeScreen(navController: NavController) {
 
         item { Spacer(Modifier.height(20.dp)) }
     }
+    } // PullToRefreshBox
 }
 
 /** Premium greeting masthead: an amber accent bar, a gradient greeting, and a subtitle. */

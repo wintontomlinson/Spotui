@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.graphicsLayer
@@ -557,6 +558,12 @@ private fun FeaturedBrowseTile(
     }
 }
 
+/**
+ * Spotify-style browse card: a short, solid-colour rounded tile with the
+ * category name in bold white at the TOP-LEFT and the live cover art as a small
+ * rotated thumbnail tucked into the BOTTOM-RIGHT corner — exactly like the
+ * category cards on Spotify's Search page.
+ */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun BrowseTile(
@@ -578,69 +585,42 @@ private fun BrowseTile(
 
     Box(
         modifier = modifier
-            .height(150.dp)
-            .clip(RoundedCornerShape(18.dp))
-            // Soft diagonal wash of the tile's cyan hue so it looks intentional
-            // even before (or if) the artwork loads.
-            .background(
-                Brush.linearGradient(
-                    listOf(category.color, category.color.copy(alpha = 0.7f)),
-                )
-            )
-            .border(1.dp, Color(0x33E8C24A), RoundedCornerShape(18.dp))
+            .height(104.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(category.color)
             .clickable(onClick = onClick),
     ) {
-        // Cyan + Gold Edition: the artwork fills the whole tile as a background,
-        // with a cinematic diagonal scrim over it (crossfaded in with a
-        // placeholder) instead of a small tilted corner thumbnail.
+        // Category name — top-left, bold, exactly like Spotify.
+        Text(
+            text = category.label,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(14.dp)
+                .fillMaxWidth(0.62f),
+        )
+        // Cover art — a small tilted thumbnail tucked into the bottom-right,
+        // Spotify's signature browse-card flourish.
         if (cover.isNotBlank()) {
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 0.dp)
+                    .size(66.dp)
+                    .offset(x = 12.dp, y = 8.dp)
+                    .rotate(28f)
+                    .clip(RoundedCornerShape(6.dp)),
                 loading = placeholder(R.drawable.placeholder),
                 failure = placeholder(R.drawable.placeholder),
             )
         }
-        // Diagonal scrim: the tile's own hue at the top-left, transparent in the
-        // middle, fading into the deep cyan canvas at the bottom-right so the
-        // label stays legible over any artwork and the palette stays cohesive.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            category.color.copy(alpha = 0.35f),
-                            Color(0x00041418),
-                            Color(0xE6041418),
-                        ),
-                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                        end = androidx.compose.ui.geometry.Offset.Infinite,
-                    )
-                ),
-        )
-        // Thin gold accent bar above the label — a small premium flourish.
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 14.dp, bottom = 44.dp)
-                .height(3.dp)
-                .width(26.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Accent),
-        )
-        Text(
-            text = category.label,
-            color = Color.White,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.ExtraBold,
-            maxLines = 2,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(14.dp),
-        )
     }
 }
 
@@ -727,23 +707,14 @@ private fun DiscoverPane(
             )
         }
         item {
-            // Explore layout: the first category is a big, full-width featured banner
-            // (the hero of the screen), then the rest fall into the familiar two-column
-            // grid of colourful browse tiles. Each tap runs the seeded search.
+            // Spotify-style Explore: a uniform two-column grid of solid-colour
+            // category cards, each with its name top-left and a tilted cover
+            // thumbnail bottom-right. Every tap runs the seeded search.
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                val featured = BROWSE_CATEGORIES.firstOrNull()
-                val rest = BROWSE_CATEGORIES.drop(1)
-                if (featured != null) {
-                    FeaturedBrowseTile(
-                        category = featured,
-                        onClick = { onPick(featured.query) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                rest.chunked(2).forEach { pair ->
+                BROWSE_CATEGORIES.chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },
