@@ -83,6 +83,7 @@ import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.LikedSongsViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -157,7 +158,7 @@ fun LikedSongsScreen(navController: NavController) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         if (songsResp is Response.Loading) {
             Loader()
@@ -193,7 +194,7 @@ fun LikedSongsScreen(navController: NavController) {
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(AppBackground.toArgb()))
+                        .background(AppBackgroundBrush)
                 ) {
                     item {
                         Column(

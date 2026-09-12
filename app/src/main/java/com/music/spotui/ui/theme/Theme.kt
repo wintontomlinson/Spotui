@@ -25,11 +25,18 @@ private val DarkColorScheme = darkColorScheme(
     primary = RoyalGold,
     onPrimary = Color(0xFF241540),
     secondary = RoyalPurpleLight,
+    onSecondary = Color(0xFF1A0F30),
     tertiary = RoyalGoldLight,
     background = AppBackground,
+    onBackground = Color(0xFFF3ECFF),
     surface = Color(0xFF1A0F30),
+    onSurface = Color(0xFFF3ECFF),
     surfaceVariant = GridBackground,
+    onSurfaceVariant = Color(0xFFD6C9F2),
     primaryContainer = RoyalPurpleDeep,
+    onPrimaryContainer = Color(0xFFF5E09A),
+    secondaryContainer = Color(0xFF2B1D4A),
+    outline = Color(0x33D4AF37),
 )
 
 private val LightColorScheme = lightColorScheme(

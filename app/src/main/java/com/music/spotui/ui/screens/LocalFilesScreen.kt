@@ -58,6 +58,7 @@ import com.music.spotui.data.preferences.getLocalSongs
 import com.music.spotui.data.preferences.removeLocalTrack
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import kotlinx.coroutines.Dispatchers
@@ -111,7 +112,7 @@ fun LocalFilesScreen(navController: NavController) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize().background(Color(AppBackground.toArgb())),
+        modifier = Modifier.fillMaxSize().background(AppBackgroundBrush),
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -140,7 +141,7 @@ fun LocalFilesScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(AppBackground.toArgb()))
+                    .background(AppBackgroundBrush)
                     .consumeWindowInsets(innerPadding)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding())
                     .verticalScroll(rememberScrollState()),

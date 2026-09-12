@@ -78,6 +78,7 @@ import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.categoryRoute
 import com.music.spotui.ui.navigation.showRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.components.AppSearchBar
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -96,7 +97,7 @@ fun SearchScreen(navController: NavController, searchFocusTrigger: Int = 0) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         SumUpSearchScreen(
             navController = navController,
@@ -181,7 +182,7 @@ fun SumUpSearchScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(AppBackgroundBrush)
                 .statusBarsPadding()
 
         ) {
@@ -800,23 +801,27 @@ fun SearchAlbumRow(album: com.music.spotui.data.entity.AlbumsModel, onClick: () 
  * "Charts" lead the grid.
  */
 private val browseCategories: List<Triple<String, Color, String>> = listOf(
-    Triple("Trending", Color(0xFF7C3AED), "Trending music"),
-    Triple("Charts", Color(0xFFB8892B), "Top charts"),
-    Triple("New Releases", Color(0xFF6D28D9), "New releases"),
-    Triple("Made For You", Color(0xFF8B5CF6), "Discover weekly"),
-    Triple("Pop", Color(0xFF9D4EDD), "Pop"),
-    Triple("Hip-Hop", Color(0xFF5B21B6), "Hip hop"),
-    Triple("Rock", Color(0xFF7B2D8E), "Rock"),
-    Triple("Latin", Color(0xFFA23E9C), "Latin"),
-    Triple("R&B", Color(0xFFC08A2E), "R&B"),
-    Triple("K-Pop", Color(0xFF8E44AD), "K-pop"),
-    Triple("Indie", Color(0xFF6247AA), "Indie"),
-    Triple("Dance/Electronic", Color(0xFF4C1D95), "Electronic dance"),
-    Triple("Chill", Color(0xFF5E3A8C), "Chill"),
-    Triple("Workout", Color(0xFF7C3AED), "Workout"),
-    Triple("Jazz", Color(0xFF503750), "Jazz"),
-    Triple("Country", Color(0xFFA05A2C), "Country"),
-    Triple("Metal", Color(0xFF3D2C63), "Metal"),
+    // Display name, tile colour, and the search query used both to open the
+    // category and to resolve its cover art. Queries lean on Spotify's flagship
+    // editorial playlists (Today's Top Hits, RapCaviar, Rock Classics, …) so the
+    // Explore tiles carry professional, recognisable cover art.
+    Triple("Trending", Color(0xFF7C3AED), "Today's Top Hits"),
+    Triple("Charts", Color(0xFFB8892B), "Top 50 Global"),
+    Triple("New Releases", Color(0xFF6D28D9), "New Music Friday"),
+    Triple("Made For You", Color(0xFF8B5CF6), "Discover Weekly"),
+    Triple("Pop", Color(0xFF9D4EDD), "Pop Rising"),
+    Triple("Hip-Hop", Color(0xFF5B21B6), "RapCaviar"),
+    Triple("Rock", Color(0xFF7B2D8E), "Rock Classics"),
+    Triple("Latin", Color(0xFFA23E9C), "Baila Reggaeton"),
+    Triple("R&B", Color(0xFFC08A2E), "Are & Be"),
+    Triple("K-Pop", Color(0xFF8E44AD), "K-Pop Daebak"),
+    Triple("Indie", Color(0xFF6247AA), "Indie Pop"),
+    Triple("Dance/Electronic", Color(0xFF4C1D95), "mint electronic dance"),
+    Triple("Chill", Color(0xFF5E3A8C), "Chill Hits"),
+    Triple("Workout", Color(0xFF7C3AED), "Beast Mode workout"),
+    Triple("Jazz", Color(0xFF503750), "Jazz Classics"),
+    Triple("Country", Color(0xFFA05A2C), "Hot Country"),
+    Triple("Metal", Color(0xFF3D2C63), "Kickass Metal"),
     Triple("Podcasts", Color(0xFF4A3B78), "Podcast"),
 )
 
@@ -870,37 +875,59 @@ private fun BrowseCategoryTile(
     }
     Box(
         modifier = modifier
-            .height(128.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(color)
-            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(14.dp))
+            .height(150.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(
+                // A soft diagonal wash of the tile colour so it looks intentional
+                // even before (or if) the artwork loads.
+                Brush.linearGradient(
+                    colors = listOf(color, color.copy(alpha = 0.75f)),
+                ),
+            )
+            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(16.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
             ) { onClick() },
     ) {
         if (cover.isNotBlank()) {
-            // Full-bleed artwork.
+            // Full-bleed, high-resolution artwork with a smooth crossfade in.
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
+                loading = placeholder(R.drawable.placeholder),
+                failure = placeholder(R.drawable.placeholder),
             )
         }
-        // Royal scrim so the title stays legible over any artwork, tinted with
-        // the tile's own colour at the top for a premium, cohesive look.
+        // Cinematic diagonal scrim (top-left tinted with the tile colour, fading
+        // into the deep royal base at the bottom) so the title stays legible
+        // over any artwork while keeping a premium, cohesive look.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    Brush.verticalGradient(
+                    Brush.linearGradient(
                         colors = listOf(
-                            color.copy(alpha = 0.55f),
-                            Color(0xCC130824),
+                            color.copy(alpha = 0.35f),
+                            Color(0x00130824),
+                            Color(0xE6130824),
                         ),
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset.Infinite,
                     ),
                 ),
+        )
+        // Thin gold accent bar above the label — a small premium flourish.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 14.dp, bottom = 44.dp)
+                .height(3.dp)
+                .width(26.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xFFD4AF37)),
         )
         Text(
             text = name,

@@ -94,6 +94,7 @@ import com.music.spotui.ui.components.SavedInSheet
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -124,7 +125,7 @@ fun AlbumScreen(navController: NavController, albumName: String, artist: String 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         val albumsResponse = (albums as? Response.Success)?.data.orEmpty()
         val songsResponse = (songs as? Response.Success)?.data.orEmpty()
@@ -301,7 +302,7 @@ fun SumUpAlbumScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(AppBackgroundBrush)
                 .verticalScroll(scrollState)
             ) {
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.music.spotui.ui.components.SongOptionsSheet
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -102,7 +103,7 @@ fun QueueScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF130824))
+            .background(AppBackgroundBrush)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -150,7 +151,7 @@ fun QueueContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF130824))
+            .background(AppBackgroundBrush)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

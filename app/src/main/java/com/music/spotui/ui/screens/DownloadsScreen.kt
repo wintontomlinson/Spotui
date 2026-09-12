@@ -80,6 +80,7 @@ import com.music.spotui.data.preferences.isDownloadsSortDescending
 import com.music.spotui.data.preferences.setDownloadsSortOption
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
@@ -158,7 +159,7 @@ fun DownloadsScreen(navController: NavController) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         Scaffold(
             topBar = {
@@ -188,7 +189,7 @@ fun DownloadsScreen(navController: NavController) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(AppBackground.toArgb()))
+                        .background(AppBackgroundBrush)
                         .verticalScroll(scrollState)
                 ) {
                 Column(
