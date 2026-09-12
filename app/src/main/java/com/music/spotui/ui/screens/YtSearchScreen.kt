@@ -85,31 +85,41 @@ private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 private val TextFaint = Color(0xFF7A7A85)
 
-/** Colourful browse tiles shown on the empty search screen, each seeds a search. */
-private data class BrowseCategory(val label: String, val query: String, val color: Color)
+/**
+ * Colourful browse tiles shown on the empty search screen.
+ *  • [query]      — the search actually run when the tile is tapped.
+ *  • [imageQuery] — what the tile's background artwork is resolved from; kept
+ *    close to the visible label so the picture clearly matches the name.
+ */
+private data class BrowseCategory(
+    val label: String,
+    val query: String,
+    val color: Color,
+    val imageQuery: String = query,
+)
 
 private val BROWSE_CATEGORIES = listOf(
-    // Spotify-style Explore: each category gets its OWN vibrant hue (like the real
-    // Search page) instead of one flat family, and the queries are tuned to pull
-    // fresh, recognisable cover art onto every tile.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954)),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300)),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF)),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264)),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B)),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900)),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08)),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C)),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC)),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632)),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896)),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB)),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8)),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750)),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95)),
-    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF509BF5)),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952)),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777)),
+    // Each category has its own vibrant hue plus a name-matched `imageQuery`, so
+    // the full-bleed tile artwork clearly reflects the label. `query` is what
+    // actually runs on tap.
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "trending music"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "top music charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new music release album"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "feel good playlist"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "bollywood movie songs"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "punjabi music singer"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "hip hop rap"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "pop music"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi chill beats"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "gym workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romantic love song"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "party dance club"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "devotional bhajan"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "90s retro music"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad emotional song"),
+    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF509BF5), imageQuery = "kpop"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "english pop music"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "instrumental music"),
 )
 
 /**
@@ -565,7 +575,8 @@ private fun FeaturedBrowseTile(
  * Spotify-style browse card: a short, solid-colour rounded tile with the
  * category name in bold white at the TOP-LEFT and the live cover art as a small
  * rotated thumbnail tucked into the BOTTOM-RIGHT corner — exactly like the
- * category cards on Spotify's Search page.
+ * Explore card: a rounded tile whose FULL background is artwork matched to the
+ * category name, with a dark scrim and the label sitting on top of the image.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -574,56 +585,65 @@ private fun BrowseTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val coverState = androidx.compose.runtime.remember(category.query) {
+    // The tile art is resolved from the category NAME (its imageQuery) so the
+    // picture visibly matches the label, while the tap still runs `query`.
+    val coverState = androidx.compose.runtime.remember(category.imageQuery) {
         androidx.compose.runtime.mutableStateOf(
-            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.query)
+            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.imageQuery)
         )
     }
     val cover = coverState.value
-    androidx.compose.runtime.LaunchedEffect(category.query) {
+    androidx.compose.runtime.LaunchedEffect(category.imageQuery) {
         if (coverState.value.isBlank()) {
-            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.query)
+            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.imageQuery)
         }
     }
 
     Box(
         modifier = modifier
-            .height(104.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .height(130.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(category.color)
             .clickable(onClick = onClick),
     ) {
-        // Category name — top-left, bold, exactly like Spotify.
-        Text(
-            text = category.label,
-            color = Color.White,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(14.dp)
-                .fillMaxWidth(0.62f),
-        )
-        // Cover art — a small tilted thumbnail tucked into the bottom-right,
-        // Spotify's signature browse-card flourish.
+        // Full-bleed artwork: the image related to the category name fills the
+        // WHOLE tile as its background (not a small corner thumbnail).
         if (cover.isNotBlank()) {
             GlideImage(
                 model = cover,
                 contentScale = ContentScale.Crop,
                 contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(72.dp)
-                    .offset(x = 14.dp, y = 6.dp)
-                    .rotate(28f)
-                    .shadow(10.dp, RoundedCornerShape(6.dp), clip = false)
-                    .clip(RoundedCornerShape(6.dp)),
+                modifier = Modifier.matchParentSize(),
                 loading = placeholder(R.drawable.placeholder),
                 failure = placeholder(R.drawable.placeholder),
             )
         }
+        // Dark scrim over the image so the name stays readable on any artwork.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0x22000000),
+                            Color(0x66000000),
+                            Color(0xCC000000),
+                        ),
+                    ),
+                ),
+        )
+        // Category name sitting ON TOP of the image, bottom-left.
+        Text(
+            text = category.label,
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(14.dp),
+        )
     }
 }
 
