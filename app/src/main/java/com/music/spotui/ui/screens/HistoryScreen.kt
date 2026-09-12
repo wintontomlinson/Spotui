@@ -81,6 +81,7 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import java.text.DateFormat
@@ -172,7 +173,7 @@ fun HistoryScreen(navController: NavController) {
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(AppBackground.toArgb()))
+                    .background(AppBackgroundBrush)
                     .statusBarsPadding()
             ) {
                 item {

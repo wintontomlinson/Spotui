@@ -87,6 +87,7 @@ import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.data.preferences.PlaylistSortOption
 import com.music.spotui.data.preferences.getPlaylistSortOption
 import com.music.spotui.data.preferences.isPlaylistSortDescending
@@ -294,7 +295,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         if (songsResp is Response.Loading && playlistResp is Response.Loading) {
             Loader()
@@ -344,7 +345,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(AppBackground.toArgb()))
+                        .background(AppBackgroundBrush)
                 ) {
                 item {
                     Column(

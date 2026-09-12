@@ -252,7 +252,10 @@ class Api @Inject constructor(
             trendKeywords.any { s.title.lowercase().contains(it) }
         }
         // Rotate the "others" by a slowly-changing offset so ordering varies.
-        val bucket = (System.currentTimeMillis() / (4L * 60 * 60 * 1000)).toInt() // 4h buckets
+        // A 1-hour bucket keeps the feed feeling live across background
+        // auto-refreshes and pull-to-refreshes without reshuffling on every
+        // single re-entry.
+        val bucket = (System.currentTimeMillis() / (60L * 60 * 1000)).toInt() // 1h buckets
         val rotatedOthers = if (others.isEmpty()) others else {
             val off = ((bucket % others.size) + others.size) % others.size
             others.drop(off) + others.take(off)

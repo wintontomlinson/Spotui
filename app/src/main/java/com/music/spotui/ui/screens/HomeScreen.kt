@@ -97,6 +97,7 @@ import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.navigation.showRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.theme.GridBackground
 import com.music.spotui.ui.viewmodel.HomeViewModel
@@ -132,7 +133,7 @@ fun HomeScreen(navController: NavController){
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
             .statusBarsPadding()
     ) {
         val feed = (home as? Response.Success)?.data
@@ -287,7 +288,7 @@ fun HomeFeedContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         item {
             HomeHeaderRow(
@@ -570,7 +571,7 @@ private fun HomeMusicFeedContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         item {
             HomeHeaderRow(
@@ -1102,7 +1103,7 @@ private fun HomePodcastsFeedContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         item {
             HomeHeaderRow(
@@ -1231,7 +1232,7 @@ private fun HomeAudiobooksFeedContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         item {
             HomeHeaderRow(
@@ -1442,7 +1443,7 @@ fun SumUpHomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ){
         HomeHeaderRow(
             navController = navController,

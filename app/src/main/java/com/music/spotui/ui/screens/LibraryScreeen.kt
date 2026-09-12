@@ -99,6 +99,7 @@ import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.viewmodel.LibraryFilterType
 import com.music.spotui.ui.viewmodel.LibraryViewModel
 
@@ -302,7 +303,7 @@ fun LibraryScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
             .statusBarsPadding()
     ) {
         var searchQuery by remember { mutableStateOf("") }
@@ -700,7 +701,7 @@ fun SumUpLibraryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFF130824))
+                .background(AppBackgroundBrush)
         ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
         if (showHistoryTile) {
@@ -959,7 +960,7 @@ fun LibraryGridScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF130824)),
+            .background(AppBackgroundBrush),
         contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 130.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -1108,7 +1109,7 @@ private fun LibrarySkeleton(padding: PaddingValues) {
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF130824))
+            .background(AppBackgroundBrush)
     ) {
         Spacer(modifier = Modifier.height(10.dp))
         repeat(8) {

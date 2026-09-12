@@ -72,6 +72,7 @@ import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.ArtistViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
@@ -92,7 +93,7 @@ fun ArtistScreen(navController: NavController, artistName: String, artistId: Str
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         when (val state = overview) {
             is Response.Loading -> Loader()
@@ -161,7 +162,7 @@ private fun ArtistOverviewContent(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(AppBackgroundBrush)
         ) {
         // ── Header: big artist image with scrim + name ──
         item {
@@ -705,7 +706,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
     ) {
         val data = (overview as? Response.Success)?.data
         val releases = data?.popularReleases ?: emptyList()
@@ -725,7 +726,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(AppBackgroundBrush)
         ) {
             item {
                 Row(

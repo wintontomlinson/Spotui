@@ -47,6 +47,7 @@ import com.music.spotui.data.entity.LibraryEntry
 import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.playlistRoute
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.viewmodel.CategoryViewModel
 
 @Composable
@@ -58,7 +59,7 @@ fun CategoryScreen(navController: NavController, genre: String, title: String) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF130824))
+            .background(AppBackgroundBrush)
             .statusBarsPadding()
     ) {
         Row(

@@ -9,8 +9,10 @@ import com.music.spotui.data.entity.HomeFeedModel
 import com.music.spotui.ui.repository.AppRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -53,6 +55,35 @@ class HomeViewModel @Inject constructor(private val repository: AppRepository)  
         fetchPodcasts()
         fetchAudiobooks()
         fetchFollowedArtists()
+        startAutoRefresh()
+    }
+
+    /**
+     * Keep Home feeling alive: every [AUTO_REFRESH_INTERVAL_MS] silently re-pull
+     * the personalized/trending feed and the top-tracks row in the background so
+     * the songs surfaced track what's currently trending and match the user's
+     * interests over time — without the user having to pull-to-refresh. This is
+     * a *silent* refresh (it does not toggle the pull-to-refresh spinner) so it
+     * never interrupts scrolling. The loop lives on [viewModelScope] and so is
+     * cancelled automatically when the ViewModel is cleared.
+     */
+    private fun startAutoRefresh() = viewModelScope.launch(Dispatchers.IO) {
+        while (isActive) {
+            delay(AUTO_REFRESH_INTERVAL_MS)
+            // Bypass the process cache so the feed reorders (trending rotation)
+            // and picks up freshly-personalized content.
+            repository.provideHomeFeed(forceRefresh = true).collect { feed ->
+                _home.value = feed
+            }
+            fetchSongs()
+            fetchAlbums()
+        }
+    }
+
+    private companion object {
+        // 15 minutes: fresh enough to feel live and interest-aware, infrequent
+        // enough to be gentle on battery and the Spotify endpoints.
+        const val AUTO_REFRESH_INTERVAL_MS = 15L * 60 * 1000
     }
 
     fun setSelectedFilter(filter: String) {
