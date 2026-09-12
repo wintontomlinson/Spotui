@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -90,19 +91,22 @@ private val BROWSE_CATEGORIES = listOf(
     // family so Explore reads as one luxurious golden-black palette (the artwork
     // sits full-bleed under a scrim, so these are just the base tint). Queries are
     // tuned to fetch DIFFERENT, category-relatable official cover art.
-    BrowseCategory("Trending", "trending music video 2026", Color(0xFFB8892B)),
-    BrowseCategory("Charts", "billboard hot 100 this week", Color(0xFF8A6A1E)),
-    BrowseCategory("New releases", "brand new songs this week", Color(0xFFA6772A)),
-    BrowseCategory("Bollywood", "bollywood latest hindi songs", Color(0xFFC0862E)),
-    BrowseCategory("Punjabi", "latest punjabi songs 2026", Color(0xFF9A6B24)),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF3A3320)),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to study relax", Color(0xFF5C4A22)),
-    BrowseCategory("Workout", "gym workout motivation mix", Color(0xFFB5602A)),
-    BrowseCategory("Romance", "romantic hindi love songs", Color(0xFF8C5A3C)),
-    BrowseCategory("Party", "party club dance anthems", Color(0xFFCB9A34)),
-    BrowseCategory("Devotional", "bhakti devotional songs", Color(0xFFC08A2E)),
-    BrowseCategory("90s & Retro", "90s bollywood retro classics", Color(0xFF6E5A2C)),
-    BrowseCategory("Sad songs", "sad heartbreak songs", Color(0xFF2E2A1F)),
+    // Colours are only a neutral placeholder shown until the cover art loads —
+    // the tiles are NOT gold-tinted (the artwork sits full-bleed under a plain
+    // dark scrim). Queries are tuned to fetch DIFFERENT, category-relatable art.
+    BrowseCategory("Trending", "top trending songs this week official", Color(0xFF1A1A1C)),
+    BrowseCategory("Charts", "official top 50 chart hits", Color(0xFF1A1A1C)),
+    BrowseCategory("New releases", "brand new songs this week", Color(0xFF1A1A1C)),
+    BrowseCategory("Bollywood", "bollywood latest hindi songs", Color(0xFF1A1A1C)),
+    BrowseCategory("Punjabi", "latest punjabi songs 2026", Color(0xFF1A1A1C)),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF1A1A1C)),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to study relax", Color(0xFF1A1A1C)),
+    BrowseCategory("Workout", "gym workout motivation mix", Color(0xFF1A1A1C)),
+    BrowseCategory("Romance", "best romantic love songs official video", Color(0xFF1A1A1C)),
+    BrowseCategory("Party", "party club dance anthems", Color(0xFF1A1A1C)),
+    BrowseCategory("Devotional", "bhakti devotional songs", Color(0xFF1A1A1C)),
+    BrowseCategory("90s & Retro", "90s bollywood retro classics", Color(0xFF1A1A1C)),
+    BrowseCategory("Sad songs", "sad heartbreak songs", Color(0xFF1A1A1C)),
 )
 
 /**
@@ -490,11 +494,10 @@ private fun BrowseTile(
             .height(128.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(category.color)
-            .border(1.dp, Color(0x33D4AF37), RoundedCornerShape(14.dp))
+            .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(14.dp))
             .clickable(onClick = onClick),
     ) {
-        // Royal Edition: the artwork fills the whole tile as a background, with a
-        // royal gradient scrim over it, instead of a small tilted corner thumbnail.
+        // The artwork fills the whole tile as a background — no gold tint on top.
         if (cover.isNotBlank()) {
             GlideImage(
                 model = cover,
@@ -503,16 +506,17 @@ private fun BrowseTile(
                 modifier = Modifier.matchParentSize(),
             )
         }
-        // Scrim: the tile's own hue at the top fading to the royal canvas, so the
-        // label stays legible over any artwork and the palette stays cohesive.
+        // Plain neutral scrim (transparent → black) only so the label stays
+        // legible over any artwork. No colour tint, so the real cover art shows.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            category.color.copy(alpha = 0.55f),
-                            Color(0xCC000000),
+                            Color.Transparent,
+                            Color(0x99000000),
+                            Color(0xD9000000),
                         )
                     )
                 ),
@@ -538,7 +542,10 @@ private fun DiscoverPane(
     onRemoveRecent: (String) -> Unit,
     onClearRecent: () -> Unit,
 ) {
-    LazyColumn(contentPadding = PaddingValues(bottom = 180.dp)) {
+    LazyColumn(
+        modifier = Modifier.nestedScroll(com.music.spotui.ui.navigation.navBarScrollConnection),
+        contentPadding = PaddingValues(bottom = 180.dp),
+    ) {
         if (recent.isNotEmpty()) {
             item {
                 Row(
@@ -613,9 +620,9 @@ private fun DiscoverPane(
                 )
                 Text(
                     text = "Fresh picks, updated daily",
-                    color = Color(0xFFE8C15A),
+                    color = Color(0xFFB3B3B3),
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }

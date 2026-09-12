@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.shadow
@@ -116,6 +117,8 @@ fun FreeHomeScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            // Drive the bottom nav bar's compress/expand as the user scrolls.
+            .nestedScroll(com.music.spotui.ui.navigation.navBarScrollConnection)
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
     ) {

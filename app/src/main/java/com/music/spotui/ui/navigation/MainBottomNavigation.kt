@@ -95,35 +95,50 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // Compress the bar while the user scrolls down through content:
+                    // it shrinks and drops its labels, then expands again on scroll up.
+                    val compressed by NavBarScrollState.compressed
+                    val barHeight by androidx.compose.animation.core.animateDpAsState(
+                        targetValue = if (compressed) 52.dp else 74.dp,
+                        animationSpec = androidx.compose.animation.core.tween(220),
+                        label = "navBarHeight",
+                    )
+                    val barAlpha by androidx.compose.animation.core.animateFloatAsState(
+                        targetValue = if (compressed) 0.42f else 0.62f,
+                        animationSpec = androidx.compose.animation.core.tween(220),
+                        label = "navBarAlpha",
+                    )
+
                     NavigationBar(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .padding(horizontal = 16.dp, vertical = if (compressed) 3.dp else 6.dp)
                             .fillMaxWidth()
+                            .height(barHeight)
                             // A floating, rounded nav bar that reads as a raised control
                             // surface over the content, rather than icons sitting loose on
                             // the gradient.
                             .shadow(
-                                elevation = 20.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                                elevation = if (compressed) 10.dp else 20.dp,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
                                 clip = false,
                                 ambientColor = Color.Black,
                                 spotColor = Color.Black,
                             )
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
                             // Transparent, glassy nav bar — a translucent black tint so
-                            // content shows through, with a soft gold hairline so the
-                            // pill still reads as a distinct control on the black canvas.
+                            // content shows through (even more see-through when
+                            // compressed), with a soft gold hairline.
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFF141414).copy(alpha = 0.55f),
-                                        Color(0xFF000000).copy(alpha = 0.62f),
+                                        Color(0xFF141414).copy(alpha = barAlpha - 0.10f),
+                                        Color(0xFF000000).copy(alpha = barAlpha),
                                     ),
                                 )
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFE8C15A).copy(alpha = 0.35f),
+                                color = Color(0xFFE8C15A).copy(alpha = 0.30f),
                                 shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
                             ),
                         containerColor = Color.Transparent,
@@ -154,20 +169,22 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                         ), contentDescription = "home"
                                     )
                                 },
-                                label = {
-                                    if (currentTab == item.route) {
-                                        Text(
-                                            color = Color(0xFFE8C15A),
-                                            text = item.label,
-                                            fontSize = 11.sp,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                        )
-                                    } else {
-                                        Text(
-                                            color = Color(0xFFBFB49A),
-                                            text = item.label,
-                                            fontSize = 11.sp
-                                        )
+                                label = if (compressed) null else {
+                                    {
+                                        if (currentTab == item.route) {
+                                            Text(
+                                                color = Color(0xFFE8C15A),
+                                                text = item.label,
+                                                fontSize = 11.sp,
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                            )
+                                        } else {
+                                            Text(
+                                                color = Color(0xFFBFB49A),
+                                                text = item.label,
+                                                fontSize = 11.sp
+                                            )
+                                        }
                                     }
                                 },
                                 onClick = {
@@ -216,7 +233,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                         }
                                     }
                                 },
-                                alwaysShowLabel = true,
+                                alwaysShowLabel = false,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = Color(0xFFE8C15A),

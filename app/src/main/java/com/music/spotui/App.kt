@@ -36,6 +36,8 @@ fun App() {
     var lastRoute by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(currentRoute, playerState) {
+        // A route change means a fresh screen — start the nav bar expanded.
+        com.music.spotui.ui.navigation.NavBarScrollState.reset()
         if (currentRoute != Routes.Player.route) {
             bottomBarState.value = when (currentRoute) {
                 Routes.Queue.route -> false
