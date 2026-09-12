@@ -467,6 +467,91 @@ private fun SearchField(
  * The cover is fetched on first display and cached for the session, so scrolling back
  * costs nothing.
  */
+/**
+ * The big, full-width "featured" Explore banner — the hero at the top of the
+ * grid. Same live cover art as [BrowseTile] but taller and with a "Featured"
+ * kicker above the title so it reads as the headline category.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun FeaturedBrowseTile(
+    category: BrowseCategory,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val coverState = androidx.compose.runtime.remember(category.query) {
+        androidx.compose.runtime.mutableStateOf(
+            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.query)
+        )
+    }
+    val cover = coverState.value
+    androidx.compose.runtime.LaunchedEffect(category.query) {
+        if (coverState.value.isBlank()) {
+            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.query)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .height(190.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(category.color, category.color.copy(alpha = 0.7f)),
+                )
+            )
+            .border(1.dp, Color(0x33E8C24A), RoundedCornerShape(22.dp))
+            .clickable(onClick = onClick),
+    ) {
+        if (cover.isNotBlank()) {
+            GlideImage(
+                model = cover,
+                contentScale = ContentScale.Crop,
+                contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                loading = placeholder(R.drawable.placeholder),
+                failure = placeholder(R.drawable.placeholder),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            category.color.copy(alpha = 0.35f),
+                            Color(0x00041418),
+                            Color(0xF2041418),
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset.Infinite,
+                    )
+                ),
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(18.dp),
+        ) {
+            Text(
+                text = "FEATURED",
+                color = Accent,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 2.sp,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = category.label,
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun BrowseTile(
@@ -637,14 +722,23 @@ private fun DiscoverPane(
             )
         }
         item {
-            // Two column grid of colourful browse tiles. Each is a rounded card in its own
-            // hue with the label bottom-left, the familiar premium browse layout, and each
-            // tap runs the seeded search.
+            // Explore layout: the first category is a big, full-width featured banner
+            // (the hero of the screen), then the rest fall into the familiar two-column
+            // grid of colourful browse tiles. Each tap runs the seeded search.
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                BROWSE_CATEGORIES.chunked(2).forEach { pair ->
+                val featured = BROWSE_CATEGORIES.firstOrNull()
+                val rest = BROWSE_CATEGORIES.drop(1)
+                if (featured != null) {
+                    FeaturedBrowseTile(
+                        category = featured,
+                        onClick = { onPick(featured.query) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                rest.chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },

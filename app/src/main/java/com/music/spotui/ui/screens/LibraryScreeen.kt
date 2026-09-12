@@ -103,6 +103,7 @@ import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
 import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.viewmodel.LibraryFilterType
 import com.music.spotui.ui.viewmodel.LibraryViewModel
 
@@ -152,7 +153,7 @@ private fun LibraryRowMenu(
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
-            containerColor = Color(0xFF1A1A1A),
+            containerColor = Color(0xFF072A31),
         ) {
             Column(
                 modifier = Modifier
@@ -199,7 +200,7 @@ private fun LibraryRowMenu(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            containerColor = Color(0xFF241540),
+            containerColor = Color(0xFF0B3A44),
             title = {
                 Text(
                     text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
@@ -288,7 +289,7 @@ fun LibraryFilterChips(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF0B3A44))
                         .clickable { onClearFilters() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -344,8 +345,8 @@ private fun LibraryChipItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) Color(0xFFE8C24A) else Color(0xFF1C1C21)
-    val textColor = if (isSelected) Color(0xFF241540) else Color.White
+    val backgroundColor = if (isSelected) Color(0xFFE8C24A) else Color(0xFF0B3A44)
+    val textColor = if (isSelected) Color(0xFF0B3A44) else Color.White
 
     Box(
         modifier = Modifier
@@ -400,7 +401,7 @@ fun LibraryScreen(navController: NavController) {
         var playlistNameInput by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            containerColor = Color(0xFF282828),
+            containerColor = Color(0xFF0B3A44),
             title = { Text("Create Local Playlist", color = Color.White, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(
@@ -409,8 +410,8 @@ fun LibraryScreen(navController: NavController) {
                     placeholder = { Text("Playlist name", color = Color.Gray) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF383838),
-                        unfocusedContainerColor = Color(0xFF383838),
+                        focusedContainerColor = Color(0xFF0F4A57),
+                        unfocusedContainerColor = Color(0xFF0F4A57),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         cursorColor = Color(0xFFE8C24A),
@@ -456,7 +457,7 @@ fun LibraryScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(AppBackgroundBrush)
             .statusBarsPadding()
     ) {
         var searchQuery by remember { mutableStateOf("") }
@@ -484,7 +485,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF241540))
+                    .background(Color(0xFF0B3A44))
                     .clickable { showCreateDialog = true },
                 contentAlignment = Alignment.Center
             ) {
@@ -497,7 +498,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFE8C24A) else Color(0xFF241540))
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Color(0xFFE8C24A) else Color(0xFF0B3A44))
                     .clickable { isSearchVisible = !isSearchVisible },
                 contentAlignment = Alignment.Center
             ) {
@@ -517,7 +518,7 @@ fun LibraryScreen(navController: NavController) {
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF352E24))
+                    .background(Color(0xFF0F4A57))
                     .clickable { navController.navigate(Routes.Settings.route) },
                 contentAlignment = Alignment.Center
             ) {
@@ -575,7 +576,7 @@ fun LibraryScreen(navController: NavController) {
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .height(36.dp)
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF0B3A44))
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
@@ -629,7 +630,7 @@ fun LibraryScreen(navController: NavController) {
                     modifier = Modifier
                         .height(36.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xFF241540))
+                        .background(Color(0xFF0B3A44))
                         .clickable { showSortSheet = true }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -716,7 +717,7 @@ fun LibraryScreen(navController: NavController) {
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Color(0xFF072A31)
             ) {
                 Column(
                     modifier = Modifier
@@ -730,7 +731,7 @@ fun LibraryScreen(navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF241540))
+                    HorizontalDivider(color = Color(0xFF0B3A44))
                     Spacer(modifier = Modifier.height(4.dp))
                     LibrarySortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -840,7 +841,7 @@ fun SumUpLibraryScreen(
             ) {
                 Text(
                     text = "Clear filters",
-                    color = Color(0xFF241540),
+                    color = Color(0xFF0B3A44),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -855,7 +856,7 @@ fun SumUpLibraryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFF0E0E13))
+                .background(Color.Transparent)
         ) {
         item { Spacer(modifier = Modifier.height(10.dp)) }
         // Premium quick access grid for the destinations that always work.
@@ -902,7 +903,7 @@ fun SumUpLibraryScreen(
                             .clip(RoundedCornerShape(6.dp))
                             .background(
                                 Brush.linearGradient(
-                                    colors = listOf(Color(0xFF450AF5), Color(0xFF8E8E93))
+                                    colors = listOf(Color(0xFF12909F), Color(0xFF0A5866))
                                 )
                             ),
                     ) {
@@ -916,8 +917,13 @@ fun SumUpLibraryScreen(
                 } else {
                     GlideImage(
                         modifier = Modifier
-                            .size(55.dp)
-                            .clip(RoundedCornerShape(if (entry.isPlaylist) 6.dp else 4.dp)),
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(if (entry.isPlaylist) 10.dp else 6.dp))
+                            .border(
+                                1.dp,
+                                Color.White.copy(alpha = 0.06f),
+                                RoundedCornerShape(if (entry.isPlaylist) 10.dp else 6.dp),
+                            ),
                         model = entry.coverUri,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.placeholder),
@@ -1032,7 +1038,7 @@ fun LibraryGridScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFF0E0E13)),
+                .background(Color.Transparent),
         ) {
             Spacer(modifier = Modifier.height(10.dp))
             LibraryQuickAccess(navController)
@@ -1066,7 +1072,7 @@ fun LibraryGridScreen(
                 ) {
                     Text(
                         text = "Clear filters",
-                        color = Color(0xFF241540),
+                        color = Color(0xFF0B3A44),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1080,7 +1086,7 @@ fun LibraryGridScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF0E0E13)),
+            .background(Color.Transparent),
         contentPadding = PaddingValues(16.dp, 10.dp, 16.dp, 130.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -1100,7 +1106,7 @@ fun LibraryGridScreen(
                             .fillMaxWidth()
                             .aspectRatio(1f)
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xFF27856A)),
+                            .background(Color(0xFF0E7C8C)),
                     ) {
                         Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
                     }
@@ -1146,7 +1152,7 @@ fun LibraryGridScreen(
                             .clip(RoundedCornerShape(6.dp))
                             .background(
                                 Brush.linearGradient(
-                                    colors = listOf(Color(0xFF450AF5), Color(0xFF8E8E93))
+                                    colors = listOf(Color(0xFF12909F), Color(0xFF0A5866))
                                 )
                             ),
                     ) {
@@ -1229,7 +1235,7 @@ private fun LibrarySkeleton(padding: PaddingValues) {
         modifier = Modifier
             .fillMaxSize()
             .padding(padding)
-            .background(Color(0xFF0E0E13))
+            .background(Color.Transparent)
     ) {
         Spacer(modifier = Modifier.height(10.dp))
         repeat(8) {
@@ -1239,11 +1245,11 @@ private fun LibrarySkeleton(padding: PaddingValues) {
                     .fillMaxWidth()
                     .padding(20.dp, 6.dp)
             ) {
-                Box(modifier = Modifier.size(55.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFF1E1E1E)))
+                Box(modifier = Modifier.size(55.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFF0B3A44)))
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Box(modifier = Modifier.height(14.dp).width(160.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF1E1E1E)))
+                    Box(modifier = Modifier.height(14.dp).width(160.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF0B3A44)))
                     Spacer(modifier = Modifier.height(6.dp))
-                    Box(modifier = Modifier.height(11.dp).width(90.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF1E1E1E)))
+                    Box(modifier = Modifier.height(11.dp).width(90.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF0B3A44)))
                 }
             }
         }
@@ -1283,7 +1289,7 @@ private fun LibraryEmptyState(navController: NavController) {
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            containerColor = Color(0xFF241540),
+            containerColor = Color(0xFF0B3A44),
             title = { Text("Create playlist", color = Color.White, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(
@@ -1292,8 +1298,8 @@ private fun LibraryEmptyState(navController: NavController) {
                     placeholder = { Text("Playlist name", color = Color.Gray) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF352E24),
-                        unfocusedContainerColor = Color(0xFF352E24),
+                        focusedContainerColor = Color(0xFF0F4A57),
+                        unfocusedContainerColor = Color(0xFF0F4A57),
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
                         cursorColor = accent,
@@ -1364,7 +1370,7 @@ private fun LibraryEmptyState(navController: NavController) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 "Create playlist",
-                color = Color(0xFF241540),
+                color = Color(0xFF0B3A44),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -1380,7 +1386,7 @@ private fun LibraryEmptyState(navController: NavController) {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF241540))
+                    .background(Color(0xFF0B3A44))
                     .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(50))
                     .clickable { navController.navigate(Routes.YtSearch.route) }
                     .padding(horizontal = 20.dp, vertical = 11.dp),
@@ -1433,19 +1439,19 @@ private fun LibraryQuickAccess(navController: NavController) {
         Tile(
             "Recently played", caption(counts[1], "Nothing played yet", "play"),
             Icons.Default.DateRange,
-            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Color(0xFF0F4A57), Color(0xFF072430),
             Routes.History.route,
         ),
         Tile(
             "Downloads", caption(counts[2], "Nothing saved offline"),
             Icons.Default.Add,
-            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Color(0xFF0F4A57), Color(0xFF072430),
             Routes.Downloads.route,
         ),
         Tile(
             "Local files", caption(counts[3], "Music on this device", "track"),
             Icons.Default.PhoneAndroid,
-            Color(0xFF2C2C34), Color(0xFF1A1A1F),
+            Color(0xFF0F4A57), Color(0xFF072430),
             Routes.LocalFiles.route,
         ),
     )
@@ -1460,8 +1466,8 @@ private fun LibraryQuickAccess(navController: NavController) {
                 pair.forEach { tile ->
                     // The Liked tile is the amber one, so its content is dark for contrast;
                     // the dark tiles use an amber icon and white text.
-                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF241540) else Color.White
-                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF241540) else accent
+                    val onTile = if (tile.route == Routes.Liked.route) Color(0xFF0B3A44) else Color.White
+                    val iconTint = if (tile.route == Routes.Liked.route) Color(0xFF0B3A44) else accent
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -1485,13 +1491,27 @@ private fun LibraryQuickAccess(navController: NavController) {
                             ) { navController.navigate(tile.route) }
                             .padding(16.dp),
                     ) {
-                        Icon(
-                            tile.icon,
-                            contentDescription = null,
-                            tint = iconTint,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(Modifier.height(18.dp))
+                        // Icon sits in a soft rounded chip so each tile has a clear,
+                        // premium focal point rather than a bare glyph.
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (tile.route == Routes.Liked.route)
+                                        Color(0xFF0B3A44).copy(alpha = 0.18f)
+                                    else accent.copy(alpha = 0.14f)
+                                ),
+                        ) {
+                            Icon(
+                                tile.icon,
+                                contentDescription = null,
+                                tint = iconTint,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
                         Text(
                             text = tile.label,
                             color = onTile,
