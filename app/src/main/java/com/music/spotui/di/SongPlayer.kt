@@ -1922,8 +1922,9 @@ object SongPlayer {
     // of the player's full software volume (1.0) we attach an Android
     // LoudnessEnhancer to the audio session and apply a fixed gain. This makes the
     // app feel as loud as the rest of the system at the same device volume.
-    // Gain is in millibels (mB): 800 mB ≈ +8 dB, a solid, non-distorting lift.
-    @Volatile private var loudnessGainMb = 800
+    // Gain is in millibels (mB): 1200 mB ≈ +12 dB, a strong lift so quiet
+    // YouTube/FLAC sources play clearly louder without obvious distortion.
+    @Volatile private var loudnessGainMb = 1200
     @Volatile private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
     @Volatile private var loudnessSessionId = 0
 

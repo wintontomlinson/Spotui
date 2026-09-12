@@ -644,7 +644,7 @@ fun SwipeToPlayNextWrapper(
                     painter = painterResource(id = R.drawable.ic_queue_add),
                     contentDescription = "Play next",
                     // Dark content on the light amber accent keeps the contrast strong.
-                    tint = Color(0xFF16224A),
+                    tint = Color(0xFF1C1C1E),
                     modifier = Modifier.size(24.dp)
                 )
             }

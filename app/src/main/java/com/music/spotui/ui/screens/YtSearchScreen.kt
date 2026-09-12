@@ -86,23 +86,23 @@ private val TextFaint = Color(0xFF7A7A85)
 private data class BrowseCategory(val label: String, val query: String, val color: Color)
 
 private val BROWSE_CATEGORIES = listOf(
-    // Royal Edition — every tile is tinted from the royal-BLUE / gold family so
-    // Explore reads as one premium palette. Trending & Charts lead the grid.
-    // Queries are tuned so each tile's cover art is relatable to the category
-    // (e.g. official playlists / this-year mixes) rather than a random result.
-    BrowseCategory("Trending", "trending music hits playlist", Color(0xFF1E3A8C)),
-    BrowseCategory("Charts", "top 50 global chart songs", Color(0xFFB8892B)),
-    BrowseCategory("New releases", "new music this week playlist", Color(0xFF2447A8)),
-    BrowseCategory("Bollywood", "bollywood top hits playlist", Color(0xFF3A5BBF)),
-    BrowseCategory("Punjabi", "punjabi top hits playlist", Color(0xFF1B4D8C)),
-    BrowseCategory("Hip-Hop", "hip hop rap hits playlist", Color(0xFF13294F)),
-    BrowseCategory("Chill & Lo-Fi", "lofi chill beats to relax playlist", Color(0xFF29527A)),
-    BrowseCategory("Workout", "workout gym motivation playlist", Color(0xFF2C6E8F)),
-    BrowseCategory("Romance", "romantic love songs playlist", Color(0xFF4A5CB8)),
-    BrowseCategory("Party", "party dance hits playlist", Color(0xFF3F51B5)),
-    BrowseCategory("Devotional", "devotional bhajan songs playlist", Color(0xFFC08A2E)),
-    BrowseCategory("90s & Retro", "90s retro classic hits playlist", Color(0xFF34477A)),
-    BrowseCategory("Sad songs", "sad emotional songs playlist", Color(0xFF1F2E5C)),
+    // Golden Black Edition — tiles are tinted from a gold / amber / warm-charcoal
+    // family so Explore reads as one luxurious golden-black palette (the artwork
+    // sits full-bleed under a scrim, so these are just the base tint). Queries are
+    // tuned to fetch DIFFERENT, category-relatable official cover art.
+    BrowseCategory("Trending", "trending music video 2026", Color(0xFFB8892B)),
+    BrowseCategory("Charts", "billboard hot 100 this week", Color(0xFF8A6A1E)),
+    BrowseCategory("New releases", "brand new songs this week", Color(0xFFA6772A)),
+    BrowseCategory("Bollywood", "bollywood latest hindi songs", Color(0xFFC0862E)),
+    BrowseCategory("Punjabi", "latest punjabi songs 2026", Color(0xFF9A6B24)),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF3A3320)),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to study relax", Color(0xFF5C4A22)),
+    BrowseCategory("Workout", "gym workout motivation mix", Color(0xFFB5602A)),
+    BrowseCategory("Romance", "romantic hindi love songs", Color(0xFF8C5A3C)),
+    BrowseCategory("Party", "party club dance anthems", Color(0xFFCB9A34)),
+    BrowseCategory("Devotional", "bhakti devotional songs", Color(0xFFC08A2E)),
+    BrowseCategory("90s & Retro", "90s bollywood retro classics", Color(0xFF6E5A2C)),
+    BrowseCategory("Sad songs", "sad heartbreak songs", Color(0xFF2E2A1F)),
 )
 
 /**
@@ -512,7 +512,7 @@ private fun BrowseTile(
                     Brush.verticalGradient(
                         listOf(
                             category.color.copy(alpha = 0.55f),
-                            Color(0xCC0A1128),
+                            Color(0xCC000000),
                         )
                     )
                 ),

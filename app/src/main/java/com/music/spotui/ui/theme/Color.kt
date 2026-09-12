@@ -15,12 +15,12 @@ val Pink40 = Color(0xFF7D5260)
  * base is a deep royal navy, cards sit one step lighter, and elevated sheets one
  * step lighter again, so the dark UI reads as layered and premium rather than muddy.
  */
-val AppBackground = Color(0xFF0A1128)   // deep royal navy
-val SurfaceElevated = Color(0xFF101A3A)
-val SurfaceCard = Color(0xFF16224A)
-val Hairline = Color(0xFF243056)
+val AppBackground = Color(0xFF000000)   // true black base
+val SurfaceElevated = Color(0xFF121212)
+val SurfaceCard = Color(0xFF1C1C1E)
+val Hairline = Color(0xFF2E2A1F)        // faint gold-tinted hairline
 
-val GridBackground = Color(0xFF16224A)
+val GridBackground = Color(0xFF1C1C1E)
 
 /** Legacy alias kept so existing references compile; points at the real accent now. */
 val AppPalette = Color(0xFFE8C15A)
@@ -38,9 +38,9 @@ val Accent = Color(0xFFE8C15A)          // warm royal gold
 val AccentDark = Color(0xFFB8892B)
 
 /** Content colour for text and icons placed on top of [Accent]. */
-val OnAccent = Color(0xFF0A1128)
+val OnAccent = Color(0xFF000000)
 
-/** Royal-blue ramp for gradients / highlights (replaces the old purple ramp). */
-val RoyalPurpleLight = Color(0xFF7FA0E0)   // light royal blue
-val RoyalPurple = Color(0xFF1E3A8C)        // royal blue
-val RoyalPurpleDeep = Color(0xFF12235C)    // deep royal blue
+/** Gold ramp for gradients / highlights (replaces the old blue ramp). */
+val RoyalPurpleLight = Color(0xFFF3D98B)   // light gold
+val RoyalPurple = Color(0xFFE8C15A)        // gold
+val RoyalPurpleDeep = Color(0xFF8A6A1E)    // deep gold
