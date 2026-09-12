@@ -33,12 +33,11 @@ android {
     // four. Each device only needs its own, so the download drops by roughly the combined
     // size of the other three architectures' native libraries. A universal APK is still
     // produced as a fallback for sideloading onto an unknown device.
+    // ABI splits disabled: ship a single, install-anywhere universal APK per
+    // release instead of separate per-architecture variants.
     splits {
         abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-            isUniversalApk = true
+            isEnable = false
         }
     }
 

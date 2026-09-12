@@ -17,12 +17,12 @@ val Pink40 = Color(0xFF7D5260)
  * makes the dark UI read as layered and premium rather than muddy. Gold is the
  * single accent so the cyan surfaces stay calm and the accent pops.
  */
-val AppBackground = Color(0xFF041418)
-val SurfaceElevated = Color(0xFF072A31)
-val SurfaceCard = Color(0xFF0B3A44)
-val Hairline = Color(0xFF12525E)
+val AppBackground = Color(0xFF020D10)
+val SurfaceElevated = Color(0xFF051F25)
+val SurfaceCard = Color(0xFF082C34)
+val Hairline = Color(0xFF0E4048)
 
-val GridBackground = Color(0xFF0B3A44)
+val GridBackground = Color(0xFF082C34)
 
 /** Legacy alias kept so existing references compile; points at the real accent now. */
 val AppPalette = Color(0xFFE8C24A)
@@ -64,8 +64,8 @@ val CyanDeep = Color(0xFF0A5866)
 val AppBackgroundBrush: androidx.compose.ui.graphics.Brush =
     androidx.compose.ui.graphics.Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF08333B), // lifted dark cyan at the top (under the status bar)
+            Color(0xFF06272D), // lifted dark cyan at the top (under the status bar)
             AppBackground,     // deep cyan base
-            Color(0xFF020A0C), // near-black settle at the bottom
+            Color(0xFF01070A), // near-black settle at the bottom
         ),
     )

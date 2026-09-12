@@ -77,8 +77,8 @@ import com.music.spotui.ui.viewmodel.formatDurationMs
 
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
-private val Surface = Color(0xFF0B3A44)
-private val SurfaceHigh = Color(0xFF0F4A57)
+private val Surface = Color(0xFF082C34)
+private val SurfaceHigh = Color(0xFF0C3A44)
 private val Hairline = Color(0x14FFFFFF)
 private val TextDim = Color(0xFFB3B3B3)
 private val TextFaint = Color(0xFF7A7A85)
