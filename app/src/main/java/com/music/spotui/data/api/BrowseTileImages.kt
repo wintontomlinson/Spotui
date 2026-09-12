@@ -72,17 +72,18 @@ object BrowseTileImages {
                 val year = Calendar.getInstance().get(Calendar.YEAR)
                 val freshQuery = "$genre $year"
 
-                // Prefer SONG / video-style covers first: they give distinct,
-                // current, category-relatable artwork per tile, instead of the same
-                // few generic playlist covers repeating across tiles. Album art next
-                // (also square + specific), then playlist as the last resort — so a
-                // tile always resolves to something but favours varied imagery.
-                val raw = songArt(freshQuery)
+                // Prefer PLAYLIST/MIX covers first: for a category query like
+                // "workout gym motivation songs mix" or "sad emotional breakup
+                // songs mix" the top playlist's artwork is strongly on-theme and
+                // relatable, which is what we want on the tile. Fall back to album
+                // then song art, and try the plain query too, so a tile is never
+                // blank but favours the most category-relevant image.
+                val raw = playlistArt(genre)
+                    ?: playlistArt(freshQuery)
+                    ?: albumArt(genre)
                     ?: albumArt(freshQuery)
                     ?: songArt(genre)
-                    ?: albumArt(genre)
-                    ?: playlistArt(freshQuery)
-                    ?: playlistArt(genre)
+                    ?: songArt(freshQuery)
 
                 // Extra large so the full-bleed tile art stays crisp on high-density
                 // screens (tiles are image-forward, not small thumbnails).
