@@ -117,7 +117,6 @@ private val BROWSE_CATEGORIES = listOf(
     BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "devotional bhajan"),
     BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "90s retro music"),
     BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad emotional song"),
-    BrowseCategory("K-Pop", "kpop hits 2026 official mv", Color(0xFF509BF5), imageQuery = "kpop"),
     BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "english pop music"),
     BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "instrumental music"),
 )
@@ -655,7 +654,9 @@ private fun DiscoverPane(
     onRemoveRecent: (String) -> Unit,
     onClearRecent: () -> Unit,
 ) {
-    LazyColumn(contentPadding = PaddingValues(bottom = 180.dp)) {
+    // Extra bottom room so the last Explore row clears the mini-player + nav bar
+    // and its label is fully readable.
+    LazyColumn(contentPadding = PaddingValues(bottom = 240.dp)) {
         if (recent.isNotEmpty()) {
             item {
                 Row(

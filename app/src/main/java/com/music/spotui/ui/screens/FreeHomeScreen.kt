@@ -117,12 +117,25 @@ fun FreeHomeScreen(navController: NavController) {
         }
     }
 
+    val pullState = androidx.compose.material3.pulltorefresh.rememberPullToRefreshState()
     androidx.compose.material3.pulltorefresh.PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { vm.pullRefresh() },
+        state = pullState,
         modifier = Modifier
             .fillMaxSize()
             .background(com.music.spotui.ui.theme.AppBackgroundBrush),
+        indicator = {
+            // Themed refresh effect: a gold spinner on a deep-cyan pill so the
+            // reload gesture matches the app's cyan+gold look.
+            androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
+                state = pullState,
+                isRefreshing = isRefreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
+                containerColor = com.music.spotui.ui.theme.SurfaceElevated,
+                color = Accent,
+            )
+        },
     ) {
     LazyColumn(
         modifier = Modifier

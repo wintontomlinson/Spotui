@@ -3,11 +3,9 @@ package com.music.spotui.data.api
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.AlbumItem
 import com.metrolist.innertube.models.PlaylistItem
-import com.metrolist.innertube.models.SongItem
 import com.music.spotui.ui.viewmodel.hiResThumbnail
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -50,11 +48,10 @@ object BrowseTileImages {
 
         val url = withContext(Dispatchers.IO) {
             runCatching {
-                // Bias toward current, trending artwork. Uses the real current year
-                // (not a hardcoded one) so this stays fresh in future years too.
-                val year = Calendar.getInstance().get(Calendar.YEAR)
-                val freshQuery = "$genre $year"
-
+                // Only use ALBUM and PLAYLIST art — these are square cover images.
+                // We deliberately do NOT fall back to video/song thumbnails: those
+                // are 16:9 music-video stills / "wallpaper" frames that look wrong
+                // stretched across a tile.
                 suspend fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
                     .getOrNull()?.items?.filterIsInstance<AlbumItem>()
                     ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
@@ -63,18 +60,9 @@ object BrowseTileImages {
                     .getOrNull()?.items?.filterIsInstance<PlaylistItem>()
                     ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
 
-                suspend fun songArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
-                    .getOrNull()?.items?.filterIsInstance<SongItem>()
-                    ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
-
-                // Fresh (year-biased) album → fresh playlist → plain album →
-                // plain playlist → song, so a tile is never left blank.
-                val raw = albumArt(freshQuery)
-                    ?: playlistArt(freshQuery)
-                    ?: albumArt(genre)
-                    ?: playlistArt(genre)
-                    ?: songArt(freshQuery)
-                    ?: songArt(genre)
+                // Album cover first (cleanest), then a playlist cover. No song/video
+                // thumbnail fallback, so no wallpaper-style stills leak in.
+                val raw = albumArt(genre) ?: playlistArt(genre)
 
                 // Extra large so the full-bleed tile art stays crisp on high-density
                 // screens (tiles are image-forward, not small thumbnails).
