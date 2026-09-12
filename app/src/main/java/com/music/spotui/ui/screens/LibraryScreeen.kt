@@ -998,7 +998,9 @@ fun SumUpLibraryScreen(
                 }
             }
         }
-        item { Spacer(modifier = Modifier.height(160.dp)) }
+        // Extra room so the last library row clears the mini-player + nav bar
+        // and is fully visible when scrolled to the bottom.
+        item { Spacer(modifier = Modifier.height(230.dp)) }
     }
     com.music.spotui.ui.components.FastScrollbarForLazyList(
         state = listState,
