@@ -55,15 +55,15 @@ object BrowseTileImages {
                 val year = Calendar.getInstance().get(Calendar.YEAR)
                 val freshQuery = "$genre $year"
 
-                fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
+                suspend fun albumArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_ALBUM)
                     .getOrNull()?.items?.filterIsInstance<AlbumItem>()
                     ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
 
-                fun playlistArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST)
+                suspend fun playlistArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_COMMUNITY_PLAYLIST)
                     .getOrNull()?.items?.filterIsInstance<PlaylistItem>()
                     ?.firstOrNull { !it.thumbnail.isNullOrBlank() }?.thumbnail
 
-                fun songArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
+                suspend fun songArt(q: String): String? = YouTube.search(q, YouTube.SearchFilter.FILTER_SONG)
                     .getOrNull()?.items?.filterIsInstance<SongItem>()
                     ?.firstOrNull { it.thumbnail.isNotBlank() }?.thumbnail
 
