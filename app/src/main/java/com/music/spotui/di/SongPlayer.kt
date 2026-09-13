@@ -116,13 +116,20 @@ object SongPlayer {
         }
         val playingUrl = boundState?.songUrl?.value
         if (!playingUrl.isNullOrBlank()) {
-            exoPlayer?.stop()
-            exoPlayer?.clearMediaItems()
-            if (currentPlayingSong != null) {
-                playSong(currentPlayingSong.url, appContext, "song/${currentPlayingSong.id}")
-            } else {
-                val currentId = boundState?.songId?.value
-                playSong(playingUrl, appContext, if (currentId != null && currentId != 0) "song/$currentId" else null)
+            // ExoPlayer must only be touched on its application (main) thread —
+            // clearCaches can be invoked from Settings/background, so marshal the
+            // stop/clear onto the main thread to avoid "wrong thread" crashes.
+            scope.launch(Dispatchers.Main) {
+                runCatching {
+                    player?.stop()
+                    player?.clearMediaItems()
+                }
+                if (currentPlayingSong != null) {
+                    playSong(currentPlayingSong.url, appContext, "song/${currentPlayingSong.id}")
+                } else {
+                    val currentId = boundState?.songId?.value
+                    playSong(playingUrl, appContext, if (currentId != null && currentId != 0) "song/$currentId" else null)
+                }
             }
         }
     }
@@ -2077,7 +2084,19 @@ object SongPlayer {
         }
     }
 
+    // Debounce guard: a track ending can trigger several advance paths at once
+    // (the media-service STATE_ENDED listener, crossfade finalize, radio
+    // continuation). Collapse a burst into a single advance so no track is
+    // skipped or double-advanced.
+    @Volatile private var lastAdvanceMs = 0L
+
     fun next(context: Context) {
+        val now = System.currentTimeMillis()
+        if (now - lastAdvanceMs < 800L) {
+            android.util.Log.d(TAG, "next: ignored (debounced double-advance)")
+            return
+        }
+        lastAdvanceMs = now
         acquireWakeLock(context, "spotui:next", 60_000L)
         val state = boundState
         if (state == null) {

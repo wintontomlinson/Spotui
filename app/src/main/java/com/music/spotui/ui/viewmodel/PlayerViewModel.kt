@@ -106,7 +106,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         // Register the autoplay-radio provider so the player engine can keep the
         // queue going forever with related / interest-based tracks when a song
         // ends — even from the background media service (no UI needed).
-        SongPlayer.radioProvider = provider@{ queueSongs ->
+        val provider: suspend (List<SongsModel>) -> List<SongsModel> = provider@{ queueSongs ->
             if (!autoplayRadioEnabled) return@provider emptyList()
             val seeds = queueSongs.takeLast(8)
                 .mapNotNull { it.spotifyTrackId.ifBlank { null } }
@@ -118,6 +118,22 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                 fetchYoutubeRelated(queueSongs)
             }
         }
+        radioProvider = provider
+        SongPlayer.radioProvider = provider
+    }
+
+    // Keep a reference to the exact provider lambda WE registered, so onCleared
+    // only removes it if it's still ours (a newer ViewModel may have replaced it).
+    private var radioProvider: (suspend (List<SongsModel>) -> List<SongsModel>)? = null
+
+    override fun onCleared() {
+        super.onCleared()
+        // Avoid leaking this ViewModel through the SongPlayer singleton: drop the
+        // provider only if it still points at ours.
+        if (SongPlayer.radioProvider === radioProvider) {
+            SongPlayer.radioProvider = null
+        }
+        radioProvider = null
     }
 
 
