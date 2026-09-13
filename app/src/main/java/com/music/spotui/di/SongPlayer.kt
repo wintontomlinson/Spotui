@@ -1899,26 +1899,26 @@ object SongPlayer {
     }
 
     /**
-     * Buffering tuned for audio on a slow or flaky connection.
+     * Buffering tuned to minimise stalls / re-buffering for audio.
      *
-     * The stock LoadControl targets video, so it starts playback only after a large
-     * buffer and keeps it modest. For audio on a weak connection the better trade is to
-     * start sooner and then hold a much deeper buffer, so a slow link has room to fill
-     * ahead and a brief dropout does not stall the track.
-     *
-     * - Start playback after 2.5s buffered, and after a rebuffer resume at 5s, so audio
-     *   begins quickly instead of waiting on a video sized prebuffer.
-     * - Keep up to 2 minutes buffered, far more than the default, so on a slow link the
-     *   player keeps pulling ahead while it can and rides out dips without stalling.
+     * Goals:
+     *  - START FAST: begin playback after only ~1s buffered (0.8s) and resume just
+     *    2s after a rebuffer, so there's very little wait/"buffering" spinner.
+     *  - RARELY REBUFFER: keep a large min buffer (50s) and a deep max buffer
+     *    (up to 4 min) so on a slow/flaky link the player pulls far ahead and
+     *    rides out dips without stalling again.
+     *  - KEEP A BACK-BUFFER (30s) so scrubbing backwards doesn't re-download.
+     *  - Prioritise time-over-size so a big audio buffer isn't cut short.
      */
     private fun buildLoadControl(): androidx.media3.exoplayer.LoadControl =
         androidx.media3.exoplayer.DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs = */ 30_000,
-                /* maxBufferMs = */ 120_000,
-                /* bufferForPlaybackMs = */ 2_500,
-                /* bufferForPlaybackAfterRebufferMs = */ 5_000,
+                /* minBufferMs = */ 50_000,
+                /* maxBufferMs = */ 240_000,
+                /* bufferForPlaybackMs = */ 800,
+                /* bufferForPlaybackAfterRebufferMs = */ 2_000,
             )
+            .setBackBuffer(/* backBufferDurationMs = */ 30_000, /* retainBackBufferFromKeyframe = */ true)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 

@@ -107,23 +107,23 @@ private val BROWSE_CATEGORIES = listOf(
     // imageQuery points at recognisable, current hit albums/artists so each tile
     // shows relatable, latest cover art (resolved to a square album cover) rather
     // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "top hits 2026 album"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "billboard hot 100 hits album"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new album 2026"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "feel good hits 2026 album"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "arijit singh hit songs album"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "diljit dosanjh album"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "drake album"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "taylor swift album"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi hip hop beats album"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "beast mode workout album"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romantic love songs album"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "dance party hits album"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "krishna bhajan album"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "90s bollywood hits album"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad songs album"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "the weeknd album"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "peaceful piano instrumental album"),
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "trending"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "madeforyou"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "bollywood"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "punjabi"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "hiphop"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "pop"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romance"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "party"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "devotional"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "retro"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "english"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "instrumental"),
 )
 
 /**
@@ -746,24 +746,43 @@ private fun DiscoverPane(
         }
 
         item {
-            Text(
-                text = "Explore",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 12.dp),
-            )
+            // Explore masthead: a gold accent tick + title + subtitle, matching
+            // the app's Home section headers for a consistent premium look.
+            Column(modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .height(22.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Accent),
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "Explore",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Browse moods, genres & the latest",
+                    color = TextDim,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(start = 14.dp),
+                )
+            }
         }
         item {
-            // Spotify-style Explore: a uniform two-column grid of solid-colour
-            // category cards, each with its name top-left and a tilted cover
-            // thumbnail bottom-right. Every tap runs the seeded search.
+            // A uniform two-column grid of image-forward category cards; every tap
+            // runs the seeded search behind that category.
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 BROWSE_CATEGORIES.chunked(2).forEach { pair ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },
                                 modifier = Modifier.weight(1f))
@@ -774,9 +793,6 @@ private fun DiscoverPane(
                 }
             }
         }
-        // The "Popular searches" chip rows are gone. They were the same idea as the browse
-        // tiles above, a canned search behind a label, only without artwork, so the screen
-        // was asking twice for the same tap. The tiles do the job better.
     }
 }
 
