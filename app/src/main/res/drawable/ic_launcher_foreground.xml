@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Launcher foreground: a five bar waveform, drawn as round capped strokes so every
-  bar is a clean pill. The whole mark sits inside the adaptive icon safe zone (the
-  centre 66 of 108), including the rounded ends of the outer bars, and the bars stay
-  thick enough to stay readable at the smallest launcher size.
+  Launcher foreground: a five bar waveform in royal gold, drawn as round capped
+  strokes so every bar is a clean pill. Sits inside the adaptive icon safe zone
+  (the centre 66 of 108) and stays thick enough to read at the smallest size.
+  Gold glyph over the deep cyan plate = the app's Cyan + Gold identity.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -12,16 +12,16 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Warm shadow under the mark, giving it a little lift off the amber plate. -->
+    <!-- Soft dark shadow under the mark, giving it a little lift off the plate. -->
     <group android:translateY="1.4">
         <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
             android:fillColor="#00000000"
-            android:strokeColor="#3D5C2E02"
+            android:strokeColor="#40010A0C"
             android:strokeWidth="8.4"
             android:strokeLineCap="round" />
     </group>
 
-    <!-- The waveform itself. -->
+    <!-- The gold waveform itself. -->
     <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
         android:fillColor="#00000000"
         android:strokeWidth="8.4"
@@ -33,8 +33,9 @@
                 android:startY="29"
                 android:endX="78"
                 android:endY="79">
-                <item android:offset="0.0" android:color="#FF261A05" />
-                <item android:offset="1.0" android:color="#FF120C02" />
+                <item android:offset="0.0" android:color="#FFF6D879" />
+                <item android:offset="0.5" android:color="#FFE8C24A" />
+                <item android:offset="1.0" android:color="#FFC79A2B" />
             </gradient>
         </aapt:attr>
     </path>

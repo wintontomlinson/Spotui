@@ -2082,6 +2082,8 @@ object SongPlayer {
             ?: q.indexOfFirst { it.url == state.songUrl.value }.takeIf { it >= 0 }
             ?: state.songIndex.value.coerceIn(0, q.size - 1)
         android.util.Log.d(TAG, "next: cur=$cur q.size=${q.size} repeat=${state.repeat.value} curId=$curId")
+        // Keep the queue topped up with related songs as we near the end.
+        prefetchRadioIfNearEnd(cur, q.size)
         val nextIdx: Int
         if (cur < q.size - 1) {
             nextIdx = cur + 1
@@ -2089,8 +2091,11 @@ object SongPlayer {
             if (state.repeat.value == RepeatMode.ALL) {
                 nextIdx = 0
             } else {
-                android.util.Log.d(TAG, "next: at end, repeat off - not advancing")
-                releaseWakeLock("spotui:next")
+                // End of the queue with repeat OFF: instead of stopping, fetch
+                // interest-based related tracks and continue into them so autoplay
+                // keeps going forever (Spotify-style).
+                android.util.Log.d(TAG, "next: at end, repeat off - continuing with radio")
+                continueWithRadio(context)
                 return
             }
         }
@@ -2207,6 +2212,86 @@ object SongPlayer {
     /** Give the player access to the shared queue/now-playing state so it can advance the
      *  app's notion of "current track" itself when a crossfade fires. Called once at startup. */
     fun bindState(state: CurrentSongState) { boundState = state }
+
+    /**
+     * Autoplay "radio" provider: given the current queue, returns related /
+     * interest-based continuation tracks. Registered by PlayerViewModel so the
+     * engine can keep the queue going forever (Spotify-style autoplay) even when
+     * a track ends with repeat OFF. Returns empty on failure.
+     */
+    @Volatile var radioProvider: (suspend (List<com.music.spotui.data.entity.SongsModel>) -> List<com.music.spotui.data.entity.SongsModel>)? = null
+
+    // Guards against two concurrent end-of-queue radio fetches.
+    private val radioFetching = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /**
+     * Fetch related tracks for the current queue and append them, then advance.
+     * Used at the end of the queue (repeat OFF) so playback continues into fresh,
+     * interest-based songs instead of stopping.
+     */
+    private fun continueWithRadio(context: Context) {
+        val state = boundState ?: run { releaseWakeLock("spotui:next"); return }
+        val provider = radioProvider ?: run {
+            android.util.Log.d(TAG, "next: end of queue, no radio provider - stopping")
+            releaseWakeLock("spotui:next")
+            return
+        }
+        if (!radioFetching.compareAndSet(false, true)) { releaseWakeLock("spotui:next"); return }
+        scope.launch {
+            try {
+                val existing = state.queue.value
+                val existingIds = existing.map { it.id }.toSet()
+                val fresh = runCatching { provider(existing) }.getOrDefault(emptyList())
+                    .filter { it.id !in existingIds }
+                if (fresh.isNotEmpty()) {
+                    val newQueue = existing + fresh
+                    withContext(Dispatchers.Main) { state.updateQueue(newQueue) }
+                    // Play the first appended track.
+                    val nextIdx = existing.size
+                    val song = newQueue[nextIdx]
+                    android.util.Log.d(TAG, "next: radio continue -> ${song.title}")
+                    withContext(Dispatchers.Main) {
+                        state.updateSongState(
+                            song.coverUri, song.title, song.singer, true,
+                            song.id, nextIdx, song.album,
+                        )
+                    }
+                    playSong(song.url, context, "song/${song.id}")
+                } else {
+                    android.util.Log.d(TAG, "next: radio returned nothing - stopping")
+                    releaseWakeLock("spotui:next")
+                }
+            } finally {
+                radioFetching.set(false)
+            }
+        }
+    }
+
+    /**
+     * Proactively top up the queue with related tracks while there is still a
+     * couple of songs left, so the next track is ready before the current ends.
+     */
+    private fun prefetchRadioIfNearEnd(cur: Int, queueSize: Int) {
+        val state = boundState ?: return
+        val provider = radioProvider ?: return
+        if (state.repeat.value != RepeatMode.OFF) return
+        // Only when within 2 tracks of the end.
+        if (cur < queueSize - 2) return
+        if (!radioFetching.compareAndSet(false, true)) return
+        scope.launch {
+            try {
+                val existing = state.queue.value
+                val existingIds = existing.map { it.id }.toSet()
+                val fresh = runCatching { provider(existing) }.getOrDefault(emptyList())
+                    .filter { it.id !in existingIds }
+                if (fresh.isNotEmpty()) {
+                    withContext(Dispatchers.Main) { state.updateQueue(existing + fresh) }
+                }
+            } finally {
+                radioFetching.set(false)
+            }
+        }
+    }
 
     fun isCrossfadeActive(): Boolean = isCrossfading
 

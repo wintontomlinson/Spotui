@@ -30,7 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MusicNote
@@ -574,11 +576,9 @@ private fun FeaturedBrowseTile(
 }
 
 /**
- * Spotify-style browse card: a short, solid-colour rounded tile with the
- * category name in bold white at the TOP-LEFT and the live cover art as a small
- * rotated thumbnail tucked into the BOTTOM-RIGHT corner — exactly like the
- * Explore card: a rounded tile whose FULL background is artwork matched to the
- * category name, with a dark scrim and the label sitting on top of the image.
+ * Explore card: a rounded tile whose FULL background is professional artwork
+ * matched to the category, with a colour-tinted diagonal scrim, a gold play chip
+ * top-right, and the label sitting on top of the image bottom-left.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -603,9 +603,10 @@ private fun BrowseTile(
 
     Box(
         modifier = modifier
-            .height(130.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .height(138.dp)
+            .clip(RoundedCornerShape(16.dp))
             .background(category.color)
+            .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(16.dp))
             .clickable(onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
@@ -620,20 +621,40 @@ private fun BrowseTile(
                 failure = placeholder(R.drawable.placeholder),
             )
         }
-        // Dark scrim over the image so the name stays readable on any artwork.
+        // Diagonal scrim that keeps the tile's own colour identity at the top and
+        // deepens to near-black at the bottom so the label is always readable.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
-                    Brush.verticalGradient(
+                    Brush.linearGradient(
                         colors = listOf(
-                            Color(0x22000000),
+                            category.color.copy(alpha = 0.55f),
                             Color(0x66000000),
-                            Color(0xCC000000),
+                            Color(0xE6000000),
                         ),
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset.Infinite,
                     ),
                 ),
         )
+        // A small gold play chip in the top-right — a premium Explore flourish.
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(10.dp)
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(Accent.copy(alpha = 0.92f)),
+        ) {
+            Icon(
+                Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = com.music.spotui.ui.theme.OnAccent,
+                modifier = Modifier.size(16.dp),
+            )
+        }
         // Category name sitting ON TOP of the image, bottom-left.
         Text(
             text = category.label,
