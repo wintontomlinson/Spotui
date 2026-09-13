@@ -101,6 +101,11 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     // at construction (always blank then) and was never updated. UI reads
     // currentSongSinger directly, so this only ever exposed a stale value.
 
+    // Keep a reference to the exact provider lambda WE registered, so onCleared
+    // only removes it if it's still ours (a newer ViewModel may have replaced it).
+    // Declared BEFORE init so the init block can assign it.
+    private var radioProvider: (suspend (List<SongsModel>) -> List<SongsModel>)? = null
+
     init {
         fetchSongs()
         // Register the autoplay-radio provider so the player engine can keep the
@@ -121,10 +126,6 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         radioProvider = provider
         SongPlayer.radioProvider = provider
     }
-
-    // Keep a reference to the exact provider lambda WE registered, so onCleared
-    // only removes it if it's still ours (a newer ViewModel may have replaced it).
-    private var radioProvider: (suspend (List<SongsModel>) -> List<SongsModel>)? = null
 
     override fun onCleared() {
         super.onCleared()
