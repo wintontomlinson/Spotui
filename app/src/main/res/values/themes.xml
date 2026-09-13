@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Solo" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- App base theme: dark background so there's no white flash between the
+         splash and the (always-dark cyan) UI. -->
+    <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
     <style name="splashScreenTheme" parent="Theme.SplashScreen">
-        <!-- The splash shows the launcher icon: the dark waveform foreground on the amber
-             plate colour, so the launch flash matches the icon the user tapped. -->
+        <!-- The splash shows the launcher icon: the gold waveform foreground on the
+             deep-cyan plate colour, so the launch flash matches the new icon. -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="postSplashScreenTheme">@style/Theme.Solo</item>

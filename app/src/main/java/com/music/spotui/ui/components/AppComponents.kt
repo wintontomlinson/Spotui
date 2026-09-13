@@ -473,9 +473,11 @@ fun MiniPlayer(navController: NavHostController) {
                 }
 
 
-                val isLocatingOrBuffering = miniPlayerViewModel.isResolving.value || miniPlayerViewModel.isBuffering.value
+                // Only spin while LOCATING the stream (resolving); during plain
+                // buffering keep the tappable play/pause icon so the button always
+                // works and shows the right state.
                 Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-                    if (isLocatingOrBuffering) {
+                    if (miniPlayerViewModel.isResolving.value) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(28.dp),
                             color = Color.White,

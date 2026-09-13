@@ -240,6 +240,13 @@ class CurrentSongState @Inject constructor() {
      *  prevents UI desynchronization permanently. */
     fun updatePlayingState(playing: Boolean) = runOnMain {
         val realIsPlaying = SongPlayer.isPlaying()
+        // A "started playing" callback that arrives AFTER the user paused would
+        // otherwise flip the icon back to playing. Reject it when playback is not
+        // actually intended (user paused / player is paused).
+        if (playing && !realIsPlaying && !SongPlayer.isPlayIntended()) {
+            _playingState.value = false
+            return@runOnMain
+        }
         if (playing || realIsPlaying) {
             synchronized(playGenLock) {
                 _playGen++

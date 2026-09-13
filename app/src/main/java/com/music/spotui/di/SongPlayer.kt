@@ -618,6 +618,9 @@ object SongPlayer {
                 Log.e(TAG, "playSong failed for query: $song", e)
                 boundState?.updateResolveError(e.message ?: "Playback failed")
                 updateResolveStatus(false)
+                // The track never started — don't leave the button stuck on the
+                // "playing" (pause) icon.
+                boundState?.updatePlayingState(false)
             }
         }
     }
@@ -1985,6 +1988,18 @@ object SongPlayer {
     fun isPlaying(): Boolean {
         if (webPlaybackActive()) return SpotifyWebPlayer.isPlaying
         return player?.isPlaying ?: false
+    }
+
+    /**
+     * Whether playback is *intended* — i.e. the user has asked to play and hasn't
+     * paused, even if the player is momentarily buffering (where [isPlaying] is
+     * false). Used to keep the play/pause icon correct during buffering and to
+     * reject stale "started playing" callbacks that arrive after a pause.
+     */
+    fun isPlayIntended(): Boolean {
+        if (webPlaybackActive()) return SpotifyWebPlayer.isPlaying
+        val p = player ?: return false
+        return p.playWhenReady
     }
 
     fun webPlaybackActive(): Boolean {

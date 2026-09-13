@@ -1493,9 +1493,10 @@ fun PlayerFull(
                 },
             contentAlignment = Alignment.Center
         ) {
-            val isLocatingOrBuffering =
-                playerViewModel.isResolving.value || playerViewModel.isBuffering.value
-            if (isLocatingOrBuffering) {
+            // Only show the spinner while LOCATING the stream (resolving). During
+            // plain buffering keep the play/pause icon visible and correct — the
+            // button stays tappable and the state is clear.
+            if (playerViewModel.isResolving.value) {
                 androidx.compose.material3.CircularProgressIndicator(
                     modifier = Modifier.size(30.dp),
                     color = Color.Black,
