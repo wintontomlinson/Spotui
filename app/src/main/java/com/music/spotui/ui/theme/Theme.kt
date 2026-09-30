@@ -1,12 +1,10 @@
 package com.music.spotui.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,7 +12,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
@@ -54,15 +51,6 @@ private val SoloColorScheme = darkColorScheme(
     surfaceContainer = Dusk,
     surfaceContainerHigh = Velvet,
     surfaceContainerHighest = Amethyst,
-)
-
-/** Corner radii: 8 / 12 / 16 / 20 / 28 dp. Pills use 50%. */
-val SoloShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
 )
 
 /** Solo is a single, always-dark experience; dynamic (wallpaper) colour stays off. */

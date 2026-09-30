@@ -45,6 +45,9 @@ val DangerSurface = Color(0xFF4A1F2A)
 val Success = Color(0xFF7FD1A3)
 val Warning = Color(0xFFF2C46B)
 
+// Shadow for floating chrome (mini player, nav): 35% deep ink
+val ShadowInk = Color(0x5905030A)
+
 // Glass (translucent chrome over scrolling content)
 val GlassFill = Color(0xD9141020)
 val GlassFillStrong = Color(0xF2141020)

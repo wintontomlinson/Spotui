@@ -909,9 +909,13 @@ private fun LyricLineText(
     val target = when {
         !synced -> Ivory.copy(alpha = 0.95f)
         isActive -> Ivory
-        else -> Ivory.copy(alpha = 0.42f)
+        else -> Ivory.copy(alpha = 0.45f)
     }
-    val color by animateColorAsState(targetValue = target, label = "lyricColor")
+    val color by animateColorAsState(
+        targetValue = target,
+        animationSpec = androidx.compose.animation.core.tween(com.music.spotui.ui.components.SoloMotion.FADE_MS),
+        label = "lyricColor",
+    )
     val clickModifier = if (onTap != null) Modifier.clickable(
         interactionSource = remember { MutableInteractionSource() },
         indication = null,

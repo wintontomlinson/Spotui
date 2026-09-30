@@ -1,6 +1,15 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -54,6 +63,44 @@ import com.music.spotui.ui.theme.OnGold
 import com.music.spotui.ui.theme.SoloDisplay
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Velvet
+
+/** Shared motion tokens so every surface moves with the same rhythm. */
+object SoloMotion {
+    const val PRESS_SCALE = 0.96f
+    const val FADE_MS = 220
+    const val NAV_MS = 180
+    const val EXPAND_MS = 320
+    const val ICON_MS = 150
+    val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val pressSpring = spring<Float>(dampingRatio = 0.7f, stiffness = 600f)
+    fun <T> fade() = tween<T>(durationMillis = FADE_MS, easing = FastOutSlowInEasing)
+}
+
+/**
+ * Press feedback: the element eases down to 96% while held and springs back on release.
+ * Pass the same [interactionSource] to the element's clickable.
+ */
+fun Modifier.soloPress(interactionSource: MutableInteractionSource): Modifier = composed {
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) SoloMotion.PRESS_SCALE else 1f,
+        animationSpec = SoloMotion.pressSpring,
+        label = "soloPress",
+    )
+    graphicsLayer { scaleX = scale; scaleY = scale }
+}
+
+/** Clickable with the Solo press-scale. [ripple] off suits artwork tiles, on suits rows. */
+fun Modifier.soloClickable(ripple: Boolean = false, onClick: () -> Unit): Modifier = composed {
+    val source = remember { MutableInteractionSource() }
+    this
+        .soloPress(source)
+        .clickable(
+            interactionSource = source,
+            indication = if (ripple) LocalIndication.current else null,
+            onClick = onClick,
+        )
+}
 
 /** Width-to-height ratio of drawable/logo (the tight-bounds Solo mark). */
 private const val MARK_ASPECT = 25.6f / 56f
@@ -256,7 +303,7 @@ fun SoloEmptyState(
     }
 }
 
-/** Round icon button with a 40dp touch target (optionally on a velvet well). */
+/** Round icon button with a 48dp touch target (optionally on a velvet well). */
 @Composable
 fun SoloIconButton(
     icon: ImageVector,
@@ -265,16 +312,18 @@ fun SoloIconButton(
     modifier: Modifier = Modifier,
     tint: Color = Ivory,
     filled: Boolean = false,
-    size: Dp = 40.dp,
+    size: Dp = 48.dp,
     iconSize: Dp = 22.dp,
 ) {
+    val source = remember { MutableInteractionSource() }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
+            .soloPress(source)
             .clip(CircleShape)
             .then(if (filled) Modifier.background(Velvet) else Modifier)
-            .clickable(onClick = onClick),
+            .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick),
     ) {
         Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(iconSize))
     }

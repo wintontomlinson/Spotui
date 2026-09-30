@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.notification.PlaybackService
 import com.music.spotui.ui.theme.SoloTheme
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -80,9 +81,12 @@ class MainActivity : ComponentActivity() {
         // orphaned WebView gets a 0×0 viewport and Spotify won't render/navigate).
         com.music.spotui.di.SpotifyWebPlayer.attach(this)
 
-        // Perform background auto-backup if a backup directory is configured.
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            com.music.spotui.util.BackupHelper.performAutoBackup(applicationContext)
+        // Perform background auto-backup if a backup directory is configured. Scoped to
+        // the activity and guarded: a revoked folder permission (SecurityException) or a
+        // corrupt pref must not crash the app on launch.
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching { com.music.spotui.util.BackupHelper.performAutoBackup(applicationContext) }
+                .onFailure { android.util.Log.w("Backup", "Auto-backup failed", it) }
         }
 
         // Handle initial deep link intent if launched via Spotify link

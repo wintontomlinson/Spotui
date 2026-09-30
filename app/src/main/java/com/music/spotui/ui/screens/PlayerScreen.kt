@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import com.music.spotui.ui.components.soloClickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -1229,7 +1230,7 @@ fun PlayerInfo(
                             )
                             Text(
                                 text = when {
-                                    hasError -> resolveError!!
+                                    hasError -> resolveError.orEmpty()
                                     isResolvingState -> resolveStatus
                                     else -> {
                                         source + (if (quality.isNotBlank()) " • $quality" else "")
@@ -1387,10 +1388,10 @@ fun CustomSlider(
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Ivory thumb, always visible, grows while dragging
+            // Gold thumb, always visible, grows while dragging
             run {
                 drawCircle(
-                    color = Ivory,
+                    color = GoldLight,
                     radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
                     center = Offset(thumbX, trackY)
                 )
@@ -1421,18 +1422,17 @@ fun PlayerFull(
     ) {
         Icon(
             modifier = Modifier
-                .size(26.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(48.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
                     if (shuffle) {
                         playerViewModel.updateShuffleState(false)
                     } else {
                         playerViewModel.updateShuffleState(true)
                     }
 
-                },
+                }
+                .padding(11.dp),
             tint = if (shuffle) {
                 Gold
             } else {
@@ -1443,17 +1443,16 @@ fun PlayerFull(
         )
         Icon(
             modifier = Modifier
-                .size(42.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(52.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
                     // The queue itself is already in shuffled order when shuffle
                     // is on (reordered once at toggle), never re-shuffle per tap.
                     playerViewModel.playPreviousSong(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
-                },
+                }
+                .padding(5.dp),
             tint = Ivory,
             imageVector = Icons.Rounded.SkipPrevious,
             contentDescription = "Previous"
@@ -1473,7 +1472,7 @@ fun PlayerFull(
                 )
                 .clip(CircleShape)
                 .background(com.music.spotui.ui.theme.GoldBrush)
-                .clickable {
+                .soloClickable(ripple = true) {
                     // Single source of truth: toggle based on the engine's real
                     // state so the button never gets stuck showing the wrong icon.
                     playerViewModel.togglePlayPause()
@@ -1490,28 +1489,33 @@ fun PlayerFull(
                     strokeWidth = 3.dp
                 )
             } else {
-                Icon(
-                    modifier = Modifier
-                        .size(38.dp),
-                    tint = OnGold,
-                    imageVector = if (songPlayingState) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                    contentDescription = if (songPlayingState) "Pause" else "Play"
-                )
+                androidx.compose.animation.Crossfade(
+                    targetState = songPlayingState,
+                    animationSpec = androidx.compose.animation.core.tween(com.music.spotui.ui.components.SoloMotion.ICON_MS),
+                    label = "playPause",
+                ) { playing ->
+                    Icon(
+                        modifier = Modifier
+                            .size(38.dp),
+                        tint = OnGold,
+                        imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = if (playing) "Pause" else "Play"
+                    )
+                }
             }
         }
 
         Icon(
             modifier = Modifier
-                .size(42.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(52.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
 
                     playerViewModel.playNextSongs(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
-                },
+                }
+                .padding(5.dp),
             tint = Ivory,
             imageVector = Icons.Rounded.SkipNext,
             contentDescription = "Next"
@@ -1520,11 +1524,9 @@ fun PlayerFull(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .size(width = 32.dp, height = 40.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(48.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
                     val nextRepeat = when (repeat) {
                         RepeatMode.OFF -> RepeatMode.ALL
                         RepeatMode.ALL -> RepeatMode.ONE

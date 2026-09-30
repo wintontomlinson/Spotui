@@ -19,9 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -34,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.music.spotui.ui.components.MiniPlayer
@@ -48,7 +44,28 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.music.spotui.ui.theme.Gold
 import com.music.spotui.ui.theme.Ink
-import com.music.spotui.ui.theme.TextTertiary
+import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import com.music.spotui.ui.components.SoloMotion
+import com.music.spotui.ui.components.soloClickable
+import com.music.spotui.ui.theme.GlassFill
+import com.music.spotui.ui.theme.GlassFillStrong
+import com.music.spotui.ui.theme.HairlineGold
+import com.music.spotui.ui.theme.HairlineSoft
+import com.music.spotui.ui.theme.ShadowInk
+import com.music.spotui.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -78,14 +95,14 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
             // 0f = fully expanded (idle / at top), 1f = compressed (scrolling down).
             val compression by animateFloatAsState(
                 targetValue = NavBarScrollState.compression,
+                animationSpec = tween(SoloMotion.NAV_MS),
                 label = "navBarCompression",
             )
             // As the user scrolls down, the floating bar shrinks toward the bottom,
             // shrinks a little and stays fully visible so the tabs are always
             // reachable — it never fades away. Springs back to full size on scroll up.
-            val barScale = 1f - 0.12f * compression
-            val barAlpha = 1f - 0.12f * compression
-            val barTranslateY = 8f * compression
+            val barScale = 1f - 0.04f * compression
+            val barTranslateY = 6f * compression
 
             Box(
                 contentAlignment = Alignment.BottomCenter,
@@ -120,146 +137,154 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    NavigationBar(
+                    val navStack by navController.currentBackStackEntryAsState()
+                    // Some destinations carry optional arguments, for example "ytsearch?q={q}".
+                    // Compare on the base route so the correct tab stays highlighted.
+                    val currentRoute = navStack?.destination?.route?.substringBefore("?")
+                    val rootRoutes = listOf(Routes.Home.route, Routes.YtSearch.route, Routes.Library.route)
+                    // Tracks which tab to highlight. On destinations that are not tabs (player,
+                    // playlist) the last tab stays lit. Taps are decided from currentRoute.
+                    var currentTab by remember { mutableStateOf(Routes.Home.route) }
+                    val route = currentRoute
+                    if (route != null && route in rootRoutes) currentTab = route
+
+                    // Floating glass pill: 64dp, compressing to 52dp (labels fade) on scroll down.
+                    val pillShape = RoundedCornerShape(26.dp)
+                    val glass = if (Build.VERSION.SDK_INT >= 31) GlassFill else GlassFillStrong
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .padding(horizontal = 18.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth()
-                            // Compress on scroll: shrink, fade and slide down as the
-                            // user scrolls into the content, spring back on scroll up.
+                            .height(64.dp - 12.dp * compression)
                             .graphicsLayer {
                                 scaleX = barScale
                                 scaleY = barScale
                                 translationY = barTranslateY
-                                alpha = barAlpha
                             }
-                            // Floating glass pill: a lifted velvet surface with a gold
-                            // light catching its top edge.
                             .shadow(
-                                elevation = 24.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
+                                elevation = 12.dp,
+                                shape = pillShape,
                                 clip = false,
-                                ambientColor = Color.Black,
-                                spotColor = Color.Black,
+                                ambientColor = ShadowInk,
+                                spotColor = ShadowInk,
                             )
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xF21B1529),
-                                        Color(0xF2141020),
-                                    ),
-                                )
-                            )
+                            .clip(pillShape)
+                            .background(glass)
                             .border(
                                 width = 1.dp,
-                                brush = Brush.verticalGradient(
-                                    listOf(Gold.copy(alpha = 0.30f), Gold.copy(alpha = 0.05f))
-                                ),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
+                                brush = Brush.verticalGradient(listOf(HairlineGold, HairlineSoft)),
+                                shape = pillShape,
                             ),
-                        containerColor = Color.Transparent,
-                        windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
                     ) {
-                        val navStack by navController.currentBackStackEntryAsState()
-                        // Some destinations carry optional arguments, for example
-                        // "ytsearch?q={q}". Compare on the base route so the correct
-                        // tab stays highlighted regardless of arguments.
-                        val currentRoute = navStack?.destination?.route?.substringBefore("?")
-
-                        val rootRoutes = listOf(Routes.Home.route, Routes.YtSearch.route, Routes.Library.route)
-                        // Tracks which tab to highlight. On destinations that are not
-                        // tabs, such as the player or a playlist, the last tab stays lit.
-                        // This is presentation only: taps are decided from currentRoute.
-                        var currentTab by remember { mutableStateOf(Routes.Home.route) }
-                        if (currentRoute in rootRoutes) {
-                            currentTab = currentRoute!!
-                        }
-
                         navItems.forEach { item ->
-                            NavigationBarItem(
-                                selected = currentTab == item.route,
-                                icon = {
-                                    Icon(
-                                        imageVector = navIcon(item, selected = currentTab == item.route),
-                                        contentDescription = item.label,
-                                    )
-                                },
-                                label = {
-                                    Text(
-                                        text = item.label,
-                                        color = if (currentTab == item.route) Gold else TextTertiary,
-                                        fontSize = 11.sp,
-                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                                    )
-                                },
+                            val selected = currentTab == item.route
+                            NavTab(
+                                item = item,
+                                selected = selected,
+                                labelAlpha = 1f - compression,
+                                modifier = Modifier.weight(1f),
                                 onClick = {
-                                    // Decide from the LIVE route, never from the
-                                    // remembered tab. The remembered value can drift out
-                                    // of sync, and when it did the old code fell through
-                                    // to popBackStack for a destination that was no
-                                    // longer on the stack, which silently did nothing and
-                                    // left the tab unresponsive.
-                                    if (currentRoute != item.route) {
-                                        val startRoute = navController.graph.startDestinationRoute
-                                        if (startRoute != null && item.route == startRoute) {
-                                            // Home IS the graph's start destination, and that
-                                            // makes the usual tab recipe cancel itself out.
-                                            // NavController runs popUpTo first, and a pop with
-                                            // saveState records the saved stack under the
-                                            // popUpTo destination's own id. Navigating to that
-                                            // same destination with restoreState then finds
-                                            // that fresh entry and restores the stack it just
-                                            // popped, so the screen never actually changed and
-                                            // the only way back to Home was the back button.
-                                            // Popping straight to Home avoids the round trip,
-                                            // and saveState still keeps the other tabs' state
-                                            // for when they are reselected.
-                                            val popped = navController.popBackStack(
-                                                route = startRoute,
-                                                inclusive = false,
-                                                saveState = true,
-                                            )
-                                            if (!popped) {
-                                                // A deep link can leave Home off the stack
-                                                // entirely, in which case there is nothing to
-                                                // pop back to and it has to be pushed.
-                                                navController.navigate(startRoute) {
-                                                    launchSingleTop = true
-                                                }
-                                            }
-                                        } else {
-                                            navController.navigate(item.route) {
-                                                popUpTo(startRoute ?: item.route) {
-                                                    saveState = true
-                                                }
+                                // Decide from the LIVE route, never from the
+                                // remembered tab. The remembered value can drift out
+                                // of sync, and when it did the old code fell through
+                                // to popBackStack for a destination that was no
+                                // longer on the stack, which silently did nothing and
+                                // left the tab unresponsive.
+                                if (currentRoute != item.route) {
+                                    val startRoute = navController.graph.startDestinationRoute
+                                    if (startRoute != null && item.route == startRoute) {
+                                        // Home IS the graph's start destination, and that
+                                        // makes the usual tab recipe cancel itself out.
+                                        // NavController runs popUpTo first, and a pop with
+                                        // saveState records the saved stack under the
+                                        // popUpTo destination's own id. Navigating to that
+                                        // same destination with restoreState then finds
+                                        // that fresh entry and restores the stack it just
+                                        // popped, so the screen never actually changed and
+                                        // the only way back to Home was the back button.
+                                        // Popping straight to Home avoids the round trip,
+                                        // and saveState still keeps the other tabs' state
+                                        // for when they are reselected.
+                                        val popped = navController.popBackStack(
+                                            route = startRoute,
+                                            inclusive = false,
+                                            saveState = true,
+                                        )
+                                        if (!popped) {
+                                            // A deep link can leave Home off the stack
+                                            // entirely, in which case there is nothing to
+                                            // pop back to and it has to be pushed.
+                                            navController.navigate(startRoute) {
                                                 launchSingleTop = true
-                                                restoreState = true
                                             }
                                         }
+                                    } else {
+                                        navController.navigate(item.route) {
+                                            popUpTo(startRoute ?: item.route) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
                                     }
+                                }
                                 },
-                                alwaysShowLabel = true,
-                                interactionSource = NoRippleInteractionSource(),
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Gold,
-                                    unselectedIconColor = TextTertiary,
-                                    // A soft gold pill behind the active tab's icon.
-                                    indicatorColor = Gold.copy(alpha = 0.14f),
-                                )
                             )
-
                         }
                     }
-
-
-
                 }
-
-
-
             }
         }
     )
+}
+
+@Composable
+private fun NavTab(
+    item: Routes,
+    selected: Boolean,
+    labelAlpha: Float,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val tint by animateColorAsState(
+        targetValue = if (selected) Gold else TextSecondary,
+        animationSpec = tween(SoloMotion.NAV_MS),
+        label = "navTint",
+    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .fillMaxHeight()
+            .soloClickable(onClick = onClick)
+            .semantics { this.selected = selected; role = Role.Tab },
+    ) {
+        Icon(
+            imageVector = navIcon(item, selected),
+            contentDescription = item.label,
+            tint = tint,
+            modifier = Modifier.size(24.dp),
+        )
+        if (labelAlpha > 0.05f) {
+            Text(
+                text = item.label,
+                color = tint,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .graphicsLayer { alpha = labelAlpha },
+            )
+        }
+        Spacer(Modifier.height(3.dp))
+        Box(
+            modifier = Modifier
+                .size(4.dp)
+                .clip(CircleShape)
+                .background(if (selected) Gold else Color.Transparent),
+        )
+    }
 }
 
 /** Filled glyph for the active tab, outlined for the rest. */

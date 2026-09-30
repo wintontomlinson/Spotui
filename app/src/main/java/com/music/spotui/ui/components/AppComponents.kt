@@ -96,6 +96,9 @@ import com.music.spotui.ui.theme.OnGold
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Velvet
 import com.music.spotui.ui.theme.Night
+import com.music.spotui.ui.theme.SoloShape
+import com.music.spotui.ui.theme.ShadowInk
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -228,13 +231,13 @@ fun MiniPlayer(navController: NavHostController) {
             }
             // Lifted velvet card tinted by the artwork, with a light-catching top edge.
             .shadow(
-                elevation = 18.dp,
-                shape = RoundedCornerShape(20.dp),
+                elevation = 12.dp,
+                shape = SoloShape.md,
                 clip = false,
-                ambientColor = Color.Black,
-                spotColor = Color.Black,
+                ambientColor = ShadowInk,
+                spotColor = ShadowInk,
             )
-            .clip(RoundedCornerShape(20.dp))
+            .clip(SoloShape.md)
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
@@ -248,7 +251,7 @@ fun MiniPlayer(navController: NavHostController) {
                 brush = Brush.verticalGradient(
                     listOf(Ivory.copy(alpha = 0.14f), Ivory.copy(alpha = 0.03f))
                 ),
-                shape = RoundedCornerShape(20.dp),
+                shape = SoloShape.md,
             )
             .padding(start = 8.dp, end = 8.dp, top = 6.dp)
 
@@ -412,7 +415,7 @@ fun MiniPlayer(navController: NavHostController) {
                     modifier = Modifier
                         .padding(end = 12.dp)
                         .size(44.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(SoloShape.sm),
                     model = songCoverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -429,15 +432,15 @@ fun MiniPlayer(navController: NavHostController) {
                             ExplicitBadge()
                             Spacer(Modifier.width(4.dp))
                         }
-                        Text(text = songTitle, color = Ivory, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = songTitle, color = Ivory, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     Spacer(Modifier.height(1.dp))
-                    Text(text = songSinger, color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text(text = songSinger, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
 
@@ -448,20 +451,18 @@ fun MiniPlayer(navController: NavHostController) {
                         imageVector = Icons.Rounded.CheckCircle,
                         tint = Gold,
                         modifier = Modifier
-                            .size(24.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { showSavedIn = true },
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .clickable { showSavedIn = true }
+                            .padding(12.dp),
                         contentDescription = "Saved",
                     )
                 } else {
                     Icon(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
                             .combinedClickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
                                 onClick = {
                                     addLikedSongId(context, songId.toString())
                                     isLiked = true
@@ -471,7 +472,8 @@ fun MiniPlayer(navController: NavHostController) {
                                         context, currentTrack?.spotifyTrackId.orEmpty(), true)
                                 },
                                 onLongClick = { showSavedIn = true },
-                            ),
+                            )
+                            .padding(12.dp),
                         imageVector = Icons.Rounded.AddCircleOutline,
                         tint = Ivory,
                         contentDescription = "Save to Liked Songs",
@@ -482,13 +484,16 @@ fun MiniPlayer(navController: NavHostController) {
                 // Only spin while LOCATING the stream (resolving); during plain
                 // buffering keep the tappable play/pause icon so the button always
                 // works and shows the right state.
+                val playSource = remember { MutableInteractionSource() }
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
+                        .soloPress(playSource)
+                        .padding(4.dp)
                         .clip(CircleShape)
                         .background(com.music.spotui.ui.theme.GoldBrush)
                         .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
+                            interactionSource = playSource,
                             indication = null
                         ) {
                             // Single source of truth: toggle from the engine's
@@ -504,12 +509,18 @@ fun MiniPlayer(navController: NavHostController) {
                             strokeWidth = 2.5.dp
                         )
                     } else {
-                        Icon(
-                            imageVector = if (songPlayingState) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            contentDescription = if (songPlayingState) "Pause" else "Play",
-                            tint = OnGold,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        androidx.compose.animation.Crossfade(
+                            targetState = songPlayingState,
+                            animationSpec = tween(SoloMotion.ICON_MS),
+                            label = "miniPlayPause",
+                        ) { playing ->
+                            Icon(
+                                imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                contentDescription = if (playing) "Pause" else "Play",
+                                tint = OnGold,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }

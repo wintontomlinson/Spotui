@@ -1,5 +1,7 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.QueueMusic
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -163,23 +165,26 @@ fun QueueContent(
                 .fillMaxWidth()
                 .padding(16.dp, 12.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = "Close",
-                tint = Ivory,
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onClose() }
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Close queue",
+                onClick = onClose,
+                iconSize = 28.dp,
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text("Queue", color = Ivory, style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         }
 
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         Box(modifier = Modifier.fillMaxSize()) {
+            if (queue.isEmpty()) {
+                com.music.spotui.ui.components.SoloEmptyState(
+                    icon = androidx.compose.material.icons.Icons.Rounded.QueueMusic,
+                    title = "Your queue is empty",
+                    message = "Play a song and what comes next shows up here.",
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -304,10 +309,9 @@ private fun QueueRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Dusk)
+            .heightIn(min = 64.dp)
+            .background(if (highlight) com.music.spotui.ui.theme.Amethyst else Dusk)
             .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
                 onLongClick = onLongClick,
                 onClick = onClick,
             )
@@ -332,17 +336,16 @@ private fun QueueRow(
                 }
                 Text(
                     text = song.title,
-                    color = if (highlight) Color(AppPalette.toArgb()) else Ivory,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
+                    color = if (highlight) com.music.spotui.ui.theme.Gold else Ivory,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
             Text(
                 text = song.singer,
-                color = TextTertiary,
-                fontSize = 13.sp,
+                color = TextSecondary,
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -351,10 +354,11 @@ private fun QueueRow(
             Icon(
                 imageVector = androidx.compose.material.icons.Icons.Rounded.DragHandle,
                 contentDescription = "Reorder",
-                tint = TextSecondary,
+                tint = TextTertiary,
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(48.dp)
                     .then(dragHandle)
+                    .padding(12.dp)
             )
         }
     }
