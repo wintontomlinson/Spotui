@@ -1,90 +1,95 @@
 package com.music.spotui.ui.theme
 
 import android.app.Activity
-import android.graphics.Color.toArgb
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-// A single, deliberate dark scheme built around the amber accent, so every Material
-// component (buttons, switches, sliders, indicators) picks up the app's colour instead
-// of a stray purple or a wallpaper tint.
-private val DarkColorScheme = darkColorScheme(
-    primary = Accent,
-    onPrimary = OnAccent,
-    secondary = Accent,
-    onSecondary = OnAccent,
-    tertiary = AccentDark,
-    background = AppBackground,
-    onBackground = Color(0xFFF2F2F5),
-    surface = SurfaceElevated,
-    onSurface = Color(0xFFF2F2F5),
-    surfaceVariant = SurfaceCard,
-    onSurfaceVariant = Color(0xFFB6B6BE),
-    outline = Hairline,
+// One deliberate dark scheme, so every Material component (switches, sliders, sheets,
+// dialogs, menus) picks up the Solo palette instead of a stray default or wallpaper tint.
+private val SoloColorScheme = darkColorScheme(
+    primary = Gold,
+    onPrimary = OnGold,
+    primaryContainer = Color(0xFF3A2C12),
+    onPrimaryContainer = GoldLight,
+    secondary = Lilac,
+    onSecondary = Ink,
+    secondaryContainer = Amethyst,
+    onSecondaryContainer = Ivory,
+    tertiary = GoldDeep,
+    onTertiary = OnGold,
+    background = Ink,
+    onBackground = Ivory,
+    surface = Dusk,
+    onSurface = Ivory,
+    surfaceVariant = Velvet,
+    onSurfaceVariant = TextSecondary,
+    surfaceTint = Color.Transparent,
+    inverseSurface = Ivory,
+    inverseOnSurface = Ink,
+    inversePrimary = GoldDeep,
+    error = Danger,
+    onError = Ink,
+    errorContainer = DangerSurface,
+    onErrorContainer = Color(0xFFFFDADA),
+    outline = Color(0xFF4A3F5E),
+    outlineVariant = Amethyst,
+    scrim = Color.Black,
+    surfaceBright = Amethyst,
+    surfaceDim = Ink,
+    surfaceContainerLowest = Ink,
+    surfaceContainerLow = Night,
+    surfaceContainer = Dusk,
+    surfaceContainerHigh = Velvet,
+    surfaceContainerHighest = Amethyst,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40 ,
-    background = AppBackground,
-    /* Other default colors to override
-
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+/** Corner radii: 8 / 12 / 16 / 20 / 28 dp. Pills use 50%. */
+val SoloShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
+/** Solo is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
 @Composable
-fun SpotuiTheme(
-    // The app is a single, always dark, amber themed experience by design.
-    darkTheme: Boolean = true,
-    // Dynamic color is intentionally OFF. Letting Android 12+ retint the UI from the
-    // user's wallpaper overrode the amber accent and the deliberate dark surfaces, so the
-    // premium look changed from phone to phone. The app owns its palette now.
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = DarkColorScheme
+fun SoloTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = Color.Transparent.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false // white icons for dark‑mode‑only app
+            // Light (ivory) status bar icons on the dark UI.
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = SoloColorScheme,
         typography = Typography,
+        shapes = SoloShapes,
     ) {
-        // Bare Text() uses LocalTextStyle, which MaterialTheme does NOT derive
-        // from the typography, so provide Montserrat as the global default so
-        // every screen picks it up without touching each Text call.
-        androidx.compose.material3.ProvideTextStyle(
-            value = androidx.compose.material3.LocalTextStyle.current.copy(
-                fontFamily = Montserrat,
-                letterSpacing = (-0.2).sp,
-            ),
-            content = content,
-        )
+        // Bare Text() reads LocalTextStyle, which MaterialTheme does not derive from the
+        // typography, so Manrope is provided as the global default here.
+        CompositionLocalProvider(LocalContentColor provides Ivory) {
+            ProvideTextStyle(
+                value = LocalTextStyle.current.merge(Typography.bodyMedium),
+                content = content,
+            )
+        }
     }
 }

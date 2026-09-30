@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
@@ -34,12 +33,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.music.spotui.ui.components.MiniPlayer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ink
+import com.music.spotui.ui.theme.TextTertiary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -82,15 +91,14 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                 contentAlignment = Alignment.BottomCenter,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // A translucent cyan-tinted scrim so the bar reads as
-                    // transparent (content shows through) and only settles into a
-                    // darker base at the very bottom.
+                    // A soft ink scrim so content fades out beneath the floating bar
+                    // instead of being cut off by a hard edge.
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color(0x66041418),
-                                Color(0xCC020A0C),
+                                Ink.copy(alpha = 0.55f),
+                                Ink.copy(alpha = 0.92f),
                             ),
                             startY = 0f
                         )
@@ -110,11 +118,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     NavigationBar(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .padding(horizontal = 18.dp, vertical = 8.dp)
                             .fillMaxWidth()
                             // Compress on scroll: shrink, fade and slide down as the
                             // user scrolls into the content, spring back on scroll up.
@@ -124,31 +132,30 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 translationY = barTranslateY
                                 alpha = barAlpha
                             }
-                            // A floating, rounded nav bar that reads as a raised control
-                            // surface over the content, rather than icons sitting loose on
-                            // the gradient.
+                            // Floating glass pill: a lifted velvet surface with a gold
+                            // light catching its top edge.
                             .shadow(
-                                elevation = 20.dp,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                                elevation = 24.dp,
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
                                 clip = false,
                                 ambientColor = Color.Black,
                                 spotColor = Color.Black,
                             )
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(22.dp))
-                            // A translucent cyan-tinted glass gradient so the bar carries
-                            // the app's colour while staying see-through over content.
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(26.dp))
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xCC0B3A44),
-                                        Color(0xCC072A31),
+                                        Color(0xF21B1529),
+                                        Color(0xF2141020),
                                     ),
                                 )
                             )
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFE8C24A).copy(alpha = 0.22f),
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+                                brush = Brush.verticalGradient(
+                                    listOf(Gold.copy(alpha = 0.30f), Gold.copy(alpha = 0.05f))
+                                ),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(26.dp),
                             ),
                         containerColor = Color.Transparent,
                         windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0)
@@ -173,21 +180,17 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 selected = currentTab == item.route,
                                 icon = {
                                     Icon(
-                                        painter = painterResource(
-                                            id = item.icon
-                                        ), contentDescription = "home"
+                                        imageVector = navIcon(item, selected = currentTab == item.route),
+                                        contentDescription = item.label,
                                     )
                                 },
                                 label = {
-                                    if (currentTab == item.route) {
-                                        Text(color = Color(0xFFE8C24A), text = item.label, fontSize = 11.sp)
-                                    } else {
-                                        Text(
-                                            color = Color.Gray,
-                                            text = item.label,
-                                            fontSize = 11.sp
-                                        )
-                                    }
+                                    Text(
+                                        text = item.label,
+                                        color = if (currentTab == item.route) Gold else TextTertiary,
+                                        fontSize = 11.sp,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    )
                                 },
                                 onClick = {
                                     // Decide from the LIVE route, never from the
@@ -238,11 +241,10 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 alwaysShowLabel = true,
                                 interactionSource = NoRippleInteractionSource(),
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Color(0xFFE8C24A),
-                                    unselectedIconColor = Color.Gray,
-                                    // A soft amber pill behind the active tab's icon, so
-                                    // the selection is clear at a glance without shouting.
-                                    indicatorColor = Color(0xFFE8C24A).copy(alpha = 0.16f),
+                                    selectedIconColor = Gold,
+                                    unselectedIconColor = TextTertiary,
+                                    // A soft gold pill behind the active tab's icon.
+                                    indicatorColor = Gold.copy(alpha = 0.14f),
                                 )
                             )
 
@@ -258,4 +260,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
             }
         }
     )
+}
+
+/** Filled glyph for the active tab, outlined for the rest. */
+private fun navIcon(item: Routes, selected: Boolean): ImageVector = when (item) {
+    Routes.YtSearch -> if (selected) Icons.Rounded.Explore else Icons.Outlined.Explore
+    Routes.Library -> if (selected) Icons.Rounded.LibraryMusic else Icons.Outlined.LibraryMusic
+    else -> if (selected) Icons.Rounded.Home else Icons.Outlined.Home
 }

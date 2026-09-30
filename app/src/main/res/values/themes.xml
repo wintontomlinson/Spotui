@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App base theme: dark background so there's no white flash between the
-         splash and the (always-dark cyan) UI. -->
+    <!-- App theme after the splash: dark plum window so there is never a white flash
+         between the splash and the Compose UI. -->
     <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
     <style name="splashScreenTheme" parent="Theme.SplashScreen">
-        <!-- The splash shows the launcher icon: the gold waveform foreground on the
-             deep-cyan plate colour, so the launch flash matches the new icon. -->
+        <!-- The gold Solo mark on the plum plate, exactly like the launcher icon. The mark
+             lives inside the 66dp safe circle of the 108dp foreground, which keeps it inside
+             the Android 12+ splash icon mask. -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
         <item name="postSplashScreenTheme">@style/Theme.Solo</item>
@@ -18,4 +19,3 @@
         <item name="android:windowTranslucentStatus">true</item>
     </style>
 </resources>
-

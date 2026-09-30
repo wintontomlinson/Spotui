@@ -65,6 +65,9 @@ import com.music.spotui.ui.theme.AppBackground
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
 // SwipeToPlayNextWrapper is in the same package and automatically visible
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -88,9 +91,12 @@ fun LikedSongsScreen(
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
-    if (!likedAlbumCover.isNullOrBlank()) {
-        Palette().extractSecondColorFromCoverUrl(context = context, likedAlbumCover) { color ->
-            dominentColor = color
+    // Once per cover, not on every recomposition.
+    LaunchedEffect(likedAlbumCover) {
+        if (!likedAlbumCover.isNullOrBlank()) {
+            Palette().extractSecondColorFromCoverUrl(context = context, likedAlbumCover) { color ->
+                dominentColor = color
+            }
         }
     }
     val likeState = albumViewModel.likeState.value
@@ -116,11 +122,11 @@ fun LikedSongsScreen(
                         },
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "",
-                        tint = Color.White)
+                        tint = Ivory)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
+                    titleContentColor = Ivory,
                 ),
                 title = {
                     Text(text = "")
@@ -186,12 +192,13 @@ fun LikedSongsScreen(
                     ) {
                         Text(modifier = Modifier,
                             text = "Liked Songs",
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold)
+                            color = Ivory,
+                            fontSize = 28.sp,
+                            fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                            fontWeight = FontWeight.SemiBold)
                         Text(modifier = Modifier,
                             text = " ${likedSongs.size} songs",
-                            color = Color.Gray,
+                            color = TextTertiary,
                             letterSpacing = 0.sp,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium)
@@ -205,7 +212,7 @@ fun LikedSongsScreen(
                         if (likedSongs.isNotEmpty()) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_queue_add),
-                                tint = Color.White,
+                                tint = Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable(
@@ -229,7 +236,7 @@ fun LikedSongsScreen(
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(RoundedCornerShape(100.dp))
-                                    .background(Color.White)
+                                    .background(Ivory)
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
@@ -292,7 +299,7 @@ fun LikedSongsScreen(
                     }
                     val songId = likedSongs[song].id
                     val currentPlayingIndicatorColor = if(songId == albumViewModel.currentSongId.value) Color(
-                        AppPalette.toArgb()) else Color.White
+                        AppPalette.toArgb()) else Ivory
 
                     SwipeToPlayNextWrapper(
                         onPlayNext = {
@@ -353,7 +360,7 @@ fun LikedSongsScreen(
                                     )
                                     Text(
                                         text = likedSongs[song].singer,
-                                        color = Color.Gray,
+                                        color = TextTertiary,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -384,7 +391,7 @@ fun LikedSongsScreen(
                                     painterResource(id = R.drawable.ic_add)
                                 }
                                 ,
-                                tint = Color.LightGray,
+                                tint = TextSecondary,
                                 contentDescription = ""
                             )
                         }

@@ -144,6 +144,34 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.blur
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import com.music.spotui.ui.theme.Amethyst
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.GoldLight
+import com.music.spotui.ui.theme.Ink
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Lilac
+import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 private val artistImageCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 private val artistIdCache = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -440,17 +468,18 @@ fun PlayerScreen(navController: NavController) {
         playerViewModel.formatDuration(SongPlayer.getCurrentPosition())
     }
 
-    Log.d("checkplayer", songTitle)
-
-    //playerViewModel.updateSongState(songCoverUri, songTitle, songSinger, songPlayingState)
-
 
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
     var showDevicesSheet by remember { mutableStateOf(false) }
-    Palette().extractSecondColorFromCoverUrl(context = context, songCoverUri) { color ->
-        dominentColor = color
+    // Once per cover: this screen recomposes every 300 ms while playing.
+    LaunchedEffect(songCoverUri) {
+        if (songCoverUri.isNotBlank()) {
+            Palette().extractSecondColorFromCoverUrl(context = context, songCoverUri) { color ->
+                dominentColor = color
+            }
+        }
     }
 
     val songsResponse by playerViewModel.songs.collectAsState()
@@ -589,21 +618,45 @@ fun PlayerScreen(navController: NavController) {
                 translationY = offsetY
                 alpha = (1f - (offsetY / screenHeight)).coerceIn(0f, 1f)
             }
+            .background(Ink)
             .background(
-                // A richer three stop blend: the artwork's dominant colour at the top,
-                // eased through a darkened version of itself, into near black at the
-                // bottom, so the screen reads as one deep gradient rather than a hard
-                // colour to black cut.
+                // The artwork's tone crowns the screen and settles into the ink canvas.
                 Brush.verticalGradient(
-                    colors = listOf(
-                        dominentColor,
-                        lerp(dominentColor, Color.Black, 0.55f),
-                        Color(0xFF0A0A0C),
-                    ),
-                    startY = 0f,
+                    0f to dominentColor,
+                    0.5f to lerp(dominentColor, Ink, 0.72f),
+                    1f to Ink,
                 )
             )
     ) {
+        // Android 12+ only: a heavily blurred copy of the artwork glows behind the
+        // controls. RenderEffect blur does not exist below API 31, where the tone
+        // gradient above is the whole background.
+        if (canvasUrl == null && songCoverUri.isNotBlank() &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+        ) {
+            GlideImage(
+                model = songCoverUri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.66f)
+                    .blur(96.dp)
+                    .alpha(0.42f),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.40f to Color.Transparent,
+                            0.66f to Ink.copy(alpha = 0.88f),
+                            1f to Ink,
+                        )
+                    )
+            )
+        }
         if (canvasUrl != null) {
             // Spotify Canvas: the looping video fills the whole now-playing screen
             // edge-to-edge behind the controls (the "immersive" treatment), with a
@@ -676,13 +729,13 @@ fun PlayerScreen(navController: NavController) {
                                     .aspectRatio(1f)
                                     .padding(16.dp)
                                     .shadow(
-                                        elevation = 24.dp,
-                                        shape = RoundedCornerShape(20.dp),
+                                        elevation = 30.dp,
+                                        shape = RoundedCornerShape(22.dp),
                                         clip = false,
                                         ambientColor = Color.Black,
-                                        spotColor = Color.Black,
+                                        spotColor = dominentColor,
                                     )
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(22.dp))
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -713,13 +766,13 @@ fun PlayerScreen(navController: NavController) {
                                             scaleY = scale
                                         }
                                         .shadow(
-                                            elevation = 24.dp,
-                                            shape = RoundedCornerShape(20.dp),
+                                            elevation = 30.dp,
+                                            shape = RoundedCornerShape(22.dp),
                                             clip = false,
                                             ambientColor = Color.Black,
-                                            spotColor = Color.Black,
+                                            spotColor = dominentColor,
                                         )
-                                        .clip(RoundedCornerShape(20.dp))
+                                        .clip(RoundedCornerShape(22.dp))
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -821,15 +874,17 @@ fun PlayerScreen(navController: NavController) {
                                     val dur = SongPlayer.getDuration()
                                     if (dur > 0) playerViewModel.formatDuration((dragValue * dur).toLong()) else "0:00"
                                 } else songProgressText,
-                                color = Color.Gray,
+                                color = TextTertiary,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold,
+                                style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
                             )
                             Text(
                                 text = songDurationText,
-                                color = Color.Gray,
+                                color = TextTertiary,
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold,
+                                style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
                             )
                         }
 
@@ -912,87 +967,59 @@ fun PlayerTopBar(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Icon(
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    onBackClick()
-                },
-            painter = painterResource(id = R.drawable.ic_down),
-            tint = Color.White,
-            contentDescription = ""
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.Rounded.KeyboardArrowDown,
+            contentDescription = "Close player",
+            onClick = onBackClick,
+            filled = true,
+            iconSize = 26.dp,
         )
 
-        // Spotify shows the source context here (album/playlist), not a generic label.
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // The source context (album / playlist) the track is playing from.
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+        ) {
             Text(
                 text = "PLAYING FROM",
-                color = Color(0xFFE8C24A),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
+                color = Gold,
+                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.6.sp,
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = contextName.ifBlank { "Now Playing" },
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                color = Ivory,
+                style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 200.dp),
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Lyrics is a primary action, so it gets its own always visible button
-            // instead of being buried at the bottom of the scrolling content.
-            if (onLyricsClick != null) {
-                Icon(
-                    imageVector = Icons.Default.Lyrics,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onLyricsClick() },
-                    contentDescription = "Lyrics"
-                )
-                Spacer(Modifier.width(18.dp))
-            }
-            // Up next gives direct access to the queue, which previously had no
-            // entry point from the now playing screen.
-            if (onQueueClick != null) {
-                Icon(
-                    imageVector = Icons.Default.QueueMusic,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(23.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onQueueClick() },
-                    contentDescription = "Up next"
-                )
-                Spacer(Modifier.width(18.dp))
-            }
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(23.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onMenuClick() },
-                contentDescription = ""
+        if (onLyricsClick != null) {
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.Rounded.Lyrics,
+                contentDescription = "Lyrics",
+                onClick = onLyricsClick,
             )
         }
+        if (onQueueClick != null) {
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.AutoMirrored.Rounded.QueueMusic,
+                contentDescription = "Up next",
+                onClick = onQueueClick,
+            )
+        }
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.Rounded.MoreVert,
+            contentDescription = "More options",
+            onClick = onMenuClick,
+        )
     }
 }
 
@@ -1035,38 +1062,38 @@ fun PlayerInfo(
         AlertDialog(
             onDismissRequest = { showStreamDetailDialog = false },
             title = {
-                Text("Stream Resolution Info", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Stream Resolution Info", color = Ivory, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             },
             text = {
                 Column {
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text("Engine / Source:", color = Color(0xFFB3B3B3), fontSize = 13.sp, modifier = Modifier.width(115.dp))
-                        Text(if (source.isBlank()) "Standard" else source, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Engine / Source:", color = TextSecondary, fontSize = 13.sp, modifier = Modifier.width(115.dp))
+                        Text(if (source.isBlank()) "Standard" else source, color = Ivory, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                     if (quality.isNotBlank()) {
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            Text("Audio Quality:", color = Color(0xFFB3B3B3), fontSize = 13.sp, modifier = Modifier.width(115.dp))
-                            Text(quality, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Audio Quality:", color = TextSecondary, fontSize = 13.sp, modifier = Modifier.width(115.dp))
+                            Text(quality, color = Ivory, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     if (!resolveDetailNote.isNullOrBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text("Status Note:", color = Color(0xFFB3B3B3), fontSize = 12.sp)
+                        Text("Status Note:", color = TextSecondary, fontSize = 12.sp)
                         Spacer(Modifier.height(4.dp))
                         Text(
                             resolveDetailNote,
-                            color = Color(0xFFFFB74D),
+                            color = com.music.spotui.ui.theme.Warning,
                             fontSize = 12.sp,
                             lineHeight = 16.sp,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x22FFB74D))
+                                .background(com.music.spotui.ui.theme.Warning.copy(alpha = 0.13f))
                                 .padding(10.dp)
                         )
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Resolution Trace Log:", color = Color(0xFFB3B3B3), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Resolution Trace Log:", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     SelectionContainer {
                         Box(
@@ -1074,21 +1101,21 @@ fun PlayerInfo(
                                 .fillMaxWidth()
                                 .heightIn(max = 220.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF0C0C10))
+                                .background(Ink)
                                 .padding(10.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
                             Column {
                                 val logs = com.music.spotui.di.SongPlayer.resolutionLogs.toList()
                                 if (logs.isEmpty()) {
-                                    Text("No live trace logs captured for current playback session.", color = Color.Gray, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("No live trace logs captured for current playback session.", color = TextTertiary, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                 } else {
                                     logs.forEach { line ->
                                         val textColor = when {
-                                            line.contains("✓") -> Color(0xFF81C784)
-                                            line.contains("✗") -> Color(0xFFE57373)
-                                            line.contains("Fallback") || line.contains("Exhausted") -> Color(0xFFFFB74D)
-                                            else -> Color(0xFFD1D1D6)
+                                            line.contains("✓") -> com.music.spotui.ui.theme.Success
+                                            line.contains("✗") -> com.music.spotui.ui.theme.Danger
+                                            line.contains("Fallback") || line.contains("Exhausted") -> com.music.spotui.ui.theme.Warning
+                                            else -> TextSecondary
                                         }
                                         Text(line, color = textColor, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, lineHeight = 15.sp)
                                     }
@@ -1114,9 +1141,9 @@ fun PlayerInfo(
                     }
                 }
             },
-            containerColor = Color(0xFF141418),
-            titleContentColor = Color.White,
-            textContentColor = Color.White,
+            containerColor = Dusk,
+            titleContentColor = Ivory,
+            textContentColor = Ivory,
         )
     }
 
@@ -1135,14 +1162,9 @@ fun PlayerInfo(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .width(270.dp)
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
-//                        GlideImage(
-//                            modifier = Modifier.size(60.dp),
-//                            model = albumSongs[song].coverUri,
-//                            contentScale = ContentScale.Crop,
-//                            contentDescription = ""
-//                        )
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isExplicit) {
@@ -1152,21 +1174,21 @@ fun PlayerInfo(
                         Text(
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                             text = songTitle,
-                            color = Color.White,
-                            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-                            fontSize = 23.sp,
-                            fontWeight = FontWeight.Bold,
+                            color = Ivory,
+                            fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.SemiBold,
                             letterSpacing = (-0.4).sp,
                             maxLines = 1,
                             softWrap = false,
                         )
                     }
-                    Spacer(Modifier.height(3.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = songSinger,
-                        color = Color(0xFFC4C4CC),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        color = TextSecondary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = if (onArtistClick != null) Modifier.clickable(
@@ -1182,19 +1204,22 @@ fun PlayerInfo(
                         // Source badge: green = real Spotify; other colors = not Spotify
                         // (Lossless via SpotiFLAC's Tidal/Qobuz/Amazon/Deezer mirrors, or YouTube).
                         val badgeColor = when {
-                            hasError -> Color(0xFFFF6B6B)
-                            isResolvingState -> Color(0xFF3DABFF)
-                            source == "Spotify" -> Color(0xFFE8C24A)
-                            source.startsWith("Lossless") -> Color(0xFFFFC862)
-                            source.startsWith("Deezer") || source == "Deezer" -> Color(0xFFA238FF)
-                            source == "Downloaded" -> Color(0xFF9C9C9C)
-                            else -> Color(0xFFFF6B6B)
+                            hasError -> com.music.spotui.ui.theme.Danger
+                            isResolvingState -> Lilac
+                            source == "Spotify" -> Gold
+                            source.startsWith("Lossless") -> GoldLight
+                            source.startsWith("Deezer") || source == "Deezer" -> Lilac
+                            source == "Downloaded" -> TextSecondary
+                            else -> com.music.spotui.ui.theme.Danger
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .padding(top = 3.dp)
-                                .clickable { showStreamDetailDialog = true },
+                                .padding(top = 8.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(badgeColor.copy(alpha = 0.12f))
+                                .clickable { showStreamDetailDialog = true }
+                                .padding(horizontal = 9.dp, vertical = 4.dp),
                         ) {
                             Box(
                                 modifier = Modifier
@@ -1223,7 +1248,7 @@ fun PlayerInfo(
 
             Icon(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(30.dp)
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -1260,17 +1285,9 @@ fun PlayerInfo(
                         },
                         onLongClick = { onShowSavedIn?.invoke() },
                     ),
-                painter = if (isLiked.value) {
-                    painterResource(id = R.drawable.added)
-                } else {
-                    painterResource(id = R.drawable.ic_add)
-                },
-                tint = if (isLiked.value) {
-                    Color(AppPalette.toArgb())
-                } else {
-                    Color.White
-                },
-                contentDescription = ""
+                imageVector = if (isLiked.value) Icons.Rounded.CheckCircle else Icons.Rounded.AddCircleOutline,
+                tint = if (isLiked.value) Gold else Ivory,
+                contentDescription = if (isLiked.value) "Saved to Liked Songs" else "Save to Liked Songs"
             )
         }
     }
@@ -1356,24 +1373,24 @@ fun CustomSlider(
 
             // Inactive (background) track
             drawLine(
-                color = Color(0xFF535353),
+                color = Ivory.copy(alpha = 0.16f),
                 start = Offset(0f, trackY),
                 end = Offset(size.width, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active (played) track, YouTube Music red
+            // Active (played) track in gold
             drawLine(
-                color = Color(0xFFE8C24A),
+                color = Gold,
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Thumb dot, always visible (YT Music shows it), pops larger while dragging
+            // Ivory thumb, always visible, grows while dragging
             run {
                 drawCircle(
-                    color = Color(0xFFE8C24A),
+                    color = Ivory,
                     radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
                     center = Offset(thumbX, trackY)
                 )
@@ -1382,31 +1399,6 @@ fun CustomSlider(
     }
 }
 
-@Composable
-fun PlayerEndInfo() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Icon(
-            modifier = Modifier
-                .size(22.dp),
-            painter = painterResource(id = R.drawable.ic_devices),
-            tint = Color.White,
-            contentDescription = ""
-        )
-        Icon(
-            modifier = Modifier
-                .size(16.dp),
-            painter = painterResource(id = R.drawable.ic_share),
-            tint = Color.White,
-            contentDescription = ""
-        )
-    }
-}
 
 @Composable
 fun PlayerFull(
@@ -1425,11 +1417,11 @@ fun PlayerFull(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp)
+            .padding(horizontal = 22.dp, vertical = 16.dp)
     ) {
         Icon(
             modifier = Modifier
-                .size(25.dp)
+                .size(26.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -1442,16 +1434,16 @@ fun PlayerFull(
 
                 },
             tint = if (shuffle) {
-                Color(0xFFE8C24A)
+                Gold
             } else {
-                Color.White
+                Ivory
             },
-            painter = painterResource(id = R.drawable.ic_player_shuffle),
-            contentDescription = ""
+            imageVector = Icons.Rounded.Shuffle,
+            contentDescription = if (shuffle) "Shuffle on" else "Shuffle off"
         )
         Icon(
             modifier = Modifier
-                .size(35.dp)
+                .size(42.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -1462,30 +1454,25 @@ fun PlayerFull(
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
                 },
-            tint = Color.White,
-            painter = painterResource(id = R.drawable.ic_player_back),
-            contentDescription = ""
+            tint = Ivory,
+            imageVector = Icons.Rounded.SkipPrevious,
+            contentDescription = "Previous"
         )
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
                 // requiredSize forces an exact 68×68 square even if the parent Column
                 // constrains height, .size() alone let it get squished into an ellipse.
-                .requiredSize(68.dp)
-                // A soft amber glow under the play button so it reads as the primary
-                // control, in the app's accent rather than a flat white disc.
+                .requiredSize(72.dp)
+                // A warm gold glow under the play disc so it reads as the primary control.
                 .shadow(
-                    elevation = 18.dp,
+                    elevation = 22.dp,
                     shape = CircleShape,
                     clip = false,
-                    ambientColor = Color(0xFFE8C24A),
-                    spotColor = Color(0xFFE8C24A),
+                    ambientColor = Gold,
+                    spotColor = Gold,
                 )
                 .clip(CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color(0xFFFFC760), Color(0xFFE8C24A)),
-                    )
-                )
+                .background(com.music.spotui.ui.theme.GoldBrush)
                 .clickable {
                     // Single source of truth: toggle based on the engine's real
                     // state so the button never gets stuck showing the wrong icon.
@@ -1499,26 +1486,23 @@ fun PlayerFull(
             if (playerViewModel.isResolving.value) {
                 androidx.compose.material3.CircularProgressIndicator(
                     modifier = Modifier.size(30.dp),
-                    color = Color.Black,
+                    color = OnGold,
                     strokeWidth = 3.dp
                 )
             } else {
                 Icon(
                     modifier = Modifier
-                        .size(30.dp),
-                    tint = Color.Black,
-                    painter = if (songPlayingState)
-                        painterResource(id = R.drawable.ic_playing)
-                    else
-                        painterResource(id = R.drawable.play_svgrepo_com),
-                    contentDescription = ""
+                        .size(38.dp),
+                    tint = OnGold,
+                    imageVector = if (songPlayingState) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    contentDescription = if (songPlayingState) "Pause" else "Play"
                 )
             }
         }
 
         Icon(
             modifier = Modifier
-                .size(35.dp)
+                .size(42.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -1528,9 +1512,9 @@ fun PlayerFull(
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
                 },
-            tint = Color.White,
-            painter = painterResource(id = R.drawable.ic_player_skip),
-            contentDescription = ""
+            tint = Ivory,
+            imageVector = Icons.Rounded.SkipNext,
+            contentDescription = "Next"
         )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1554,31 +1538,26 @@ fun PlayerFull(
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = if (repeat != RepeatMode.OFF) {
-                        Color(0xFFE8C24A)
+                        Gold
                     } else {
-                        Color.White
+                        Ivory
                     },
-                    painter = painterResource(id = R.drawable.ic_repeat),
-                    contentDescription = "Repeat"
+                    imageVector = if (repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                    contentDescription = when (repeat) {
+                        RepeatMode.OFF -> "Repeat off"
+                        RepeatMode.ALL -> "Repeat all"
+                        RepeatMode.ONE -> "Repeat one"
+                    }
                 )
-                if (repeat == RepeatMode.ONE) {
-                    Text(
-                        text = "1",
-                        color = Color(0xFFE8C24A),
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.offset(y = (-1).dp)
-                    )
-                }
             }
             if (repeat != RepeatMode.OFF) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Box(
 modifier = Modifier
                         .size(4.dp)
-                        .background(Color(0xFFE8C24A), shape = CircleShape)
+                        .background(Gold, shape = CircleShape)
                 )
             } else {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1587,38 +1566,7 @@ modifier = Modifier
     }
 }
 
-@Composable
-fun PlayerEndInfo(onOpenDevices: () -> Unit = {}) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Icon(
-            modifier = Modifier
-                .size(22.dp)
-                .clickable { onOpenDevices() },
-            painter = painterResource(id = R.drawable.ic_devices),
-            tint = Color.White,
-            contentDescription = "Devices"
-        )
-        Icon(
-            modifier = Modifier
-                .size(16.dp),
-            painter = painterResource(id = R.drawable.ic_share),
-            tint = Color.White,
-            contentDescription = ""
-        )
-    }
-}
 
-/** The current audio output route name for the Connect indicator (BT name if
- *  connected, else Headphones / This device). */
-private fun currentAudioRoute(context: Context): String {
-    return com.music.spotui.ui.utils.AudioDeviceHelper.getCurrentAudioRouteName(context)
-}
 
 @Composable
 fun PlayerConnectRow(
@@ -1651,27 +1599,29 @@ fun PlayerConnectRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 25.dp, vertical = 4.dp),
+            .padding(horizontal = 22.dp, vertical = 4.dp),
     ) {
-        // Device / Spotify Connect indicator (green, like the official app).
+        // Current audio output, as a gold chip that opens the device picker.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(50))
+                .background(Gold.copy(alpha = 0.12f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                 ) { onOpenDevices() }
+                .padding(horizontal = 12.dp, vertical = 7.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_devices),
-                tint = Color(0xFFE8C24A),
-                modifier = Modifier.size(18.dp),
-                contentDescription = "Device",
+                imageVector = Icons.Rounded.Headphones,
+                tint = Gold,
+                modifier = Modifier.size(17.dp),
+                contentDescription = "Audio output",
             )
             Text(
                 text = routeName,
-                color = Color(0xFFE8C24A),
+                color = Gold,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -1683,10 +1633,10 @@ fun PlayerConnectRow(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_share),
-                tint = Color.White,
+                imageVector = Icons.Rounded.Share,
+                tint = Ivory,
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(22.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -1705,10 +1655,10 @@ fun PlayerConnectRow(
             )
             Spacer(modifier = Modifier.width(22.dp))
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.List,
-                tint = Color.White,
+                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                tint = Ivory,
                 modifier = Modifier
-                    .size(23.dp)
+                    .size(24.dp)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -1804,7 +1754,7 @@ fun ArtistsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = Dusk,
         dragHandle = null,
     ) {
         Column(
@@ -1815,7 +1765,7 @@ fun ArtistsSheet(
         ) {
             Text(
                 text = "Artists",
-                color = Color.White,
+                color = Ivory,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
@@ -1856,12 +1806,12 @@ fun ArtistsSheet(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF333333)),
+                                .background(Velvet),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                tint = Color.Gray,
+                                tint = TextTertiary,
                                 modifier = Modifier.size(24.dp),
                                 contentDescription = name,
                             )
@@ -1870,7 +1820,7 @@ fun ArtistsSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = name,
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
@@ -1888,11 +1838,11 @@ fun ArtistsSheet(
                                 .clip(RoundedCornerShape(20.dp))
                                 .border(
                                     1.dp,
-                                    if (following) Color.Transparent else Color.Gray,
+                                    if (following) Color.Transparent else TextTertiary,
                                     RoundedCornerShape(20.dp),
                                 )
                                 .background(
-                                    if (following) Color(0xFFE8C24A) else Color.Transparent,
+                                    if (following) Gold else Color.Transparent,
                                     RoundedCornerShape(20.dp),
                                 )
                                 .clickable {
@@ -1919,7 +1869,7 @@ fun ArtistsSheet(
                         ) {
                             Text(
                                 text = if (following) "Following" else "Follow",
-                                color = if (following) Color(0xFF191414) else Color.White,
+                                color = if (following) OnGold else Ivory,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -2024,7 +1974,7 @@ fun PlayerOptionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = Dusk,
         dragHandle = null
     ) {
         Column(
@@ -2112,7 +2062,7 @@ fun PlayerOptionsSheet(
                     Column {
                         Text(
                             title,
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -2120,14 +2070,14 @@ fun PlayerOptionsSheet(
                         )
                         Text(
                             singer,
-                            color = Color.Gray,
+                            color = TextTertiary,
                             fontSize = 13.sp,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }
-                androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                androidx.compose.material3.HorizontalDivider(color = Velvet)
 
                 PlayerMenuRow(
                     icon = Icons.Default.Share,
@@ -2147,7 +2097,7 @@ fun PlayerOptionsSheet(
                     icon = if (downloaded) Icons.Default.CheckCircle else ImageVector.vectorResource(
                         R.drawable.ic_download
                     ),
-                    iconTint = if (downloaded) Color(AppPalette.toArgb()) else Color.White,
+                    iconTint = if (downloaded) Color(AppPalette.toArgb()) else Ivory,
                     label = when {
                         downloaded -> "Remove download"
                         downloadingNow -> "Downloading…"
@@ -2172,7 +2122,7 @@ fun PlayerOptionsSheet(
                 }
                 PlayerMenuRow(
                     icon = Icons.Default.PlayArrow,
-                    iconTint = if (currentAlternative != null) Color(AppPalette.toArgb()) else Color.White,
+                    iconTint = if (currentAlternative != null) Color(AppPalette.toArgb()) else Ivory,
                     label = if (currentAlternative == null) "Alternative stream" else "Alternative stream set",
                     enabled = currentSong != null,
                     trailingArrow = true,
@@ -2190,7 +2140,7 @@ fun PlayerOptionsSheet(
                 }
                 PlayerMenuRow(
                     icon = if (isLiked.value) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    iconTint = if (isLiked.value) Color(AppPalette.toArgb()) else Color.White,
+                    iconTint = if (isLiked.value) Color(AppPalette.toArgb()) else Ivory,
                     label = if (isLiked.value) "Remove from Liked Songs" else "Add to Liked Songs"
                 ) {
                     if (isLiked.value) {
@@ -2266,7 +2216,7 @@ fun PlayerOptionsSheet(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        tint = Color.White,
+                        tint = Ivory,
                         modifier = Modifier
                             .size(24.dp)
                             .clickable { showSleep = false },
@@ -2275,7 +2225,7 @@ fun PlayerOptionsSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         "Sleep timer",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
@@ -2292,7 +2242,7 @@ fun PlayerOptionsSheet(
                         )
                     }
                 }
-                androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                androidx.compose.material3.HorizontalDivider(color = Velvet)
                 val options = listOf(
                     "Off" to 0L,
                     "5 minutes" to 5L,
@@ -2332,7 +2282,7 @@ fun AlternativeStreamEditor(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                tint = Color.White,
+                tint = Ivory,
                 modifier = Modifier
                     .size(24.dp)
                     .clickable { onBack() },
@@ -2341,7 +2291,7 @@ fun AlternativeStreamEditor(
             Spacer(Modifier.width(12.dp))
             Text(
                 "Alternative stream",
-                color = Color.White,
+                color = Ivory,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -2356,7 +2306,7 @@ fun AlternativeStreamEditor(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF282828))
+                    .background(Velvet)
                     .clickable {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
@@ -2385,7 +2335,7 @@ fun AlternativeStreamEditor(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = videoId,
-                        color = Color(0xFFB3B3B3),
+                        color = TextSecondary,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -2393,7 +2343,7 @@ fun AlternativeStreamEditor(
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                    tint = Color(0xFFB3B3B3),
+                    tint = TextSecondary,
                     modifier = Modifier.size(18.dp),
                     contentDescription = "Open on YouTube",
                 )
@@ -2408,7 +2358,7 @@ fun AlternativeStreamEditor(
         } else {
             Text(
                 text = "No alternative stream set",
-                color = Color(0xFFB3B3B3),
+                color = TextSecondary,
                 fontSize = 13.sp,
             )
         }
@@ -2418,8 +2368,8 @@ fun AlternativeStreamEditor(
             onValueChange = { youtubeText = it },
             enabled = enabled,
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 14.sp),
-            label = { Text("YouTube link or video ID", color = Color(0xFFB3B3B3)) },
+            textStyle = androidx.compose.ui.text.TextStyle(color = Ivory, fontSize = 14.sp),
+            label = { Text("YouTube link or video ID", color = TextSecondary) },
             modifier = Modifier.fillMaxWidth(),
         )
         Row(
@@ -2432,7 +2382,7 @@ fun AlternativeStreamEditor(
                 onClick = { onUseYouTube(youtubeText) }) {
                 Text(
                     "Use YouTube",
-                    color = if (enabled && youtubeText.isNotBlank()) AppPalette else Color.Gray
+                    color = if (enabled && youtubeText.isNotBlank()) AppPalette else TextTertiary
                 )
             }
         }
@@ -2455,7 +2405,7 @@ fun AlternativeStreamEditor(
             icon = Icons.Default.CheckCircle,
             label = "Clear alternative stream",
             enabled = enabled && currentAlternative != null,
-            iconTint = Color(0xFFE57373),
+            iconTint = com.music.spotui.ui.theme.Danger,
         ) {
             onClear()
         }
@@ -2490,7 +2440,7 @@ fun YouTubeSearchView(
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                tint = Color.White,
+                tint = Ivory,
                 modifier = Modifier
                     .size(24.dp)
                     .clickable { viewModel.stopPreview(); onBack() },
@@ -2499,7 +2449,7 @@ fun YouTubeSearchView(
             Spacer(Modifier.width(12.dp))
             Text(
                 "Search YouTube",
-                color = Color.White,
+                color = Ivory,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -2510,8 +2460,8 @@ fun YouTubeSearchView(
             onValueChange = { viewModel.updateQuery(it) },
             enabled = enabled,
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 14.sp),
-            label = { Text("Search query", color = Color(0xFFB3B3B3)) },
+            textStyle = androidx.compose.ui.text.TextStyle(color = Ivory, fontSize = 14.sp),
+            label = { Text("Search query", color = TextSecondary) },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(12.dp))
@@ -2539,7 +2489,7 @@ fun YouTubeSearchView(
                 if (errorText != null) {
                     Text(
                         text = errorText,
-                        color = Color(0xFFE57373),
+                        color = com.music.spotui.ui.theme.Danger,
                         fontSize = 13.sp,
                         modifier = Modifier.padding(top = 8.dp),
                     )
@@ -2549,7 +2499,7 @@ fun YouTubeSearchView(
             viewModel.searchResults.isEmpty() && viewModel.searchQuery.isNotBlank() -> {
                 Text(
                     text = "No results found",
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -2616,7 +2566,7 @@ private fun YouTubeSearchResultRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -2625,7 +2575,7 @@ private fun YouTubeSearchResultRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = song.artists.joinToString(", ") { it.name },
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -2634,7 +2584,7 @@ private fun YouTubeSearchResultRow(
                 if (durationText.isNotBlank()) {
                     Text(
                         text = " · $durationText",
-                        color = Color(0xFFB3B3B3),
+                        color = TextSecondary,
                         fontSize = 12.sp,
                     )
                 }
@@ -2652,7 +2602,7 @@ private fun YouTubeSearchResultRow(
         } else {
             Icon(
                 imageVector = if (isPreviewing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                tint = if (isPreviewing) AppPalette else Color(0xFFB3B3B3),
+                tint = if (isPreviewing) AppPalette else TextSecondary,
                 modifier = Modifier
                     .size(32.dp)
                     .clickable(enabled = enabled) { onPreview() }
@@ -2663,7 +2613,7 @@ private fun YouTubeSearchResultRow(
         Spacer(Modifier.width(2.dp))
         Icon(
             imageVector = Icons.Default.Check,
-            tint = Color(0xFFB3B3B3),
+            tint = TextSecondary,
             modifier = Modifier
                 .size(32.dp)
                 .clickable(enabled = enabled) { onSelect() }
@@ -2678,7 +2628,7 @@ fun PlayerMenuRow(
     icon: ImageVector,
     label: String,
     subtitle: String? = null,
-    iconTint: Color = Color.White,
+    iconTint: Color = Ivory,
     enabled: Boolean = true,
     trailingArrow: Boolean = false,
     onClick: () -> Unit
@@ -2692,7 +2642,7 @@ fun PlayerMenuRow(
     ) {
         Icon(
             imageVector = icon,
-            tint = if (enabled) iconTint else Color.Gray,
+            tint = if (enabled) iconTint else TextTertiary,
             modifier = Modifier.size(22.dp),
             contentDescription = null
         )
@@ -2700,7 +2650,7 @@ fun PlayerMenuRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                color = if (enabled) Color.White else Color.Gray,
+                color = if (enabled) Ivory else TextTertiary,
                 fontSize = 15.sp,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -2708,7 +2658,7 @@ fun PlayerMenuRow(
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 13.sp,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -2718,7 +2668,7 @@ fun PlayerMenuRow(
         if (trailingArrow) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                tint = Color.Gray,
+                tint = TextTertiary,
                 modifier = Modifier.size(20.dp),
                 contentDescription = null
             )

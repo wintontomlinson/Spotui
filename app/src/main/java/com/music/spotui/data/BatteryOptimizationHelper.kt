@@ -26,21 +26,21 @@ object BatteryOptimizationHelper {
 
     fun getManufacturerTips(): Pair<String, String>? = when (Build.MANUFACTURER.lowercase()) {
         "xiaomi", "redmi", "poco" -> "Xiaomi / MIUI" to
-            "Settings > Apps > Manage apps > SOLO > Battery saver > No restrictions"
+            "Settings > Apps > Manage apps > Solo > Battery saver > No restrictions"
         "huawei", "honor" -> "Huawei / EMUI" to
-            "Settings > Apps > Apps > SOLO > Battery > Allow background activity"
+            "Settings > Apps > Apps > Solo > Battery > Allow background activity"
         "samsung" -> "Samsung / One UI" to
-            "Settings > Apps > SOLO > Battery > Allow background activity"
+            "Settings > Apps > Solo > Battery > Allow background activity"
         "oneplus", "realme" -> "OnePlus / ColorOS" to
-            "Settings > Apps > SOLO > Battery usage > Allow background activity"
+            "Settings > Apps > Solo > Battery usage > Allow background activity"
         "oppo" -> "OPPO / ColorOS" to
-            "Settings > Apps > SOLO > Battery usage > Allow background activity"
+            "Settings > Apps > Solo > Battery usage > Allow background activity"
         "vivo" -> "Vivo / Funtouch" to
-            "Settings > Apps > SOLO > Battery > Background restriction > Unrestricted"
+            "Settings > Apps > Solo > Battery > Background restriction > Unrestricted"
         "sony" -> "Sony / Xperia" to
-            "Settings > Apps > SOLO > Battery > Battery optimization > Don't optimize"
+            "Settings > Apps > Solo > Battery > Battery optimization > Don't optimize"
         "nothing" -> "Nothing OS" to
-            "Settings > Apps > SOLO > Battery > Unrestricted"
+            "Settings > Apps > Solo > Battery > Unrestricted"
         else -> null
     }
 }

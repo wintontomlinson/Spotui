@@ -77,6 +77,11 @@ import com.music.spotui.ui.theme.AppBackground
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.ShowViewModel
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Velvet
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -130,7 +135,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
             item {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    tint = Color.White,
+                    tint = Ivory,
                     contentDescription = "Back",
                     modifier = Modifier
                         .padding(16.dp)
@@ -156,20 +161,21 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = show?.name ?: showName,
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        color = Ivory,
+                        fontSize = 28.sp,
+                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     show?.publisher?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, color = Color(0xFFB3B3B3), fontSize = 13.sp)
+                        Text(it, color = TextSecondary, fontSize = 13.sp)
                     }
                     if (episodes.isNotEmpty()) {
                         Spacer(Modifier.height(12.dp))
                         Icon(
                             painter = painterResource(id = R.drawable.ic_queue_add),
-                            tint = Color.White,
+                            tint = Ivory,
                             modifier = Modifier
                                 .size(24.dp)
                                 .clickable(
@@ -216,20 +222,20 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Color(0xFF2A2A30))
+                                .background(Velvet)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
-                                color = Color.White,
+                                color = Ivory,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
-                                tint = Color.White,
+                                tint = Ivory,
                                 modifier = Modifier
                                     .size(16.dp)
                                     .padding(start = 4.dp)
@@ -249,7 +255,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                     ) {
                         Text(
                             text = "No matches found for \"$searchQuery\"",
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -295,13 +301,13 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Column(modifier = Modifier.padding(start = 12.dp)) {
                                 Text(
                                     ep.title,
-                                    color = if (ep.id == vm.currentSongId.value) Color(0xFFE8C24A) else Color.White,
+                                    color = if (ep.id == vm.currentSongId.value) Gold else Ivory,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(ep.singer, color = Color(0xFFB3B3B3), fontSize = 12.sp, maxLines = 1)
+                                Text(ep.singer, color = TextSecondary, fontSize = 12.sp, maxLines = 1)
                             }
                         }
                     }
@@ -313,7 +319,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Dusk
             ) {
                 Column(
                     modifier = Modifier
@@ -322,12 +328,12 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    HorizontalDivider(color = Velvet)
                     Spacer(modifier = Modifier.height(4.dp))
                     ShowSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -356,13 +362,13 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == ShowSortOption.DATE),
-                                color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
                             )

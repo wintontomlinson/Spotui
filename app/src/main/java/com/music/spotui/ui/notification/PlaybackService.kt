@@ -506,7 +506,7 @@ class PlaybackService : MediaLibraryService() {
                 }
                 currentSongState.updateRepeatState(mode)
                 // Always ensure the underlying ExoPlayer repeatMode stays REPEAT_MODE_OFF.
-                // Spotui manages single-track / all-track looping at the queue & PlaybackService level.
+                // Solo manages single-track / all-track looping at the queue & PlaybackService level.
                 // If ExoPlayer itself is set to REPEAT_MODE_ONE or REPEAT_MODE_ALL on a single-item
                 // timeline, ExoPlayer silently loops the single item internally and NEVER emits STATE_ENDED.
                 base.repeatMode = Player.REPEAT_MODE_OFF
@@ -700,7 +700,7 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> =
-            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "spotui"), params))
+            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "Solo"), params))
 
         override fun onGetChildren(
             session: MediaLibrarySession,

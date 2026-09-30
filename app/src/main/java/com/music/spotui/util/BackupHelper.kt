@@ -104,7 +104,8 @@ object BackupHelper {
     }
 
     /**
-     * Validates if [jsonString] is a genuine Spotui backup file.
+     * Validates if [jsonString] is a genuine Solo backup file (the format keeps its
+     * original "spotui" identifiers so older backups still restore).
      * Returns the root [JSONObject] if valid, or null if invalid.
      */
     fun validateBackupJson(jsonString: String): JSONObject? {
@@ -191,7 +192,7 @@ object BackupHelper {
         }
 
         val root = validateBackupJson(jsonString)
-            ?: return@withContext Pair(false, "Invalid backup file: Not a valid SOLO backup")
+            ?: return@withContext Pair(false, "Invalid backup file: Not a valid Solo backup")
 
         runCatching {
             val data = root.getJSONObject("data")

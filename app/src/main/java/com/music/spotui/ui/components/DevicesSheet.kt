@@ -55,6 +55,12 @@ import com.music.spotui.R
 import com.music.spotui.ui.utils.AudioDeviceHelper
 import com.music.spotui.ui.utils.AudioDeviceItem
 import com.music.spotui.ui.utils.AudioDeviceType
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Night
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,8 +91,8 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF121212),
-        contentColor = Color.White,
+        containerColor = Night,
+        contentColor = Ivory,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
     ) {
         Column(
@@ -107,13 +113,13 @@ fun DevicesSheet(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_devices),
                         contentDescription = null,
-                        tint = Color(0xFFE8C24A),
+                        tint = Gold,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Connect to a device",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -121,7 +127,7 @@ fun DevicesSheet(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = Color.LightGray,
+                    tint = TextSecondary,
                     modifier = Modifier
                         .size(24.dp)
                         .clip(CircleShape)
@@ -132,7 +138,7 @@ fun DevicesSheet(
                 )
             }
 
-            HorizontalDivider(color = Color(0xFF282828), thickness = 1.dp)
+            HorizontalDivider(color = Velvet, thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
             // Bluetooth Permission Banner if needed (Android 12+)
@@ -143,12 +149,12 @@ fun DevicesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF282828))
+                        .background(Velvet)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Grant permission to discover paired Bluetooth devices",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 12.sp,
                         modifier = Modifier.weight(1f)
                     )
@@ -156,7 +162,7 @@ fun DevicesSheet(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFE8C24A))
+                            .background(Gold)
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                             }
@@ -178,7 +184,7 @@ fun DevicesSheet(
             if (activeDevice != null) {
                 Text(
                     text = "CURRENT DEVICE",
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -190,20 +196,20 @@ fun DevicesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFE8C24A).copy(alpha = 0.15f))
+                        .background(Gold.copy(alpha = 0.15f))
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_devices),
                         contentDescription = null,
-                        tint = Color(0xFFE8C24A),
+                        tint = Gold,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = activeDevice.name,
-                            color = Color(0xFFE8C24A),
+                            color = Gold,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -211,14 +217,14 @@ fun DevicesSheet(
                         )
                         Text(
                             text = "Listening on this device",
-                            color = Color(0xFFE8C24A).copy(alpha = 0.8f),
+                            color = Gold.copy(alpha = 0.8f),
                             fontSize = 12.sp
                         )
                     }
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Active",
-                        tint = Color(0xFFE8C24A),
+                        tint = Gold,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -229,7 +235,7 @@ fun DevicesSheet(
             // Available Devices Section Title
             Text(
                 text = "SELECT A DEVICE",
-                color = Color.Gray,
+                color = TextTertiary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
@@ -256,7 +262,7 @@ fun DevicesSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFF282828), thickness = 1.dp)
+            HorizontalDivider(color = Velvet, thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
             // Open System Audio Switcher / Bluetooth Settings Action Row
@@ -276,12 +282,12 @@ fun DevicesSheet(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF282828))
+                        .background(Velvet)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Ivory,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -289,13 +295,13 @@ fun DevicesSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "System Audio Switcher",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = "Connect or pair Bluetooth devices in Android Settings",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 11.sp
                     )
                 }
@@ -311,8 +317,8 @@ private fun DeviceItemRow(
     item: AudioDeviceItem,
     onClick: () -> Unit
 ) {
-    val textColor = if (item.isActive) Color(0xFFE8C24A) else Color.White
-    val iconColor = if (item.isActive) Color(0xFFE8C24A) else Color.LightGray
+    val textColor = if (item.isActive) Gold else Ivory
+    val iconColor = if (item.isActive) Gold else TextSecondary
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -368,7 +374,7 @@ private fun DeviceItemRow(
             }
             Text(
                 text = subText,
-                color = if (item.isActive) Color(0xFFE8C24A).copy(alpha = 0.8f) else Color.Gray,
+                color = if (item.isActive) Gold.copy(alpha = 0.8f) else TextTertiary,
                 fontSize = 11.sp
             )
         }
@@ -377,7 +383,7 @@ private fun DeviceItemRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Active",
-                tint = Color(0xFFE8C24A),
+                tint = Gold,
                 modifier = Modifier.size(18.dp)
             )
         }

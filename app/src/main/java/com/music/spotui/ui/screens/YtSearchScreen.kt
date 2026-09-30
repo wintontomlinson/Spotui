@@ -78,14 +78,22 @@ import com.music.spotui.ui.viewmodel.PlaylistResult
 import com.music.spotui.ui.viewmodel.SearchTab
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 import com.music.spotui.ui.viewmodel.formatDurationMs
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextDisabled
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.components.shimmer
+import androidx.compose.material.icons.rounded.SearchOff
 
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
-private val Surface = Color(0xFF082C34)
-private val SurfaceHigh = Color(0xFF0C3A44)
-private val Hairline = Color(0x14FFFFFF)
-private val TextDim = Color(0xFFB3B3B3)
-private val TextFaint = Color(0xFF7A7A85)
+private val Surface = Dusk
+private val SurfaceHigh = Velvet
+private val Hairline = Ivory.copy(alpha = 0.08f)
+private val TextDim = TextSecondary
+private val TextFaint = TextTertiary
 
 /**
  * Colourful browse tiles shown on the empty search screen.
@@ -101,29 +109,30 @@ private data class BrowseCategory(
 )
 
 private val BROWSE_CATEGORIES = listOf(
-    // Each category has its own vibrant hue plus a name-matched `imageQuery`, so
+    // Each category carries a jewel tone from the Solo palette (it tints the tile's scrim)
+    // plus a name-matched `imageQuery`, so
     // the full-bleed tile artwork clearly reflects the label. `query` is what
     // actually runs on tap.
     // imageQuery points at recognisable, current hit albums/artists so each tile
     // shows relatable, latest cover art (resolved to a square album cover) rather
     // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1DB954), imageQuery = "trending"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFE13300), imageQuery = "charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF7358FF), imageQuery = "new"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF1E3264), imageQuery = "madeforyou"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFE8115B), imageQuery = "bollywood"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFBC5900), imageQuery = "punjabi"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF148A08), imageQuery = "hiphop"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFDC148C), imageQuery = "pop"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF0D73EC), imageQuery = "lofi"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFFF4632), imageQuery = "workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFAF2896), imageQuery = "romance"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF8D67AB), imageQuery = "party"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB49BC8), imageQuery = "devotional"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF503750), imageQuery = "retro"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF477D95), imageQuery = "sad"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF056952), imageQuery = "english"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF777777), imageQuery = "instrumental"),
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFFC8963E), imageQuery = "trending"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF9E2B3F), imageQuery = "charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF6B4BB8), imageQuery = "new"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF2F4F9E), imageQuery = "madeforyou"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFB83A6B), imageQuery = "bollywood"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFC9752A), imageQuery = "punjabi"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2E7D5B), imageQuery = "hiphop"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFA83A8C), imageQuery = "pop"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2C7A8C), imageQuery = "lofi"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFC4513A), imageQuery = "workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFA3304F), imageQuery = "romance"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF7A4FB0), imageQuery = "party"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB8862E), imageQuery = "devotional"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF7A5A7E), imageQuery = "retro"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF4A6380), imageQuery = "sad"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F7A6E), imageQuery = "english"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF6B6680), imageQuery = "instrumental"),
 )
 
 /**
@@ -278,22 +287,10 @@ private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
         modifier = Modifier.padding(bottom = 6.dp),
     ) {
         items(SearchTab.entries.toList(), key = { it.name }) { entry ->
-            val active = entry == selected
-            Text(
-                text = entry.label,
-                color = if (active) Color.Black else Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(if (active) Accent else SurfaceHigh)
-                    .border(
-                        1.dp,
-                        if (active) Color.Transparent else Hairline,
-                        RoundedCornerShape(50),
-                    )
-                    .clickable { onSelect(entry) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            com.music.spotui.ui.components.SoloChip(
+                label = entry.label,
+                selected = entry == selected,
+                onClick = { onSelect(entry) },
             )
         }
     }
@@ -323,7 +320,7 @@ private fun ArtistResultRow(artist: ArtistResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(
                 text = artist.name,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -347,7 +344,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(RoundedCornerShape(10.dp)),
             model = album.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -357,7 +354,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
             Text(
                 text = album.title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -390,7 +387,7 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(RoundedCornerShape(10.dp)),
             model = playlist.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -400,7 +397,7 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
             Text(
                 text = playlist.title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -450,7 +447,7 @@ private fun SearchField(
             value = query,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+            textStyle = TextStyle(color = Ivory, fontSize = 16.sp),
             cursorBrush = SolidColor(Accent),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
@@ -484,96 +481,6 @@ private fun SearchField(
     }
 }
 
-/**
- * One "Browse all" tile: a coloured card with the label top-left and a real cover
- * tilted into the bottom-right corner, the way Spotify presents its browse categories.
- * The cover is fetched on first display and cached for the session, so scrolling back
- * costs nothing.
- */
-/**
- * The big, full-width "featured" Explore banner — the hero at the top of the
- * grid. Same live cover art as [BrowseTile] but taller and with a "Featured"
- * kicker above the title so it reads as the headline category.
- */
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-private fun FeaturedBrowseTile(
-    category: BrowseCategory,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val coverState = androidx.compose.runtime.remember(category.query) {
-        androidx.compose.runtime.mutableStateOf(
-            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.query)
-        )
-    }
-    val cover = coverState.value
-    androidx.compose.runtime.LaunchedEffect(category.query) {
-        if (coverState.value.isBlank()) {
-            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.query)
-        }
-    }
-
-    Box(
-        modifier = modifier
-            .height(190.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(category.color, category.color.copy(alpha = 0.7f)),
-                )
-            )
-            .border(1.dp, Color(0x33E8C24A), RoundedCornerShape(22.dp))
-            .clickable(onClick = onClick),
-    ) {
-        if (cover.isNotBlank()) {
-            GlideImage(
-                model = cover,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                loading = placeholder(R.drawable.placeholder),
-                failure = placeholder(R.drawable.placeholder),
-            )
-        }
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            category.color.copy(alpha = 0.35f),
-                            Color(0x00041418),
-                            Color(0xF2041418),
-                        ),
-                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                        end = androidx.compose.ui.geometry.Offset.Infinite,
-                    )
-                ),
-        )
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(18.dp),
-        ) {
-            Text(
-                text = "FEATURED",
-                color = Accent,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 2.sp,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = category.label,
-                color = Color.White,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 2,
-            )
-        }
-    }
-}
 
 /**
  * Explore card: a rounded tile whose FULL background is professional artwork
@@ -604,9 +511,9 @@ private fun BrowseTile(
     Box(
         modifier = modifier
             .height(138.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             .background(category.color)
-            .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(16.dp))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
@@ -629,9 +536,9 @@ private fun BrowseTile(
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            category.color.copy(alpha = 0.55f),
-                            Color(0x66000000),
-                            Color(0xE6000000),
+                            category.color.copy(alpha = 0.50f),
+                            com.music.spotui.ui.theme.Ink.copy(alpha = 0.35f),
+                            com.music.spotui.ui.theme.Ink.copy(alpha = 0.92f),
                         ),
                         start = androidx.compose.ui.geometry.Offset(0f, 0f),
                         end = androidx.compose.ui.geometry.Offset.Infinite,
@@ -658,7 +565,7 @@ private fun BrowseTile(
         // Category name sitting ON TOP of the image, bottom-left.
         Text(
             text = category.label,
-            color = Color.White,
+            color = Ivory,
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 2,
@@ -691,7 +598,7 @@ private fun DiscoverPane(
                 ) {
                     Text(
                         text = "Recent searches",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f),
@@ -724,7 +631,7 @@ private fun DiscoverPane(
                     )
                     Text(
                         text = entry,
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 15.sp,
                         maxLines = 1,
                         modifier = Modifier
@@ -746,31 +653,18 @@ private fun DiscoverPane(
         }
 
         item {
-            // Explore masthead: a gold accent tick + title + subtitle, matching
-            // the app's Home section headers for a consistent premium look.
-            Column(modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 14.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .width(4.dp)
-                            .height(22.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Accent),
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        text = "Explore",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                }
+            // Explore masthead in the display serif.
+            Column(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 14.dp)) {
+                Text(
+                    text = "Explore",
+                    style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+                    color = Ivory,
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Browse moods, genres & the latest",
+                    text = "Moods, genres and what's new",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                     color = TextDim,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(start = 14.dp),
                 )
             }
         }
@@ -809,7 +703,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(RoundedCornerShape(10.dp)),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -824,7 +718,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
         ) {
             Text(
                 text = song.title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -851,19 +745,9 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
     }
 }
 
-/** Placeholder rows that pulse while the first page of results loads. */
+/** Placeholder rows that shimmer while the first page of results loads. */
 @Composable
 private fun ResultSkeleton(circular: Boolean = false) {
-    val transition = rememberInfiniteTransition(label = "skeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "skeletonAlpha",
-    )
     Column(modifier = Modifier.padding(top = 6.dp)) {
         repeat(8) {
             Row(
@@ -872,34 +756,17 @@ private fun ResultSkeleton(circular: Boolean = false) {
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        // Match the shape of the rows being waited for, so the list does
-                        // not visibly change form when the results land.
-                        .clip(RoundedCornerShape(if (circular) 50.dp else 6.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+                // Match the shape of the rows being waited for, so the list does not
+                // visibly change form when the results land.
+                Box(Modifier.size(52.dp).shimmer(RoundedCornerShape(if (circular) 50.dp else 10.dp)))
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 12.dp),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.62f)
-                            .height(13.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Surface.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.62f).height(13.dp).shimmer())
                     Spacer(Modifier.height(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.38f)
-                            .height(11.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Surface.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.38f).height(11.dp).shimmer())
                 }
             }
         }
@@ -908,32 +775,10 @@ private fun ResultSkeleton(circular: Boolean = false) {
 
 @Composable
 private fun EmptyState(title: String, message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(36.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            Icons.Default.MusicNote,
-            contentDescription = null,
-            tint = Color(0xFF3A3A44),
-            modifier = Modifier.size(56.dp),
-        )
-        Spacer(Modifier.height(14.dp))
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = message,
-            color = TextFaint,
-            fontSize = 14.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-    }
+    com.music.spotui.ui.components.SoloEmptyState(
+        icon = Icons.Rounded.SearchOff,
+        title = title,
+        message = message,
+        modifier = Modifier.fillMaxSize(),
+    )
 }

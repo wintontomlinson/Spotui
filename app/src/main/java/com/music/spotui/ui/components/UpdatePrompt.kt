@@ -58,6 +58,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Velvet
 
 @Composable
 fun UpdatePrompt() {
@@ -73,8 +78,8 @@ fun UpdatePrompt() {
     AlertDialog(
         onDismissRequest = { update = null },
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = Color(0xFF1A1A1A),
-        titleContentColor = Color.White,
+        containerColor = Dusk,
+        titleContentColor = Ivory,
         title = {
             Text("Update available, ${info.version}")
         },
@@ -88,8 +93,8 @@ fun UpdatePrompt() {
                     RenderMarkdown(info.releaseBody)
                 } else {
                     Text(
-                        "A new version of SOLO is available.",
-                        color = Color(0xFFB3B3B3),
+                        "A new version of Solo is available.",
+                        color = TextSecondary,
                     )
                 }
             }
@@ -103,7 +108,7 @@ fun UpdatePrompt() {
                 }
                 update = null
             }) {
-                Text("Update", color = Color(0xFFE8C24A))
+                Text("Update", color = Gold)
             }
         },
         dismissButton = {
@@ -111,10 +116,10 @@ fun UpdatePrompt() {
                 UpdateChecker.skipRelease(context, info)
                 update = null
             }) {
-                Text("Don't show again", color = Color(0xFFB3B3B3))
+                Text("Don't show again", color = TextSecondary)
             }
             TextButton(onClick = { update = null }) {
-                Text("Dismiss", color = Color.White)
+                Text("Dismiss", color = Ivory)
             }
         },
     )
@@ -235,7 +240,7 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = Color.White
+                    tint = Ivory
                 )
             }
         }
@@ -245,9 +250,9 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
 @Composable
 private fun RenderMarkdown(markdown: String) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    val linkColor = Color(0xFFE8C24A)
-    val headingColor = Color.White
-    val bodyColor = Color(0xFFB3B3B3)
+    val linkColor = Gold
+    val headingColor = Ivory
+    val bodyColor = TextSecondary
 
     var enlargedImageUrl by remember { mutableStateOf<String?>(null) }
 
@@ -299,7 +304,7 @@ private fun RenderMarkdown(markdown: String) {
             trimmed == "---" || trimmed == "***" || trimmed == "___"
                 || (trimmed.length >= 3 && trimmed.all { it == '_' || it == '-' || it == '*' }) -> {
                 HorizontalDivider(
-                    color = Color(0xFF2A2A2A),
+                    color = Velvet,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
@@ -436,7 +441,7 @@ private fun MarkdownInline(
                 }
                 "code" -> {
                     pushStyle(SpanStyle(
-                        color = Color(0xFFE0E0E0),
+                        color = TextSecondary,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp,
                     ))

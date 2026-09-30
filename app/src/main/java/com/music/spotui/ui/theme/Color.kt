@@ -1,71 +1,82 @@
 package com.music.spotui.ui.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.ColorUtils
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
-
-/**
- * Cyan + Gold Edition — a premium dark surface ramp on a deep teal/cyan base.
- * Instead of one flat background these give depth: the base is a deep dark cyan,
- * cards sit one step lighter, and elevated sheets one step lighter again, which
- * makes the dark UI read as layered and premium rather than muddy. Gold is the
- * single accent so the cyan surfaces stay calm and the accent pops.
- */
-val AppBackground = Color(0xFF020D10)
-val SurfaceElevated = Color(0xFF051F25)
-val SurfaceCard = Color(0xFF082C34)
-val Hairline = Color(0xFF0E4048)
-
-val GridBackground = Color(0xFF082C34)
-
-/** Legacy alias kept so existing references compile; points at the real accent now. */
-val AppPalette = Color(0xFFE8C24A)
-
-/**
- * The single app accent — golden. Gold reads as premium/luxury on the deep cyan
- * surfaces, and unlike red it never gets confused with an error state.
+/*
+ * Solo design tokens: "Midnight Velvet & Gold".
  *
- * Gold is a light colour, so anything drawn ON TOP of an accent filled surface must
- * use [OnAccent] rather than white, otherwise the contrast is too low.
+ * A plum-black canvas, a layered velvet surface ramp (each step one visible notch
+ * lighter), a single warm-gold accent and ivory text. Screens read colours from here
+ * instead of hard-coding hex values, so the whole app stays on one palette.
  */
-val Accent = Color(0xFFE8C24A)
 
-/** A deeper gold for pressed states and gradients. */
-val AccentDark = Color(0xFFC79A2B)
+// Canvas and surface ramp
+val Ink = Color(0xFF0C0912)        // app canvas
+val Night = Color(0xFF141020)      // surface 1: bars, grouped rows
+val Dusk = Color(0xFF1B1529)       // surface 2: cards, sheets, dialogs
+val Velvet = Color(0xFF241C35)     // surface 3: inputs, chips, icon wells
+val Amethyst = Color(0xFF2E2442)   // surface 4: selected / pressed
+val RoyalPlum = Color(0xFF2B1A4D)  // brand plate, gradient crown
+val RoyalViolet = Color(0xFF6B4BB8)
+val Lilac = Color(0xFFBFA8E8)      // secondary accent (status, info)
 
-/** Content colour for text and icons placed on top of [Accent]. */
-val OnAccent = Color(0xFF042027)
+// Gold accent ramp
+val GoldLight = Color(0xFFFBEFD0)
+val Gold = Color(0xFFE6C27A)
+val GoldDeep = Color(0xFFB8893A)
+val OnGold = Color(0xFF1A1206)     // content drawn on top of gold
+
+// Text (all pass WCAG AA on Ink through Velvet)
+val Ivory = Color(0xFFF5F0E6)
+val TextSecondary = Color(0xFFB9B0C4)
+val TextTertiary = Color(0xFF908799)
+val TextDisabled = Color(0xFF5A5366)
+
+// Lines
+val HairlineSoft = Color(0x14F5F0E6)   // 8% ivory: dividers, card edges
+val HairlineGold = Color(0x2EE6C27A)   // 18% gold: premium edges on hero surfaces
+
+// Status
+val Danger = Color(0xFFF07B7B)
+val DangerSurface = Color(0xFF4A1F2A)
+val Success = Color(0xFF7FD1A3)
+val Warning = Color(0xFFF2C46B)
+
+// Glass (translucent chrome over scrolling content)
+val GlassFill = Color(0xD9141020)
+val GlassFillStrong = Color(0xF2141020)
+
+/** Shared screen background: a royal-plum crown that settles into the ink canvas. */
+val AppBackgroundBrush: Brush = Brush.verticalGradient(
+    0f to Color(0xFF1E1433),
+    0.42f to Ink,
+    1f to Color(0xFF08060C),
+)
+
+/** The gold used for primary actions (play buttons, the Liked tile). */
+val GoldBrush: Brush = Brush.linearGradient(listOf(GoldLight, Gold, GoldDeep))
 
 /**
- * Cyan ramp for gradients / highlights (the surface family). Kept under the old
- * RoyalPurple* names so existing references keep compiling, but the values are
- * now cyan so any gradient built from them matches the new palette.
+ * Keeps an artwork-derived colour rich but dark enough for ivory text on top
+ * (saturation <= 0.55, lightness 0.14..0.26), so tinted player and album backgrounds
+ * never wash out or clash with the gold accent.
  */
-val RoyalPurpleLight = Color(0xFF7FE7F0)
-val RoyalPurple = Color(0xFF17B0C4)
-val RoyalPurpleDeep = Color(0xFF0A5866)
+fun artworkTone(color: Color): Color {
+    val hsl = FloatArray(3)
+    ColorUtils.colorToHSL(color.toArgb(), hsl)
+    hsl[1] = hsl[1].coerceAtMost(0.55f)
+    hsl[2] = hsl[2].coerceIn(0.14f, 0.26f)
+    return Color(ColorUtils.HSLToColor(hsl))
+}
 
-/** Bright cyan highlight for glows / selected accents that shouldn't be gold. */
-val CyanBright = Color(0xFF2CD4E6)
-val CyanDeep = Color(0xFF0A5866)
-
-
-/**
- * Shared app background — a top-to-bottom deep-cyan gradient (dark teal canvas →
- * near-black base). Used on the Home and Search roots so the cyan palette reads
- * as depth rather than a flat black wash.
- */
-val AppBackgroundBrush: androidx.compose.ui.graphics.Brush =
-    androidx.compose.ui.graphics.Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF06272D), // lifted dark cyan at the top (under the status bar)
-            AppBackground,     // deep cyan base
-            Color(0xFF01070A), // near-black settle at the bottom
-        ),
-    )
+// Compatibility names used across older screens. They all resolve to Solo tokens.
+val AppBackground = Ink
+val SurfaceElevated = Dusk
+val GridBackground = Velvet
+val AppPalette = Gold
+val Accent = Gold
+val AccentDark = GoldDeep
+val OnAccent = OnGold

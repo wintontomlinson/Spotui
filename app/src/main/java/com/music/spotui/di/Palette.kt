@@ -10,23 +10,6 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 
 class Palette {
-//    fun extractColorFromImageUrl(context: Context, imageUrl: String, onPaletteGenerated: (Palette) -> Unit) {
-//        Glide.with(context)
-//            .asBitmap()
-//            .load(imageUrl)
-//            .into(object : CustomTarget<Bitmap>() {
-//                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-//                    Palette.from(resource).generate { palette ->
-//                        palette?.let { onPaletteGenerated(it) }
-//                    }
-//                }
-//
-//                override fun onLoadCleared(placeholder: Drawable?) {
-//                    // Handle cleanup here if necessary
-//                }
-//            })
-//    }
-
     fun extractFirstColorFromImageUrl(context: Context, imageUrl: String, onColorExtracted: (Color) -> Unit) {
         Glide.with(context)
             .asBitmap()
@@ -38,14 +21,12 @@ class Palette {
                         dominantColor?.let {
                             // Convert RGB color integer to ARGB color integer with full opacity
                             val argbColor = Color(it or (0xFF shl 24))
-                            onColorExtracted(argbColor)
+                            onColorExtracted(com.music.spotui.ui.theme.artworkTone(argbColor))
                         }
                     }
                 }
 
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    // Handle cleanup here if necessary
-                }
+                override fun onLoadCleared(placeholder: Drawable?) = Unit
             })
     }
     fun extractSecondColorFromCoverUrl(context: Context, imageUrl: String, onColorExtracted: (Color) -> Unit) {
@@ -64,14 +45,12 @@ class Palette {
                         lightVibrantColor?.let {
                             // Convert RGB color integer to ARGB color integer with full opacity
                             val argbColor = Color(it or (0xFF shl 24))
-                            onColorExtracted(argbColor)
+                            onColorExtracted(com.music.spotui.ui.theme.artworkTone(argbColor))
                         }
                     }
                 }
 
-                override fun onLoadCleared(placeholder: Drawable?) {
-                    // Handle cleanup here if necessary
-                }
+                override fun onLoadCleared(placeholder: Drawable?) = Unit
             })
     }
 }

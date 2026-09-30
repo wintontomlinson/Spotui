@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Launcher background: a deep cyan/teal plate that matches the app's Cyan + Gold
-  theme. The gold glyph on top pops against it on both light and dark wallpapers.
+  Solo launcher background: a royal-plum plate that settles into the app's ink canvas,
+  with a soft amethyst glow behind the mark so the gold reads as lit, not flat.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -10,47 +10,22 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Base plate: brighter teal at the top left, deep cyan-black at the bottom right. -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="linear"
-                android:startX="6"
-                android:startY="0"
-                android:endX="102"
-                android:endY="108">
-                <item android:offset="0.0" android:color="#FF116C7A" />
-                <item android:offset="0.45" android:color="#FF0B3A44" />
-                <item android:offset="1.0" android:color="#FF041418" />
+            <gradient android:type="linear" android:startX="54" android:startY="0" android:endX="54" android:endY="108">
+                <item android:offset="0.0" android:color="#FF2B1A4D" />
+                <item android:offset="0.55" android:color="#FF1A1030" />
+                <item android:offset="1.0" android:color="#FF0C0912" />
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Soft cyan highlight so the plate reads as a lit surface rather than flat fill. -->
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="32"
-                android:centerY="26"
-                android:gradientRadius="78">
-                <item android:offset="0.0" android:color="#552CD4E6" />
-                <item android:offset="0.55" android:color="#142CD4E6" />
-                <item android:offset="1.0" android:color="#002CD4E6" />
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Depth in the lower right corner, kept very low contrast. -->
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:type="radial"
-                android:centerX="92"
-                android:centerY="98"
-                android:gradientRadius="62">
-                <item android:offset="0.0" android:color="#4D010A0C" />
-                <item android:offset="1.0" android:color="#00010A0C" />
+            <gradient android:type="radial" android:centerX="54" android:centerY="34" android:gradientRadius="46">
+                <item android:offset="0.0" android:color="#4D7A5CB2" />
+                <item android:offset="0.55" android:color="#1A7A5CB2" />
+                <item android:offset="1.0" android:color="#007A5CB2" />
             </gradient>
         </aapt:attr>
     </path>

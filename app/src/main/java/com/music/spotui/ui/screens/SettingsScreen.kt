@@ -108,6 +108,14 @@ import com.music.spotui.data.diagnostics.PlaybackLog
 import com.music.spotui.ui.theme.AppPalette
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.layout.heightIn
+import com.music.spotui.ui.theme.Amethyst
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -184,12 +192,18 @@ fun SettingsScreen(navController: NavController) {
         containerColor = AppBackground,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Settings", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "Settings",
+                        color = Ivory,
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                    )
+                },
                 navigationIcon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Color.White,
+                        tint = Ivory,
                         modifier = Modifier
                             .padding(start = 8.dp)
                             .size(26.dp)
@@ -242,7 +256,7 @@ fun SettingsScreen(navController: NavController) {
             SettingsClickRow(
                 title = "Battery optimization",
                 subtitle = if (batteryOptExempt) "Exempt, app won't be killed" else "Not exempt, tap to change",
-                subtitleColor = if (batteryOptExempt) Color(0xFF81C784) else SettingsTextDim,
+                subtitleColor = if (batteryOptExempt) com.music.spotui.ui.theme.Success else SettingsTextDim,
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Filled.Check,
@@ -268,14 +282,14 @@ fun SettingsScreen(navController: NavController) {
             BatteryOptimizationHelper.getManufacturerTips()?.let { (name, tip) ->
                 Text(
                     text = "Tip for $name",
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                 )
                 Text(
                     text = tip,
-                    color = Color(0xFF808080),
+                    color = TextTertiary,
                     fontSize = 12.sp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -313,18 +327,18 @@ fun SettingsScreen(navController: NavController) {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                    .background(Color(0xFF0F4A57))
+                    .background(Amethyst)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Clear Audio Stream Cache", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Text("Unlocks all cached streams and forces re-resolution", color = Color.Gray, fontSize = 11.sp)
+                    Text("Clear Audio Stream Cache", color = Ivory, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Unlocks all cached streams and forces re-resolution", color = TextTertiary, fontSize = 11.sp)
                 }
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "Clear cache",
-                    tint = Color.Gray,
+                    tint = TextTertiary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -354,17 +368,17 @@ fun SettingsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Crossfade", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("Crossfade", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Text(
                     if (crossfadeMs <= 0f) "Off" else "${(crossfadeMs / 1000f).let { String.format("%.0f", it) }}s",
-                    color = if (crossfadeMs <= 0f) Color(0xFFB3B3B3) else AppPalette,
+                    color = if (crossfadeMs <= 0f) TextSecondary else AppPalette,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
             Text(
                 "Blend the end of a song into the start of the next",
-                color = Color(0xFFB3B3B3),
+                color = TextSecondary,
                 fontSize = 13.sp,
             )
             Slider(
@@ -376,7 +390,7 @@ fun SettingsScreen(navController: NavController) {
                 colors = SliderDefaults.colors(
                     thumbColor = AppPalette,
                     activeTrackColor = AppPalette,
-                    inactiveTrackColor = Color(0xFF333333),
+                    inactiveTrackColor = Velvet,
                 ),
             )
             Spacer(Modifier.height(12.dp))
@@ -384,7 +398,7 @@ fun SettingsScreen(navController: NavController) {
             Text(
                 "If a song stops before it ends, open this straight afterwards. It records why " +
                     "playback stopped and how much of the stream arrived.",
-                color = Color(0xFFB3B3B3),
+                color = TextSecondary,
                 fontSize = 13.sp,
             )
             Row(
@@ -405,7 +419,7 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(Modifier.width(8.dp))
                 Text(
                     "Clear",
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -449,14 +463,14 @@ fun SettingsScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Back Up Now", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Back Up Now", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         Text(
                             when {
                                 isBackingUp -> "Creating backup in background…"
                                 backupDirUri.isNullOrBlank() -> "Tap to choose folder & back up"
                                 else -> "Folder: $folderName"
                             },
-                            color = if (backupDirUri.isNullOrBlank()) Color(0xFFFFB74D) else Color(0xFFB3B3B3),
+                            color = if (backupDirUri.isNullOrBlank()) com.music.spotui.ui.theme.Warning else TextSecondary,
                             fontSize = 12.sp,
                             maxLines = 1,
                         )
@@ -491,7 +505,7 @@ fun SettingsScreen(navController: NavController) {
                         Icon(
                             imageVector = Icons.Filled.Folder,
                             contentDescription = "Change Backup Folder",
-                            tint = Color.White,
+                            tint = Ivory,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -513,10 +527,10 @@ fun SettingsScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Restore from File", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Restore from File", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Spotui backup file",
-                        color = Color(0xFFB3B3B3),
+                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Solo backup file",
+                        color = TextSecondary,
                         fontSize = 12.sp,
                     )
                 }
@@ -530,7 +544,7 @@ fun SettingsScreen(navController: NavController) {
                     Icon(
                         imageVector = Icons.Filled.FolderOpen,
                         contentDescription = "Restore",
-                        tint = Color.White,
+                        tint = Ivory,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -578,10 +592,10 @@ fun SettingsScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Reset YouTube & Bot Session", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Reset YouTube & Bot Session", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
                         "Clears session tokens, visitor ID, PoToken generator, and resolved stream caches",
-                        color = Color(0xFFB3B3B3),
+                        color = TextSecondary,
                         fontSize = 12.sp,
                     )
                 }
@@ -602,7 +616,7 @@ fun SettingsScreen(navController: NavController) {
             if (loggedIn) {
                 Text(
                     text = "Log out of Spotify",
-                    color = Color(0xFFE57373),
+                    color = com.music.spotui.ui.theme.Danger,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -620,39 +634,21 @@ fun SettingsScreen(navController: NavController) {
             } else {
                 Text(
                     text = "Free mode",
-                    color = Color.White,
+                    color = Ivory,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(vertical = 6.dp),
                 )
                 Text(
-                    text = "You're using Spotu for free, search and play any song, no account needed.",
-                    color = Color.Gray,
+                    text = "You're using Solo for free: search and play any song, no account needed.",
+                    color = TextTertiary,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 6.dp),
                 )
             }
-            Spacer(Modifier.height(24.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Maintained with ♥ by ",
-                    color = Color.Gray,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                )
-                Text(
-                    text = "SATYAN SHARMA",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            Spacer(Modifier.height(12.dp))
+            SectionTitle("About")
+            AboutSoloCard()
             Spacer(Modifier.height(40.dp))
         }
 
@@ -666,11 +662,65 @@ fun SettingsScreen(navController: NavController) {
     }
 }
 
+/**
+ * About card: the Solo mark on its plum plate, the version, the maintainer and the
+ * open-source projects Solo is built on.
+ */
+@Composable
+private fun AboutSoloCard() {
+    val uriHandler = LocalUriHandler.current
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    listOf(com.music.spotui.ui.theme.RoyalPlum, Dusk)
+                )
+            )
+            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(20.dp))
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+    ) {
+        com.music.spotui.ui.components.SoloMark(height = 52.dp)
+        Spacer(Modifier.height(14.dp))
+        Text(
+            "Solo",
+            color = Gold,
+            style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+        )
+        Text(
+            "Version ${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
+            color = TextSecondary,
+            fontSize = 12.sp,
+        )
+        Spacer(Modifier.height(14.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Maintained with ♥ by ", color = TextTertiary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Text("SATYAN SHARMA", color = Ivory, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Built on Neptune, Metrolist, SpotiFLAC and SimpMusic. Free software under GPL-3.0.",
+            color = TextTertiary,
+            fontSize = 12.sp,
+            lineHeight = 17.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        Spacer(Modifier.height(16.dp))
+        com.music.spotui.ui.components.SoloPillButton(
+            text = "Source code",
+            onClick = { runCatching { uriHandler.openUri("https://github.com/wintontomlinson/Spotui") } },
+            primary = false,
+        )
+    }
+}
+
 // Shared surfaces so every settings group reads as one consistent card system.
 private val SettingsAccent = com.music.spotui.ui.theme.Accent
-private val SettingsCard = Color(0xFF082C34)
-private val SettingsHairline = Color(0x1AE8C24A)
-private val SettingsTextDim = Color(0xFFB3B3B3)
+private val SettingsCard = Dusk
+private val SettingsHairline = Gold.copy(alpha = 0.1f)
+private val SettingsTextDim = TextSecondary
 
 /**
  * Group heading. Small, uppercase and letter spaced so it reads as a label above a
@@ -724,7 +774,7 @@ private fun SettingsClickRow(
             Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
             Text(subtitle, color = subtitleColor, fontSize = 12.sp, lineHeight = 16.sp)
         }
@@ -754,7 +804,7 @@ private fun SettingsSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
             Text(subtitle, color = SettingsTextDim, fontSize = 12.sp, lineHeight = 16.sp)
         }
@@ -764,10 +814,10 @@ private fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 // Amber is a light accent, so the thumb goes dark when active.
-                checkedThumbColor = Color(0xFF042027),
+                checkedThumbColor = OnGold,
                 checkedTrackColor = SettingsAccent,
-                uncheckedThumbColor = Color(0xFFB3B3B3),
-                uncheckedTrackColor = Color(0xFF2A2A32),
+                uncheckedThumbColor = TextSecondary,
+                uncheckedTrackColor = Velvet,
             ),
         )
     }
@@ -790,7 +840,7 @@ private fun QualityPicker(
     ) {
         Text(
             title,
-            color = Color.White,
+            color = Ivory,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 14.dp),
@@ -809,7 +859,7 @@ private fun QualityPicker(
                 Column(Modifier.weight(1f)) {
                     Text(
                         q.label,
-                        color = if (isSel) SettingsAccent else Color.White,
+                        color = if (isSel) SettingsAccent else Ivory,
                         fontSize = 15.sp,
                         fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal,
                     )
@@ -843,11 +893,11 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF082C34),
+        containerColor = Dusk,
         title = {
             Text(
                 "Playback log",
-                color = Color.White,
+                color = Ivory,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -856,7 +906,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
             if (lines.isEmpty()) {
                 Text(
                     "Nothing recorded yet. Play a song, and if it stops early come straight back here.",
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 13.sp,
                 )
             } else {
@@ -868,7 +918,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                     lines.forEach { line ->
                         Text(
                             line,
-                            color = Color(0xFFD6D6D6),
+                            color = TextSecondary,
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace,
                             modifier = Modifier.padding(vertical = 2.dp),
@@ -890,14 +940,14 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                             .getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                                 as android.content.ClipboardManager
                         clipboard.setPrimaryClip(
-                            android.content.ClipData.newPlainText("SOLO playback log", PlaybackLog.asText()),
+                            android.content.ClipData.newPlainText("Solo playback log", PlaybackLog.asText()),
                         )
                         android.widget.Toast
                             .makeText(context, "Playback log copied", android.widget.Toast.LENGTH_SHORT)
                             .show()
                     },
                 ) {
-                    Text("Copy", color = Color(0xFFB3B3B3), fontWeight = FontWeight.SemiBold)
+                    Text("Copy", color = TextSecondary, fontWeight = FontWeight.SemiBold)
                 }
             }
         },

@@ -85,11 +85,19 @@ import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import java.text.DateFormat
 import java.util.Date
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.GoldLight
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Lilac
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
-private val CardBg = Color(0xFF18181C)
-private val BarTrack = Color(0xFF2A2A2A)
-private val SpotifyGreen = Color(0xFFE8C24A)
-private val MutedText = Color(0xFFB3B3B3)
+private val CardBg = Dusk
+private val BarTrack = Velvet
+private val SoloGold = Gold
+private val MutedText = TextSecondary
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -187,7 +195,7 @@ fun HistoryScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "",
-                                tint = Color.White,
+                                tint = Ivory,
                                 modifier = Modifier
                                     .size(26.dp)
                                     .clickable(
@@ -196,7 +204,7 @@ fun HistoryScreen(navController: NavController) {
                                     ) { navController.navigateUp() },
                             )
                             Spacer(Modifier.width(16.dp))
-                            Text("Listening history", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text("Listening history", color = Ivory, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         }
                         if (history.isNotEmpty()) {
                             Text(
@@ -217,7 +225,7 @@ fun HistoryScreen(navController: NavController) {
                     item {
                         Text(
                             "Nothing here yet, play something!",
-                            color = Color.Gray,
+                            color = TextTertiary,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(16.dp, 32.dp),
                         )
@@ -233,23 +241,23 @@ fun HistoryScreen(navController: NavController) {
                                 .background(
                                     Brush.linearGradient(
                                         colors = listOf(
-                                            Color(0xFF2E1C5A),
-                                            Color(0xFF181824),
+                                            com.music.spotui.ui.theme.RoyalPlum,
+                                            Dusk,
                                         )
                                     )
                                 )
                                 .padding(16.dp),
                         ) {
                             Column {
-                                Text("YOUR LISTENING HABITS", color = Color(0xFFB09BE8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("YOUR LISTENING HABITS", color = Gold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.height(12.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceAround,
                                 ) {
-                                    StatPill("Total plays", "${history.size}", SpotifyGreen)
-                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", Color(0xFF4CB0E8))
-                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", Color(0xFFE89BDB))
+                                    StatPill("Total plays", "${history.size}", SoloGold)
+                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", Lilac)
+                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", GoldLight)
                                 }
                             }
                         }
@@ -260,7 +268,7 @@ fun HistoryScreen(navController: NavController) {
                         item {
                             Text(
                                 "Top artists",
-                                color = Color.White,
+                                color = Ivory,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
@@ -290,7 +298,7 @@ fun HistoryScreen(navController: NavController) {
                         item {
                             Text(
                                 "Top tracks",
-                                color = Color.White,
+                                color = Ivory,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
@@ -326,7 +334,7 @@ fun HistoryScreen(navController: NavController) {
                     item {
                         Text(
                             "History",
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
@@ -355,20 +363,20 @@ fun HistoryScreen(navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50))
-                                    .background(Color(0xFF2A2A30))
+                                    .background(Velvet)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = currentSort.getDescriptiveLabel(isDescending),
-                                    color = Color.White,
+                                    color = Ivory,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Sort Options",
-                                    tint = Color.White,
+                                    tint = Ivory,
                                     modifier = Modifier
                                         .size(16.dp)
                                         .padding(start = 4.dp)
@@ -387,7 +395,7 @@ fun HistoryScreen(navController: NavController) {
                             ) {
                                 Text(
                                     text = "No matches found for \"$searchQuery\"",
-                                    color = Color.White,
+                                    color = Ivory,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -428,7 +436,7 @@ fun HistoryScreen(navController: NavController) {
             if (showSortSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showSortSheet = false },
-                    containerColor = Color(0xFF1A1A1A)
+                    containerColor = Dusk
                 ) {
                     Column(
                         modifier = Modifier
@@ -437,12 +445,12 @@ fun HistoryScreen(navController: NavController) {
                     ) {
                         Text(
                             text = "Sort by",
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                         )
-                        HorizontalDivider(color = Color(0xFF2A2A2A))
+                        HorizontalDivider(color = Velvet)
                         Spacer(modifier = Modifier.height(4.dp))
                         HistorySortOption.entries.forEach { option ->
                             val isSelected = option == currentSort
@@ -471,13 +479,13 @@ fun HistoryScreen(navController: NavController) {
                                 Icon(
                                     imageVector = icon,
                                     contentDescription = null,
-                                    tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                    tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(18.dp))
                                 Text(
                                     text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == HistorySortOption.DATE),
-                                    color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                    color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                     fontSize = 15.sp,
                                     modifier = Modifier.weight(1f)
                                 )
@@ -499,7 +507,7 @@ fun HistoryScreen(navController: NavController) {
             if (showClearDialog) {
                 AlertDialog(
                     onDismissRequest = { showClearDialog = false },
-                    title = { Text("Clear listening history?", color = Color.White, fontWeight = FontWeight.Bold) },
+                    title = { Text("Clear listening history?", color = Ivory, fontWeight = FontWeight.Bold) },
                     text = { Text("This will remove all ${history.size} plays. This action cannot be undone.", color = MutedText) },
                     confirmButton = {
                         TextButton(onClick = {
@@ -507,16 +515,16 @@ fun HistoryScreen(navController: NavController) {
                             history = emptyList()
                             showClearDialog = false
                         }) {
-                            Text("Clear", color = Color(0xFFE57373))
+                            Text("Clear", color = com.music.spotui.ui.theme.Danger)
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showClearDialog = false }) {
-                            Text("Cancel", color = Color.White)
+                            Text("Cancel", color = Ivory)
                         }
                     },
-                    containerColor = Color(0xFF1A1A1A),
-                    titleContentColor = Color.White,
+                    containerColor = Dusk,
+                    titleContentColor = Ivory,
                     textContentColor = MutedText,
                 )
             }
@@ -579,7 +587,7 @@ private fun TopArtistRow(
         ) {
             Text(
                 name,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -654,7 +662,7 @@ private fun TopTrackRow(
         ) {
             Text(
                 title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -726,10 +734,10 @@ private fun HistoryRow(
                 .weight(1f)
                 .padding(start = 10.dp, end = 8.dp),
         ) {
-            Text(entry.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(entry.title, color = Ivory, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 "${entry.singer} • ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(entry.ts))}",
-                color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = TextTertiary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
         Icon(

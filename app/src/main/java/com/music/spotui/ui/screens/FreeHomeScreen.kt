@@ -60,14 +60,21 @@ import com.music.spotui.ui.navigation.navBarScroll
 import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.GoldLight
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.components.shimmer
+import androidx.compose.material.icons.rounded.Settings
 
 // Accent comes from the single source of truth in the theme package.
 private val Accent = com.music.spotui.ui.theme.Accent
 private val OnAccent = com.music.spotui.ui.theme.OnAccent
-private val Surface = Color(0xFF082C34)
-private val SurfaceHigh = Color(0xFF0C3A44)
-private val Hairline = Color(0x14FFFFFF)
-private val TextDim = Color(0xFFB3B3B3)
+private val Surface = Dusk
+private val SurfaceHigh = Velvet
+private val Hairline = Ivory.copy(alpha = 0.08f)
+private val TextDim = TextSecondary
 
 /**
  * Login free Home. No Spotify session needed. Content is a set of curated and
@@ -144,7 +151,7 @@ fun FreeHomeScreen(navController: NavController) {
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
     ) {
-        item { HomeHeader() }
+        item { HomeHeader(onOpenSettings = { navController.navigate(Routes.Settings.route) }) }
 
         item {
             MoodChips(onPick = openSearch)
@@ -183,47 +190,36 @@ fun FreeHomeScreen(navController: NavController) {
     } // PullToRefreshBox
 }
 
-/** Premium greeting masthead: an amber accent bar, a gradient greeting, and a subtitle. */
+/** Masthead: the Solo wordmark with a settings shortcut, then a time-aware greeting. */
 @Composable
-private fun HomeHeader() {
+private fun HomeHeader(onOpenSettings: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 16.dp),
+            .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 10.dp),
     ) {
-        // A small amber accent bar above the greeting, a premium masthead touch that ties
-        // the header to the app's colour.
-        Box(
-            modifier = Modifier
-                .width(34.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Accent, com.music.spotui.ui.theme.AccentDark)
-                    )
-                ),
-        )
-        Spacer(Modifier.height(14.dp))
-        // The greeting is drawn in a warm amber gradient with the heavier title cut, so it
-        // reads as a premium masthead rather than plain white body text.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.music.spotui.ui.components.SoloWordmark(markHeight = 24.dp, textSize = 24.sp)
+            Spacer(Modifier.weight(1f))
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = androidx.compose.material.icons.Icons.Rounded.Settings,
+                contentDescription = "Settings",
+                onClick = onOpenSettings,
+                filled = true,
+                iconSize = 20.dp,
+            )
+        }
+        Spacer(Modifier.height(22.dp))
         Text(
             text = greeting(),
-            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            letterSpacing = (-0.5).sp,
-            style = androidx.compose.ui.text.TextStyle(
-                brush = Brush.horizontalGradient(
-                    listOf(Color(0xFFFFE0A3), Accent)
-                ),
-            ),
+            style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+            color = Ivory,
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
             text = greetingSubtitle(),
             color = TextDim,
-            fontSize = 13.sp,
+            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
         )
     }
 }
@@ -262,9 +258,9 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 Text(
                     text = "${index + 1}",
                     color = if (index < 3) Accent else TextDim,
-                    fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-                    fontSize = if (index < 3) 18.sp else 15.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontSize = if (index < 3) 20.sp else 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.width(24.dp),
                 )
@@ -272,7 +268,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 GlideImage(
                     modifier = Modifier
                         .size(50.dp)
-                        .clip(RoundedCornerShape(9.dp)),
+                        .clip(RoundedCornerShape(10.dp)),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -286,7 +282,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 ) {
                     Text(
                         text = song.title,
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -322,27 +318,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 
 @Composable
 private fun SectionHeader(title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 13.dp),
-    ) {
-        // A short gold tick before each section title ties the shelves to the
-        // app's accent and gives Home a consistent, premium rhythm.
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(18.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Accent),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
+    com.music.spotui.ui.components.SoloSectionHeader(title = title)
 }
 
 private val MOODS = listOf(
@@ -360,22 +336,13 @@ private val MOODS = listOf(
 private fun MoodChips(onPick: (String) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(MOODS, key = { it.first }) { (label, query) ->
-            Text(
-                text = label,
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(SurfaceHigh)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onPick(query) }
-                    .padding(horizontal = 16.dp, vertical = 9.dp),
+            com.music.spotui.ui.components.SoloChip(
+                label = label,
+                selected = false,
+                onClick = { onPick(query) },
             )
         }
     }
@@ -394,15 +361,16 @@ private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .width(tileWidth)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(Surface)
+            .border(1.dp, Hairline, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(end = 12.dp),
     ) {
         GlideImage(
             modifier = Modifier
                 .size(56.dp)
-                .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
+                .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -412,7 +380,7 @@ private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(
                 text = song.title,
-                color = Color.White,
+                color = Ivory,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -458,7 +426,7 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
 private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(152.dp)
+            .width(156.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -467,15 +435,15 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(152.dp)
+                .size(156.dp)
                 .shadow(
-                    elevation = 10.dp,
-                    shape = RoundedCornerShape(12.dp),
+                    elevation = 12.dp,
+                    shape = RoundedCornerShape(16.dp),
                     clip = false,
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
                 )
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(Surface),
         ) {
             GlideImage(
@@ -518,7 +486,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
         Spacer(Modifier.height(9.dp))
         Text(
             text = song.title,
-            color = Color.White,
+            color = Ivory,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 2,
@@ -539,21 +507,12 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
 /** Placeholder rows for the trending block while it loads. */
 @Composable
 private fun TrendingSkeleton() {
-    val transition = rememberInfiniteTransition(label = "trendingSkeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "trendingSkeletonAlpha",
-    )
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Surface),
+            .clip(RoundedCornerShape(18.dp))
+            .background(Surface)
+            .padding(vertical = 4.dp),
     ) {
         repeat(4) {
             Row(
@@ -562,79 +521,35 @@ private fun TrendingSkeleton() {
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(SurfaceHigh.copy(alpha = alpha)),
-                )
+                Box(Modifier.size(50.dp).shimmer(RoundedCornerShape(10.dp)))
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 12.dp),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(SurfaceHigh.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.6f).height(12.dp).shimmer())
                     Spacer(Modifier.height(7.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.35f)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(SurfaceHigh.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.35f).height(10.dp).shimmer())
                 }
             }
         }
     }
 }
 
-/** Pulsing placeholders shown while a section is still loading. */
+/** Placeholder cards shown while a section is still loading. */
 @Composable
 private fun CardSkeletonRow() {
-    val transition = rememberInfiniteTransition(label = "cardSkeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "cardSkeletonAlpha",
-    )
     Row(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.padding(horizontal = 16.dp),
     ) {
         repeat(3) {
-            Column(modifier = Modifier.width(152.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(152.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+            Column(modifier = Modifier.width(156.dp)) {
+                Box(Modifier.size(156.dp).shimmer(RoundedCornerShape(16.dp)))
                 Spacer(Modifier.height(9.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+                Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
                 Spacer(Modifier.height(7.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.55f)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+                Box(Modifier.fillMaxWidth(0.55f).height(10.dp).shimmer())
             }
         }
     }

@@ -1,17 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Monochrome variant used by themed icons on Android 13 and above. Same waveform as
-  the foreground, flat white so the system can tint it.
--->
+<!-- Themed-icon (Android 13+) layer: the Solo mark as a flat silhouette the system tints. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
-        android:fillColor="#00000000"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="8.4"
-        android:strokeLineCap="round" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M42.2,53 L42.2,30.8 A3.8,3.8 0,0 1 49.8,30.8 L49.8,53 A4.2,4.2 0,0 0 58.2,53 L58.2,30.8 A3.8,3.8 0,0 1 65.8,30.8 L65.8,53 A11.8,11.8 0,0 1 42.2,53 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M51.2,60 L56.8,60 L56.8,72 L51.2,72 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M54,69.4 A5.8,5.8 0,1 1 54,81 A5.8,5.8 0,1 1 54,69.4 Z" />
 </vector>

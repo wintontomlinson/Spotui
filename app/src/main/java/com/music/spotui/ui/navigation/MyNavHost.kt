@@ -44,13 +44,6 @@ fun MyNavHost(
 ) {
 
     val playerViewModel : PlayerViewModel = hiltViewModel()
-    val playerState by playerViewModel.currentSongTitle
-
-    Log.d("player", playerState.toString())
-
-//    val context = LocalContext.current
-//    var player : ExoPlayer? = null
-//    player = ExoPlayer.Builder(context).build()
 
     val context = LocalContext.current
     // The app always opens on Home, which is the login free YouTube powered screen.

@@ -94,6 +94,13 @@ import com.music.spotui.data.preferences.setPlaylistSort
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.PlaylistViewModel
+import com.music.spotui.ui.theme.Amethyst
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
@@ -172,20 +179,20 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
         var newPlaylistNameInput by remember(currentName) { mutableStateOf(currentName) }
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
-            containerColor = Color(0xFF282828),
-            title = { Text("Rename Playlist", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = Velvet,
+            title = { Text("Rename Playlist", color = Ivory, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(
                     value = newPlaylistNameInput,
                     onValueChange = { newPlaylistNameInput = it },
-                    placeholder = { Text("Playlist name", color = Color.Gray) },
+                    placeholder = { Text("Playlist name", color = TextTertiary) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF383838),
-                        unfocusedContainerColor = Color(0xFF383838),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color(0xFFE8C24A),
+                        focusedContainerColor = Amethyst,
+                        unfocusedContainerColor = Amethyst,
+                        focusedTextColor = Ivory,
+                        unfocusedTextColor = Ivory,
+                        cursorColor = Gold,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -197,7 +204,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             confirmButton = {
                 Text(
                     "Save",
-                    color = Color(0xFFE8C24A),
+                    color = Gold,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier
@@ -217,7 +224,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             dismissButton = {
                 Text(
                     "Cancel",
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 15.sp,
                     modifier = Modifier
                         .clickable { showRenameDialog = false }
@@ -230,13 +237,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            containerColor = Color(0xFF282828),
-            title = { Text("Delete Playlist", color = Color.White, fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to delete this playlist?", color = Color.LightGray) },
+            containerColor = Velvet,
+            title = { Text("Delete Playlist", color = Ivory, fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to delete this playlist?", color = TextSecondary) },
             confirmButton = {
                 Text(
                     "Delete",
-                    color = Color(0xFFFF5252),
+                    color = com.music.spotui.ui.theme.Danger,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier
@@ -253,7 +260,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             dismissButton = {
                 Text(
                     "Cancel",
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 15.sp,
                     modifier = Modifier
                         .clickable { showDeleteDialog = false }
@@ -311,8 +318,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
         }
 
         var dominentColor by remember { mutableStateOf(Color(AppBackground.toArgb())) }
-        Palette().extractSecondColorFromCoverUrl(context = context, playlist.coverUri) { color ->
-            dominentColor = color
+        // Once per cover, not on every recomposition.
+        LaunchedEffect(playlist.coverUri) {
+            if (playlist.coverUri.isNotBlank()) {
+                Palette().extractSecondColorFromCoverUrl(context = context, playlist.coverUri) { color ->
+                    dominentColor = color
+                }
+            }
         }
 
         Scaffold(
@@ -327,12 +339,12 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Color.White
+                            tint = Ivory
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
+                        titleContentColor = Ivory,
                     ),
                     title = { Text(text = "") }
                 )
@@ -387,16 +399,17 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                         ) {
                             Text(
                                 text = playlist.name.ifBlank { playlistName },
-                                color = Color.White,
-                                fontSize = 23.sp,
-                                fontWeight = FontWeight.Bold
+                                color = Ivory,
+                                fontSize = 28.sp,
+                                fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                                fontWeight = FontWeight.SemiBold
                             )
                             if (isLocalPlaylist) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit Playlist Name",
-                                    tint = Color.White,
+                                    tint = Ivory,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -405,7 +418,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Text(
                                 modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                                 text = playlist.time,
-                                color = Color.Gray,
+                                color = TextTertiary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -418,14 +431,14 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Icon(
                                     imageVector = Icons.Default.PhoneAndroid,
                                     contentDescription = "Local Playlist",
-                                    tint = Color(0xFFE8C24A),
+                                    tint = Gold,
                                     modifier = Modifier
                                         .size(14.dp)
                                         .padding(end = 4.dp)
                                 )
                                 Text(
                                     text = "Local Playlist",
-                                    color = Color.White,
+                                    color = Ivory,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -433,13 +446,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = "Playlist • ",
-                                        color = Color.White,
+                                        color = Ivory,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         text = playlist.artists,
-                                        color = Color.White,
+                                        color = Ivory,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         modifier = Modifier.clickable(
@@ -484,7 +497,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                         // Add all playlist tracks to the queue.
                                         Icon(
                                             painter = painterResource(id = R.drawable.ic_queue_add),
-                                            tint = Color.White,
+                                            tint = Ivory,
                                             modifier = Modifier
                                                 .size(24.dp)
                                                 .clickable(
@@ -504,7 +517,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                         Icon(
                                             imageVector = if (playlistDownloaded)
                                                 Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
-                                            tint = if (playlistDownloaded) Color(AppPalette.toArgb()) else Color.White,
+                                            tint = if (playlistDownloaded) Color(AppPalette.toArgb()) else Ivory,
                                             modifier = Modifier
                                                 .size(24.dp)
                                                 .clickable(
@@ -535,7 +548,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                         // Shuffle-play: start the playlist in random order.
                                         Icon(
                                             painter = painterResource(id = R.drawable.ic_player_shuffle),
-                                            tint = Color.White,
+                                            tint = Ivory,
                                             modifier = Modifier
                                                 .size(24.dp)
                                                 .clickable(
@@ -562,7 +575,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
                                                 contentDescription = "Delete Playlist",
-                                                tint = Color.White,
+                                                tint = Ivory,
                                                 modifier = Modifier
                                                     .size(24.dp)
                                                     .clickable(
@@ -584,7 +597,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                     modifier = Modifier
                                         .size(52.dp)
                                         .clip(RoundedCornerShape(100.dp))
-                                        .background(Color.White)
+                                        .background(Ivory)
                                         .clickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null
@@ -644,20 +657,20 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(50))
-                                    .background(Color(0xFF2A2A30))
+                                    .background(Velvet)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = currentSort.getDescriptiveLabel(isDescending),
-                                    color = Color.White,
+                                    color = Ivory,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Sort Options",
-                                    tint = Color.White,
+                                    tint = Ivory,
                                     modifier = Modifier
                                         .size(16.dp)
                                         .padding(start = 4.dp)
@@ -669,7 +682,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
 
                 itemsIndexed(filteredSongs, key = { _, song -> song.id }) { index, song ->
                     val currentColor = if (song.id == playlistViewModel.currentSongId.value)
-                        Color(AppPalette.toArgb()) else Color.White
+                        Color(AppPalette.toArgb()) else Ivory
 
                     SwipeToPlayNextWrapper(
                         onPlayNext = {
@@ -732,7 +745,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 }
                                 Text(
                                     text = song.singer,
-                                    color = Color.Gray,
+                                    color = TextTertiary,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1
@@ -753,7 +766,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Dusk
             ) {
                 Column(
                     modifier = Modifier
@@ -762,12 +775,12 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    HorizontalDivider(color = Velvet)
                     Spacer(modifier = Modifier.height(4.dp))
                     PlaylistSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -798,13 +811,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                              Text(
                                  text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == PlaylistSortOption.DATE),
-                                 color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                 color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                  fontSize = 15.sp,
                                  modifier = Modifier.weight(1f)
                              )

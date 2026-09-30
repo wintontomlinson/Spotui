@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Launcher foreground: a five bar waveform in royal gold, drawn as round capped
-  strokes so every bar is a clean pill. Sits inside the adaptive icon safe zone
-  (the centre 66 of 108) and stays thick enough to read at the smallest size.
-  Gold glyph over the deep cyan plate = the app's Cyan + Gold identity.
+  Solo launcher foreground: the "Pure Tone" mark, a tuning fork (one voice, one pure
+  note) drawn from primitive geometry in the 108-unit adaptive-icon grid. The whole mark
+  sits inside the 66-unit safe circle (its farthest point is 28.4 units from centre), so
+  every launcher mask shape keeps it intact. Gold gradient over a soft drop shadow.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -12,30 +12,36 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Soft dark shadow under the mark, giving it a little lift off the plate. -->
     <group android:translateY="1.4">
-        <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
-            android:fillColor="#00000000"
-            android:strokeColor="#40010A0C"
-            android:strokeWidth="8.4"
-            android:strokeLineCap="round" />
+        <path android:fillColor="#4D05030A" android:pathData="M42.2,53 L42.2,30.8 A3.8,3.8 0,0 1 49.8,30.8 L49.8,53 A4.2,4.2 0,0 0 58.2,53 L58.2,30.8 A3.8,3.8 0,0 1 65.8,30.8 L65.8,53 A11.8,11.8 0,0 1 42.2,53 Z" />
+        <path android:fillColor="#4D05030A" android:pathData="M51.2,60 L56.8,60 L56.8,72 L51.2,72 Z" />
+        <path android:fillColor="#4D05030A" android:pathData="M54,69.4 A5.8,5.8 0,1 1 54,81 A5.8,5.8 0,1 1 54,69.4 Z" />
     </group>
 
-    <!-- The gold waveform itself. -->
-    <path android:pathData="M30,45.2 L30,62.8 M42,36.7 L42,71.3 M54,29.2 L54,78.8 M66,37.7 L66,70.3 M78,44.2 L78,63.8"
-        android:fillColor="#00000000"
-        android:strokeWidth="8.4"
-        android:strokeLineCap="round">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="30"
-                android:startY="29"
-                android:endX="78"
-                android:endY="79">
-                <item android:offset="0.0" android:color="#FFF6D879" />
-                <item android:offset="0.5" android:color="#FFE8C24A" />
-                <item android:offset="1.0" android:color="#FFC79A2B" />
+    <path android:pathData="M42.2,53 L42.2,30.8 A3.8,3.8 0,0 1 49.8,30.8 L49.8,53 A4.2,4.2 0,0 0 58.2,53 L58.2,30.8 A3.8,3.8 0,0 1 65.8,30.8 L65.8,53 A11.8,11.8 0,0 1 42.2,53 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="40" android:startY="27" android:endX="68" android:endY="81">
+                <item android:offset="0.0" android:color="#FFFBEFD0" />
+                <item android:offset="0.45" android:color="#FFE6C27A" />
+                <item android:offset="1.0" android:color="#FFB8893A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M51.2,60 L56.8,60 L56.8,72 L51.2,72 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="40" android:startY="27" android:endX="68" android:endY="81">
+                <item android:offset="0.0" android:color="#FFFBEFD0" />
+                <item android:offset="0.45" android:color="#FFE6C27A" />
+                <item android:offset="1.0" android:color="#FFB8893A" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M54,69.4 A5.8,5.8 0,1 1 54,81 A5.8,5.8 0,1 1 54,69.4 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="40" android:startY="27" android:endX="68" android:endY="81">
+                <item android:offset="0.0" android:color="#FFFBEFD0" />
+                <item android:offset="0.45" android:color="#FFE6C27A" />
+                <item android:offset="1.0" android:color="#FFB8893A" />
             </gradient>
         </aapt:attr>
     </path>

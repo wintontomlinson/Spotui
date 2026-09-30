@@ -63,6 +63,9 @@ import com.music.spotui.ui.viewmodel.PlayerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -126,14 +129,14 @@ fun LocalFilesScreen(navController: NavController) {
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Color.White,
+                            tint = Ivory,
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
+                        titleContentColor = Ivory,
                     ),
-                    title = { Text("Local files", color = Color.White, fontWeight = FontWeight.Bold) },
+                    title = { Text("Local files", color = Ivory, fontWeight = FontWeight.Bold) },
                 )
             },
         ) { innerPadding ->
@@ -147,14 +150,15 @@ fun LocalFilesScreen(navController: NavController) {
             ) {
                 Text(
                     text = "On this device",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = Ivory,
+                    fontSize = 28.sp,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(20.dp, 8.dp, 20.dp, 2.dp),
                 )
                 Text(
                     text = if (songs.isEmpty()) "Import FLAC, MP3, WAV and more" else "${songs.size} songs",
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 13.sp,
                     modifier = Modifier.padding(20.dp, 0.dp, 20.dp, 12.dp),
                 )
@@ -167,7 +171,7 @@ fun LocalFilesScreen(navController: NavController) {
                     ImportButton("Add songs", accent, Modifier.weight(1f), enabled = !importing) {
                         addSongs.launch(arrayOf("audio/*"))
                     }
-                    ImportButton("Add folder", Color(0xFF2A2A33), Modifier.weight(1f), enabled = !importing) {
+                    ImportButton("Add folder", Velvet, Modifier.weight(1f), enabled = !importing) {
                         addFolder.launch(null)
                     }
                 }
@@ -185,14 +189,14 @@ fun LocalFilesScreen(navController: NavController) {
                 if (songs.isEmpty()) {
                     Text(
                         text = "No local music yet. Tap “Add songs” or “Add folder” to import from your device.",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(20.dp),
                     )
                 } else {
                     songs.forEachIndexed { index, song ->
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(AppPalette.toArgb()) else Color.White
+                            Color(AppPalette.toArgb()) else Ivory
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -226,13 +230,13 @@ fun LocalFilesScreen(navController: NavController) {
                             )
                             Column(modifier = Modifier.padding(start = 12.dp).width(280.dp)) {
                                 Text(song.title, color = currentColor, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-                                Text(song.singer, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                                Text(song.singer, color = TextTertiary, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1)
                             }
                         }
                     }
                     Text(
                         text = "Long-press a song to remove it from your library.",
-                        color = Color(0xFF6A6A6A),
+                        color = TextTertiary,
                         fontSize = 11.sp,
                         modifier = Modifier.padding(20.dp, 12.dp),
                     )
@@ -254,13 +258,13 @@ private fun ImportButton(
 ) {
     Text(
         text = label,
-        color = if (container == Color(0xFF2A2A33)) Color.White else Color.Black,
+        color = if (container == Velvet) Ivory else Color.Black,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(if (enabled) container else Color(0xFF333333))
+            .background(if (enabled) container else Velvet)
             .clickable(enabled = enabled) { onClick() }
             .padding(vertical = 12.dp),
     )

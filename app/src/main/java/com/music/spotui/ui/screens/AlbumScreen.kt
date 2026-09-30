@@ -99,6 +99,10 @@ import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 import kotlinx.coroutines.delay
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 
 @Composable
@@ -125,7 +129,6 @@ fun AlbumScreen(
 
 
 
-    Log.d("check", albumName.toString())
 
     Surface(
         modifier = Modifier
@@ -137,12 +140,10 @@ fun AlbumScreen(
 
         when {
             albums is Response.Loading && songs is Response.Loading -> {
-                Log.d("homeMain", "loading..-albums")
                 Loader()
             }
 
             else -> {
-                Log.d("homeMain", "albums ready")
                 if (albumName == "Liked Songs"){
                     LikedSongsScreen(albumsResponse, songsResponse, navController, context)
                 }
@@ -210,8 +211,14 @@ fun SumUpAlbumScreen(
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
-    Palette().extractSecondColorFromCoverUrl(context = context, album[0].coverUri){ color ->
-        dominentColor = color
+    // Once per cover, not on every recomposition.
+    val albumCover = album[0].coverUri
+    LaunchedEffect(albumCover) {
+        if (albumCover.isNotBlank()) {
+            Palette().extractSecondColorFromCoverUrl(context = context, albumCover) { color ->
+                dominentColor = color
+            }
+        }
     }
 
     var isAlbumLiked by remember { mutableStateOf( isAlbumLiked(context, album[0].id.toString())) }
@@ -275,7 +282,6 @@ fun SumUpAlbumScreen(
 
 
 
-    Log.d("color", dominentColor.toString())
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -290,11 +296,11 @@ fun SumUpAlbumScreen(
                         },
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "",
-                        tint = Color.White)
+                        tint = Ivory)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
+                    titleContentColor = Ivory,
                 ),
                 title = {
                     Text(text = "")
@@ -346,9 +352,10 @@ fun SumUpAlbumScreen(
                 Text(modifier = Modifier
                     .padding(20.dp, 5.dp, 0.dp, 0.dp),
                     text = albumName,
-                    color = Color.White,
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold)
+                    color = Ivory,
+                    fontSize = 28.sp,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontWeight = FontWeight.SemiBold)
                 if (albumArtists.isNotBlank()) {
                     Text(
                         modifier = Modifier
@@ -364,7 +371,7 @@ fun SumUpAlbumScreen(
                                 }
                             },
                         text = albumArtists,
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -372,7 +379,7 @@ fun SumUpAlbumScreen(
                 Text(modifier = Modifier
                     .padding(20.dp, 0.dp, 0.dp, 0.dp),
                     text = "Album : ${album[0].time}",
-                    color = Color.Gray,
+                    color = TextTertiary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -437,7 +444,7 @@ fun SumUpAlbumScreen(
                                     Color(AppPalette.toArgb())
                                 }
                                 else{
-                                    Color.White
+                                    Ivory
                                 },
                                 contentDescription = ""
                             )
@@ -448,7 +455,7 @@ fun SumUpAlbumScreen(
                             Icon(
                                 imageVector = if (albumDownloaded)
                                     Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
-                                tint = if (albumDownloaded) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (albumDownloaded) Color(AppPalette.toArgb()) else Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable(
@@ -482,7 +489,7 @@ fun SumUpAlbumScreen(
                             if (albumSongs.isNotEmpty()) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_queue_add),
-                                    tint = Color.White,
+                                    tint = Ivory,
                                     modifier = Modifier
                                         .size(24.dp)
                                         .clickable(
@@ -503,7 +510,7 @@ fun SumUpAlbumScreen(
                             // Shuffle-play: start the album in random order.
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_player_shuffle),
-                                tint = Color.White,
+                                tint = Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable(
@@ -538,7 +545,7 @@ fun SumUpAlbumScreen(
                                 modifier = Modifier
                                     .size(52.dp)
                                     .clip(RoundedCornerShape(100.dp))
-                                    .background(Color.White)
+                                    .background(Ivory)
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
@@ -602,20 +609,20 @@ fun SumUpAlbumScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(Color(0xFF2A2A30))
+                            .background(Velvet)
                             .clickable { showSortSheet = true }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = currentSort.getDescriptiveLabel(isDescending),
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = "Sort Options",
-                            tint = Color.White,
+                            tint = Ivory,
                             modifier = Modifier
                                 .size(16.dp)
                                 .padding(start = 4.dp)
@@ -632,7 +639,7 @@ fun SumUpAlbumScreen(
                     ) {
                         Text(
                             text = "No matches found for \"$searchQuery\"",
-                            color = Color.White,
+                            color = Ivory,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -659,7 +666,7 @@ fun SumUpAlbumScreen(
                         }
                         val songId = targetSong.id
 
-                        val currentPlayingIndicatorColor = if (songId == albumViewModel.currentSongId.value) Color(AppPalette.toArgb()) else Color.White
+                        val currentPlayingIndicatorColor = if (songId == albumViewModel.currentSongId.value) Color(AppPalette.toArgb()) else Ivory
 
                         SwipeToPlayNextWrapper(
                             onPlayNext = {
@@ -719,7 +726,7 @@ fun SumUpAlbumScreen(
                                         }
                                         Text(
                                             text = targetSong.singer,
-                                            color = Color.Gray,
+                                            color = TextTertiary,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium,
                                             maxLines = 1,
@@ -751,9 +758,9 @@ fun SumUpAlbumScreen(
                                         painterResource(id = R.drawable.ic_add)
                                     },
                                     tint = if (isLiked) {
-                                        Color.White
+                                        Ivory
                                     } else {
-                                        Color.Gray
+                                        TextTertiary
                                     },
                                     contentDescription = ""
                                 )
@@ -774,7 +781,7 @@ fun SumUpAlbumScreen(
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Dusk
             ) {
                 Column(
                     modifier = Modifier
@@ -783,12 +790,12 @@ fun SumUpAlbumScreen(
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                    androidx.compose.material3.HorizontalDivider(color = Velvet)
                     Spacer(modifier = Modifier.height(4.dp))
                     AlbumSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -818,13 +825,13 @@ fun SumUpAlbumScreen(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option != AlbumSortOption.DEFAULT),
-                                color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
                             )

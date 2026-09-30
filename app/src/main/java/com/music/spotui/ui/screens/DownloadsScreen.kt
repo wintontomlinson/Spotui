@@ -83,6 +83,12 @@ import com.music.spotui.ui.theme.AppBackground
 import com.music.spotui.ui.theme.AppPalette
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
 fun DownloadSortOption.getDescriptiveLabel(isDescending: Boolean): String {
     return when (this) {
@@ -153,7 +159,7 @@ fun DownloadsScreen(navController: NavController) {
         }
     }
 
-    val accent = Color(0xFFE8C24A)
+    val accent = Gold
 
     Surface(
         modifier = Modifier
@@ -172,12 +178,12 @@ fun DownloadsScreen(navController: NavController) {
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Color.White
+                            tint = Ivory
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
+                        titleContentColor = Ivory,
                     ),
                     title = { Text(text = "") }
                 )
@@ -226,14 +232,15 @@ fun DownloadsScreen(navController: NavController) {
                     Text(
                         modifier = Modifier.padding(20.dp, 5.dp, 0.dp, 0.dp),
                         text = "Downloaded",
-                        color = Color.White,
+                        color = Ivory,
                         fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
+                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                        fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                         text = "${songs.size} songs • available offline",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -260,20 +267,20 @@ fun DownloadsScreen(navController: NavController) {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Color(0xFF2A2A30))
+                                .background(Velvet)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
-                                color = Color.White,
+                                color = Ivory,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
-                                tint = Color.White,
+                                tint = Ivory,
                                 modifier = Modifier
                                     .size(16.dp)
                                     .padding(start = 4.dp)
@@ -286,12 +293,12 @@ fun DownloadsScreen(navController: NavController) {
                     if (songs.isNotEmpty() && searchQuery.isBlank()) {
                         Text(
                             text = "Clear all",
-                            color = Color(0xFFE57373),
+                            color = com.music.spotui.ui.theme.Danger,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Color(0xFF1A1A20))
+                                .background(Dusk)
                                 .clickable {
                                     showClearConfirmDialog = true
                                 }
@@ -329,7 +336,7 @@ fun DownloadsScreen(navController: NavController) {
                                 }
                                 Text(
                                     text = song.title,
-                                    color = Color.White,
+                                    color = Ivory,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1
@@ -343,12 +350,12 @@ fun DownloadsScreen(navController: NavController) {
                                     .height(4.dp)
                                     .clip(RoundedCornerShape(2.dp)),
                                 color = accent,
-                                trackColor = Color(0xFF333333),
+                                trackColor = Velvet,
                             )
                         }
                         Text(
                             text = "$pct%",
-                            color = Color.Gray,
+                            color = TextTertiary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(start = 12.dp),
@@ -359,14 +366,14 @@ fun DownloadsScreen(navController: NavController) {
                 if (songs.isEmpty() && inProgress.isEmpty()) {
                     Text(
                         text = "No downloads yet. Tap ⋯ on a track and choose Download.",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(20.dp),
                     )
                 } else if (displayedSongs.isEmpty() && inProgress.isEmpty()) {
                     Text(
                         text = "No matches found for \"$searchQuery\"",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(20.dp),
                     )
@@ -374,7 +381,7 @@ fun DownloadsScreen(navController: NavController) {
                     repeat(displayedSongs.size) { index ->
                         val song = displayedSongs[index]
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(AppPalette.toArgb()) else Color.White
+                            Color(AppPalette.toArgb()) else Ivory
 
                         SwipeToPlayNextWrapper(
                             onPlayNext = {
@@ -436,7 +443,7 @@ fun DownloadsScreen(navController: NavController) {
                                     }
                                     Text(
                                         text = song.singer,
-                                        color = Color.Gray,
+                                        color = TextTertiary,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium,
                                         maxLines = 1
@@ -458,7 +465,7 @@ fun DownloadsScreen(navController: NavController) {
             if (showSortSheet) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
-                        containerColor = Color(0xFF1A1A1A)
+                        containerColor = Dusk
                     ) {
                         Column(
                             modifier = Modifier
@@ -467,12 +474,12 @@ fun DownloadsScreen(navController: NavController) {
                         ) {
                             Text(
                                 text = "Sort by",
-                                color = Color.White,
+                                color = Ivory,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                             )
-                            HorizontalDivider(color = Color(0xFF2A2A2A))
+                            HorizontalDivider(color = Velvet)
                             Spacer(modifier = Modifier.height(4.dp))
                             DownloadSortOption.entries.forEach { option ->
                                 val isSelected = option == currentSort
@@ -501,13 +508,13 @@ fun DownloadsScreen(navController: NavController) {
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                        tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                         modifier = Modifier.size(22.dp)
                                     )
                                     Spacer(modifier = Modifier.width(18.dp))
                                     Text(
                                         text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == DownloadSortOption.DATE),
-                                        color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                        color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
                                         fontSize = 15.sp,
                                         modifier = Modifier.weight(1f)
                                     )
@@ -528,8 +535,8 @@ fun DownloadsScreen(navController: NavController) {
                 if (showClearConfirmDialog) {
                     AlertDialog(
                         onDismissRequest = { showClearConfirmDialog = false },
-                        title = { Text(text = "Clear all downloads?", color = Color.White, fontWeight = FontWeight.Bold) },
-                        text = { Text(text = "Are you sure you want to remove all downloaded songs? This action cannot be undone.", color = Color(0xFFB3B3B3)) },
+                        title = { Text(text = "Clear all downloads?", color = Ivory, fontWeight = FontWeight.Bold) },
+                        text = { Text(text = "Are you sure you want to remove all downloaded songs? This action cannot be undone.", color = TextSecondary) },
                         confirmButton = {
                             TextButton(onClick = {
                                 val n =
@@ -541,17 +548,17 @@ fun DownloadsScreen(navController: NavController) {
                                     android.widget.Toast.LENGTH_SHORT,
                                 ).show()
                             }) {
-                                Text("Clear", color = Color(0xFFE57373))
+                                Text("Clear", color = com.music.spotui.ui.theme.Danger)
                             }
                         },
                         dismissButton = {
                             TextButton(onClick = { showClearConfirmDialog = false }) {
-                                Text("Cancel", color = Color.White)
+                                Text("Cancel", color = Ivory)
                             }
                         },
-                        containerColor = Color(0xFF1A1A1A),
-                        titleContentColor = Color.White,
-                        textContentColor = Color(0xFFB3B3B3),
+                        containerColor = Dusk,
+                        titleContentColor = Ivory,
+                        textContentColor = TextSecondary,
                     )
                 }
             }

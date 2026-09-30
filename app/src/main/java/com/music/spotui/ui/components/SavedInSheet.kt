@@ -67,8 +67,16 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.GoldDeep
+import com.music.spotui.ui.theme.GoldLight
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Velvet
 
-private val SpotifyGreen = Color(0xFFE8C24A)
+private val SoloGold = Gold
 
 /**
  * Spotify-style "Saved in" sheet: Liked Songs plus local playlists and Spotify user playlists.
@@ -132,7 +140,7 @@ fun SavedInSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
+        containerColor = Dusk,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
             Row(
@@ -142,10 +150,10 @@ fun SavedInSheet(
                     .fillMaxWidth()
                     .padding(20.dp, 4.dp, 20.dp, 12.dp),
             ) {
-                Text("Saved in", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Saved in", color = Ivory, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(
                     "New playlist",
-                    color = SpotifyGreen,
+                    color = SoloGold,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable(
@@ -162,15 +170,15 @@ fun SavedInSheet(
                     value = newName,
                     onValueChange = { newName = it },
                     singleLine = true,
-                    placeholder = { Text("Playlist name", color = Color.Gray) },
+                    placeholder = { Text("Playlist name", color = TextTertiary) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { createNow() }),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF2A2A2A),
-                        unfocusedContainerColor = Color(0xFF2A2A2A),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = SpotifyGreen,
+                        focusedContainerColor = Velvet,
+                        unfocusedContainerColor = Velvet,
+                        focusedTextColor = Ivory,
+                        unfocusedTextColor = Ivory,
+                        cursorColor = SoloGold,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
@@ -182,7 +190,7 @@ fun SavedInSheet(
                 Row(modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp)) {
                     Text(
                         if (isCreatingPlaylist) "Creating..." else "Create",
-                        color = if (isCreatingPlaylist) Color.Gray else SpotifyGreen,
+                        color = if (isCreatingPlaylist) TextTertiary else SoloGold,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable(
@@ -194,7 +202,7 @@ fun SavedInSheet(
                     Spacer(Modifier.width(24.dp))
                     Text(
                         "Cancel",
-                        color = Color.Gray,
+                        color = TextTertiary,
                         fontSize = 14.sp,
                         modifier = Modifier.clickable(
                             enabled = !isCreatingPlaylist,
@@ -220,10 +228,10 @@ fun SavedInSheet(
                                     .size(48.dp)
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(
-                                        Brush.linearGradient(listOf(Color(0xFF4A39EA), Color(0xFF868AE1)))
+                                        Brush.linearGradient(listOf(GoldDeep, GoldLight))
                                     ),
                             ) {
-                                Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Favorite, contentDescription = null, tint = com.music.spotui.ui.theme.OnGold, modifier = Modifier.size(20.dp))
                             }
                         },
                     ) {
@@ -338,27 +346,27 @@ private fun SavedInRow(
                 .weight(1f)
                 .padding(start = 14.dp, end = 8.dp),
         ) {
-            Text(name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(name, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isLocal) {
                     Icon(
                         imageVector = Icons.Default.PhoneAndroid,
                         contentDescription = "Local Storage",
-                        tint = SpotifyGreen,
+                        tint = SoloGold,
                         modifier = Modifier
                             .size(14.dp)
                             .padding(end = 3.dp)
                     )
                 }
                 if (subtitle.isNotBlank()) {
-                    Text(subtitle, color = Color.Gray, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle, color = TextTertiary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         if (saved) {
-            Icon(Icons.Default.CheckCircle, contentDescription = "Saved", tint = SpotifyGreen, modifier = Modifier.size(26.dp))
+            Icon(Icons.Default.CheckCircle, contentDescription = "Saved", tint = SoloGold, modifier = Modifier.size(26.dp))
         } else {
-            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFFB3B3B3), modifier = Modifier.size(26.dp))
+            Icon(Icons.Default.Add, contentDescription = "Add", tint = TextSecondary, modifier = Modifier.size(26.dp))
         }
     }
 }

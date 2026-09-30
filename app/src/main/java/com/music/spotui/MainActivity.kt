@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.util.UnstableApi
@@ -20,7 +21,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.notification.PlaybackService
-import com.music.spotui.ui.theme.SpotuiTheme
+import com.music.spotui.ui.theme.SoloTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -35,7 +36,9 @@ class MainActivity : ComponentActivity() {
     @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?){
-
+        // Must run before super.onCreate: swaps the splash theme for Theme.Solo once the
+        // first frame is ready, and draws the compat splash icon on Android 8 to 11.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
@@ -64,9 +67,8 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = false
         setContent {
 
-            SpotuiTheme {
-                // A surface container using the 'background' color from the theme
-                    App()
+            SoloTheme {
+                App()
 
                 // New-release check (GitHub): prompts Upgrade / Dismiss / Don't show again.
                 com.music.spotui.ui.components.UpdatePrompt()

@@ -89,10 +89,23 @@ import androidx.compose.animation.core.spring
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
+import com.music.spotui.ui.theme.Amethyst
+import com.music.spotui.ui.theme.Gold
+import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Night
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
 
 @Composable
 fun Loader() {
     Column(Modifier
+        .fillMaxSize()
         .background(Color(AppBackground.toArgb())),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -102,7 +115,7 @@ fun Loader() {
                 .size(45.dp),
             // The app accent, not the old off brand purple, so every loading screen
             // stays on palette.
-            color = Color(0xFFE8C24A),
+            color = Gold,
             strokeWidth = 3.dp,
         )
     }
@@ -116,11 +129,11 @@ fun ExplicitBadge(
 ) {
     Text(
         text = "E",
-        color = Color(0xFFB3B3B3),
+        color = TextSecondary,
         fontSize = size,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .background(Color(0xFF333333), RoundedCornerShape(3.dp))
+            .background(Velvet, RoundedCornerShape(3.dp))
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )
 }
@@ -161,31 +174,26 @@ fun MiniPlayer(navController: NavHostController) {
         0f
     }
 
-    val currentRoute = navController.currentBackStackEntry?.destination?.route
-
-
-
-    LaunchedEffect(key1  = songPlayingState) {
-            while (songPlayingState) {
-                songProgress = SongPlayer.getDuration().toFloat().let { dur ->
-                    if (dur > 0f) (SongPlayer.getCurrentPosition().toFloat() / dur).coerceIn(0f, 1f) else 0f
-                }
-                delay(300L) // update every .00 second
-
-                if (songProgress > 0f && songProgress >= 1f && currentRoute != Routes.Player.route) {
-                    navController.navigate(Routes.Player.route)
-                    miniPlayerViewModel.setPlaying(false)
-                }
+    // Progress polling only. The end of a track is handled by the playback service
+    // (autoplay / radio / crossfade), so the mini player never pauses or navigates here.
+    LaunchedEffect(key1 = songPlayingState) {
+        while (songPlayingState) {
+            songProgress = SongPlayer.getDuration().toFloat().let { dur ->
+                if (dur > 0f) (SongPlayer.getCurrentPosition().toFloat() / dur).coerceIn(0f, 1f) else 0f
+            }
+            delay(300L)
         }
     }
 
     val context = LocalContext.current
 
-    var darkVibrantColor by remember {
-        mutableStateOf(Color(GridBackground.toArgb()))
-    }
-    Palette().extractFirstColorFromImageUrl(context = context, songCoverUri){ color ->
-        darkVibrantColor = color
+    var darkVibrantColor by remember { mutableStateOf(Night) }
+    LaunchedEffect(songCoverUri) {
+        if (songCoverUri.isNotBlank()) {
+            Palette().extractFirstColorFromImageUrl(context = context, songCoverUri) { color ->
+                darkVibrantColor = color
+            }
+        }
     }
 
     var isLiked by remember {
@@ -213,44 +221,42 @@ fun MiniPlayer(navController: NavHostController) {
     Column(
         modifier = Modifier
 
-            .padding(13.dp, 0.dp)
+            .padding(horizontal = 12.dp)
             .graphicsLayer {
                 translationY = swipeOffsetY
                 alpha = (1f + swipeOffsetY / 150f).coerceIn(0f, 1f)
             }
-            // Premium mini player: a lifted pill with a soft shadow, a gradient drawn
-            // from the artwork's colour into a darker version of itself for depth, and a
-            // hairline edge so it separates cleanly from the content scrolling behind it.
+            // Lifted velvet card tinted by the artwork, with a light-catching top edge.
             .shadow(
-                elevation = 16.dp,
-                shape = RoundedCornerShape(16.dp),
+                elevation = 18.dp,
+                shape = RoundedCornerShape(20.dp),
                 clip = false,
                 ambientColor = Color.Black,
                 spotColor = Color.Black,
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        darkVibrantColor,
-                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Color.Black, 0.45f),
+                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Night, 0.20f),
+                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Night, 0.78f),
                     )
                 )
             )
             .border(
                 width = 1.dp,
-                color = Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(16.dp),
+                brush = Brush.verticalGradient(
+                    listOf(Ivory.copy(alpha = 0.14f), Ivory.copy(alpha = 0.03f))
+                ),
+                shape = RoundedCornerShape(20.dp),
             )
-            .padding(8.dp, 2.dp)
+            .padding(start = 8.dp, end = 8.dp, top = 6.dp)
 
     ) {
         Row(horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                //.background(Color.Green)
-                .padding(0.dp, 2.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -396,7 +402,7 @@ fun MiniPlayer(navController: NavHostController) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .width(260.dp)
+                    .weight(1f)
                     .clipToBounds()
                     .graphicsLayer {
                         translationX = swipeOffsetX
@@ -404,10 +410,9 @@ fun MiniPlayer(navController: NavHostController) {
             ) {
                 GlideImage(
                     modifier = Modifier
-                        .padding(0.dp, 0.dp, 10.dp, 0.dp)
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                    ,
+                        .padding(end = 12.dp)
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(10.dp)),
                     model = songCoverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -416,33 +421,34 @@ fun MiniPlayer(navController: NavHostController) {
                 )
                 Column(
                     modifier = Modifier
-                        .widthIn(Dp.Unspecified, 200.dp)
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isCurrentSongExplicit) {
                             ExplicitBadge()
                             Spacer(Modifier.width(4.dp))
                         }
-                        Text(text = songTitle, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis )
+                        Text(text = songTitle, color = Ivory, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
-                    Text(text = songSinger, color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(1.dp))
+                    Text(text = songSinger, color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
 
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.width(70.dp)
             ) {
 
                 // Plus = save; green check = already saved. A second tap opens the
                 // "Saved in" sheet (Liked Songs + playlists) instead of unliking.
                 if (isLiked) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        tint = Color(0xFFE8C24A),
+                        imageVector = Icons.Rounded.CheckCircle,
+                        tint = Gold,
                         modifier = Modifier
-                            .size(22.dp)
+                            .size(24.dp)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
@@ -452,7 +458,7 @@ fun MiniPlayer(navController: NavHostController) {
                 } else {
                     Icon(
                         modifier = Modifier
-                            .size(22.dp)
+                            .size(24.dp)
                             .combinedClickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -466,9 +472,9 @@ fun MiniPlayer(navController: NavHostController) {
                                 },
                                 onLongClick = { showSavedIn = true },
                             ),
-                        painter = painterResource(id = R.drawable.ic_add),
-                        tint = Color.White,
-                        contentDescription = "Add",
+                        imageVector = Icons.Rounded.AddCircleOutline,
+                        tint = Ivory,
+                        contentDescription = "Save to Liked Songs",
                     )
                 }
 
@@ -476,32 +482,33 @@ fun MiniPlayer(navController: NavHostController) {
                 // Only spin while LOCATING the stream (resolving); during plain
                 // buffering keep the tappable play/pause icon so the button always
                 // works and shows the right state.
-                Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(com.music.spotui.ui.theme.GoldBrush)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            // Single source of truth: toggle from the engine's
+                            // real state so the mini-player icon never sticks.
+                            miniPlayerViewModel.togglePlayPause()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
                     if (miniPlayerViewModel.isResolving.value) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(28.dp),
-                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            color = OnGold,
                             strokeWidth = 2.5.dp
                         )
                     } else {
                         Icon(
-                            painter = if (songPlayingState)
-                                painterResource(id = R.drawable.ic_playing)
-                            else
-                                painterResource(id = R.drawable.play_svgrepo_com)
-                            ,
-                            contentDescription = "",
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    // Single source of truth: toggle from the engine's
-                                    // real state so the mini-player icon never sticks.
-                                    miniPlayerViewModel.togglePlayPause()
-                                }
+                            imageVector = if (songPlayingState) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = if (songPlayingState) "Pause" else "Play",
+                            tint = OnGold,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
@@ -519,7 +526,9 @@ fun MiniPlayer(navController: NavHostController) {
             },
             valueRange = 0f..1f,
             steps = 0,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp)
         )
     }
 
@@ -568,7 +577,7 @@ fun CustomSlider(
 
             // Inactive track
             drawLine(
-                color = Color(0xFF535353),
+                color = Ivory.copy(alpha = 0.14f),
                 start = Offset(0f, trackY),
                 end = Offset(size.width, trackY),
                 strokeWidth = trackHeightPx,
@@ -576,7 +585,7 @@ fun CustomSlider(
             )
             // Active track
             drawLine(
-                color = Color.White,
+                color = Gold,
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
@@ -593,14 +602,15 @@ fun Snackbar(showMessage : String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color.White),
+            .clip(RoundedCornerShape(14.dp))
+            .background(Velvet)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center
     ){
         Text(
-            fontWeight = FontWeight.W500,
+            fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
-            color = Color.Black,
+            color = Ivory,
             text = showMessage
         )
     }
@@ -639,14 +649,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8C24A)) // accent
+                    .background(Gold) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_queue_add),
                     contentDescription = "Play next",
                     // Dark content on the light amber accent keeps the contrast strong.
-                    tint = Color(0xFF241540),
+                    tint = OnGold,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -679,14 +689,14 @@ fun AppSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF1C1C21))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .background(Velvet)
+            .border(1.dp, Ivory.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
             .height(height)
             .padding(horizontal = 14.dp)
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_search_big),
-            tint = Color(0xFFB3B3B3),
+            tint = TextSecondary,
             contentDescription = "Search",
             modifier = Modifier
                 .size(22.dp)
@@ -714,27 +724,27 @@ fun AppSearchBar(
             onValueChange = onQueryChange,
             textStyle = TextStyle.Default.copy(
                 fontSize = 15.sp,
-                color = Color.White,
+                color = Ivory,
                 fontWeight = FontWeight.Medium
             ),
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedPlaceholderColor = Color(0xFFB3B3B3),
-                unfocusedPlaceholderColor = Color(0xFFB3B3B3),
+                focusedTextColor = Ivory,
+                unfocusedTextColor = Ivory,
+                focusedPlaceholderColor = TextSecondary,
+                unfocusedPlaceholderColor = TextSecondary,
                 unfocusedContainerColor = Color.Transparent,
                 disabledContainerColor = Color.Transparent,
                 focusedContainerColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFFE8C24A)
+                cursorColor = Gold
             ),
             singleLine = true,
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = Color(0xFFB3B3B3),
+                    color = TextSecondary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Start
@@ -746,7 +756,7 @@ fun AppSearchBar(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear",
-                tint = Color(0xFFB3B3B3),
+                tint = TextSecondary,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(
