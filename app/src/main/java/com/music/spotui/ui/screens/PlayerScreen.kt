@@ -705,7 +705,6 @@ fun PlayerScreen(navController: NavController) {
                         onQueueClick = { navController.navigate(Routes.Queue.route) },
                         onBackClick = { dismissPlayer() }
                     )
-                    //Spacer(modifier = Modifier.padding(16.dp))
                     // Swipe the artwork left/right to skip to the next/previous track. Using a
                     // HorizontalPager makes the artwork follow the finger and snap, syncing the
                     // change with the track (Spotify's now-playing gesture) instead of an abrupt
@@ -782,7 +781,6 @@ fun PlayerScreen(navController: NavController) {
                             }
                         }
                     }
-                    //Spacer(modifier = Modifier.padding(30.dp))
 
                     Column(
                         modifier = Modifier
@@ -916,7 +914,6 @@ fun PlayerScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    //PlayerEndInfo(onOpenDevices = { showDevicesSheet = true })
                 }
             }
             item {

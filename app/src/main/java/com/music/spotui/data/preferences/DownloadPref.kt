@@ -146,18 +146,6 @@ fun clearAllDownloads(context: Context): Int {
 private fun sanitizeFileName(name: String): String =
     name.replace(Regex("[/\\\\:*?\"<>|]"), "_").trim().take(120).ifBlank { "track" }
 
-/**
- * Copy every downloaded track out of the app's private storage into the shared
- * **Music/spotui** folder as `Artist - Title.<ext>`, so files show up in normal
- * file managers / music apps (no root needed). Uses MediaStore on API 29+.
- * Returns (exportedCount, destinationLabel).
- */
-fun exportDownloads(context: Context): Pair<Int, String> {
-    val entries = getDownloadedEntries(context).filter { it.second.isNotBlank() && File(it.second).exists() }
-    if (entries.isEmpty()) return 0 to "No downloaded files to export"
-    val count = entries.count { (song, path) -> exportFile(context, song, path) }
-    return count to "Music/spotui"
-}
 
 /** Export a single downloaded track to public Music/spotui. Returns true on success. */
 fun exportDownload(context: Context, song: SongsModel): Boolean {

@@ -333,7 +333,6 @@ fun SumUpAlbumScreen(
                         )
                 ,
                 verticalArrangement = Arrangement.Center,
-               // horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.padding(25.dp))
 
@@ -345,8 +344,6 @@ fun SumUpAlbumScreen(
                         modifier = Modifier.size(230.dp),
                         model = album[0].coverUri,
                         failure = placeholder(R.drawable.placeholder),
-                        //loading = placeholder(R.drawable.album),
-                        //contentScale = ContentScale.Crop,
                         contentDescription = "",
                     )
                 }
@@ -413,7 +410,6 @@ fun SumUpAlbumScreen(
                                 ,
                                 model = album[0].coverUri,
                                 failure = placeholder(R.drawable.placeholder),
-                                //loading = placeholder(R.drawable.album),
                                 contentScale = ContentScale.Crop,
                                 contentDescription = "",
                             )
@@ -590,7 +586,6 @@ fun SumUpAlbumScreen(
 
             }
 
-//            Spacer(modifier = Modifier.padding(25.dp))
 
             if (albumSongs.isNotEmpty()) {
                 // Search Bar

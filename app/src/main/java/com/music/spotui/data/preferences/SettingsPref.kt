@@ -33,7 +33,6 @@ private const val KEY_WEB_PLAYBACK = "web_playback_enabled"
 private const val KEY_VIDEO_FALLBACK = "video_fallback_enabled"
 private const val KEY_LIBRARY_GRID = "library_grid_view"
 private const val KEY_AUTO_PLAY = "auto_play_startup"
-private const val KEY_IGNORE_BATTERY_OPT = "ignore_battery_optimization"
 private const val KEY_UPDATE_REPO_URL = "update_repo_url"
 const val DEFAULT_UPDATE_REPO_URL = "https://github.com/H4zh4n/Spotui"
 
@@ -78,17 +77,12 @@ fun isLibraryGridView(c: Context): Boolean = prefs(c).getBoolean(KEY_LIBRARY_GRI
 fun setLibraryGridView(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_LIBRARY_GRID, v).apply()
 
 fun isPreloadEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_PRELOAD, true)
-fun setPreloadEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_PRELOAD, v).apply()
 
 /**
  * YouTube account cookie (captured from an in-app WebView login). Passed to the
  * InnerTube client so age-restricted / login-required videos resolve. Empty when
  * not signed in, the app then uses anonymous YouTube access.
  */
-private const val KEY_YT_COOKIE = "youtube_cookie"
-fun getYoutubeCookie(c: Context): String = prefs(c).getString(KEY_YT_COOKIE, "").orEmpty()
-fun setYoutubeCookie(c: Context, v: String) = prefs(c).edit().putString(KEY_YT_COOKIE, v).apply()
-fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPISID")
 
 /**
  * Play audio through Spotify's own web player in a hidden WebView (real Spotify
@@ -97,7 +91,6 @@ fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPIS
  * download/crossfade support.
  */
 fun isWebPlaybackEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_WEB_PLAYBACK, false)
-fun setWebPlaybackEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_WEB_PLAYBACK, v).apply()
 
 fun isAutoPlayEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_AUTO_PLAY, false)
 fun setAutoPlayEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_AUTO_PLAY, v).apply()
@@ -122,14 +115,11 @@ fun getCrossfadeMs(c: Context): Int = prefs(c).getInt(KEY_CROSSFADE_MS, 0)
 fun setCrossfadeMs(c: Context, ms: Int) =
     prefs(c).edit().putInt(KEY_CROSSFADE_MS, ms.coerceIn(CROSSFADE_MIN_MS, CROSSFADE_MAX_MS)).apply()
 
-fun isCrossfadeEnabled(c: Context): Boolean = getCrossfadeMs(c) > 0
 
 /** DJ-style mixing: low-pass the outgoing track and high-pass the incoming one during the blend. */
 fun isCrossfadeDjMode(c: Context): Boolean = prefs(c).getBoolean(KEY_CROSSFADE_DJ, false)
 fun setCrossfadeDjMode(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_CROSSFADE_DJ, v).apply()
 
-fun isIgnoreBatteryOptimization(c: Context): Boolean = prefs(c).getBoolean(KEY_IGNORE_BATTERY_OPT, false)
-fun setIgnoreBatteryOptimization(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_IGNORE_BATTERY_OPT, v).apply()
 
 fun getUpdateRepoUrl(c: Context): String =
     prefs(c).getString(KEY_UPDATE_REPO_URL, DEFAULT_UPDATE_REPO_URL).orEmpty().ifBlank { DEFAULT_UPDATE_REPO_URL }
@@ -220,7 +210,4 @@ fun setAudioProviderEnabled(c: Context, providerId: String, enabled: Boolean) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getEnabledAudioProviderOrder(c: Context): List<AudioProviderOrderItem> {
-    return getAudioProviderOrder(c).filter { isAudioProviderEnabled(c, it.id) }
-}
 

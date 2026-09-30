@@ -139,7 +139,7 @@ fun FreeHomeScreen(navController: NavController) {
                 state = pullState,
                 isRefreshing = isRefreshing,
                 modifier = Modifier.align(Alignment.TopCenter),
-                containerColor = com.music.spotui.ui.theme.SurfaceElevated,
+                containerColor = com.music.spotui.ui.theme.Dusk,
                 color = Accent,
             )
         },

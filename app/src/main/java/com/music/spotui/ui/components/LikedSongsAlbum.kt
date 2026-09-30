@@ -158,7 +158,6 @@ fun LikedSongsScreen(
                         )
                 ,
                 verticalArrangement = Arrangement.Center,
-                // horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.padding(25.dp))
 
@@ -172,8 +171,6 @@ fun LikedSongsScreen(
                         // no Liked Songs entry to take a cover from.
                         model = likedAlbumCover ?: likedSongs.firstOrNull()?.coverUri,
                         failure = placeholder(R.drawable.placeholder),
-                        //loading = placeholder(R.drawable.album),
-                        //contentScale = ContentScale.Crop,
                         contentDescription = "",
                     )
                 }
@@ -277,7 +274,6 @@ fun LikedSongsScreen(
 
             }
 
-//            Spacer(modifier = Modifier.padding(25.dp))
 
             if(likedSongs.isNotEmpty()){
                 repeat(likedSongs.size) {song ->
@@ -382,7 +378,6 @@ fun LikedSongsScreen(
                                             } else {
                                                 addLikedSongId(context, songId.toString())
                                             }
-                                            //isLiked = isSongLiked(context, songId.toString())
                                             albumViewModel.updateLikeState(!albumViewModel.likeState.value)
                                         },
                                         onLongClick = { showSavedIn = true },

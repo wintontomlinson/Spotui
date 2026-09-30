@@ -138,7 +138,6 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     }
 
 
-    //val songsResponse = (songs.value as Response.Success).data
 
     // Resolve where we currently are in the queue. The stored index can be stale
     // (e.g. queue swapped out), so match by song id first and fall back to the index.

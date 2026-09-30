@@ -80,9 +80,6 @@ fun artworkTone(color: Color): Color {
 
 // Compatibility names used across older screens. They all resolve to Solo tokens.
 val AppBackground = Ink
-val SurfaceElevated = Dusk
-val GridBackground = Velvet
 val AppPalette = Gold
 val Accent = Gold
-val AccentDark = GoldDeep
 val OnAccent = OnGold

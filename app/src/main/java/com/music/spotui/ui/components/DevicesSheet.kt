@@ -57,7 +57,6 @@ import com.music.spotui.ui.utils.AudioDeviceItem
 import com.music.spotui.ui.utils.AudioDeviceType
 import com.music.spotui.ui.theme.Gold
 import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.Night
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Velvet

@@ -1,9 +1,37 @@
-# Spotui: Fork Features & Differences
+# Solo (formerly Spotui): Fork Features & Differences
 
 This document outlines the custom features, improvements, and differences introduced in this fork
 compared to the main Spotui repository.
 
 ---
+
+## 3.0.0 — Solo
+
+* **New name and original logo.** The app is now **Solo**. Its mark, a gold tuning fork ("one pure
+  note"), is used on the adaptive, round and themed (Android 13) launcher icons, the splash
+  screen, the notification icon (a white-only 24dp vector), the in-app wordmark and the README.
+* **Design system "Midnight Velvet & Gold".** Plum-black canvas, a velvet surface ramp, one warm-gold
+  accent and ivory text; Fraunces for display type and Manrope for the UI (both SIL OFL, licences
+  in `licenses/fonts`). Shared tokens for colour, type, shapes, spacing and motion.
+* **Redesigned UI.** Floating glass tab bar that compresses on scroll, refined mini player and full
+  player (gold play disc, 48dp targets, press feedback, play/pause crossfade), gold play buttons on
+  album/playlist/liked pages, consistent sheets (24dp corners, drag handle) and dialogs, and proper
+  empty and error states (Downloads, History, Local files, Library with Retry).
+* **Bug fixes**
+  * The mini player opened the full player and paused playback when a track reached its end,
+    which could break autoplay and crossfade. Track changes are now left to the playback service.
+  * Artwork colour extraction ran on every mini-player recomposition; it now runs once per cover.
+  * Launch auto-backup and "Export to Music" could crash the app if the backup folder permission
+    was revoked or the saved data was corrupt; both are now guarded.
+  * A race on the cached library could crash Library while it was being refreshed.
+  * Downloads and Local files re-read and re-scanned their lists on the main thread; this now runs
+    in the background.
+  * Spotify's proprietary fonts were bundled in the APK; they are replaced by open-licensed fonts.
+  * `installSplashScreen()` was never called, so Android 8–11 showed no splash icon.
+* **Cleanup.** Removed unused files, composables, preference helpers, drawables, colours, fonts,
+  commented-out code, example tests, a live-network provider test and unused Gradle dependencies.
+* **Version 3.0.0** (versionCode 2026093010). The package name is unchanged, so it installs over
+  earlier builds and keeps your library, likes, downloads, settings and Spotify login.
 
 ## 👑 Royal Edition (on v2.0.0)
 

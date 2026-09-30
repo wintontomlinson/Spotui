@@ -5,8 +5,8 @@ name: Build & Release APK
 #
 # The version CHANGES ON EVERY BUILD so each APK is unique and installs over the
 # previous one:
-#   • push a tag like v2.0.1            → versionName = 2.0.1 (from the tag)
-#   • "Run workflow" (manual dispatch)  → versionName = <base>.<run#> (e.g. 2.0.0.7)
+#   • push a tag like v3.0.1            → versionName = 3.0.1 (from the tag)
+#   • "Run workflow" (manual dispatch)  → versionName = <base>.<run#> (e.g. 3.0.0.7)
 # versionCode is always base + run number, i.e. strictly increasing.
 on:
   push:
@@ -48,7 +48,7 @@ jobs:
       # Compute a version that CHANGES ON EVERY BUILD so no two APKs collide.
       #   • On a tag push (vX.Y.Z)  → versionName = X.Y.Z (from the tag)
       #   • Otherwise (manual/auto) → base versionName from build.gradle + ".<run#>"
-      # versionCode is ALWAYS unique: base-code * 100000 + GITHUB_RUN_NUMBER, so
+      # versionCode is ALWAYS unique: base-code + GITHUB_RUN_NUMBER, so
       # every build is a strictly higher, installable-over-the-top upgrade.
       - name: Compute changing version
         id: ver
@@ -84,7 +84,7 @@ jobs:
       - name: Upload APKs as workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Spotui-v${{ steps.ver.outputs.version }}-apks
+          name: Solo-v${{ steps.ver.outputs.version }}-apks
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
@@ -95,9 +95,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
-          name: Spotui v${{ steps.ver.outputs.version }}
+          name: Solo v${{ steps.ver.outputs.version }}
           body: |
-            Automated build of **Spotui v${{ steps.ver.outputs.version }}** (versionCode ${{ steps.ver.outputs.code }}).
+            Automated build of **Solo v${{ steps.ver.outputs.version }}** (versionCode ${{ steps.ver.outputs.code }}).
 
             Download the single universal APK below — it installs on any device.
           files: app/build/outputs/apk/release/*.apk
