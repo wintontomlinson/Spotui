@@ -96,8 +96,6 @@ import com.music.spotui.data.api.Api
 import com.music.spotui.data.api.Response
 import com.music.spotui.data.entity.LibraryEntry
 import com.music.spotui.data.preferences.LocalPlaylistPref
-import com.music.spotui.data.preferences.isLibraryGridView
-import com.music.spotui.data.preferences.setLibraryGridView
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.navigation.albumRoute

@@ -31,7 +31,6 @@ private const val KEY_CROSSFADE_MS = "crossfade_duration_ms"
 private const val KEY_CROSSFADE_DJ = "crossfade_dj_mode"
 private const val KEY_WEB_PLAYBACK = "web_playback_enabled"
 private const val KEY_VIDEO_FALLBACK = "video_fallback_enabled"
-private const val KEY_LIBRARY_GRID = "library_grid_view"
 private const val KEY_AUTO_PLAY = "auto_play_startup"
 private const val KEY_UPDATE_REPO_URL = "update_repo_url"
 const val DEFAULT_UPDATE_REPO_URL = "https://github.com/H4zh4n/Spotui"
@@ -70,11 +69,6 @@ fun setDownloadQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_DL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
-
-
-/** Library layout: false = rows (default), true = Spotify-style 3-column grid. */
-fun isLibraryGridView(c: Context): Boolean = prefs(c).getBoolean(KEY_LIBRARY_GRID, false)
-fun setLibraryGridView(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_LIBRARY_GRID, v).apply()
 
 fun isPreloadEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_PRELOAD, true)
 

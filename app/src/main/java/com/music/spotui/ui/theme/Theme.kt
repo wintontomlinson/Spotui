@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -12,6 +11,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
@@ -71,13 +71,14 @@ fun SoloTheme(content: @Composable () -> Unit) {
         typography = Typography,
         shapes = SoloShapes,
     ) {
-        // Bare Text() reads LocalTextStyle, which MaterialTheme does not derive from the
-        // typography, so Manrope is provided as the global default here.
-        CompositionLocalProvider(LocalContentColor provides Ivory) {
-            ProvideTextStyle(
-                value = LocalTextStyle.current.merge(Typography.bodyMedium),
-                content = content,
-            )
-        }
+        // Bare Text() reads LocalTextStyle, so Manrope is provided as the global default here.
+        // Provided directly (not merged over M3's bodyLarge) and without a fixed line height,
+        // so a Text that only sets a larger fontSize (lyrics, hero titles) gets line boxes
+        // that scale with it instead of overlapping when it wraps.
+        CompositionLocalProvider(
+            LocalContentColor provides Ivory,
+            LocalTextStyle provides Typography.bodyMedium.copy(lineHeight = TextUnit.Unspecified),
+            content = content,
+        )
     }
 }
