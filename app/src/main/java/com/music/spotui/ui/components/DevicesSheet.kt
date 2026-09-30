@@ -91,9 +91,11 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Night,
+        containerColor = com.music.spotui.ui.theme.Dusk,
         contentColor = Ivory,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier
@@ -170,7 +172,7 @@ fun DevicesSheet(
                     ) {
                         Text(
                             text = "Grant",
-                            color = Color.Black,
+                            color = com.music.spotui.ui.theme.OnGold,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )

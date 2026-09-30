@@ -1,5 +1,7 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material.icons.rounded.DownloadForOffline
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -123,14 +125,17 @@ fun DownloadsScreen(navController: NavController) {
     var isDescending by remember { mutableStateOf(isDownloadsSortDescending(context)) }
 
     androidx.compose.runtime.LaunchedEffect(currentSort, isDescending) {
-        songs = getDownloadedSongs(context)
+        // Parses the saved JSON and stats every file: keep it off the main thread.
+        songs = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { getDownloadedSongs(context) }
     }
 
     androidx.compose.runtime.LaunchedEffect(Unit) {
         while (true) {
             val snap = com.music.spotui.di.SongPlayer.downloadingSnapshot()
             // A download leaving the snapshot means it finished → refresh the saved list.
-            if (snap.size != inProgress.size) songs = getDownloadedSongs(context)
+            if (snap.size != inProgress.size) {
+                songs = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { getDownloadedSongs(context) }
+            }
             inProgress = snap
             kotlinx.coroutines.delay(400)
         }
@@ -364,18 +369,18 @@ fun DownloadsScreen(navController: NavController) {
                 }
 
                 if (songs.isEmpty() && inProgress.isEmpty()) {
-                    Text(
-                        text = "No downloads yet. Tap ⋯ on a track and choose Download.",
-                        color = TextTertiary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(20.dp),
+                    com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.DownloadForOffline,
+                        title = "No downloads yet",
+                        message = "Tap ⋯ on any track and choose Download to keep it for offline listening.",
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 } else if (displayedSongs.isEmpty() && inProgress.isEmpty()) {
-                    Text(
-                        text = "No matches found for \"$searchQuery\"",
-                        color = TextTertiary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(20.dp),
+                    com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
+                        title = "No matches",
+                        message = "Nothing in your downloads matches \"$searchQuery\".",
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
                     repeat(displayedSongs.size) { index ->
@@ -465,7 +470,10 @@ fun DownloadsScreen(navController: NavController) {
             if (showSortSheet) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
-                        containerColor = Dusk
+                        containerColor = Dusk,
+                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                        scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(
                             modifier = Modifier

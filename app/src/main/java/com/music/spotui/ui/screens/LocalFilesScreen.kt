@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -89,8 +90,9 @@ fun LocalFilesScreen(navController: NavController) {
         scope.launch(Dispatchers.IO) {
             val tracks = LocalImport.importFiles(context, uris)
             addLocalTracks(context, tracks)
+            val fresh = getLocalSongs(context)
             withContext(Dispatchers.Main) {
-                songs = getLocalSongs(context)
+                songs = fresh
                 importing = false
                 toast("Imported ${tracks.size} song${if (tracks.size == 1) "" else "s"}")
             }
@@ -105,8 +107,9 @@ fun LocalFilesScreen(navController: NavController) {
         scope.launch(Dispatchers.IO) {
             val tracks = LocalImport.importFolder(context, treeUri)
             addLocalTracks(context, tracks)
+            val fresh = getLocalSongs(context)
             withContext(Dispatchers.Main) {
-                songs = getLocalSongs(context)
+                songs = fresh
                 importing = false
                 toast("Imported ${tracks.size} song${if (tracks.size == 1) "" else "s"} from folder")
             }
@@ -187,11 +190,11 @@ fun LocalFilesScreen(navController: NavController) {
                 Spacer(Modifier.height(8.dp))
 
                 if (songs.isEmpty()) {
-                    Text(
-                        text = "No local music yet. Tap “Add songs” or “Add folder” to import from your device.",
-                        color = TextTertiary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(20.dp),
+                    com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.LibraryMusic,
+                        title = "No local music yet",
+                        message = "Tap “Add songs” or “Add folder” to import music from your device.",
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
                     songs.forEachIndexed { index, song ->

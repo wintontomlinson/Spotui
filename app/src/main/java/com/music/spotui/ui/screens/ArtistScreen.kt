@@ -321,7 +321,7 @@ private fun ArtistOverviewContent(
                         Icon(
                             painter = painterResource(id = R.drawable.play_svgrepo_com),
                             contentDescription = "",
-                            tint = Color.Black,
+                            tint = com.music.spotui.ui.theme.OnGold,
                             modifier = Modifier.size(26.dp),
                         )
                     }
@@ -863,7 +863,7 @@ private fun ReleaseFilterChip(label: String, selected: Boolean, onClick: () -> U
     ) {
         Text(
             text = label,
-            color = if (selected) Color.Black else Ivory,
+            color = if (selected) com.music.spotui.ui.theme.OnGold else Ivory,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )

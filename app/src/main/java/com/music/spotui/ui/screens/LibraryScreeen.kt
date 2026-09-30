@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -166,6 +167,9 @@ private fun LibraryRowMenu(
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             containerColor = Dusk,
+            shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+            dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+            scrimColor = com.music.spotui.ui.theme.Scrim,
         ) {
             Column(
                 modifier = Modifier
@@ -212,7 +216,7 @@ private fun LibraryRowMenu(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            containerColor = Velvet,
+            containerColor = Dusk,
             title = {
                 Text(
                     text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
@@ -413,7 +417,7 @@ fun LibraryScreen(navController: NavController) {
         var playlistNameInput by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            containerColor = Velvet,
+            containerColor = Dusk,
             title = { Text("Create Local Playlist", color = Ivory, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(
@@ -516,7 +520,7 @@ fun LibraryScreen(navController: NavController) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_search_big),
                     contentDescription = "Search & Filter",
-                    tint = if (isSearchVisible || searchQuery.isNotEmpty()) Color.Black else Ivory,
+                    tint = if (isSearchVisible || searchQuery.isNotEmpty()) com.music.spotui.ui.theme.OnGold else Ivory,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -722,13 +726,23 @@ fun LibraryScreen(navController: NavController) {
                     onLibraryChanged = { libraryViewModel.load() },
                 )
             }
-            else -> Box(modifier = Modifier.padding(20.dp, 100.dp)) { Snackbar(showMessage = "Couldn't load your library") }
+            else -> com.music.spotui.ui.components.SoloEmptyState(
+                icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
+                title = "Couldn't load your library",
+                message = "Check your connection and try again. Liked songs, downloads and local files still work offline.",
+                actionLabel = "Retry",
+                onAction = { libraryViewModel.load() },
+                modifier = Modifier.fillMaxWidth().padding(top = 60.dp),
+            )
         }
 
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Dusk
+                containerColor = Dusk,
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(
                     modifier = Modifier
@@ -1078,7 +1092,7 @@ private fun LibraryEmptyState(navController: NavController) {
         var name by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            containerColor = Velvet,
+            containerColor = Dusk,
             title = { Text("Create playlist", color = Ivory, fontWeight = FontWeight.Bold) },
             text = {
                 TextField(

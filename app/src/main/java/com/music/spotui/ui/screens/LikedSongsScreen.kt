@@ -1,5 +1,7 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -352,9 +354,10 @@ fun LikedSongsScreen(navController: NavController) {
                                     Box(
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
-                                            .size(52.dp)
-                                            .clip(RoundedCornerShape(100.dp))
-                                            .background(Ivory)
+                                            .size(56.dp)
+                                            .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.GoldDeep, spotColor = com.music.spotui.ui.theme.GoldDeep)
+                                            .clip(CircleShape)
+                                            .background(com.music.spotui.ui.theme.GoldBrush)
                                             .clickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = null
@@ -379,7 +382,7 @@ fun LikedSongsScreen(navController: NavController) {
                                     ) {
                                         Icon(
                                             modifier = Modifier.size(25.dp),
-                                            tint = Color.Black,
+                                            tint = com.music.spotui.ui.theme.OnGold,
                                             painter = painterResource(
                                                 id = if (currentInList && playing) R.drawable.ic_playing else R.drawable.play_svgrepo_com,
                                             ),
@@ -541,7 +544,10 @@ fun LikedSongsScreen(navController: NavController) {
                 if (showSortSheet) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
-                        containerColor = Dusk
+                        containerColor = Dusk,
+                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                        scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(
                             modifier = Modifier

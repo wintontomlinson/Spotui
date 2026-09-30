@@ -102,6 +102,18 @@ fun Modifier.soloClickable(ripple: Boolean = false, onClick: () -> Unit): Modifi
         )
 }
 
+/** Sheet grab handle: a 36x4dp soft ivory pill. */
+@Composable
+fun SoloDragHandle() {
+    Box(
+        modifier = Modifier
+            .padding(top = 10.dp, bottom = 6.dp)
+            .size(width = 36.dp, height = 4.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Ivory.copy(alpha = 0.22f)),
+    )
+}
+
 /** Width-to-height ratio of drawable/logo (the tight-bounds Solo mark). */
 private const val MARK_ASPECT = 25.6f / 56f
 

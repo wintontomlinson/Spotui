@@ -141,6 +141,9 @@ fun SavedInSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Dusk,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
             Row(

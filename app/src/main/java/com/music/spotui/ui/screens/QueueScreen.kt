@@ -91,8 +91,9 @@ fun QueueSheet(
         containerColor = Dusk,
         contentColor = Ivory,
         dragHandle = null,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        modifier = Modifier.fillMaxHeight(0.92f)
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        modifier = Modifier.fillMaxHeight(0.92f),
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         QueueContent(
             navController = navController,

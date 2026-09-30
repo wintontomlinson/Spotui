@@ -319,7 +319,10 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Dusk
+                containerColor = Dusk,
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(
                     modifier = Modifier

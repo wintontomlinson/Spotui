@@ -839,8 +839,9 @@ class Api @Inject constructor(
                 isLocal = true,
             )
         }
-        if (HomeCache.library != null) {
-            val nonLocal = HomeCache.library!!.filterNot { it.isLocal }
+        val cachedLibrary = HomeCache.library
+        if (cachedLibrary != null) {
+            val nonLocal = cachedLibrary.filterNot { it.isLocal }
             val likedAndDownloaded = nonLocal.filter { it.spotifyId == LIKED_SONGS_ID || it.spotifyId == DOWNLOADS_ID }
             val restNonLocal = nonLocal.filterNot { it.spotifyId == LIKED_SONGS_ID || it.spotifyId == DOWNLOADS_ID }
             val updatedLibrary = deduplicateLibraryEntries(likedAndDownloaded + localEntries + restNonLocal)

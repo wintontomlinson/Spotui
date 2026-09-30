@@ -1758,6 +1758,8 @@ fun ArtistsSheet(
         sheetState = sheetState,
         containerColor = Dusk,
         dragHandle = null,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier
@@ -1977,7 +1979,9 @@ fun PlayerOptionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Dusk,
-        dragHandle = null
+        dragHandle = null,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier

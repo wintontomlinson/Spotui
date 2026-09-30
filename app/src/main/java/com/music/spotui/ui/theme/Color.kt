@@ -45,6 +45,9 @@ val DangerSurface = Color(0xFF4A1F2A)
 val Success = Color(0xFF7FD1A3)
 val Warning = Color(0xFFF2C46B)
 
+// Scrim behind sheets and dialogs (70% black)
+val Scrim = Color(0xB3000000)
+
 // Shadow for floating chrome (mini player, nav): 35% deep ink
 val ShadowInk = Color(0x5905030A)
 

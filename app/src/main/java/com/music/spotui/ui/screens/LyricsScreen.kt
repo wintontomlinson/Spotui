@@ -433,7 +433,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
                         Icon(
                             imageVector = Icons.Default.ClearAll,
                             contentDescription = "Clear translation",
-                            tint = Color.Black,
+                            tint = com.music.spotui.ui.theme.Ink,
                             modifier = Modifier.size(16.dp),
                         )
                     }
@@ -674,7 +674,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
                         ) { vm.startTranslation() }
                         .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
-                    Text("Translate", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    Text("Translate", color = com.music.spotui.ui.theme.Ink, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                 }
             }
         }
@@ -765,7 +765,10 @@ private fun LanguagePickerBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Dusk, // Sleek dark gray
-        contentColor = Ivory
+        contentColor = Ivory,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier

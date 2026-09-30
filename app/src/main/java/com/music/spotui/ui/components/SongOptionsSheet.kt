@@ -116,6 +116,9 @@ fun SongOptionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Dusk,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
             Row(
@@ -209,7 +212,8 @@ fun SongOptionsSheet(
                     // sheet closing (a rememberCoroutineScope would be cancelled).
                     val app = context.applicationContext
                     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                        val ok = com.music.spotui.data.preferences.exportDownload(app, song)
+                        val ok = runCatching { com.music.spotui.data.preferences.exportDownload(app, song) }
+                            .getOrDefault(false)
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             android.widget.Toast.makeText(
                                 app,

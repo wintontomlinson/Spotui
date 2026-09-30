@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -223,11 +224,11 @@ fun HistoryScreen(navController: NavController) {
 
                 if (history.isEmpty()) {
                     item {
-                        Text(
-                            "Nothing here yet, play something!",
-                            color = TextTertiary,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(16.dp, 32.dp),
+                        com.music.spotui.ui.components.SoloEmptyState(
+                            icon = androidx.compose.material.icons.Icons.Rounded.History,
+                            title = "No listening history yet",
+                            message = "Songs you play show up here, with your top artists and stats.",
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 } else {
@@ -436,7 +437,10 @@ fun HistoryScreen(navController: NavController) {
             if (showSortSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showSortSheet = false },
-                    containerColor = Dusk
+                    containerColor = Dusk,
+                    shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                    dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                    scrimColor = com.music.spotui.ui.theme.Scrim,
                 ) {
                     Column(
                         modifier = Modifier
