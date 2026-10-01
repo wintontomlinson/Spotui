@@ -106,6 +106,7 @@ import com.music.spotui.data.preferences.getUpdateRepoUrl
 import com.music.spotui.data.preferences.setUpdateRepoUrl
 import com.music.spotui.data.preferences.resetUpdateRepoUrl
 import com.music.spotui.data.preferences.DEFAULT_UPDATE_REPO_URL
+import com.music.spotui.data.preferences.ramp
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.runtime.DisposableEffect
@@ -138,6 +139,9 @@ fun SettingsScreen(navController: NavController) {
     var autoPlay by remember { mutableStateOf(isAutoPlayEnabled(context)) }
     var normalize by remember { mutableStateOf(com.music.spotui.data.preferences.isNormalizeVolume(context)) }
     var batteryOptExempt by remember { mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimization(context)) }
+
+    var accentChoice by remember { mutableStateOf(com.music.spotui.data.preferences.getAccentChoice(context)) }
+    var showAccentDialog by remember { mutableStateOf(false) }
 
     var backupDirUri by remember { mutableStateOf(BackupPref.getDirectoryUri(context)) }
     var folderName by remember(backupDirUri) { mutableStateOf(BackupHelper.getFolderDisplayName(context, backupDirUri)) }
@@ -233,6 +237,44 @@ fun SettingsScreen(navController: NavController) {
                 // (account / log out) isn't hidden under the bar.
                 .padding(bottom = 200.dp)
         ) {
+            SectionTitle("Appearance")
+            SettingsClickRow(
+                title = "Accent colour",
+                subtitle = "Recolours the app's highlights · ${accentChoice.label}",
+                leadingIcon = {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(accentChoice.ramp().second),
+                    )
+                },
+                trailing = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = SettingsTextDim,
+                        modifier = Modifier.size(22.dp),
+                    )
+                },
+                onClick = { showAccentDialog = true },
+            )
+            SettingsClickRow(
+                title = "Your listening",
+                subtitle = "Top artists, tracks, minutes and your day streak",
+                trailing = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = SettingsTextDim,
+                        modifier = Modifier.size(22.dp),
+                    )
+                },
+                onClick = { navController.navigate(com.music.spotui.ui.navigation.Routes.Stats.route) },
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             SectionTitle("Devices & Bluetooth")
             SettingsClickRow(
                 title = "Audio Output Devices",
@@ -716,7 +758,91 @@ fun SettingsScreen(navController: NavController) {
             )
         }
 
+        if (showAccentDialog) {
+            AccentPickerDialog(
+                selected = accentChoice,
+                onSelect = { choice ->
+                    accentChoice = choice
+                    com.music.spotui.data.preferences.setAccentChoice(context, choice)
+                    // Recolour the whole app live.
+                    com.music.spotui.data.preferences.applyAccent(choice)
+                },
+                onDismiss = { showAccentDialog = false },
+            )
+        }
+
     }
+}
+
+/**
+ * Accent picker: a restrained swatch row (Azure / Teal / Indigo / Steel). Selecting one writes
+ * the additive pref and recolours the app live; the graphite canvas is never touched.
+ */
+@Composable
+private fun AccentPickerDialog(
+    selected: com.music.spotui.data.preferences.AccentChoice,
+    onSelect: (com.music.spotui.data.preferences.AccentChoice) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Surface2,
+        title = { Text("Accent colour", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column {
+                Text(
+                    "Pick the colour SOLO uses for highlights and controls.",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    com.music.spotui.data.preferences.AccentChoice.entries.forEach { choice ->
+                        val isSel = choice == selected
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(SoloShape.md)
+                                .clickable { onSelect(choice) }
+                                .padding(vertical = 8.dp),
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .background(choice.ramp().second)
+                                    .border(
+                                        width = if (isSel) 3.dp else 1.dp,
+                                        color = if (isSel) TextPrimary else SettingsHairline,
+                                        shape = androidx.compose.foundation.shape.CircleShape,
+                                    ),
+                            ) {
+                                if (isSel) {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = "Selected",
+                                        tint = OnAccent,
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                choice.label,
+                                color = if (isSel) TextPrimary else TextTertiary,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            com.music.spotui.ui.components.SoloDialogConfirm(text = "Done", onClick = onDismiss)
+        },
+    )
 }
 
 /**
@@ -775,7 +901,8 @@ private fun AboutCard() {
 }
 
 // Shared surfaces so every settings group reads as one consistent card system.
-private val SettingsAccent = com.music.spotui.ui.theme.Accent
+// Accent is a getter (follows the live accent picker), the surfaces are fixed graphite.
+private val SettingsAccent: Color get() = com.music.spotui.ui.theme.Accent
 private val SettingsCard = com.music.spotui.ui.theme.Surface1
 private val SettingsHairline = com.music.spotui.ui.theme.Hairline
 private val SettingsTextDim = TextSecondary

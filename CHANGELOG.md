@@ -33,6 +33,16 @@ compared to the main Spotui repository.
   Queue and Equalizer, Settings (every row and the compact About card), the mini player, top bars,
   sheets, dialogs, navigation chrome and the loading / empty / error states — moves onto Graphite &
   Azure, so nothing retains the old look. UI layer only; audio, data and stream paths untouched.
+* **Phase C: new features + polish.** Added a one-time first-run onboarding (brand intro, free-play
+  explainer and an accent picker), shown once on first launch. Added an **accent picker** in
+  Settings → Appearance (Azure / Teal / Indigo / Steel) that recolours the app's highlights live
+  while leaving the graphite canvas untouched. Added a read-only **Listening** recap (Settings →
+  Your listening) built on-device from the existing taste model — top artists and tracks, total
+  listens, estimated minutes and a day streak, with an empty state. Redesigned the **Equalizer**
+  with a live band-response curve and premium preset chips/sliders (same engine and presets). Search
+  keeps its result-type filters and recent-search history. **In-app updates** now download the
+  release APK inside the app with a progress bar and launch the system installer directly
+  (requesting install permission when needed) — no browser hand-off.
 
 ## 7.0.0 — SOLO
 
