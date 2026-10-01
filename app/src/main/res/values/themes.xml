@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App theme after the splash: dark obsidian window so there is never a white flash
+    <!-- App theme after the splash: dark graphite window so there is never a white flash
          between the splash and the Compose UI. -->
     <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
     <style name="splashScreenTheme" parent="Theme.SplashScreen">
-        <!-- The SOLO Spotlight-O on the obsidian plate, exactly like the launcher icon. The mark
+        <!-- The SOLO Aperture S on the graphite plate, exactly like the launcher icon. The mark
              lives inside the 66dp safe circle of the 108dp foreground, which keeps it inside
              the Android 12+ splash icon mask. -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>

@@ -4,17 +4,18 @@
 The launcher itself uses the adaptive icon (minSdk is 26). The bitmaps written here are
 the legacy mipmaps, the Play Store listing icon, the README icon and the artwork
 placeholder, all drawn from the same geometry as drawable/ic_launcher_foreground.xml
-(the "Lumen Prism" mark in the 108-unit adaptive grid) and
-drawable/ic_launcher_background.xml (the indigo radial plate).
+(the "Aperture S" mark in the 108-unit adaptive grid) and
+drawable/ic_launcher_background.xml (the graphite radial plate).
 
-Lumen Prism: a single upright beam of light descends from a gold beam-tip at the top,
-strikes a refraction node and fans out into a short violet->cyan spectrum of three
-diverging rays. It reads as "one voice -> pure sound / one light -> a spectrum", tying
-to SOLO without copying the Spotlight-O ring, a Sonic V, a tuning fork or the Solo Facet,
-and without resembling Spotify, YouTube Music, Apple Music, SoundCloud, JioSaavn, Gaana,
-Wynk, Tidal, Deezer or Amazon Music. The beam is a tapered violet shaft, the fan rays run
-violet -> indigo -> cyan, and the beam-tip is a warm gold diamond. A soft black copy
-offset +1.4 Y is the shadow.
+Aperture S: a single continuous stroke sweeps through two opposed arcs to form the
+letter S; the counters it leaves behind — the two bowls of the S — read as the open
+blades of a camera/lens aperture framing a focused centre. It reads as "one voice ->
+one focused sound", tying to SOLO without copying the retired Lumen Prism beam, a
+Spotlight-O ring, a Sonic V, a tuning fork or the Solo Facet, and without resembling
+Spotify, YouTube Music, Apple Music, SoundCloud, JioSaavn, Gaana, Wynk, Tidal, Deezer
+or Amazon Music. The stroke runs a soft-sky -> azure -> cobalt gradient top-to-bottom
+on a graphite plate, with a cool-steel focal dot at the aperture centre. A soft black
+copy offset +1.4 Y is the shadow.
 
 Requires Pillow. Run from the repository root:
     python3 tools/generate_launcher_icons.py            # write every raster
@@ -37,32 +38,34 @@ PLACEHOLDER = os.path.join(RES, "drawable", "placeholder.webp")
 UNITS = 108.0  # adaptive icon grid
 SUPERSAMPLE = 4
 
-# Plate: indigo radial glow, off-centre toward the top left.
+# Plate: graphite radial glow, off-centre toward the top left.
 PLATE_CENTRE = (40.0, 34.0)
 PLATE_RADIUS = 100.0
-PLATE_STOPS = [(0.0, (0x1A, 0x16, 0x30)), (0.55, (0x13, 0x13, 0x1F)), (1.0, (0x0B, 0x0B, 0x14))]
+PLATE_STOPS = [(0.0, (0x17, 0x1B, 0x20)), (0.55, (0x12, 0x15, 0x19)), (1.0, (0x0E, 0x10, 0x13))]
 
-# Lumen Prism mark geometry (108-unit grid), identical to the vector drawables.
-# A beam descends from a gold tip, hits a refraction node and fans into three rays.
-# The whole mark is balanced around the grid centre (54,54): beam top at y 28,
-# node at y 52, fan reaching ~y 80, so it sits centred in the 66-unit safe circle.
-TIP = (54.0, 28.0)          # top of the beam (gold diamond centre)
-NODE = (54.0, 52.0)         # refraction node where the beam fans out
-BEAM_TOP_HALF = 3.6         # beam half-width at the tip
-BEAM_NODE_HALF = 4.6        # beam half-width at the node (slight flare toward the prism)
-TIP_DIAMOND = 6.0           # gold diamond half-height at the tip
+# Aperture S mark geometry (108-unit grid), identical to the vector drawables.
+# The S is one continuous stroke built from two tangent arcs that meet at the waist
+# (54,54) where the stroke runs vertical. The upper bowl is a circle centred LEFT of the
+# waist (so its right flank forms the top hook curving down-and-right); the lower bowl is
+# a circle centred RIGHT of the waist (its left flank forms the bottom hook curving
+# up-and-left). Because both centres sit at the waist's y, the two arcs share a vertical
+# tangent there and join seamlessly into an S. A small focal dot sits at the aperture
+# centre. The whole mark is balanced around the grid centre (54,54) so it sits inside the
+# 66-unit safe circle.
+CENTRE = (54.0, 54.0)
+BOWL_R = 14.0          # radius of each bowl arc centreline
+STROKE_HALF = 6.2      # half the stroke width (filled, so this is the thickness)
+TERMINAL_TRIM = 14.0   # degrees trimmed off each open terminal so the S reads crisp
+DOT_R = 3.6            # cool-steel focal dot at the aperture centre
 
-# Fan rays: angle measured clockwise from straight down (y+), screen coords.
-# Three diverging rays violet -> indigo -> cyan, each a slim triangle from the node.
-FAN_LEN = 28.0              # ray length from the node
-FAN_HALF = 3.4             # ray half-width at its far end
-FAN_RAYS = (
-    (-38.0, (0xB7, 0x9C, 0xFF)),   # violet, swings left
-    (0.0, (0x7C, 0x5C, 0xFF)),     # indigo-violet, straight down
-    (38.0, (0x3F, 0xE0, 0xD0)),    # cyan, swings right
-)
-BEAM_STOPS = [(0.0, (0xB7, 0x9C, 0xFF)), (1.0, (0x7C, 0x5C, 0xFF))]
-GOLD = (0xF5, 0xC9, 0x7A)
+# Upper bowl centre sits ABOVE the waist, lower bowl centre BELOW it; both on the waist x.
+UPPER_CENTRE = (CENTRE[0], CENTRE[1] - BOWL_R)
+LOWER_CENTRE = (CENTRE[0], CENTRE[1] + BOWL_R)
+
+# Gradient down the stroke: soft sky -> azure -> cobalt.
+STROKE_STOPS = [(0.0, (0x93, 0xC5, 0xFD)), (0.5, (0x3B, 0x82, 0xF6)), (1.0, (0x1D, 0x4E, 0xD8))]
+STEEL = (0xCB, 0xD5, 0xE1)   # cool-steel focal dot
+ACCENT = (0x3B, 0x82, 0xF6)
 
 SHADOW = (0, 0, 0)
 SHADOW_ALPHA = 0.28
@@ -104,100 +107,95 @@ def plate(size):
     return _field(size, lambda x, y: _ramp(PLATE_STOPS, math.hypot(x - gx, y - gy) / PLATE_RADIUS))
 
 
+def _arc_outline(centre, r, half, a0, a1, steps=48):
+    """Returns a filled-polygon outline tracing a stroked arc from a0 to a1 (degrees)."""
+    cx, cy = centre
+    outer, inner = [], []
+    for i in range(steps + 1):
+        a = math.radians(a0 + (a1 - a0) * i / steps)
+        dx, dy = math.cos(a), math.sin(a)
+        outer.append((cx + dx * (r + half), cy + dy * (r + half)))
+        inner.append((cx + dx * (r - half), cy + dy * (r - half)))
+    return outer + inner[::-1]
+
+
+def _s_polys(dy=0.0):
+    """The two tangent arcs forming an upright S.
+
+    Angles are screen coords (0deg = +x/right, 90deg = +y/down, growing clockwise). The
+    upper bowl is centred above the waist: it starts at the top-right terminal (~ -45deg)
+    and sweeps counter-clockwise over the top and round the left down to the waist
+    (90deg, the bottom of this circle), making the upper hook of the S. The lower bowl is
+    centred below the waist: it starts at the waist (-90deg = top of this circle) and
+    sweeps counter-clockwise round the right and under the bottom to the bottom-left
+    terminal (~135deg), making the lower hook. They share a horizontal tangent at the
+    waist, so the stroke flows as one continuous upright S.
+    """
+    uc = (UPPER_CENTRE[0], UPPER_CENTRE[1] + dy)
+    lc = (LOWER_CENTRE[0], LOWER_CENTRE[1] + dy)
+    t = TERMINAL_TRIM
+    # Upper hook: top-right terminal (~ -45deg) -> top -> left -> waist (-270deg = 90deg).
+    upper = _arc_outline(uc, BOWL_R, STROKE_HALF, -45.0 - t, -270.0)
+    # Lower hook: waist (-90deg) -> right -> bottom -> bottom-left terminal (~135deg).
+    lower = _arc_outline(lc, BOWL_R, STROKE_HALF, -90.0, 135.0 + t)
+    return upper, lower
+
+
 def _poly(scale, offset, pts):
     """Scales 108-unit [pts] by [scale] with a (dx, dy) screen [offset]."""
     dx, dy = offset
     return [(x * scale + dx, y * scale + dy) for x, y in pts]
 
 
-def _beam_pts(dy=0.0):
-    """Tapered beam quad from the gold tip down to the refraction node."""
-    tx, ty = TIP[0], TIP[1] + dy
-    nx, ny = NODE[0], NODE[1] + dy
-    return [
-        (tx - BEAM_TOP_HALF, ty),
-        (tx + BEAM_TOP_HALF, ty),
-        (nx + BEAM_NODE_HALF, ny),
-        (nx - BEAM_NODE_HALF, ny),
-    ]
-
-
-def _tip_pts(dy=0.0):
-    """Gold diamond capping the beam at the top."""
-    tx, ty = TIP[0], TIP[1] + dy
-    h = TIP_DIAMOND
-    w = BEAM_TOP_HALF + 1.6
-    return [(tx, ty - h), (tx + w, ty), (tx, ty + h * 0.35), (tx - w, ty)]
-
-
-def _ray_pts(angle_deg, dy=0.0):
-    """Slim triangle fan ray from the node at [angle_deg] off straight-down."""
-    nx, ny = NODE[0], NODE[1] + dy
-    a = math.radians(angle_deg)
-    # Direction straight down (0,1) rotated by angle.
-    dirx, diry = math.sin(a), math.cos(a)
-    perpx, perpy = diry, -dirx
-    fx, fy = nx + dirx * FAN_LEN, ny + diry * FAN_LEN
-    return [
-        (nx, ny),
-        (fx + perpx * FAN_HALF, fy + perpy * FAN_HALF),
-        (fx - perpx * FAN_HALF, fy - perpy * FAN_HALF),
-    ]
-
-
-def _poly_mask(size, pts_units, dy=0.0, units=UNITS):
+def _poly_mask(size, pts_units, units=UNITS):
     k = size / units
     mask = Image.new("L", (size, size), 0)
     ImageDraw.Draw(mask).polygon([(x * k, y * k) for x, y in pts_units], fill=255)
     return mask
 
 
-def _beam_gradient(x, y, dy=0.0):
-    """Colour along the beam shaft from tip (violet) to node (deeper violet)."""
-    t = (y - (TIP[1] + dy)) / max(1e-3, (NODE[1] - TIP[1]))
-    return _ramp(BEAM_STOPS, t)
+def _stroke_gradient(x, y, dy=0.0):
+    """Colour down the S stroke from the top (soft sky) to the bottom (cobalt)."""
+    top = CENTRE[1] - BOWL_R * 2 - STROKE_HALF + dy
+    bot = CENTRE[1] + BOWL_R * 2 + STROKE_HALF + dy
+    t = (y - top) / max(1e-3, (bot - top))
+    return _ramp(STROKE_STOPS, t)
 
 
 def draw_mark(canvas, dy=0.0, colour=None, alpha=255):
-    """Draws the beam, gold tip and the violet->cyan fan onto an RGBA [canvas]."""
+    """Draws the two S bowls and the steel focal dot onto an RGBA [canvas]."""
     size = canvas.size[0]
     layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
 
-    # Fan rays first (behind the beam), then the beam, then the gold tip on top.
-    pieces = []
-    for angle, col in FAN_RAYS:
-        pieces.append((_ray_pts(angle, dy), col))
-    beam_pts = _beam_pts(dy)
-    tip_pts = _tip_pts(dy)
+    upper, lower = _s_polys(dy)
 
-    for pts, col in pieces:
-        fill_col = colour if colour is not None else col
-        fill = Image.new("RGB", canvas.size, fill_col)
-        piece = fill.convert("RGBA")
-        piece.putalpha(_poly_mask(size, pts, dy).point(lambda v: v * alpha // 255))
+    # S stroke (gradient, or flat for shadow/monochrome).
+    if colour is not None:
+        stroke_fill = Image.new("RGB", canvas.size, colour)
+    else:
+        stroke_fill = _field(size, lambda x, y: _stroke_gradient(x, y, dy))
+
+    for pts in (upper, lower):
+        piece = stroke_fill.convert("RGBA")
+        piece.putalpha(_poly_mask(size, pts).point(lambda v: v * alpha // 255))
         layer = Image.alpha_composite(layer, piece)
 
-    # Beam shaft (gradient, or flat for shadow/monochrome).
-    if colour is not None:
-        beam_fill = Image.new("RGB", canvas.size, colour)
-    else:
-        beam_fill = _field(size, lambda x, y: _beam_gradient(x, y, dy))
-    beam = beam_fill.convert("RGBA")
-    beam.putalpha(_poly_mask(size, beam_pts, dy).point(lambda v: v * alpha // 255))
-    layer = Image.alpha_composite(layer, beam)
-
-    # Gold tip.
-    tip_col = colour if colour is not None else GOLD
-    tip_fill = Image.new("RGB", canvas.size, tip_col)
-    tip = tip_fill.convert("RGBA")
-    tip.putalpha(_poly_mask(size, tip_pts, dy).point(lambda v: v * alpha // 255))
-    layer = Image.alpha_composite(layer, tip)
+    # Cool-steel focal dot at the aperture centre.
+    k = size / UNITS
+    dot_col = colour if colour is not None else STEEL
+    dot_mask = Image.new("L", (size, size), 0)
+    cx, cy = CENTRE[0] * k, (CENTRE[1] + dy) * k
+    r = DOT_R * k
+    ImageDraw.Draw(dot_mask).ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
+    dot_fill = Image.new("RGB", canvas.size, dot_col).convert("RGBA")
+    dot_fill.putalpha(dot_mask.point(lambda v: v * alpha // 255))
+    layer = Image.alpha_composite(layer, dot_fill)
 
     return Image.alpha_composite(canvas, layer)
 
 
 def artwork(size, with_plate=True):
-    """Full 108-unit canvas: plate (optional), soft shadow and the Lumen Prism mark."""
+    """Full 108-unit canvas: plate (optional), soft shadow and the Aperture S mark."""
     work = size * SUPERSAMPLE
     if with_plate:
         canvas = plate(work).convert("RGBA")
@@ -236,9 +234,9 @@ def launcher_bitmap(size, shape):
 
 
 def placeholder(size):
-    """Artwork placeholder: a quiet indigo tile with a faint Lumen Prism."""
+    """Artwork placeholder: a quiet graphite tile with a faint Aperture S."""
     work = size * SUPERSAMPLE
-    base = _field(work, lambda x, y: _lerp((0x1A, 0x16, 0x30), (0x0E, 0x0E, 0x16), (x + y) / (2 * UNITS)))
+    base = _field(work, lambda x, y: _lerp((0x17, 0x1B, 0x20), (0x0E, 0x10, 0x13), (x + y) / (2 * UNITS)))
     base = draw_mark(base.convert("RGBA"), alpha=46)
     return base.convert("RGB").resize((size, size), Image.LANCZOS)
 
@@ -247,16 +245,19 @@ def notification(size):
     """White-only small icon preview (24-unit artboard)."""
     work = size * SUPERSAMPLE
     mask = Image.new("L", (work, work), 0)
-    # Reuse the mark polygons scaled from 108 units into the 24-unit artboard.
     scale = NOTIF_SCALE
     off = (NOTIF_CENTRE[0] - 54.0 * scale, NOTIF_CENTRE[1] - 54.0 * scale)
     k = work / 24.0
     d = ImageDraw.Draw(mask)
-    for angle, _ in FAN_RAYS:
-        pts = _poly(scale, off, _ray_pts(angle))
-        d.polygon([(x * k, y * k) for x, y in pts], fill=255)
-    d.polygon([(x * k, y * k) for x, y in _poly(scale, off, _beam_pts())], fill=255)
-    d.polygon([(x * k, y * k) for x, y in _poly(scale, off, _tip_pts())], fill=255)
+    upper, lower = _s_polys()
+    for pts in (upper, lower):
+        sp = _poly(scale, off, pts)
+        d.polygon([(x * k, y * k) for x, y in sp], fill=255)
+    # Focal dot.
+    cx = (CENTRE[0] * scale + off[0]) * k
+    cy = (CENTRE[1] * scale + off[1]) * k
+    r = DOT_R * scale * k
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
     img = Image.new("RGBA", (work, work), (255, 255, 255, 0))
     img.putalpha(mask)
     return img.resize((size, size), Image.LANCZOS)
