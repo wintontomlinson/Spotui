@@ -181,6 +181,7 @@ import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.Gold
 
 private val artistImageCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 private val artistIdCache = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -662,6 +663,18 @@ fun PlayerScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.66f)
+                    // Guarded parallax/depth: the blurred backdrop drifts and eases its
+                    // scale with the dismiss drag so pulling the sheet feels dimensional.
+                    // Derived from the existing offsetY/playing state so it adds no new
+                    // recomposition trigger; API 31+ only (inside the RenderEffect guard).
+                    .graphicsLayer {
+                        val dragFraction = (offsetY / screenHeight).coerceIn(0f, 1f)
+                        translationY = -dragFraction * 48.dp.toPx()
+                        val base = if (songPlayingState) 1.06f else 1.02f
+                        val s = base + dragFraction * 0.06f
+                        scaleX = s
+                        scaleY = s
+                    }
                     .blur(64.dp)
                     .alpha(0.35f),
             )
@@ -749,14 +762,16 @@ fun PlayerScreen(navController: NavController) {
                                     .aspectRatio(1f)
                                     .padding(27.dp)
                                     .graphicsLayer { scaleX = artScale; scaleY = artScale }
+                                    // Soft violet glow + thin gold hairline for a premium edge.
                                     .shadow(
                                         elevation = 34.dp,
                                         shape = com.music.spotui.ui.theme.SoloShape.xl,
                                         clip = false,
-                                        ambientColor = artTone,
-                                        spotColor = artTone,
+                                        ambientColor = Accent,
+                                        spotColor = Accent,
                                     )
                                     .clip(com.music.spotui.ui.theme.SoloShape.xl)
+                                    .border(1.dp, Gold.copy(alpha = 0.45f), com.music.spotui.ui.theme.SoloShape.xl)
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -787,14 +802,21 @@ fun PlayerScreen(navController: NavController) {
                                             scaleX = scale
                                             scaleY = scale
                                         }
+                                        // Soft violet glow lifts the current artwork; a thin
+                                        // gold hairline gives it a crafted, premium edge.
                                         .shadow(
                                             elevation = 34.dp,
                                             shape = com.music.spotui.ui.theme.SoloShape.xl,
                                             clip = false,
-                                            ambientColor = artTone,
-                                            spotColor = artTone,
+                                            ambientColor = Accent,
+                                            spotColor = Accent,
                                         )
                                         .clip(com.music.spotui.ui.theme.SoloShape.xl)
+                                        .border(
+                                            1.dp,
+                                            Gold.copy(alpha = if (page == currentIndex) 0.45f else 0f),
+                                            com.music.spotui.ui.theme.SoloShape.xl,
+                                        )
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -848,12 +870,16 @@ fun PlayerScreen(navController: NavController) {
                         // release.
                         var isDragging by remember { mutableStateOf(false) }
                         var dragValue by remember { mutableStateOf(0f) }
-                        val liveFraction = SongPlayer.getDuration().toFloat().let { dur ->
+                        val durForBar = SongPlayer.getDuration().toFloat()
+                        val liveFraction = durForBar.let { dur ->
                             if (dur > 0f) (SongPlayer.getCurrentPosition()
                                 .toFloat() / dur).coerceIn(0f, 1f) else 0f
                         }
+                        val bufferedFraction = if (durForBar > 0f)
+                            (SongPlayer.getBufferedPosition().toFloat() / durForBar).coerceIn(0f, 1f) else 0f
                         CustomSlider(
                             value = if (isDragging) dragValue else liveFraction,
+                            bufferedFraction = bufferedFraction,
                             onValueChange = { newValue ->
                                 isDragging = true
                                 dragValue = newValue
@@ -906,6 +932,16 @@ fun PlayerScreen(navController: NavController) {
                             )
                         }
 
+
+                        // Next-up peek: the song queued after the current one. Tapping it
+                        // opens the full queue. Hidden when nothing follows.
+                        val nextUp = queueSongs.getOrNull(currentIndex + 1)
+                        if (nextUp != null) {
+                            NextUpPeek(
+                                song = nextUp,
+                                onClick = { navController.navigate(Routes.Queue.route) },
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
                         PlayerFull(
@@ -1326,9 +1362,13 @@ fun PlayerInfo(
 }
 
 /**
- * Seek bar: a 3dp Surface4 track with the accent gradient on the played part and a 12dp
- * thumb that grows to 18dp while dragging, inside a 48dp touch band. Exposes slider
- * semantics so TalkBack can read and set the position.
+ * Solo seek bar: a 3dp Surface4 track with a faint gold buffered-ahead tint, the
+ * violet→cyan accent gradient on the played part, and a Gold scrubber thumb that scales
+ * up on drag (with a soft gold halo), inside a 48dp touch band. Exposes slider semantics
+ * so TalkBack can read and set the position.
+ *
+ * [bufferedFraction] is the stream's buffered-ahead position (0..1); it only tints the
+ * track and never affects seeking.
  */
 @Composable
 fun CustomSlider(
@@ -1338,6 +1378,7 @@ fun CustomSlider(
     onValueChangeFinished: (() -> Unit)? = null,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
+    bufferedFraction: Float = 0f,
     colors: Any? = null, // kept for API compat; unused
 ) {
     var isDragging by remember { mutableStateOf(false) }
@@ -1393,6 +1434,7 @@ fun CustomSlider(
             val y = size.height / 2f
             val thumbR = thumbDp.toPx() / 2f
             val x = (fraction * size.width).coerceIn(0f, size.width)
+            // Base (unbuffered) track.
             drawLine(
                 color = com.music.spotui.ui.theme.Surface4,
                 start = Offset(0f, y),
@@ -1400,6 +1442,17 @@ fun CustomSlider(
                 strokeWidth = trackPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round,
             )
+            // Buffered-ahead tint: a faint gold wash showing how far the stream is ready.
+            val bufX = (bufferedFraction.coerceIn(0f, 1f) * size.width).coerceIn(0f, size.width)
+            if (bufX > x) {
+                drawLine(
+                    color = Gold.copy(alpha = 0.22f),
+                    start = Offset(x, y),
+                    end = Offset(bufX, y),
+                    strokeWidth = trackPx,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                )
+            }
             if (x > 0f) {
                 drawLine(
                     brush = Brush.horizontalGradient(
@@ -1413,11 +1466,75 @@ fun CustomSlider(
                     cap = androidx.compose.ui.graphics.StrokeCap.Round,
                 )
             }
-            drawCircle(color = TextPrimary, radius = thumbR, center = Offset(x, y))
+            // Soft gold halo while dragging so the thumb reads as the premium scrubber.
+            if (isDragging) {
+                drawCircle(color = Gold.copy(alpha = 0.28f), radius = thumbR * 1.9f, center = Offset(x, y))
+            }
+            drawCircle(color = Gold, radius = thumbR, center = Offset(x, y))
         }
     }
 }
 
+
+/**
+ * "Next up" peek: a compact strip showing the song queued after the current one, with a
+ * small thumbnail, a gold-tinted "NEXT UP" label and a chevron. Tapping it opens the full
+ * queue. The caller hides it when there is no next item.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun NextUpPeek(
+    song: SongsModel,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 22.dp)
+            .padding(top = 6.dp)
+            .clip(SoloShape.pill)
+            .background(Surface2.copy(alpha = 0.6f))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.pill)
+            .soloClickable(ripple = true, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+    ) {
+        GlideImage(
+            model = song.coverUri,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(SoloShape.sm),
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
+            Text(
+                text = "NEXT UP",
+                color = Gold,
+                style = MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.4.sp,
+            )
+            Spacer(Modifier.height(1.dp))
+            Text(
+                text = song.title + (if (song.singer.isNotBlank()) " • ${song.singer}" else ""),
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+            contentDescription = "Open queue",
+            tint = TextSecondary,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+}
 
 @Composable
 fun PlayerFull(
@@ -1430,6 +1547,8 @@ fun PlayerFull(
     queueSongs: List<SongsModel>
 ) {
 
+    // A light tactile tick on skip so the transport feels premium under the thumb.
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -1480,6 +1599,7 @@ fun PlayerFull(
                 .size(52.dp)
                 .clip(CircleShape)
                 .soloClickable(ripple = true) {
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     // The queue itself is already in shuffled order when shuffle
                     // is on (reordered once at toggle), never re-shuffle per tap.
                     playerViewModel.playPreviousSong(queueSongs, context)
@@ -1551,7 +1671,7 @@ fun PlayerFull(
                 .size(52.dp)
                 .clip(CircleShape)
                 .soloClickable(ripple = true) {
-
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     playerViewModel.playNextSongs(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())

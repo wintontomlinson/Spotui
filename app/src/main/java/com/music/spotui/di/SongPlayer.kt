@@ -2109,9 +2109,9 @@ object SongPlayer {
     // It attaches to the player's audio session id (which ExoPlayer may assign
     // asynchronously), so we (re)attach whenever the session id changes.
     @Volatile private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
-    // Boost in millibels (100 mB = 1 dB). ~7 dB is clearly louder while staying
+    // Boost in millibels (100 mB = 1 dB). ~5 dB is a fuller reference level that stays
     // safe from hard clipping on most tracks. Used when normalization is off.
-    private const val LOUDNESS_TARGET_MB = 700
+    private const val LOUDNESS_TARGET_MB = 500
     @Volatile private var currentLoudnessGain = LOUDNESS_TARGET_MB
     // YouTube's per-track loudness (dB relative to its reference), keyed by play query.
     private val loudnessRegistry = java.util.concurrent.ConcurrentHashMap<String, Double>()
@@ -2145,10 +2145,12 @@ object SongPlayer {
     }
 
     // ── Loudness normalization ──
-    // With normalization on, the enhancer gain is 7 dB (the same base as
-    // normalization off, so the average level matches 3.0) minus the track's YouTube
-    // loudness offset, clamped to 0..10 dB: loud masters get less boost, quiet ones
-    // more, so consecutive tracks land at a similar level. Off keeps the fixed 7 dB.
+    // With normalization on, the enhancer gain is the 5 dB base (the same base as
+    // normalization off) minus the track's YouTube loudness offset, clamped to
+    // 0..12 dB: loud masters get less boost, quiet ones more, so consecutive tracks
+    // land at a similar perceived level. The wider 0..1200 clamp (was 0..1000) lets
+    // quiet masters be lifted further without over-boosting hot masters off the lower
+    // 5 dB base. Off keeps the fixed 5 dB.
     private fun rememberLoudness(song: String, loudnessDb: Double, ctx: Context) {
         loudnessRegistry[song] = loudnessDb
         com.music.spotui.data.preferences.setCachedLoudnessDb(ctx, song, loudnessDb)
@@ -2164,7 +2166,7 @@ object SongPlayer {
         currentLoudnessQuery = song
         val ctx = appCtx ?: return
         currentLoudnessGain = if (com.music.spotui.data.preferences.isNormalizeVolume(ctx)) {
-            (LOUDNESS_TARGET_MB - (loudnessFor(song, ctx) ?: 0.0) * 100).toInt().coerceIn(0, 1000)
+            (LOUDNESS_TARGET_MB - (loudnessFor(song, ctx) ?: 0.0) * 100).toInt().coerceIn(0, 1200)
         } else LOUDNESS_TARGET_MB
         runCatching { loudnessEnhancer?.setTargetGain(currentLoudnessGain) }
     }
@@ -2197,6 +2199,9 @@ object SongPlayer {
     // ── Equalizer ──
     /** Preset curves on five reference bands (60, 230, 910, 3.6k, 14k Hz), in mB. */
     val EQ_PRESETS: List<Pair<String, IntArray>> = listOf(
+        // A gentle, hi-fi-leaning default: low-shelf warmth, a slight presence lift
+        // and airy top, with a touch of mid scoop so vocals and detail breathe.
+        "Premium" to intArrayOf(300, 150, -50, 250, 350),
         "Flat" to intArrayOf(0, 0, 0, 0, 0),
         "Bass boost" to intArrayOf(600, 400, 0, 0, 0),
         "Vocal" to intArrayOf(-200, 0, 400, 300, 0),
@@ -2516,6 +2521,12 @@ object SongPlayer {
     fun getCurrentPosition(): Long {
         if (webPlaybackActive()) return SpotifyWebPlayer.positionMs
         return player?.currentPosition ?: 0L
+    }
+
+    /** How far the stream has buffered ahead (ms). Used only to tint the seek bar. */
+    fun getBufferedPosition(): Long {
+        if (webPlaybackActive()) return SpotifyWebPlayer.positionMs
+        return player?.bufferedPosition ?: 0L
     }
 
     fun isPrepared(): Boolean {

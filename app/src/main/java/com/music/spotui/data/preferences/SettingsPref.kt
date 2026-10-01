@@ -17,9 +17,9 @@ enum class StreamQuality(
     val detail: String,
     val audioQuality: AudioQuality,
 ) {
-    LOW("Low", "Data saver, smallest size", AudioQuality.LOW),
-    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO),
-    HIGH("High", "Best available quality", AudioQuality.HIGH),
+    LOW("Low", "Data saver — smallest size", AudioQuality.LOW),
+    NORMAL("Normal", "Balanced for your network", AudioQuality.AUTO),
+    HIGH("High", "Best available — Opus/AAC, FLAC via providers when available", AudioQuality.HIGH),
 }
 
 private const val PREF = "settings_prefs"
@@ -130,7 +130,10 @@ fun setPlaybackSpeedPitch(c: Context, speed: Float, pitch: Float) =
 
 fun isEqEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_EQ_ENABLED, false)
 fun setEqEnabledPref(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_EQ_ENABLED, v).apply()
-fun getEqPreset(c: Context): String = prefs(c).getString(KEY_EQ_PRESET, "Flat") ?: "Flat"
+// Default preset is Premium so the first curve a user hears after enabling EQ is the
+// tasteful hi-fi one. EQ stays disabled by default (isEqEnabled), so behaviour is
+// unchanged until the user turns it on.
+fun getEqPreset(c: Context): String = prefs(c).getString(KEY_EQ_PRESET, "Premium") ?: "Premium"
 /** Per-device-band levels in millibels, empty when never customised. */
 fun getEqBands(c: Context): List<Int> =
     prefs(c).getString(KEY_EQ_BANDS, "").orEmpty().split(',').mapNotNull { it.trim().toIntOrNull() }
