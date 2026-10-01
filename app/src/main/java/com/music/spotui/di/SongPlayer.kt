@@ -770,26 +770,31 @@ object SongPlayer {
      * Always resolves the stream URL; [preBuffer] also pre-caches the first
      * [PRELOAD_BYTES] of audio so the tap starts from disk.
      */
-    fun prefetch(song: String, context: Context, preBuffer: Boolean = true) {
-        if (song.isBlank()) return
+    fun prefetch(song: String, context: Context, preBuffer: Boolean = true): kotlinx.coroutines.Job? {
+        if (song.isBlank()) return null
         val appContext = context.applicationContext
         // No point resolving streams while Spotify web is the active engine.
-        if (webPlaybackActive()) return
+        if (webPlaybackActive()) return null
         if (hasFreshStream(song)) {
             // URL already known; still make sure the intro bytes are on disk.
             if (preBuffer) streamCache[song]?.let { url -> scope.launch { cacheIntro(song, url, appContext) } }
-            return
+            return null
         }
         // Lossless FLAC & YouTube pre-buffering uses LosslessCacheKeyFactory
         // and ResolvingDataSource to handle stream URLs seamlessly.
-        scope.launch {
+        // Cancelling the returned job only drops a prefetch still queued for a
+        // permit; once it holds one it finishes, so a tap awaiting the same
+        // in-flight resolve is never cut off.
+        return scope.launch {
             prefetchGate.withPermit {
-                acquireWakeLock(appContext, "spotui:prefetch", 30_000L)
-                try {
-                    val url = runCatching { resolveStreamUrl(song, appContext, forPlayback = false) }.getOrNull()
-                    if (url != null && preBuffer) cacheIntro(song, url, appContext)
-                } finally {
-                    releaseWakeLock("spotui:prefetch")
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    acquireWakeLock(appContext, "spotui:prefetch", 30_000L)
+                    try {
+                        val url = runCatching { resolveStreamUrl(song, appContext, forPlayback = false) }.getOrNull()
+                        if (url != null && preBuffer) cacheIntro(song, url, appContext)
+                    } finally {
+                        releaseWakeLock("spotui:prefetch")
+                    }
                 }
             }
         }
@@ -801,17 +806,17 @@ object SongPlayer {
      * PoToken/player chains at once, but get the likely-next taps ready ahead of
      * time, this is what kills the "~3s per track" first-tap latency.
      */
-    fun prefetchList(songs: List<String>, context: Context, count: Int = 2) {
+    fun prefetchList(songs: List<String>, context: Context, count: Int = 2): List<kotlinx.coroutines.Job> {
         // Only the top couple of rows, only on unmetered networks, and URL only (no
         // audio bytes). Resolving whole lists made search and album screens fire a
         // dozen player lookups before the user chose anything; two is the sweet spot
         // where the likely tap is ready without that cost.
         val appContext = context.applicationContext
-        if (!com.music.spotui.data.preferences.isPreloadEnabled(appContext)) return
+        if (!com.music.spotui.data.preferences.isPreloadEnabled(appContext)) return emptyList()
         val cm = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        if (cm.isActiveNetworkMetered) return
-        songs.asSequence().filter { it.isNotBlank() }.distinct().take(count.coerceIn(0, 2))
-            .forEach { prefetch(it, appContext, preBuffer = false) }
+        if (cm.isActiveNetworkMetered) return emptyList()
+        return songs.asSequence().filter { it.isNotBlank() }.distinct().take(count.coerceIn(0, 2))
+            .mapNotNull { prefetch(it, appContext, preBuffer = false) }.toList()
     }
 
     // ── Intro preloading (instant playback) ──
@@ -1080,7 +1085,7 @@ object SongPlayer {
                         updateResolveStatus(false)
                     }
 
-                    playback.audioConfig?.loudnessDb?.let { loudnessRegistry[song] = it }
+                    playback.audioConfig?.loudnessDb?.let { rememberLoudness(song, it, appContext) }
                     putStream(
                         song, playback.streamUrl,
                         if (forPlayback) currentSource else "Alternative YouTube",
@@ -1244,7 +1249,7 @@ object SongPlayer {
             updateResolveStatus(false)
         }
         putStream(song, playback.streamUrl, "YouTube", ytQuality, expectedTier, ytExpiresAt(playback.streamExpiresInSeconds))
-        playback.audioConfig?.loudnessDb?.let { loudnessRegistry[song] = it }
+        playback.audioConfig?.loudnessDb?.let { rememberLoudness(song, it, appContext) }
         // Persist to disk so replays after an app restart skip the whole pipeline.
         com.music.spotui.data.preferences.setCachedStream(
             appContext, song, playback.streamUrl, "YouTube", ytQuality,
@@ -1930,34 +1935,50 @@ object SongPlayer {
         lastYtFailureReason = null
         val connectivityManager =
             appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        // Skip the HTTP HEAD validation probe when the video ID came from a
-        // previous successful play (cached in memory or SharedPrefs). ExoPlayer
-        // has its own retry logic, so the probe just adds ~0.5-1s of latency.
-        val cacheKey = "$query|${com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG.value}"
-        val candidatesCached = videoCandidatesCache.containsKey(cacheKey)
         val tried = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
         /**
-         * Staggered race over up to 3 candidates. Candidate 0 starts at once; each
-         * later one starts after a 1.2 s head start per rank, or immediately once
-         * every earlier one has failed. The first stream to resolve wins and the
-         * rest are cancelled, so a slow or broken top hit no longer costs the full
-         * sequential timeout before the next candidate is even tried.
+         * Staggered race over up to 3 candidates, always with stream validation so
+         * the client fallback chain in YTPlayerUtils stays in force.
+         *
+         * For playback, candidate 0 starts at once and each later one starts after a
+         * 1.2 s head start per rank, or immediately once every earlier one has
+         * failed. The result is still the best-ranked success: candidate i is only
+         * accepted once every candidate ranked above it has failed, so a slow top hit
+         * is never displaced by a remix or live take that happened to answer first.
+         *
+         * Background resolves (forPlayback = false) run the candidates strictly one
+         * after another, so lookahead never fans out into several concurrent
+         * player/PoToken requests next to the track the user tapped.
          */
-        suspend fun raceIds(ids: List<String>, skipValidation: Boolean): YTPlayerUtils.PlaybackData? {
+        suspend fun raceIds(ids: List<String>): YTPlayerUtils.PlaybackData? {
             val fresh = ids.filter { tried.add(it) }.take(3)
             if (fresh.isEmpty()) return null
             if (forPlayback) updateResolveStatus(true, "Resolving YouTube stream…")
             return kotlinx.coroutines.coroutineScope {
                 val winner = kotlinx.coroutines.CompletableDeferred<YTPlayerUtils.PlaybackData?>()
                 val failed = List(fresh.size) { kotlinx.coroutines.CompletableDeferred<Unit>() }
-                val remaining = java.util.concurrent.atomic.AtomicInteger(fresh.size)
+                val successes = arrayOfNulls<YTPlayerUtils.PlaybackData>(fresh.size)
+                val settleLock = Any()
+                // Completes [winner] with the best-ranked success, once nothing ranked
+                // above it can still succeed; null when every candidate failed.
+                fun settle() = synchronized(settleLock) {
+                    for (k in fresh.indices) {
+                        successes[k]?.let { winner.complete(it); return@synchronized }
+                        if (!failed[k].isCompleted) return@synchronized
+                    }
+                    winner.complete(null)
+                }
                 fresh.forEachIndexed { index, videoId ->
                     launch {
                         if (index > 0) {
-                            // Head start for the better-ranked candidates, cut short once
-                            // every one of them has already failed.
-                            kotlinx.coroutines.withTimeoutOrNull(1_200L * index) {
+                            if (forPlayback) {
+                                // Head start for the better-ranked candidates, cut short
+                                // once every one of them has already failed.
+                                kotlinx.coroutines.withTimeoutOrNull(1_200L * index) {
+                                    for (j in 0 until index) failed[j].await()
+                                }
+                            } else {
                                 for (j in 0 until index) failed[j].await()
                             }
                         }
@@ -1967,7 +1988,7 @@ object SongPlayer {
                                 videoId = videoId,
                                 audioQuality = audioQuality,
                                 connectivityManager = connectivityManager,
-                                skipValidation = skipValidation,
+                                skipValidation = false,
                             )
                         } catch (e: kotlinx.coroutines.CancellationException) {
                             throw e
@@ -1975,14 +1996,14 @@ object SongPlayer {
                             Result.failure(e)
                         }
                         result.fold(
-                            onSuccess = { winner.complete(it) },
+                            onSuccess = { synchronized(settleLock) { successes[index] = it } },
                             onFailure = {
                                 lastYtFailureReason = it.message ?: "Stream failed"
                                 Log.w(TAG, "stream failed for $videoId (${it.message}), racing next candidate for: ${searchTextForPlayback(query)}")
                                 failed[index].complete(Unit)
-                                if (remaining.decrementAndGet() == 0) winner.complete(null)
                             },
                         )
+                        settle()
                     }
                 }
                 val r = winner.await()
@@ -1990,7 +2011,7 @@ object SongPlayer {
                 r
             }
         }
-        raceIds(resolveVideoCandidates(query, forPlayback = forPlayback), skipValidation = candidatesCached)?.let { return it }
+        raceIds(resolveVideoCandidates(query, forPlayback = forPlayback))?.let { return it }
         if (!com.music.spotui.data.preferences.isVideoFallbackEnabled(appContext)) {
             Log.w(TAG, "song candidates exhausted and video fallback disabled for: ${searchTextForPlayback(query)}")
             return null
@@ -1999,7 +2020,7 @@ object SongPlayer {
         // we're not signed in to YouTube). Regular video uploads, lyric videos,
         // reuploads, usually aren't age-gated: last-resort pass over those.
         Log.w(TAG, "song candidates exhausted, trying video search for: ${searchTextForPlayback(query)}")
-        raceIds(resolveVideoCandidates(query, YouTube.SearchFilter.FILTER_VIDEO, forPlayback = forPlayback), skipValidation = false)?.let { return it }
+        raceIds(resolveVideoCandidates(query, YouTube.SearchFilter.FILTER_VIDEO, forPlayback = forPlayback))?.let { return it }
         Log.e(TAG, "All YouTube candidates failed for: ${searchTextForPlayback(query)}")
         return null
     }
@@ -2124,11 +2145,22 @@ object SongPlayer {
     // With normalization on, the enhancer gain is 4 dB minus the track's YouTube
     // loudness offset, clamped to 0..10 dB: loud masters get less boost, quiet ones
     // more, so consecutive tracks land at a similar level. Off keeps the fixed 7 dB.
+    private fun rememberLoudness(song: String, loudnessDb: Double, ctx: Context) {
+        loudnessRegistry[song] = loudnessDb
+        com.music.spotui.data.preferences.setCachedLoudnessDb(ctx, song, loudnessDb)
+    }
+
+    // Memory first, then the persisted value, so a disk-cache hit after a restart
+    // (or a FLAC stream for a track YouTube already measured) uses the same gain.
+    private fun loudnessFor(song: String, ctx: Context): Double? =
+        loudnessRegistry[song] ?: com.music.spotui.data.preferences.getCachedLoudnessDb(ctx, song)
+            ?.also { loudnessRegistry[song] = it }
+
     private fun applyLoudnessFor(song: String) {
         currentLoudnessQuery = song
         val ctx = appCtx ?: return
         currentLoudnessGain = if (com.music.spotui.data.preferences.isNormalizeVolume(ctx)) {
-            (400 - (loudnessRegistry[song] ?: 0.0) * 100).toInt().coerceIn(0, 1000)
+            (400 - (loudnessFor(song, ctx) ?: 0.0) * 100).toInt().coerceIn(0, 1000)
         } else LOUDNESS_TARGET_MB
         runCatching { loudnessEnhancer?.setTargetGain(currentLoudnessGain) }
     }

@@ -15,7 +15,7 @@ import kotlin.math.tanh
  * those counters (plus likes) with a three-week recency decay.
  *
  * Stored as one JSON map in the `TasteProfile` prefs file, capped at [MAX_TRACKS]
- * most recently touched tracks. Reads use an in-memory copy; writes go to IO.
+ * most recently touched tracks. Reads iterate a snapshot taken under the lock; writes go to IO.
  */
 object TasteProfile {
 
@@ -115,12 +115,21 @@ object TasteProfile {
         }
     }
 
-    fun trackStats(ctx: Context, key: String): Stats? = load(ctx)[key]
+    /** Immutable copy of the stats taken under [lock], safe to iterate while IO writes. */
+    private fun snapshot(ctx: Context): List<Stats> {
+        val map = load(ctx)
+        return synchronized(lock) { map.values.toList() }
+    }
+
+    fun trackStats(ctx: Context, key: String): Stats? {
+        val map = load(ctx)
+        return synchronized(lock) { map[key] }
+    }
 
     /** Whether any play of this artist has been recorded. */
     fun knowsArtist(ctx: Context, artist: String): Boolean {
         val a = artistKey(artist)
-        return load(ctx).values.any { artistKey(it.artist) == a }
+        return snapshot(ctx).any { artistKey(it.artist) == a }
     }
 
     /** Per-track preference in [-1, 1] from that track's own counters. */
@@ -139,7 +148,7 @@ object TasteProfile {
         val now = System.currentTimeMillis()
         affinityCache?.let { (at, map) -> if (now - at < 60_000) return map }
         val sums = HashMap<String, Double>()
-        load(ctx).values.forEach { s ->
+        snapshot(ctx).forEach { s ->
             val a = artistKey(s.artist)
             if (a.isBlank()) return@forEach
             val decay = exp(-((now - s.lastTs).coerceAtLeast(0) / DAY_MS) / DECAY_DAYS)
@@ -160,7 +169,7 @@ object TasteProfile {
     fun topArtists(ctx: Context, limit: Int): List<String> {
         val aff = artistAffinity(ctx)
         val display = HashMap<String, String>()
-        load(ctx).values.forEach { s ->
+        snapshot(ctx).forEach { s ->
             val name = s.artist.substringBefore(",").removeSuffix(" - Topic").trim()
             if (name.isNotBlank()) display.putIfAbsent(artistKey(s.artist), name)
         }

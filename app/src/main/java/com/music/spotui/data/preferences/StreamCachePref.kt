@@ -8,6 +8,7 @@ private const val SUFFIX_SOURCE = "_src"
 private const val SUFFIX_QUALITY = "_q"
 private const val SUFFIX_TIER = "_tier"
 private const val SUFFIX_EXPIRES = "_exp"
+private const val SUFFIX_LOUDNESS = "_loud"
 
 /**
  * Returns a cached (url, source, quality) triple if the entry exists, has not
@@ -71,6 +72,24 @@ fun setCachedStream(
         .putString(query + SUFFIX_QUALITY, quality)
         .putString(query + SUFFIX_TIER, qualityTier)
         .putLong(query + SUFFIX_EXPIRES, expiresAt)
+        .apply()
+}
+
+/**
+ * YouTube's per-track loudness (dB) for [query]. Kept apart from the URL entry and
+ * not expired with it, because a track's loudness doesn't change when its URL does;
+ * this keeps normalization identical on every play, including after a restart.
+ */
+fun getCachedLoudnessDb(context: Context, query: String): Double? {
+    val prefs = context.getSharedPreferences(PREF_STREAM_CACHE, Context.MODE_PRIVATE)
+    if (!prefs.contains(query + SUFFIX_LOUDNESS)) return null
+    return prefs.getFloat(query + SUFFIX_LOUDNESS, 0f).toDouble()
+}
+
+fun setCachedLoudnessDb(context: Context, query: String, loudnessDb: Double) {
+    context.getSharedPreferences(PREF_STREAM_CACHE, Context.MODE_PRIVATE)
+        .edit()
+        .putFloat(query + SUFFIX_LOUDNESS, loudnessDb.toFloat())
         .apply()
 }
 
