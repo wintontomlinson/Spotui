@@ -64,6 +64,36 @@ class FreeHomeViewModel @Inject constructor(
         return curated.drop(off) + curated.take(off)
     }
 
+    /** A search-friendly mood term for a [TasteProfile] cluster tag, or null. */
+    private fun clusterQueryTerm(cluster: String?): String? = when (cluster) {
+        "chill" -> "chill lofi"
+        "edm" -> "edm remix"
+        "acoustic" -> "acoustic"
+        "live" -> "live"
+        "slowed" -> "slowed reverb"
+        "hype" -> "hype workout"
+        "sad" -> "sad emotional"
+        "romance" -> "romantic love"
+        else -> null
+    }
+
+    /** Title + query for the mood/cluster shelf, chosen from the strongest cluster. */
+    private fun moodShelf(cluster: String?): Pair<String, String>? = when (cluster) {
+        "chill", "acoustic", "sad", "slowed" -> "More chill for you" to "chill relaxing songs"
+        "edm", "hype" -> "Turn it up" to "high energy party hype songs"
+        "romance" -> "In the mood for love" to "romantic love songs"
+        "live" -> "Live and loud" to "best live performances songs"
+        else -> null
+    }
+
+    /** Title + query for the time-contextual shelf, by the current time-of-day bucket. */
+    private fun timeShelf(bucket: Int): Pair<String, String> = when (bucket) {
+        0 -> "Late-night mix" to "late night chill songs"
+        1 -> "Morning picks" to "good morning fresh songs"
+        2 -> "Afternoon rotation" to "feel good afternoon songs"
+        else -> "Evening wind-down" to "evening relax songs"
+    }
+
     /** Query behind the trending block that leads Home. */
     private val trendingQuery = "trending songs this week"
 
@@ -109,6 +139,10 @@ class FreeHomeViewModel @Inject constructor(
     // Timestamp of the newest history entry the current Home was built from, so we
     // can rebuild only when the user has actually played something new.
     private var builtFromHistoryTs = 0L
+
+    // Cap on personalized rows (More-like / Because-you-played / time / mood / fresh)
+    // so Home stays focused before the curated evergreen rows follow.
+    private val MAX_PERSONALIZED_ROWS = 7
 
     init {
         // Keep "Trending now" genuinely live: silently re-pull it every
@@ -219,11 +253,20 @@ class FreeHomeViewModel @Inject constructor(
         if (today == mixDay && _mix.value.isNotEmpty()) return
         mixDay = today
         viewModelScope.launch {
-            val seedArtists = top.take(3).ifEmpty {
+            // Context-aware "Mix for you": seed from the artists the user plays in the
+            // current time bucket, biased toward their strongest mood/genre cluster, so
+            // a morning mix and a late-night mix differ. Falls back to global top, then
+            // to raw recent artists, so a thin profile still produces a mix.
+            val bucket = profile.currentHourBucket()
+            val cluster = runCatching { profile.strongestCluster(context) }.getOrNull()
+            val contextual = runCatching { profile.topArtists(context, 3, hourBucket = bucket) }
+                .getOrDefault(emptyList())
+            val seedArtists = contextual.ifEmpty { top.take(3) }.ifEmpty {
                 history.mapNotNull { it.singer.substringBefore(",").removeSuffix(" - Topic").trim().ifBlank { null } }
                     .distinct().take(3)
             }
-            val queries = seedArtists.map { "$it songs" }.toMutableList()
+            val clusterTerm = clusterQueryTerm(cluster)
+            val queries = seedArtists.map { if (clusterTerm != null) "$it $clusterTerm songs" else "$it songs" }.toMutableList()
             if (seedArtists.size < 3) seedArtists.forEach { queries += "songs like $it" }
             val candidates = queries.flatMap { searchSongs(it, limit = 15) }
             val ranked = withContext(Dispatchers.Default) {
@@ -291,11 +334,32 @@ class FreeHomeViewModel @Inject constructor(
                     if (usedTitles.add(title)) personalized += title to q
                 }
             }
+
+            val profile = com.music.spotui.data.recommendation.TasteProfile
+            // Time-contextual shelf: "Morning picks" / "Late-night mix" etc. by bucket.
+            val (timeTitle, timeQuery) = timeShelf(profile.currentHourBucket())
+            if (usedTitles.add(timeTitle)) personalized += timeTitle to timeQuery
+
+            // Mood/cluster shelf from the user's strongest mood/genre cluster.
+            val cluster = runCatching { profile.strongestCluster(context) }.getOrNull()
+            moodShelf(cluster)?.let { (moodTitle, moodQuery) ->
+                if (usedTitles.add(moodTitle)) personalized += moodTitle to moodQuery
+            }
+
+            // "Fresh for you" discovery shelf seeded from genre-neighbour keywords of
+            // the top artist (exploration), so Home surfaces something new too.
+            val topArtist = runCatching { profile.topArtists(context, 1) }.getOrDefault(emptyList()).firstOrNull()
+            if (!topArtist.isNullOrBlank()) {
+                val clusterTerm = clusterQueryTerm(cluster)
+                val freshQuery = if (clusterTerm != null) "artists like $topArtist $clusterTerm" else "artists like $topArtist"
+                if (usedTitles.add("Fresh for you")) personalized += "Fresh for you" to freshQuery
+            }
         }
 
         // Curated rows always follow (and are the whole list on first launch),
-        // rotated so the trending mix on Home changes through the day.
-        return personalized + rotatedCurated()
+        // rotated so the trending mix on Home changes through the day. Cap the
+        // personalized rows so Home stays focused even with a rich profile.
+        return personalized.take(MAX_PERSONALIZED_ROWS) + rotatedCurated()
     }
 
     private fun fetchRow(index: Int, query: String) {

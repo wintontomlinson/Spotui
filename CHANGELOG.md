@@ -1,7 +1,33 @@
-# Sonvra (formerly Solo / Spotui): Fork Features & Differences
+# SOLO (formerly Sonvra / Solo / Spotui): Fork Features & Differences
 
 This document outlines the custom features, improvements, and differences introduced in this fork
 compared to the main Spotui repository.
+
+---
+
+## 5.0.0 — SOLO
+
+* **New name: SOLO.** The app is now **SOLO** everywhere: launcher label, splash, notification,
+  Settings, the APK file name and the release page.
+* **New logo, "Spotlight O".** An original mark — a Volt-gradient notched ring (the O of SOLO) with
+  a single centred dot, a lone voice under a spotlight. It is used on the launcher, round and themed
+  icons, the notification icon, the splash screen and every raster.
+* **Aurora Noir design.** A warm obsidian canvas with one electric lime-citron "Volt" accent and a
+  layered surface ramp, set in Space Grotesk (headings) and Plus Jakarta Sans (everything else).
+  Shapes, spacing and motion follow one shared system.
+* **Every screen re-skinned.** Navigation, mini and full player, lyrics, queue, Home, Explore,
+  Library, every detail page, Settings, the equalizer, sheets, dialogs and the loading, empty and
+  error states are all restyled on the new palette and type.
+* **Smarter, context-aware recommendations.** The on-device taste engine now weighs the time of day
+  (morning vs late-night) and a lightweight mood/genre read of what you play (chill, hype, acoustic,
+  live and more), balances replaying favourites against fresh discovery based on how much it has
+  learned, and keeps the same artist and mood from repeating back to back. "Mix for you" now matches
+  the moment, and Home gains new personalised shelves — a time-of-day picks row, a mood row and a
+  "Fresh for you" discovery row. It all runs on-device, works with or without a Spotify login, and
+  playback is untouched.
+* The old Midnight Azure theme, its fonts and the "Sonic V" assets have been removed.
+* **Installs over earlier builds.** The package name and signing key are unchanged, so SOLO updates
+  an earlier install from this fork's releases and keeps your library and settings.
 
 ---
 
