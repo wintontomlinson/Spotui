@@ -4,13 +4,16 @@
 The launcher itself uses the adaptive icon (minSdk is 26). The bitmaps written here are
 the legacy mipmaps, the Play Store listing icon, the README icon and the artwork
 placeholder, all drawn from the same geometry as drawable/ic_launcher_foreground.xml
-(the "Spotlight O" mark in the 108-unit adaptive grid) and
-drawable/ic_launcher_background.xml (the warm-obsidian radial plate).
+(the "Lumen Prism" mark in the 108-unit adaptive grid) and
+drawable/ic_launcher_background.xml (the indigo radial plate).
 
-Spotlight O: a single bold ring (the O of SOLO) with a crisp wedge notch cut from its
-lower-right, and one small solid dot centred inside — a lone voice lit by a spotlight. The
-ring is a filled annulus (outer circle minus inner circle) with the notch removed, filled
-with one Volt lime->spring gradient; the centred dot is TextPrimary. A soft black copy
+Lumen Prism: a single upright beam of light descends from a gold beam-tip at the top,
+strikes a refraction node and fans out into a short violet->cyan spectrum of three
+diverging rays. It reads as "one voice -> pure sound / one light -> a spectrum", tying
+to SOLO without copying the Spotlight-O ring, a Sonic V, a tuning fork or the Solo Facet,
+and without resembling Spotify, YouTube Music, Apple Music, SoundCloud, JioSaavn, Gaana,
+Wynk, Tidal, Deezer or Amazon Music. The beam is a tapered violet shaft, the fan rays run
+violet -> indigo -> cyan, and the beam-tip is a warm gold diamond. A soft black copy
 offset +1.4 Y is the shadow.
 
 Requires Pillow. Run from the repository root:
@@ -34,32 +37,40 @@ PLACEHOLDER = os.path.join(RES, "drawable", "placeholder.webp")
 UNITS = 108.0  # adaptive icon grid
 SUPERSAMPLE = 4
 
-# Plate: warm-obsidian radial glow, off-centre toward the top left.
+# Plate: indigo radial glow, off-centre toward the top left.
 PLATE_CENTRE = (40.0, 34.0)
 PLATE_RADIUS = 100.0
-PLATE_STOPS = [(0.0, (0x20, 0x25, 0x0F)), (0.55, (0x12, 0x12, 0x14)), (1.0, (0x0A, 0x0A, 0x0C))]
+PLATE_STOPS = [(0.0, (0x1A, 0x16, 0x30)), (0.55, (0x13, 0x13, 0x1F)), (1.0, (0x0B, 0x0B, 0x14))]
 
-# Spotlight-O mark geometry (108-unit grid), identical to the vector drawables.
-CENTRE = (54.0, 54.0)
-RING_OUTER = 30.0
-RING_INNER = 19.0
-# Lower-right wedge notch, measured clockwise in screen coords (y down), 0deg = +x axis.
-NOTCH_START = 300.0
-NOTCH_END = 345.0
-DOT = (54.0, 54.0, 6.0)
-DOT_COLOUR = (0xF4, 0xF5, 0xF2)
-# Ring linear gradient axis (top-left -> bottom-right) and stops.
-RING_START, RING_END = (30.0, 30.0), (78.0, 78.0)
-RING_STOPS = [(0.0, (0xE8, 0xFF, 0x8F)), (0.5, (0xD8, 0xFF, 0x3E)), (1.0, (0x9B, 0xE6, 0x4B))]
+# Lumen Prism mark geometry (108-unit grid), identical to the vector drawables.
+# A beam descends from a gold tip, hits a refraction node and fans into three rays.
+# The whole mark is balanced around the grid centre (54,54): beam top at y 28,
+# node at y 52, fan reaching ~y 80, so it sits centred in the 66-unit safe circle.
+TIP = (54.0, 28.0)          # top of the beam (gold diamond centre)
+NODE = (54.0, 52.0)         # refraction node where the beam fans out
+BEAM_TOP_HALF = 3.6         # beam half-width at the tip
+BEAM_NODE_HALF = 4.6        # beam half-width at the node (slight flare toward the prism)
+TIP_DIAMOND = 6.0           # gold diamond half-height at the tip
+
+# Fan rays: angle measured clockwise from straight down (y+), screen coords.
+# Three diverging rays violet -> indigo -> cyan, each a slim triangle from the node.
+FAN_LEN = 28.0              # ray length from the node
+FAN_HALF = 3.4             # ray half-width at its far end
+FAN_RAYS = (
+    (-38.0, (0xB7, 0x9C, 0xFF)),   # violet, swings left
+    (0.0, (0x7C, 0x5C, 0xFF)),     # indigo-violet, straight down
+    (38.0, (0x3F, 0xE0, 0xD0)),    # cyan, swings right
+)
+BEAM_STOPS = [(0.0, (0xB7, 0x9C, 0xFF)), (1.0, (0x7C, 0x5C, 0xFF))]
+GOLD = (0xF5, 0xC9, 0x7A)
+
 SHADOW = (0, 0, 0)
 SHADOW_ALPHA = 0.28
 SHADOW_DY = 1.4
 
-# Notification small icon (24-unit artboard, white only): ring scaled about (12,12).
+# Notification small icon (24-unit artboard, white only): mark scaled about (12,12).
+NOTIF_SCALE = 24.0 / UNITS
 NOTIF_CENTRE = (12.0, 12.0)
-NOTIF_RING_OUTER = 9.6
-NOTIF_RING_INNER = 6.1
-NOTIF_DOT = (12.0, 12.0, 1.9)
 
 
 def _lerp(a, b, t):
@@ -93,62 +104,100 @@ def plate(size):
     return _field(size, lambda x, y: _ramp(PLATE_STOPS, math.hypot(x - gx, y - gy) / PLATE_RADIUS))
 
 
-def _ring_gradient(x, y, dy=0.0):
-    """Colour of the ring's linear gradient at canvas point (x, y)."""
-    sx, sy = RING_START
-    ex, ey = RING_END
-    dx, dyy = ex - sx, ey - sy
-    return _ramp(RING_STOPS, ((x - sx) * dx + (y - (sy + dy)) * dyy) / (dx * dx + dyy * dyy))
+def _poly(scale, offset, pts):
+    """Scales 108-unit [pts] by [scale] with a (dx, dy) screen [offset]."""
+    dx, dy = offset
+    return [(x * scale + dx, y * scale + dy) for x, y in pts]
 
 
-def _notched_ring_mask(size, centre, r_out, r_in, dy=0.0, units=UNITS):
-    """L mask of a filled annulus with the lower-right wedge removed."""
+def _beam_pts(dy=0.0):
+    """Tapered beam quad from the gold tip down to the refraction node."""
+    tx, ty = TIP[0], TIP[1] + dy
+    nx, ny = NODE[0], NODE[1] + dy
+    return [
+        (tx - BEAM_TOP_HALF, ty),
+        (tx + BEAM_TOP_HALF, ty),
+        (nx + BEAM_NODE_HALF, ny),
+        (nx - BEAM_NODE_HALF, ny),
+    ]
+
+
+def _tip_pts(dy=0.0):
+    """Gold diamond capping the beam at the top."""
+    tx, ty = TIP[0], TIP[1] + dy
+    h = TIP_DIAMOND
+    w = BEAM_TOP_HALF + 1.6
+    return [(tx, ty - h), (tx + w, ty), (tx, ty + h * 0.35), (tx - w, ty)]
+
+
+def _ray_pts(angle_deg, dy=0.0):
+    """Slim triangle fan ray from the node at [angle_deg] off straight-down."""
+    nx, ny = NODE[0], NODE[1] + dy
+    a = math.radians(angle_deg)
+    # Direction straight down (0,1) rotated by angle.
+    dirx, diry = math.sin(a), math.cos(a)
+    perpx, perpy = diry, -dirx
+    fx, fy = nx + dirx * FAN_LEN, ny + diry * FAN_LEN
+    return [
+        (nx, ny),
+        (fx + perpx * FAN_HALF, fy + perpy * FAN_HALF),
+        (fx - perpx * FAN_HALF, fy - perpy * FAN_HALF),
+    ]
+
+
+def _poly_mask(size, pts_units, dy=0.0, units=UNITS):
     k = size / units
-    cx, cy = centre[0] * k, (centre[1] + dy) * k
-    ro, ri = r_out * k, r_in * k
     mask = Image.new("L", (size, size), 0)
-    d = ImageDraw.Draw(mask)
-    d.ellipse((cx - ro, cy - ro, cx + ro, cy + ro), fill=255)
-    d.ellipse((cx - ri, cy - ri, cx + ri, cy + ri), fill=0)
-    # Carve the wedge: a filled triangle fan from the centre spanning the notch angles.
-    span = NOTCH_END - NOTCH_START
-    pts = [(cx, cy)]
-    steps = 24
-    reach = ro * 1.6
-    for i in range(steps + 1):
-        ang = math.radians(NOTCH_START + span * i / steps)
-        pts.append((cx + reach * math.cos(ang), cy + reach * math.sin(ang)))
-    d.polygon(pts, fill=0)
+    ImageDraw.Draw(mask).polygon([(x * k, y * k) for x, y in pts_units], fill=255)
     return mask
 
 
+def _beam_gradient(x, y, dy=0.0):
+    """Colour along the beam shaft from tip (violet) to node (deeper violet)."""
+    t = (y - (TIP[1] + dy)) / max(1e-3, (NODE[1] - TIP[1]))
+    return _ramp(BEAM_STOPS, t)
+
+
 def draw_mark(canvas, dy=0.0, colour=None, alpha=255):
-    """Draws the notched ring and the dot onto an RGBA [canvas]."""
+    """Draws the beam, gold tip and the violet->cyan fan onto an RGBA [canvas]."""
     size = canvas.size[0]
-    k = size / UNITS
-
-    ring_mask = _notched_ring_mask(size, CENTRE, RING_OUTER, RING_INNER, dy)
-    dot_mask = Image.new("L", canvas.size, 0)
-    cx, cy = DOT[0] * k, (DOT[1] + dy) * k
-    r = DOT[2] * k
-    ImageDraw.Draw(dot_mask).ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
-
-    if colour is not None:
-        ring_fill = Image.new("RGB", canvas.size, colour)
-        dot_fill = ring_fill
-    else:
-        ring_fill = _field(size, lambda x, y: _ring_gradient(x, y, dy))
-        dot_fill = Image.new("RGB", canvas.size, DOT_COLOUR)
     layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    for fill, mask in ((ring_fill, ring_mask), (dot_fill, dot_mask)):
+
+    # Fan rays first (behind the beam), then the beam, then the gold tip on top.
+    pieces = []
+    for angle, col in FAN_RAYS:
+        pieces.append((_ray_pts(angle, dy), col))
+    beam_pts = _beam_pts(dy)
+    tip_pts = _tip_pts(dy)
+
+    for pts, col in pieces:
+        fill_col = colour if colour is not None else col
+        fill = Image.new("RGB", canvas.size, fill_col)
         piece = fill.convert("RGBA")
-        piece.putalpha(mask.point(lambda v: v * alpha // 255))
+        piece.putalpha(_poly_mask(size, pts, dy).point(lambda v: v * alpha // 255))
         layer = Image.alpha_composite(layer, piece)
+
+    # Beam shaft (gradient, or flat for shadow/monochrome).
+    if colour is not None:
+        beam_fill = Image.new("RGB", canvas.size, colour)
+    else:
+        beam_fill = _field(size, lambda x, y: _beam_gradient(x, y, dy))
+    beam = beam_fill.convert("RGBA")
+    beam.putalpha(_poly_mask(size, beam_pts, dy).point(lambda v: v * alpha // 255))
+    layer = Image.alpha_composite(layer, beam)
+
+    # Gold tip.
+    tip_col = colour if colour is not None else GOLD
+    tip_fill = Image.new("RGB", canvas.size, tip_col)
+    tip = tip_fill.convert("RGBA")
+    tip.putalpha(_poly_mask(size, tip_pts, dy).point(lambda v: v * alpha // 255))
+    layer = Image.alpha_composite(layer, tip)
+
     return Image.alpha_composite(canvas, layer)
 
 
 def artwork(size, with_plate=True):
-    """Full 108-unit canvas: plate (optional), soft shadow and the Spotlight-O mark."""
+    """Full 108-unit canvas: plate (optional), soft shadow and the Lumen Prism mark."""
     work = size * SUPERSAMPLE
     if with_plate:
         canvas = plate(work).convert("RGBA")
@@ -187,9 +236,9 @@ def launcher_bitmap(size, shape):
 
 
 def placeholder(size):
-    """Artwork placeholder: a quiet graphite tile with a faint Spotlight-O."""
+    """Artwork placeholder: a quiet indigo tile with a faint Lumen Prism."""
     work = size * SUPERSAMPLE
-    base = _field(work, lambda x, y: _lerp((0x1C, 0x21, 0x16), (0x0E, 0x11, 0x0E), (x + y) / (2 * UNITS)))
+    base = _field(work, lambda x, y: _lerp((0x1A, 0x16, 0x30), (0x0E, 0x0E, 0x16), (x + y) / (2 * UNITS)))
     base = draw_mark(base.convert("RGBA"), alpha=46)
     return base.convert("RGB").resize((size, size), Image.LANCZOS)
 
@@ -197,11 +246,17 @@ def placeholder(size):
 def notification(size):
     """White-only small icon preview (24-unit artboard)."""
     work = size * SUPERSAMPLE
+    mask = Image.new("L", (work, work), 0)
+    # Reuse the mark polygons scaled from 108 units into the 24-unit artboard.
+    scale = NOTIF_SCALE
+    off = (NOTIF_CENTRE[0] - 54.0 * scale, NOTIF_CENTRE[1] - 54.0 * scale)
     k = work / 24.0
-    mask = _notched_ring_mask(work, NOTIF_CENTRE, NOTIF_RING_OUTER, NOTIF_RING_INNER, units=24.0)
     d = ImageDraw.Draw(mask)
-    cx, cy, r = NOTIF_DOT[0] * k, NOTIF_DOT[1] * k, NOTIF_DOT[2] * k
-    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
+    for angle, _ in FAN_RAYS:
+        pts = _poly(scale, off, _ray_pts(angle))
+        d.polygon([(x * k, y * k) for x, y in pts], fill=255)
+    d.polygon([(x * k, y * k) for x, y in _poly(scale, off, _beam_pts())], fill=255)
+    d.polygon([(x * k, y * k) for x, y in _poly(scale, off, _tip_pts())], fill=255)
     img = Image.new("RGBA", (work, work), (255, 255, 255, 0))
     img.putalpha(mask)
     return img.resize((size, size), Image.LANCZOS)

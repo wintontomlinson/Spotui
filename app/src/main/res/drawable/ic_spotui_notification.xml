@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Status-bar / media-notification small icon: the SOLO "Spotlight O" mark, white only (Android
-  draws small icons from alpha alone). The launcher ring scaled about (12,12) to outer r 9.6,
-  inner r 6.1, with the same lower-right notch (300deg-345deg), and a centred dot r 1.9, each
-  with >=1 unit clearance inside the 24-unit artboard. Filename kept as ic_spotui_notification
-  (referenced by PlaybackService and media3_notification_small_icon).
+  Status-bar / media-notification small icon: the SOLO "Lumen Prism" mark, white only (Android
+  draws small icons from alpha alone). The launcher geometry scaled by 24/108 about the artboard
+  centre (12,12): the gold-tip beam and the three fan rays, each with >=1 unit clearance inside
+  the 24-unit artboard. Filename kept as ic_spotui_notification (referenced by PlaybackService
+  and media3_notification_small_icon). Same geometry as tools/generate_launcher_icons.py.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M21.273,9.515 A9.600,9.600 0 1 1 16.800,3.686 L15.050,6.717 A6.100,6.100 0 1 0 17.892,10.421 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M10.100,12.000 A1.900,1.900 0 1 1 13.900,12.000 A1.900,1.900 0 1 1 10.100,12.000 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12.0,11.556 L8.765,16.924 L7.574,15.994 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12.0,11.556 L12.756,17.778 L11.244,17.778 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12.0,11.556 L16.426,15.994 L15.235,16.924 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M11.2,6.222 L12.8,6.222 L13.022,11.556 L10.978,11.556 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12.0,4.889 L13.156,6.222 L12.0,6.689 L10.844,6.222 Z" />
 </vector>

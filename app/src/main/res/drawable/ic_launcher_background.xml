@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- SOLO launcher background: a warm-obsidian plate with a radial glow toward the top left. -->
+<!-- SOLO launcher background: an indigo plate with a radial violet glow toward the top left. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
@@ -9,9 +9,9 @@
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient android:type="radial" android:centerX="40" android:centerY="34" android:gradientRadius="100">
-                <item android:offset="0.0" android:color="#FF20250F" />
-                <item android:offset="0.55" android:color="#FF121214" />
-                <item android:offset="1.0" android:color="#FF0A0A0C" />
+                <item android:offset="0.0" android:color="#FF1A1630" />
+                <item android:offset="0.55" android:color="#FF13131F" />
+                <item android:offset="1.0" android:color="#FF0B0B14" />
             </gradient>
         </aapt:attr>
     </path>
