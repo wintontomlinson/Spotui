@@ -78,19 +78,18 @@ import com.music.spotui.ui.viewmodel.PlaylistResult
 import com.music.spotui.ui.viewmodel.SearchTab
 import com.music.spotui.ui.viewmodel.YtSearchViewModel
 import com.music.spotui.ui.viewmodel.formatDurationMs
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.components.shimmer
 import androidx.compose.material.icons.rounded.SearchOff
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.Hairline
 
-// Accent comes from the single source of truth in the theme package.
-private val Accent = com.music.spotui.ui.theme.Accent
-private val Surface = Dusk
-private val SurfaceHigh = Velvet
-private val Hairline = Ivory.copy(alpha = 0.08f)
+private val Surface = Surface2
+private val SurfaceHigh = Surface3
 private val TextDim = TextSecondary
 private val TextFaint = TextTertiary
 
@@ -108,7 +107,7 @@ private data class BrowseCategory(
 )
 
 private val BROWSE_CATEGORIES = listOf(
-    // Each category carries a jewel tone from the Solo palette (it tints the tile's scrim)
+    // Each category carries a jewel tone from the Sonvra palette (it tints the tile's scrim)
     // plus a name-matched `imageQuery`, so
     // the full-bleed tile artwork clearly reflects the label. `query` is what
     // actually runs on tap.
@@ -286,7 +285,7 @@ private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
         modifier = Modifier.padding(bottom = 6.dp),
     ) {
         items(SearchTab.entries.toList(), key = { it.name }) { entry ->
-            com.music.spotui.ui.components.SoloChip(
+            com.music.spotui.ui.components.SonvraChip(
                 label = entry.label,
                 selected = entry == selected,
                 onClick = { onSelect(entry) },
@@ -319,7 +318,7 @@ private fun ArtistResultRow(artist: ArtistResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(
                 text = artist.name,
-                color = Ivory,
+                color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -353,7 +352,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
             Text(
                 text = album.title,
-                color = Ivory,
+                color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -396,7 +395,7 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(start = 12.dp, end = 8.dp)) {
             Text(
                 text = playlist.title,
-                color = Ivory,
+                color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -446,7 +445,7 @@ private fun SearchField(
             value = query,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(color = Ivory, fontSize = 16.sp),
+            textStyle = TextStyle(color = TextPrimary, fontSize = 16.sp),
             cursorBrush = SolidColor(Accent),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
@@ -483,7 +482,7 @@ private fun SearchField(
 
 /**
  * Explore card: a rounded tile whose FULL background is professional artwork
- * matched to the category, with a colour-tinted diagonal scrim, a gold play chip
+ * matched to the category, with a colour-tinted diagonal scrim, an accent play chip
  * top-right, and the label sitting on top of the image bottom-left.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -513,7 +512,7 @@ private fun BrowseTile(
             .height(height)
             .clip(RoundedCornerShape(22.dp))
             .background(category.color)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(22.dp))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(22.dp))
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
@@ -537,22 +536,22 @@ private fun BrowseTile(
                     Brush.linearGradient(
                         colors = listOf(
                             category.color.copy(alpha = 0.50f),
-                            com.music.spotui.ui.theme.Ink.copy(alpha = 0.35f),
-                            com.music.spotui.ui.theme.Ink.copy(alpha = 0.92f),
+                            com.music.spotui.ui.theme.Canvas.copy(alpha = 0.35f),
+                            com.music.spotui.ui.theme.Canvas.copy(alpha = 0.92f),
                         ),
                         start = androidx.compose.ui.geometry.Offset(0f, 0f),
                         end = androidx.compose.ui.geometry.Offset.Infinite,
                     ),
                 ),
         )
-        // Aurora glow rising from the bottom edge: the Solo accent signature on every tile.
+        // Accent glow rising from the bottom edge: the Sonvra accent signature on every tile.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
                         0.55f to Color.Transparent,
-                        1f to com.music.spotui.ui.theme.GoldDeep.copy(alpha = 0.38f),
+                        1f to com.music.spotui.ui.theme.AccentDeep.copy(alpha = 0.38f),
                     ),
                 ),
         )
@@ -561,7 +560,7 @@ private fun BrowseTile(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
                 .height(3.dp)
-                .background(com.music.spotui.ui.theme.AuroraBrush),
+                .background(com.music.spotui.ui.theme.AccentBrush),
         )
         // A small accent play chip in the top-right — a premium Explore flourish.
         Box(
@@ -583,7 +582,7 @@ private fun BrowseTile(
         // Category name sitting ON TOP of the image, bottom-left.
         Text(
             text = category.label,
-            color = Ivory,
+            color = TextPrimary,
             fontSize = if (height > 168.dp) 24.sp else 19.sp,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 2,
@@ -616,7 +615,7 @@ private fun DiscoverPane(
                 ) {
                     Text(
                         text = "Recent searches",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f),
@@ -649,7 +648,7 @@ private fun DiscoverPane(
                     )
                     Text(
                         text = entry,
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 15.sp,
                         maxLines = 1,
                         modifier = Modifier
@@ -676,7 +675,7 @@ private fun DiscoverPane(
                 Text(
                     text = "Explore",
                     style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
-                    color = Ivory,
+                    color = TextPrimary,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -745,7 +744,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
         ) {
             Text(
                 text = song.title,
-                color = Ivory,
+                color = TextPrimary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -802,7 +801,7 @@ private fun ResultSkeleton(circular: Boolean = false) {
 
 @Composable
 private fun EmptyState(title: String, message: String) {
-    com.music.spotui.ui.components.SoloEmptyState(
+    com.music.spotui.ui.components.SonvraEmptyState(
         icon = Icons.Rounded.SearchOff,
         title = title,
         message = message,

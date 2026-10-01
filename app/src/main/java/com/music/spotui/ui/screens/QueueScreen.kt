@@ -63,15 +63,15 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.music.spotui.R
 import androidx.compose.material.icons.rounded.DragHandle
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.Dusk
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.Surface2
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 
@@ -88,10 +88,10 @@ fun QueueSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Dusk,
-        contentColor = Ivory,
+        containerColor = Surface2,
+        contentColor = TextPrimary,
         dragHandle = null,
-        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
         modifier = Modifier.fillMaxHeight(0.92f),
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
@@ -110,7 +110,7 @@ fun QueueScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Dusk)
+            .background(Surface2)
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -158,7 +158,7 @@ fun QueueContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Dusk)
+            .background(Surface2)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -166,20 +166,20 @@ fun QueueContent(
                 .fillMaxWidth()
                 .padding(16.dp, 12.dp)
         ) {
-            com.music.spotui.ui.components.SoloIconButton(
+            com.music.spotui.ui.components.SonvraIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Close queue",
                 onClick = onClose,
                 iconSize = 28.dp,
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Queue", color = Ivory, style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
+            Text("Queue", color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         }
 
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         Box(modifier = Modifier.fillMaxSize()) {
             if (queue.isEmpty()) {
-                com.music.spotui.ui.components.SoloEmptyState(
+                com.music.spotui.ui.components.SonvraEmptyState(
                     icon = androidx.compose.material.icons.Icons.Rounded.QueueMusic,
                     title = "Your queue is empty",
                     message = "Play a song and what comes next shows up here.",
@@ -196,7 +196,7 @@ fun QueueContent(
                     item {
                         Text(
                             "NOW PLAYING",
-                            color = com.music.spotui.ui.theme.Gold,
+                            color = com.music.spotui.ui.theme.Accent,
                             fontSize = 11.sp,
                             letterSpacing = 1.4.sp,
                             fontWeight = FontWeight.Bold,
@@ -214,7 +214,7 @@ fun QueueContent(
                     item {
                         Text(
                             "NEXT UP",
-                            color = com.music.spotui.ui.theme.Gold,
+                            color = com.music.spotui.ui.theme.Accent,
                             fontSize = 11.sp,
                             letterSpacing = 1.4.sp,
                             fontWeight = FontWeight.Bold,
@@ -241,7 +241,7 @@ fun QueueContent(
                                         .background(com.music.spotui.ui.theme.DangerSurface)
                                         .padding(horizontal = 24.dp),
                                 ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Remove", tint = Ivory)
+                                    Icon(Icons.Default.Delete, contentDescription = "Remove", tint = TextPrimary)
                                 }
                             },
                             modifier = Modifier.graphicsLayer {
@@ -311,7 +311,7 @@ private fun QueueRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .background(if (highlight) com.music.spotui.ui.theme.Amethyst else Dusk)
+            .background(if (highlight) com.music.spotui.ui.theme.Surface4 else Surface2)
             .combinedClickable(
                 onLongClick = onLongClick,
                 onClick = onClick,
@@ -337,7 +337,7 @@ private fun QueueRow(
                 }
                 Text(
                     text = song.title,
-                    color = if (highlight) com.music.spotui.ui.theme.Gold else Ivory,
+                    color = if (highlight) com.music.spotui.ui.theme.Accent else TextPrimary,
                     style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

@@ -63,11 +63,11 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
-import com.music.spotui.ui.theme.AppPalette
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 /**
  * Long-press context menu for a single track. Mirrors Spotify's "3-dot" sheet:
@@ -116,9 +116,9 @@ fun SongOptionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Dusk,
-        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
-        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        containerColor = Surface2,
+        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
@@ -138,11 +138,11 @@ fun SongOptionsSheet(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(song.title, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(song.singer, color = TextTertiary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            HorizontalDivider(color = Velvet)
+            HorizontalDivider(color = Surface3)
 
             SongMenuRow(Icons.Default.PlayArrow, "Play next") {
                 playerViewModel.playNext(song)
@@ -162,7 +162,7 @@ fun SongOptionsSheet(
                 SongMenuRow(
                     icon = Icons.Default.Delete,
                     label = "Remove from this playlist",
-                    iconTint = Ivory
+                    iconTint = TextPrimary
                 ) {
                     com.music.spotui.data.preferences.LocalPlaylistPref.removeSongFromPlaylist(context, currentPlaylistId, song.id, song.spotifyTrackId)
                     com.music.spotui.data.api.Api.HomeCache.library = null
@@ -173,7 +173,7 @@ fun SongOptionsSheet(
             SongMenuRow(
                 icon = if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 label = if (liked) "Remove from Liked Songs" else "Add to Liked Songs",
-                iconTint = if (liked) Color(AppPalette.toArgb()) else Ivory,
+                iconTint = if (liked) Color(Accent.toArgb()) else TextPrimary,
             ) {
                 if (liked) removeLikedSongId(context, song.id.toString())
                 // Save the whole track so Liked Songs can show it without any account.
@@ -189,7 +189,7 @@ fun SongOptionsSheet(
                     downloadingNow -> if (downloadPct in 1..99) "Downloading… $downloadPct%" else "Downloading…"
                     else -> "Download"
                 },
-                iconTint = if (downloaded) Color(AppPalette.toArgb()) else Ivory,
+                iconTint = if (downloaded) Color(Accent.toArgb()) else TextPrimary,
                 enabled = !downloadingNow,
             ) {
                 if (downloaded) {
@@ -266,7 +266,7 @@ fun SongOptionsSheet(
 private fun SongMenuRow(
     icon: ImageVector,
     label: String,
-    iconTint: Color = Ivory,
+    iconTint: Color = TextPrimary,
     enabled: Boolean = true,
     trailingArrow: Boolean = false,
     onClick: () -> Unit,
@@ -288,7 +288,7 @@ private fun SongMenuRow(
         Spacer(modifier = Modifier.width(18.dp))
         Text(
             text = label,
-            color = if (enabled) Ivory else TextTertiary.copy(alpha = 0.4f),
+            color = if (enabled) TextPrimary else TextTertiary.copy(alpha = 0.4f),
             fontSize = 15.sp,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,

@@ -15,68 +15,68 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
-// dialogs, menus) picks up the Solo palette instead of a stray default or wallpaper tint.
-private val SoloColorScheme = darkColorScheme(
-    primary = Gold,
-    onPrimary = OnGold,
-    primaryContainer = Color(0xFF3A2C12),
-    onPrimaryContainer = GoldLight,
-    secondary = Lilac,
-    onSecondary = Ink,
-    secondaryContainer = Amethyst,
-    onSecondaryContainer = Ivory,
-    tertiary = GoldDeep,
-    onTertiary = OnGold,
-    background = Ink,
-    onBackground = Ivory,
-    surface = Dusk,
-    onSurface = Ivory,
-    surfaceVariant = Velvet,
+// dialogs, menus) picks up the Midnight Azure palette instead of a stray default or wallpaper tint.
+private val SonvraColorScheme = darkColorScheme(
+    primary = Accent,
+    onPrimary = OnAccent,
+    primaryContainer = Color(0xFF12264D),
+    onPrimaryContainer = AccentSoft,
+    secondary = AccentSoft,
+    onSecondary = Canvas,
+    secondaryContainer = Surface4,
+    onSecondaryContainer = TextPrimary,
+    tertiary = AccentDeep,
+    onTertiary = OnAccent,
+    background = Canvas,
+    onBackground = TextPrimary,
+    surface = Surface2,
+    onSurface = TextPrimary,
+    surfaceVariant = Surface3,
     onSurfaceVariant = TextSecondary,
     surfaceTint = Color.Transparent,
-    inverseSurface = Ivory,
-    inverseOnSurface = Ink,
-    inversePrimary = GoldDeep,
+    inverseSurface = TextPrimary,
+    inverseOnSurface = Canvas,
+    inversePrimary = AccentDeep,
     error = Danger,
-    onError = Ink,
+    onError = Canvas,
     errorContainer = DangerSurface,
-    onErrorContainer = Color(0xFFFFDADA),
-    outline = Color(0xFF4A3F5E),
-    outlineVariant = Amethyst,
+    onErrorContainer = Color(0xFFFFDADF),
+    outline = Color(0xFF3A4254),
+    outlineVariant = Surface4,
     scrim = Color.Black,
-    surfaceBright = Amethyst,
-    surfaceDim = Ink,
-    surfaceContainerLowest = Ink,
-    surfaceContainerLow = Night,
-    surfaceContainer = Dusk,
-    surfaceContainerHigh = Velvet,
-    surfaceContainerHighest = Amethyst,
+    surfaceBright = Surface4,
+    surfaceDim = Canvas,
+    surfaceContainerLowest = Canvas,
+    surfaceContainerLow = Surface1,
+    surfaceContainer = Surface2,
+    surfaceContainerHigh = Surface3,
+    surfaceContainerHighest = Surface4,
 )
 
-/** Solo is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
+/** Sonvra is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
 @Composable
-fun SoloTheme(content: @Composable () -> Unit) {
+fun SonvraTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = Color.Transparent.toArgb()
-            // Light (ivory) status bar icons on the dark UI.
+            // Light status bar icons on the dark UI.
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
     MaterialTheme(
-        colorScheme = SoloColorScheme,
+        colorScheme = SonvraColorScheme,
         typography = Typography,
-        shapes = SoloShapes,
+        shapes = SonvraShapes,
     ) {
-        // Bare Text() reads LocalTextStyle, so Manrope is provided as the global default here.
+        // Bare Text() reads LocalTextStyle, so Inter is provided as the global default here.
         // Provided directly (not merged over M3's bodyLarge) and without a fixed line height,
         // so a Text that only sets a larger fontSize (lyrics, hero titles) gets line boxes
         // that scale with it instead of overlapping when it wraps.
         CompositionLocalProvider(
-            LocalContentColor provides Ivory,
+            LocalContentColor provides TextPrimary,
             LocalTextStyle provides Typography.bodyMedium.copy(lineHeight = TextUnit.Unspecified),
             content = content,
         )

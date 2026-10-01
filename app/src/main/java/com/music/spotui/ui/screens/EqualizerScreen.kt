@@ -50,19 +50,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.components.SoloChip
-import com.music.spotui.ui.components.SoloEmptyState
-import com.music.spotui.ui.components.SoloIconButton
+import com.music.spotui.ui.components.SonvraChip
+import com.music.spotui.ui.components.SonvraEmptyState
+import com.music.spotui.ui.components.SonvraIconButton
 import com.music.spotui.ui.theme.AppBackgroundBrush
-import com.music.spotui.ui.theme.AuroraBrush
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.HairlineSoft
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.AccentBrush
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.Hairline
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 import kotlin.math.roundToInt
 
 /**
@@ -92,7 +92,7 @@ fun EqualizerScreen(navController: NavController) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
         ) {
-            SoloIconButton(
+            SonvraIconButton(
                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                 contentDescription = "Back",
                 onClick = { navController.popBackStack() },
@@ -100,7 +100,7 @@ fun EqualizerScreen(navController: NavController) {
             Text(
                 "Equalizer",
                 style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                color = Ivory,
+                color = TextPrimary,
                 modifier = Modifier.weight(1f),
             )
             if (supported) {
@@ -111,10 +111,10 @@ fun EqualizerScreen(navController: NavController) {
                         SongPlayer.setEqEnabled(context, it)
                     },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = OnGold,
-                        checkedTrackColor = Gold,
+                        checkedThumbColor = OnAccent,
+                        checkedTrackColor = Accent,
                         uncheckedThumbColor = TextSecondary,
-                        uncheckedTrackColor = Velvet,
+                        uncheckedTrackColor = Surface3,
                     ),
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -124,7 +124,7 @@ fun EqualizerScreen(navController: NavController) {
         }
 
         if (!supported || levels.isEmpty()) {
-            SoloEmptyState(
+            SonvraEmptyState(
                 icon = Icons.Rounded.GraphicEq,
                 title = "Equalizer isn't supported on this device",
                 message = "Your phone doesn't expose an audio equalizer to apps.",
@@ -150,12 +150,12 @@ fun EqualizerScreen(navController: NavController) {
         ) {
             (SongPlayer.EQ_PRESETS.map { it.first } + if (preset == "Custom") listOf("Custom") else emptyList())
                 .forEach { name ->
-                    SoloChip(
+                    SonvraChip(
                         label = name,
                         selected = preset == name,
                         modifier = Modifier.heightIn(min = 48.dp),
                         onClick = {
-                            if (name == "Custom") return@SoloChip
+                            if (name == "Custom") return@SonvraChip
                             preset = name
                             SongPlayer.applyEqPreset(context, name)
                             levels = SongPlayer.eqBandLevels()
@@ -175,15 +175,15 @@ fun EqualizerScreen(navController: NavController) {
                 .padding(top = 12.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
-                .background(Dusk)
-                .border(1.dp, HairlineSoft, RoundedCornerShape(24.dp))
+                .background(Surface2)
+                .border(1.dp, Hairline, RoundedCornerShape(24.dp))
                 .padding(vertical = 20.dp, horizontal = 6.dp),
         ) {
             levels.forEachIndexed { band, level ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         formatDb(level),
-                        color = if (enabled) Gold else TextTertiary,
+                        color = if (enabled) Accent else TextTertiary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
@@ -226,7 +226,7 @@ private fun formatDb(mB: Int): String {
     return if (db > 0) "+$txt" else txt
 }
 
-/** A 48dp-wide vertical slider: aurora fill from 0 dB toward the thumb. */
+/** A 48dp-wide vertical slider: accent fill from 0 dB toward the thumb. */
 @Composable
 private fun VerticalBandSlider(
     value: Int,
@@ -275,7 +275,7 @@ private fun VerticalBandSlider(
         val h = size.height
         fun yOf(v: Int) = h * (1f - (v - min).toFloat() / span)
         drawRoundRect(
-            color = Velvet,
+            color = Surface3,
             topLeft = Offset(cx - trackW / 2, 0f),
             size = Size(trackW, h),
             cornerRadius = CornerRadius(trackW / 2),
@@ -286,12 +286,12 @@ private fun VerticalBandSlider(
         val bottom = maxOf(zeroY, y)
         if (active) {
             drawRoundRect(
-                brush = AuroraBrush,
+                brush = AccentBrush,
                 topLeft = Offset(cx - trackW / 2, top),
                 size = Size(trackW, (bottom - top).coerceAtLeast(1f)),
                 cornerRadius = CornerRadius(trackW / 2),
             )
         }
-        drawCircle(color = if (active) Ivory else TextTertiary, radius = 9.dp.toPx(), center = Offset(cx, y))
+        drawCircle(color = if (active) TextPrimary else TextTertiary, radius = 9.dp.toPx(), center = Offset(cx, y))
     }
 }

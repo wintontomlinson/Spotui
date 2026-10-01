@@ -88,17 +88,16 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.LikedSongsViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.GoldDeep
-import com.music.spotui.ui.theme.GoldLight
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.RoyalViolet
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.AccentDeep
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
@@ -165,12 +164,12 @@ fun LikedSongsScreen(navController: NavController) {
         }
     }
 
-    val likedColor = RoyalViolet
+    val likedColor = AccentDeep
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(Color(Canvas.toArgb()))
     ) {
         if (songsResp is Response.Loading) {
             Loader()
@@ -189,12 +188,12 @@ fun LikedSongsScreen(navController: NavController) {
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Ivory
+                            tint = TextPrimary
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Ivory,
+                        titleContentColor = TextPrimary,
                     ),
                     title = { Text(text = "") }
                 )
@@ -206,7 +205,7 @@ fun LikedSongsScreen(navController: NavController) {
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(AppBackground.toArgb()))
+                        .background(Color(Canvas.toArgb()))
                 ) {
                     item {
                         Column(
@@ -215,7 +214,7 @@ fun LikedSongsScreen(navController: NavController) {
                                 .height(440.dp)
                                 .background(
                                     brush = Brush.verticalGradient(
-                                        colors = listOf(likedColor, Color(AppBackground.toArgb())),
+                                        colors = listOf(likedColor, Color(Canvas.toArgb())),
                                         startY = -100f,
                                     ),
                                 ),
@@ -233,7 +232,7 @@ fun LikedSongsScreen(navController: NavController) {
                                         .size(230.dp)
                                         .background(
                                             brush = Brush.linearGradient(
-                                                colors = listOf(GoldLight, GoldDeep),
+                                                colors = listOf(AccentSoft, AccentDeep),
                                             )
                                         ),
                                     contentAlignment = Alignment.Center,
@@ -241,7 +240,7 @@ fun LikedSongsScreen(navController: NavController) {
                                     Icon(
                                         imageVector = Icons.Filled.Favorite,
                                         contentDescription = "",
-                                        tint = com.music.spotui.ui.theme.OnGold,
+                                        tint = com.music.spotui.ui.theme.OnAccent,
                                         modifier = Modifier.size(90.dp),
                                     )
                                 }
@@ -250,9 +249,9 @@ fun LikedSongsScreen(navController: NavController) {
                             Text(
                                 modifier = Modifier.padding(20.dp, 5.dp, 0.dp, 0.dp),
                                 text = "Liked Songs",
-                                color = Ivory,
+                                color = TextPrimary,
                                 fontSize = 28.sp,
-                                fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                                fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
@@ -290,7 +289,7 @@ fun LikedSongsScreen(navController: NavController) {
                                             Icon(
                                                 imageVector = if (likedDownloaded)
                                                     Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
-                                                tint = if (likedDownloaded) Color(AppPalette.toArgb()) else Ivory,
+                                                tint = if (likedDownloaded) Color(Accent.toArgb()) else TextPrimary,
                                                 modifier = Modifier
                                                     .size(24.dp)
                                                     .clickable(
@@ -308,7 +307,7 @@ fun LikedSongsScreen(navController: NavController) {
                                             Spacer(modifier = Modifier.width(18.dp))
                                             Icon(
                                                 painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
-                                                tint = Ivory,
+                                                tint = TextPrimary,
                                                 modifier = Modifier
                                                     .size(24.dp)
                                                     .clickable(
@@ -327,7 +326,7 @@ fun LikedSongsScreen(navController: NavController) {
                                             Spacer(modifier = Modifier.width(18.dp))
                                             Icon(
                                                 painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
-                                                tint = Ivory,
+                                                tint = TextPrimary,
                                                 modifier = Modifier
                                                     .size(24.dp)
                                                     .clickable(
@@ -359,9 +358,9 @@ fun LikedSongsScreen(navController: NavController) {
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
                                             .size(56.dp)
-                                            .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.GoldDeep, spotColor = com.music.spotui.ui.theme.GoldDeep)
+                                            .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.AccentDeep, spotColor = com.music.spotui.ui.theme.AccentDeep)
                                             .clip(CircleShape)
-                                            .background(com.music.spotui.ui.theme.GoldBrush)
+                                            .background(com.music.spotui.ui.theme.AccentBrush)
                                             .clickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = null
@@ -386,7 +385,7 @@ fun LikedSongsScreen(navController: NavController) {
                                     ) {
                                         Icon(
                                             modifier = Modifier.size(25.dp),
-                                            tint = com.music.spotui.ui.theme.OnGold,
+                                            tint = com.music.spotui.ui.theme.OnAccent,
                                             painter = if (currentInList && playing) painterResource(id = R.drawable.ic_playing) else androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                                             contentDescription = if (currentInList && playing) "Pause" else "Play"
                                         )
@@ -419,20 +418,20 @@ fun LikedSongsScreen(navController: NavController) {
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(50))
-                                        .background(Velvet)
+                                        .background(Surface3)
                                         .clickable { showSortSheet = true }
                                         .padding(horizontal = 14.dp, vertical = 8.dp)
                                 ) {
                                     Text(
                                         text = currentSort.getDescriptiveLabel(isDescending),
-                                        color = Ivory,
+                                        color = TextPrimary,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Icon(
                                         imageVector = Icons.Default.KeyboardArrowDown,
                                         contentDescription = "Sort Options",
-                                        tint = Ivory,
+                                        tint = TextPrimary,
                                         modifier = Modifier
                                             .size(16.dp)
                                             .padding(start = 4.dp)
@@ -452,7 +451,7 @@ fun LikedSongsScreen(navController: NavController) {
                             ) {
                                 Text(
                                     text = "No matches found for \"$searchQuery\"",
-                                    color = Ivory,
+                                    color = TextPrimary,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -461,7 +460,7 @@ fun LikedSongsScreen(navController: NavController) {
                     } else {
                         itemsIndexed(filteredSongs, key = { _, song -> song.id }) { index, song ->
                             val currentColor = if (song.id == likedSongsViewModel.currentSongId.value)
-                                Color(AppPalette.toArgb()) else Ivory
+                                Color(Accent.toArgb()) else TextPrimary
 
                             SwipeToPlayNextWrapper(
                                 onPlayNext = {
@@ -478,7 +477,7 @@ fun LikedSongsScreen(navController: NavController) {
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(AppBackground)
+                                        .background(Canvas)
                                         .combinedClickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
@@ -546,9 +545,9 @@ fun LikedSongsScreen(navController: NavController) {
                 if (showSortSheet) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
-                        containerColor = Dusk,
-                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
-                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                        containerColor = Surface2,
+                        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
                         scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(
@@ -558,12 +557,12 @@ fun LikedSongsScreen(navController: NavController) {
                         ) {
                             Text(
                                 text = "Sort by",
-                                color = Ivory,
+                                color = TextPrimary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                             )
-                            HorizontalDivider(color = Velvet)
+                            HorizontalDivider(color = Surface3)
                             Spacer(modifier = Modifier.height(4.dp))
                             LikedSongsSortOption.entries.forEach { option ->
                                 val isSelected = option == currentSort
@@ -593,13 +592,13 @@ fun LikedSongsScreen(navController: NavController) {
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                        tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                         modifier = Modifier.size(22.dp)
                                     )
                                     Spacer(modifier = Modifier.width(18.dp))
                                     Text(
                                         text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == LikedSongsSortOption.DATE),
-                                        color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                        color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                         fontSize = 15.sp,
                                         modifier = Modifier.weight(1f)
                                     )
@@ -607,7 +606,7 @@ fun LikedSongsScreen(navController: NavController) {
                                         Icon(
                                             imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                             contentDescription = null,
-                                            tint = Color(AppPalette.toArgb()),
+                                            tint = Color(Accent.toArgb()),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }

@@ -76,7 +76,7 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import com.music.spotui.di.Palette
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
-import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.Canvas
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SwipeToDismissBox
@@ -90,22 +90,23 @@ import androidx.compose.animation.core.spring
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
-import com.music.spotui.ui.theme.Amethyst
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.Surface4
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.TextSecondary
-import com.music.spotui.ui.theme.Velvet
-import com.music.spotui.ui.theme.Night
-import com.music.spotui.ui.theme.SoloShape
+import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.Surface1
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.layout.statusBarsPadding
-import com.music.spotui.ui.theme.ShadowInk
+import com.music.spotui.ui.theme.Shadow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import com.music.spotui.ui.theme.SonvraMotion
 
 /**
  * Shared loading state for album / artist / playlist / liked / show screens: a header
@@ -117,18 +118,18 @@ fun Loader() {
     Column(
         Modifier
             .fillMaxWidth()
-            .background(Color(AppBackground.toArgb()))
+            .background(Color(Canvas.toArgb()))
             .statusBarsPadding()
             .padding(top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.size(200.dp).shimmer(SoloShape.lg))
+        Box(Modifier.size(200.dp).shimmer(SonvraShape.lg))
         Spacer(Modifier.height(18.dp))
         Box(Modifier.fillMaxWidth(0.55f).height(18.dp).shimmer())
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth(0.35f).height(12.dp).shimmer())
         Spacer(Modifier.height(18.dp))
-        SoloShimmerList(count = 6)
+        SonvraShimmerList(count = 6)
     }
 }
 
@@ -143,7 +144,7 @@ fun ExplicitBadge(
         fontSize = size,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .background(Velvet, RoundedCornerShape(3.dp))
+            .background(Surface3, RoundedCornerShape(3.dp))
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )
 }
@@ -197,7 +198,7 @@ fun MiniPlayer(navController: NavHostController) {
 
     val context = LocalContext.current
 
-    var darkVibrantColor by remember { mutableStateOf(Night) }
+    var darkVibrantColor by remember { mutableStateOf(Surface1) }
     LaunchedEffect(songCoverUri) {
         if (songCoverUri.isNotBlank()) {
             Palette().extractFirstColorFromImageUrl(context = context, songCoverUri) { color ->
@@ -208,7 +209,7 @@ fun MiniPlayer(navController: NavHostController) {
 
     val miniTone by androidx.compose.animation.animateColorAsState(
         targetValue = darkVibrantColor,
-        animationSpec = com.music.spotui.ui.theme.Motion.emphasized(),
+        animationSpec = com.music.spotui.ui.theme.SonvraMotion.emphasized(),
         label = "miniTone",
     )
 
@@ -242,29 +243,29 @@ fun MiniPlayer(navController: NavHostController) {
                 translationY = swipeOffsetY
                 alpha = (1f + swipeOffsetY / 150f).coerceIn(0f, 1f)
             }
-            // Lifted velvet card tinted by the artwork, with a light-catching top edge.
+            // Lifted surface card tinted by the artwork, with a light-catching top edge.
             .shadow(
                 elevation = 12.dp,
-                shape = SoloShape.md,
+                shape = SonvraShape.md,
                 clip = false,
-                ambientColor = ShadowInk,
-                spotColor = ShadowInk,
+                ambientColor = Shadow,
+                spotColor = Shadow,
             )
-            .clip(SoloShape.md)
+            .clip(SonvraShape.md)
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        androidx.compose.ui.graphics.lerp(miniTone, Night, 0.20f),
-                        androidx.compose.ui.graphics.lerp(miniTone, Night, 0.78f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Surface1, 0.20f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Surface1, 0.78f),
                     )
                 )
             )
             .border(
                 width = 1.dp,
                 brush = Brush.verticalGradient(
-                    listOf(Ivory.copy(alpha = 0.14f), Ivory.copy(alpha = 0.03f))
+                    listOf(TextPrimary.copy(alpha = 0.14f), TextPrimary.copy(alpha = 0.03f))
                 ),
-                shape = SoloShape.md,
+                shape = SonvraShape.md,
             )
             .padding(start = 8.dp, end = 8.dp, top = 6.dp)
 
@@ -428,7 +429,7 @@ fun MiniPlayer(navController: NavHostController) {
                     modifier = Modifier
                         .padding(end = 12.dp)
                         .size(44.dp)
-                        .clip(SoloShape.sm),
+                        .clip(SonvraShape.sm),
                     model = songCoverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -445,7 +446,7 @@ fun MiniPlayer(navController: NavHostController) {
                             ExplicitBadge()
                             Spacer(Modifier.width(4.dp))
                         }
-                        Text(text = songTitle, color = Ivory, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        Text(text = songTitle, color = TextPrimary, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     Spacer(Modifier.height(1.dp))
                     Text(text = songSinger, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
@@ -462,7 +463,7 @@ fun MiniPlayer(navController: NavHostController) {
                 if (isLiked) {
                     Icon(
                         imageVector = Icons.Rounded.CheckCircle,
-                        tint = Gold,
+                        tint = Accent,
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
@@ -488,7 +489,7 @@ fun MiniPlayer(navController: NavHostController) {
                             )
                             .padding(12.dp),
                         imageVector = Icons.Rounded.AddCircleOutline,
-                        tint = Ivory,
+                        tint = TextPrimary,
                         contentDescription = "Save to Liked Songs",
                     )
                 }
@@ -501,10 +502,10 @@ fun MiniPlayer(navController: NavHostController) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .soloPress(playSource)
+                        .sonvraPress(playSource)
                         .padding(4.dp)
                         .clip(CircleShape)
-                        .background(com.music.spotui.ui.theme.GoldBrush)
+                        .background(com.music.spotui.ui.theme.AccentBrush)
                         .clickable(
                             interactionSource = playSource,
                             indication = null
@@ -518,19 +519,19 @@ fun MiniPlayer(navController: NavHostController) {
                     if (miniPlayerViewModel.isResolving.value) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = OnGold,
+                            color = OnAccent,
                             strokeWidth = 2.5.dp
                         )
                     } else {
                         androidx.compose.animation.Crossfade(
                             targetState = songPlayingState,
-                            animationSpec = tween(SoloMotion.ICON_MS),
+                            animationSpec = tween(SonvraMotion.ICON_MS),
                             label = "miniPlayPause",
                         ) { playing ->
                             Icon(
                                 imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                                 contentDescription = if (playing) "Pause" else "Play",
-                                tint = OnGold,
+                                tint = OnAccent,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -601,16 +602,16 @@ fun CustomSlider(
 
             // Inactive track
             drawLine(
-                color = Ivory.copy(alpha = 0.14f),
+                color = TextPrimary.copy(alpha = 0.14f),
                 start = Offset(0f, trackY),
                 end = Offset(size.width, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active track in the aurora gradient
+            // Active track in the accent gradient
             if (thumbX > 0f) drawLine(
                 brush = Brush.horizontalGradient(
-                    listOf(com.music.spotui.ui.theme.GoldLight, Gold, com.music.spotui.ui.theme.GoldDeep),
+                    listOf(com.music.spotui.ui.theme.AccentSoft, Accent, com.music.spotui.ui.theme.AccentDeep),
                     startX = 0f,
                     endX = size.width,
                 ),
@@ -631,14 +632,14 @@ fun Snackbar(showMessage : String) {
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Velvet)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(14.dp)),
+            .background(Surface3)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center
     ){
         Text(
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
-            color = Ivory,
+            color = TextPrimary,
             text = showMessage
         )
     }
@@ -677,14 +678,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Gold) // accent
+                    .background(Accent) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
                     painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                     contentDescription = "Play next",
                     // Dark content on the light amber accent keeps the contrast strong.
-                    tint = OnGold,
+                    tint = OnAccent,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -717,8 +718,8 @@ fun AppSearchBar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Velvet)
-            .border(1.dp, Ivory.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .background(Surface3)
+            .border(1.dp, TextPrimary.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
             .height(height)
             .padding(horizontal = 14.dp)
     ) {
@@ -752,12 +753,12 @@ fun AppSearchBar(
             onValueChange = onQueryChange,
             textStyle = TextStyle.Default.copy(
                 fontSize = 15.sp,
-                color = Ivory,
+                color = TextPrimary,
                 fontWeight = FontWeight.Medium
             ),
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Ivory,
-                unfocusedTextColor = Ivory,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
                 focusedPlaceholderColor = TextSecondary,
                 unfocusedPlaceholderColor = TextSecondary,
                 unfocusedContainerColor = Color.Transparent,
@@ -766,7 +767,7 @@ fun AppSearchBar(
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Gold
+                cursorColor = Accent
             ),
             singleLine = true,
             placeholder = {

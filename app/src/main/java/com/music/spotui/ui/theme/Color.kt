@@ -6,71 +6,73 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 
 /*
- * Solo design tokens: "Obsidian Aurora".
+ * Sonvra design tokens: Midnight Azure.
  *
- * An obsidian canvas, a layered surface ramp (each step one visible notch lighter), a
- * single apricot-to-rose "aurora" accent and ivory text. Token names are kept from 3.0
- * (Gold*, Velvet, …) so every screen restyles from here. Screens read colours from here
- * instead of hard-coding hex values, so the whole app stays on one palette.
+ * A graphite-midnight canvas, a layered surface ramp (each step one visible notch lighter)
+ * and one cool, vivid azure signature accent. The azure is premium and calm, and it stays
+ * clear of every competitor's brand hue (green, red, orange, pink-red, purple, teal/cyan).
+ *
+ * Contrast (WCAG): Accent on Canvas 7.2:1, on Surface2 6.3:1; OnAccent on Accent 6.7:1,
+ * on AccentDeep 4.9:1; TextTertiary on Canvas 5.4:1, on Surface2 4.8:1.
+ *
+ * Screens read colours from here instead of hard-coding hex values, so the whole app stays
+ * on one palette.
  */
 
 // Canvas and surface ramp
-val Ink = Color(0xFF08070C)        // app canvas
-val Night = Color(0xFF110F18)      // surface 1: bars, grouped rows
-val Dusk = Color(0xFF181522)       // surface 2: cards, sheets, dialogs
-val Velvet = Color(0xFF211D2E)     // surface 3: inputs, chips, icon wells
-val Amethyst = Color(0xFF2B2640)   // surface 4: selected / pressed
-val RoyalPlum = Color(0xFF1D1636)  // brand plate, gradient crown
-val RoyalViolet = Color(0xFF5B4BD6)
-val Lilac = Color(0xFFAEB6FF)      // secondary accent (status, info)
+val Canvas = Color(0xFF07090D)     // app canvas
+val Surface1 = Color(0xFF0E1117)   // bars, grouped rows
+val Surface2 = Color(0xFF151922)   // cards, sheets, dialogs
+val Surface3 = Color(0xFF1C212C)   // inputs, chips, icon wells
+val Surface4 = Color(0xFF262C3A)   // pressed / selected
+val Midnight = Color(0xFF0F1A33)   // brand plate, gradient crown
 
-// Aurora accent ramp (names kept from the gold era): light apricot, apricot, rose
-val GoldLight = Color(0xFFFFE3C2)
-val Gold = Color(0xFFFFAE70)
-val GoldDeep = Color(0xFFE2566E)
-val OnGold = Color(0xFF1A0D06)     // content drawn on top of gold
+// Azure accent ramp
+val AccentSoft = Color(0xFF9CCBFF)
+val Accent = Color(0xFF5B9BFF)     // signature azure: text, icons and fills
+val AccentDeep = Color(0xFF3F7BFF)
+val OnAccent = Color(0xFF06122A)   // content drawn on accent fills
 
-// Text (all pass WCAG AA on Ink through Velvet)
-val Ivory = Color(0xFFF6F2EC)
-val TextSecondary = Color(0xFFB9B0C4)
-val TextTertiary = Color(0xFF908799)
-val TextDisabled = Color(0xFF5A5366)
+// Text
+val TextPrimary = Color(0xFFF2F5FA)
+val TextSecondary = Color(0xFFA6AFBF)
+val TextTertiary = Color(0xFF7D8698)
+val TextDisabled = Color(0xFF4A5263)
 
 // Lines
-val HairlineSoft = Color(0x14F5F0E6)   // 8% ivory: dividers, card edges
-val HairlineGold = Color(0x2EFFAE70)   // 18% apricot: premium edges on hero surfaces
+val Hairline = Color(0x14F2F5FA)        // 8% white: dividers, card edges
+val HairlineAccent = Color(0x335B9BFF)  // 20% azure: premium edges on hero surfaces
 
 // Status
-val Danger = Color(0xFFF07B7B)
-val DangerSurface = Color(0xFF4A1F2A)
-val Success = Color(0xFF7FD1A3)
-val Warning = Color(0xFFF2C46B)
+val Danger = Color(0xFFFF6B7A)
+val DangerSurface = Color(0xFF3A1720)
+val Success = Color(0xFF4FD1A1)
+val Warning = Color(0xFFFFC15C)
 
 // Scrim behind sheets and dialogs (70% black)
 val Scrim = Color(0xB3000000)
 
-// Shadow for floating chrome (mini player, nav): 35% deep ink
-val ShadowInk = Color(0x5905030A)
+// Shadow for floating chrome (mini player, nav): 40% black
+val Shadow = Color(0x66000000)
 
 // Glass (translucent chrome over scrolling content)
-val GlassFill = Color(0xD9110F18)
-val GlassFillStrong = Color(0xF2110F18)
+val GlassFill = Color(0xD90E1117)
+val GlassFillStrong = Color(0xF20E1117)
 
-/** Shared screen background: a soft violet glow at the top that settles into obsidian. */
+/** Shared screen background: a faint midnight-blue glow at the top that settles into the canvas. */
 val AppBackgroundBrush: Brush = Brush.verticalGradient(
-    0f to Color(0xFF1D1636),
-    0.42f to Ink,
-    1f to Color(0xFF060509),
+    0f to Color(0xFF0E1A33),
+    0.42f to Canvas,
+    1f to Color(0xFF05070A),
 )
 
 /** The accent gradient used for primary actions (play buttons, the Liked tile). */
-val AuroraBrush: Brush = Brush.linearGradient(listOf(GoldLight, Gold, GoldDeep))
-val GoldBrush: Brush = AuroraBrush
+val AccentBrush: Brush = Brush.linearGradient(listOf(AccentSoft, Accent, AccentDeep))
 
 /**
- * Keeps an artwork-derived colour rich but dark enough for ivory text on top
+ * Keeps an artwork-derived colour rich but dark enough for light text on top
  * (saturation <= 0.55, lightness 0.14..0.26), so tinted player and album backgrounds
- * never wash out or clash with the gold accent.
+ * never wash out or clash with the accent.
  */
 fun artworkTone(color: Color): Color {
     val hsl = FloatArray(3)
@@ -79,9 +81,3 @@ fun artworkTone(color: Color): Color {
     hsl[2] = hsl[2].coerceIn(0.14f, 0.26f)
     return Color(ColorUtils.HSLToColor(hsl))
 }
-
-// Compatibility names used across older screens. They all resolve to Solo tokens.
-val AppBackground = Ink
-val AppPalette = Gold
-val Accent = Gold
-val OnAccent = OnGold

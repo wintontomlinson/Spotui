@@ -96,26 +96,24 @@ import com.music.spotui.data.preferences.getUpdateRepoUrl
 import com.music.spotui.data.preferences.setUpdateRepoUrl
 import com.music.spotui.data.preferences.resetUpdateRepoUrl
 import com.music.spotui.data.preferences.DEFAULT_UPDATE_REPO_URL
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.music.spotui.ui.theme.AppBackground
+import com.music.spotui.ui.theme.Canvas
 import com.music.spotui.data.diagnostics.PlaybackLog
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Accent
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.layout.heightIn
-import com.music.spotui.ui.theme.Amethyst
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.OnGold
+import com.music.spotui.ui.theme.Surface4
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -190,13 +188,13 @@ fun SettingsScreen(navController: NavController) {
     }
 
     Scaffold(
-        containerColor = AppBackground,
+        containerColor = Canvas,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
                         "Settings",
-                        color = Ivory,
+                        color = TextPrimary,
                         style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                     )
                 },
@@ -204,14 +202,14 @@ fun SettingsScreen(navController: NavController) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Ivory,
+                        tint = TextPrimary,
                         modifier = Modifier
                             .padding(start = 8.dp)
                             .size(26.dp)
                             .clickable { navController.popBackStack() }
                     )
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = AppBackground)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Canvas)
             )
         }
     ) { padding ->
@@ -328,12 +326,12 @@ fun SettingsScreen(navController: NavController) {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                    .background(Amethyst)
+                    .background(Surface4)
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Clear Audio Stream Cache", color = Ivory, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Clear Audio Stream Cache", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Text("Unlocks all cached streams and forces re-resolution", color = TextTertiary, fontSize = 11.sp)
                 }
                 Icon(
@@ -382,10 +380,10 @@ fun SettingsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Crossfade", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("Crossfade", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Text(
                     if (crossfadeMs <= 0f) "Off" else "${(crossfadeMs / 1000f).let { String.format("%.0f", it) }}s",
-                    color = if (crossfadeMs <= 0f) TextSecondary else AppPalette,
+                    color = if (crossfadeMs <= 0f) TextSecondary else Accent,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
@@ -402,9 +400,9 @@ fun SettingsScreen(navController: NavController) {
                 valueRange = 0f..CROSSFADE_MAX_MS.toFloat(),
                 steps = (CROSSFADE_MAX_MS / 1000) - 1, // 1-second stops
                 colors = SliderDefaults.colors(
-                    thumbColor = AppPalette,
-                    activeTrackColor = AppPalette,
-                    inactiveTrackColor = Velvet,
+                    thumbColor = Accent,
+                    activeTrackColor = Accent,
+                    inactiveTrackColor = Surface3,
                 ),
             )
             Spacer(Modifier.height(12.dp))
@@ -422,7 +420,7 @@ fun SettingsScreen(navController: NavController) {
             ) {
                 Text(
                     "View playback log",
-                    color = AppPalette,
+                    color = Accent,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
@@ -477,7 +475,7 @@ fun SettingsScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Back Up Now", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Back Up Now", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         Text(
                             when {
                                 isBackingUp -> "Creating backup in background…"
@@ -492,14 +490,14 @@ fun SettingsScreen(navController: NavController) {
                     if (isBackingUp) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = AppPalette,
+                            color = Accent,
                             strokeWidth = 2.dp,
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Filled.Save,
                             contentDescription = "Back Up Now",
-                            tint = AppPalette,
+                            tint = Accent,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -519,7 +517,7 @@ fun SettingsScreen(navController: NavController) {
                         Icon(
                             imageVector = Icons.Filled.Folder,
                             contentDescription = "Change Backup Folder",
-                            tint = Ivory,
+                            tint = TextPrimary,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -541,7 +539,7 @@ fun SettingsScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Restore from File", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Restore from File", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
                         if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Sonvra backup file",
                         color = TextSecondary,
@@ -551,14 +549,14 @@ fun SettingsScreen(navController: NavController) {
                 if (isRestoring) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = AppPalette,
+                        color = Accent,
                         strokeWidth = 2.dp,
                     )
                 } else {
                     Icon(
                         imageVector = Icons.Filled.FolderOpen,
                         contentDescription = "Restore",
-                        tint = Ivory,
+                        tint = TextPrimary,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -606,7 +604,7 @@ fun SettingsScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Reset YouTube & Bot Session", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Reset YouTube & Bot Session", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
                         "Clears session tokens, visitor ID, PoToken generator, and resolved stream caches",
                         color = TextSecondary,
@@ -616,7 +614,7 @@ fun SettingsScreen(navController: NavController) {
                 Icon(
                     imageVector = Icons.Filled.Refresh,
                     contentDescription = "Reset Session",
-                    tint = AppPalette,
+                    tint = Accent,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -648,7 +646,7 @@ fun SettingsScreen(navController: NavController) {
             } else {
                 Text(
                     text = "Free mode",
-                    color = Ivory,
+                    color = TextPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(vertical = 6.dp),
@@ -662,7 +660,7 @@ fun SettingsScreen(navController: NavController) {
             }
             Spacer(Modifier.height(12.dp))
             SectionTitle("About")
-            AboutSoloCard()
+            AboutCard()
             Spacer(Modifier.height(40.dp))
         }
 
@@ -677,11 +675,11 @@ fun SettingsScreen(navController: NavController) {
 }
 
 /**
- * About card: the Solo mark on its plum plate, the version, the maintainer and the
- * open-source projects Solo is built on.
+ * About card: the Sonvra mark on its midnight plate, the version, the maintainer and the
+ * open-source projects Sonvra is built on.
  */
 @Composable
-private fun AboutSoloCard() {
+private fun AboutCard() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -689,17 +687,17 @@ private fun AboutSoloCard() {
             .clip(RoundedCornerShape(20.dp))
             .background(
                 androidx.compose.ui.graphics.Brush.verticalGradient(
-                    listOf(com.music.spotui.ui.theme.RoyalPlum, Dusk)
+                    listOf(com.music.spotui.ui.theme.Midnight, Surface2)
                 )
             )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(20.dp))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(20.dp))
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
-        com.music.spotui.ui.components.SoloMark(height = 52.dp)
+        com.music.spotui.ui.components.SonvraMark(height = 52.dp)
         Spacer(Modifier.height(14.dp))
         Text(
             "Sonvra",
-            color = Gold,
+            color = Accent,
             style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
         )
         Text(
@@ -710,7 +708,7 @@ private fun AboutSoloCard() {
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Maintained with ♥ by ", color = TextTertiary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            Text("SATYAN SHARMA", color = Ivory, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("SATYAN SHARMA", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(10.dp))
         Text(
@@ -725,8 +723,8 @@ private fun AboutSoloCard() {
 
 // Shared surfaces so every settings group reads as one consistent card system.
 private val SettingsAccent = com.music.spotui.ui.theme.Accent
-private val SettingsCard = Dusk
-private val SettingsHairline = Gold.copy(alpha = 0.1f)
+private val SettingsCard = Surface2
+private val SettingsHairline = Accent.copy(alpha = 0.1f)
 private val SettingsTextDim = TextSecondary
 
 /**
@@ -781,7 +779,7 @@ private fun SettingsClickRow(
             Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
             Text(subtitle, color = subtitleColor, fontSize = 12.sp, lineHeight = 16.sp)
         }
@@ -811,7 +809,7 @@ private fun SettingsSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = Ivory, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
             Text(subtitle, color = SettingsTextDim, fontSize = 12.sp, lineHeight = 16.sp)
         }
@@ -821,10 +819,10 @@ private fun SettingsSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 // Amber is a light accent, so the thumb goes dark when active.
-                checkedThumbColor = OnGold,
+                checkedThumbColor = OnAccent,
                 checkedTrackColor = SettingsAccent,
                 uncheckedThumbColor = TextSecondary,
-                uncheckedTrackColor = Velvet,
+                uncheckedTrackColor = Surface3,
             ),
         )
     }
@@ -847,7 +845,7 @@ private fun QualityPicker(
     ) {
         Text(
             title,
-            color = Ivory,
+            color = TextPrimary,
             fontSize = 15.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 14.dp),
@@ -866,7 +864,7 @@ private fun QualityPicker(
                 Column(Modifier.weight(1f)) {
                     Text(
                         q.label,
-                        color = if (isSel) SettingsAccent else Ivory,
+                        color = if (isSel) SettingsAccent else TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal,
                     )
@@ -900,11 +898,11 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Dusk,
+        containerColor = Surface2,
         title = {
             Text(
                 "Playback log",
-                color = Ivory,
+                color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -936,7 +934,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", color = AppPalette, fontWeight = FontWeight.SemiBold)
+                Text("Close", color = Accent, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {

@@ -42,8 +42,8 @@ import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ink
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.Canvas
 import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -62,13 +62,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import com.music.spotui.ui.components.SoloMotion
-import com.music.spotui.ui.components.soloClickable
+import com.music.spotui.ui.theme.SonvraMotion
+import com.music.spotui.ui.components.sonvraClickable
 import com.music.spotui.ui.theme.GlassFill
 import com.music.spotui.ui.theme.GlassFillStrong
-import com.music.spotui.ui.theme.HairlineGold
-import com.music.spotui.ui.theme.HairlineSoft
-import com.music.spotui.ui.theme.ShadowInk
+import com.music.spotui.ui.theme.HairlineAccent
+import com.music.spotui.ui.theme.Hairline
+import com.music.spotui.ui.theme.Shadow
 import com.music.spotui.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -99,7 +99,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
             // 0f = fully expanded (idle / at top), 1f = compressed (scrolling down).
             val compression by animateFloatAsState(
                 targetValue = NavBarScrollState.compression,
-                animationSpec = tween(SoloMotion.NAV_MS),
+                animationSpec = tween(SonvraMotion.NAV_MS),
                 label = "navBarCompression",
             )
             // As the user scrolls down, the floating bar shrinks toward the bottom,
@@ -118,8 +118,8 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Ink.copy(alpha = 0.55f),
-                                Ink.copy(alpha = 0.92f),
+                                Canvas.copy(alpha = 0.55f),
+                                Canvas.copy(alpha = 0.92f),
                             ),
                             startY = 0f
                         )
@@ -169,23 +169,23 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 elevation = 12.dp,
                                 shape = pillShape,
                                 clip = false,
-                                ambientColor = ShadowInk,
-                                spotColor = ShadowInk,
+                                ambientColor = Shadow,
+                                spotColor = Shadow,
                             )
                             .clip(pillShape)
                             .background(glass)
                             .border(
                                 width = 1.dp,
-                                brush = Brush.verticalGradient(listOf(HairlineGold, HairlineSoft)),
+                                brush = Brush.verticalGradient(listOf(HairlineAccent, Hairline)),
                                 shape = pillShape,
                             ),
                     ) {
-                        // Aurora pill that slides under the selected tab.
+                        // Accent pill that slides under the selected tab.
                         val tabWidth = maxWidth / navItems.size
                         val selectedIndex = navItems.indexOfFirst { it.route == currentTab }.coerceAtLeast(0)
                         val pillOffset by androidx.compose.animation.core.animateDpAsState(
                             targetValue = tabWidth * selectedIndex,
-                            animationSpec = com.music.spotui.ui.theme.Motion.spring(),
+                            animationSpec = com.music.spotui.ui.theme.SonvraMotion.spring(),
                             label = "navPill",
                         )
                         Box(
@@ -198,13 +198,13 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 .background(
                                     Brush.linearGradient(
                                         listOf(
-                                            com.music.spotui.ui.theme.GoldLight.copy(alpha = 0.20f),
-                                            Gold.copy(alpha = 0.16f),
-                                            com.music.spotui.ui.theme.GoldDeep.copy(alpha = 0.20f),
+                                            com.music.spotui.ui.theme.AccentSoft.copy(alpha = 0.20f),
+                                            Accent.copy(alpha = 0.16f),
+                                            com.music.spotui.ui.theme.AccentDeep.copy(alpha = 0.20f),
                                         )
                                     )
                                 )
-                                .border(1.dp, HairlineGold, RoundedCornerShape(20.dp)),
+                                .border(1.dp, HairlineAccent, RoundedCornerShape(20.dp)),
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -282,8 +282,8 @@ private fun NavTab(
     onClick: () -> Unit,
 ) {
     val tint by animateColorAsState(
-        targetValue = if (selected) Gold else TextSecondary,
-        animationSpec = tween(SoloMotion.NAV_MS),
+        targetValue = if (selected) Accent else TextSecondary,
+        animationSpec = tween(SonvraMotion.NAV_MS),
         label = "navTint",
     )
     Column(
@@ -292,7 +292,7 @@ private fun NavTab(
         modifier = modifier
             .fillMaxHeight()
             .heightIn(min = 48.dp)
-            .soloClickable(onClick = onClick)
+            .sonvraClickable(onClick = onClick)
             .semantics { this.selected = selected; role = Role.Tab },
     ) {
         Icon(

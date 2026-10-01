@@ -74,15 +74,14 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.ShowViewModel
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -130,13 +129,13 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(Color(Canvas.toArgb()))
                 .statusBarsPadding(),
         ) {
             item {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    tint = Ivory,
+                    tint = TextPrimary,
                     contentDescription = "Back",
                     modifier = Modifier
                         .padding(16.dp)
@@ -162,9 +161,9 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = show?.name ?: showName,
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 28.sp,
-                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -176,7 +175,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         Spacer(Modifier.height(12.dp))
                         Icon(
                             painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
-                            tint = Ivory,
+                            tint = TextPrimary,
                             modifier = Modifier
                                 .size(24.dp)
                                 .clickable(
@@ -223,20 +222,20 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Velvet)
+                                .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
-                                color = Ivory,
+                                color = TextPrimary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
-                                tint = Ivory,
+                                tint = TextPrimary,
                                 modifier = Modifier
                                     .size(16.dp)
                                     .padding(start = 4.dp)
@@ -256,7 +255,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                     ) {
                         Text(
                             text = "No matches found for \"$searchQuery\"",
-                            color = Ivory,
+                            color = TextPrimary,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -279,7 +278,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(AppBackground)
+                                .background(Canvas)
                                 .combinedClickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -302,7 +301,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Column(modifier = Modifier.padding(start = 12.dp)) {
                                 Text(
                                     ep.title,
-                                    color = if (ep.id == vm.currentSongId.value) Gold else Ivory,
+                                    color = if (ep.id == vm.currentSongId.value) Accent else TextPrimary,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 2,
@@ -320,9 +319,9 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Dusk,
-                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
-                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                containerColor = Surface2,
+                shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
                 scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(
@@ -332,12 +331,12 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Velvet)
+                    HorizontalDivider(color = Surface3)
                     Spacer(modifier = Modifier.height(4.dp))
                     ShowSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -366,13 +365,13 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == ShowSortOption.DATE),
-                                color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                 fontSize = 15.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -380,7 +379,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(AppPalette.toArgb()),
+                                    tint = Color(Accent.toArgb()),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }

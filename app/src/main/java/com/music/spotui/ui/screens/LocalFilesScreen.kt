@@ -58,15 +58,15 @@ import com.music.spotui.data.preferences.addLocalTracks
 import com.music.spotui.data.preferences.getLocalSongs
 import com.music.spotui.data.preferences.removeLocalTrack
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -74,7 +74,7 @@ fun LocalFilesScreen(navController: NavController) {
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val accent = AppPalette
+    val accent = Accent
 
     var songs by remember { mutableStateOf(getLocalSongs(context)) }
     var importing by remember { mutableStateOf(false) }
@@ -117,7 +117,7 @@ fun LocalFilesScreen(navController: NavController) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize().background(Color(AppBackground.toArgb())),
+        modifier = Modifier.fillMaxSize().background(Color(Canvas.toArgb())),
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -132,30 +132,30 @@ fun LocalFilesScreen(navController: NavController) {
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Ivory,
+                            tint = TextPrimary,
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Ivory,
+                        titleContentColor = TextPrimary,
                     ),
-                    title = { Text("Local files", color = Ivory, fontWeight = FontWeight.Bold) },
+                    title = { Text("Local files", color = TextPrimary, fontWeight = FontWeight.Bold) },
                 )
             },
         ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(AppBackground.toArgb()))
+                    .background(Color(Canvas.toArgb()))
                     .consumeWindowInsets(innerPadding)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding())
                     .verticalScroll(rememberScrollState()),
             ) {
                 Text(
                     text = "On this device",
-                    color = Ivory,
+                    color = TextPrimary,
                     fontSize = 28.sp,
-                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(20.dp, 8.dp, 20.dp, 2.dp),
                 )
@@ -174,7 +174,7 @@ fun LocalFilesScreen(navController: NavController) {
                     ImportButton("Add songs", accent, Modifier.weight(1f), enabled = !importing) {
                         addSongs.launch(arrayOf("audio/*"))
                     }
-                    ImportButton("Add folder", Velvet, Modifier.weight(1f), enabled = !importing) {
+                    ImportButton("Add folder", Surface3, Modifier.weight(1f), enabled = !importing) {
                         addFolder.launch(null)
                     }
                 }
@@ -190,7 +190,7 @@ fun LocalFilesScreen(navController: NavController) {
                 Spacer(Modifier.height(8.dp))
 
                 if (songs.isEmpty()) {
-                    com.music.spotui.ui.components.SoloEmptyState(
+                    com.music.spotui.ui.components.SonvraEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.LibraryMusic,
                         title = "No local music yet",
                         message = "Tap “Add songs” or “Add folder” to import music from your device.",
@@ -199,7 +199,7 @@ fun LocalFilesScreen(navController: NavController) {
                 } else {
                     songs.forEachIndexed { index, song ->
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(AppPalette.toArgb()) else Ivory
+                            Color(Accent.toArgb()) else TextPrimary
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -261,13 +261,13 @@ private fun ImportButton(
 ) {
     Text(
         text = label,
-        color = if (container == Velvet) Ivory else Color.Black,
+        color = if (container == Surface3) TextPrimary else Color.Black,
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(if (enabled) container else Velvet)
+            .background(if (enabled) container else Surface3)
             .clickable(enabled = enabled) { onClick() }
             .padding(vertical = 12.dp),
     )

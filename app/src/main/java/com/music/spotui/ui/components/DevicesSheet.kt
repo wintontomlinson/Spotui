@@ -56,11 +56,11 @@ import com.music.spotui.R
 import com.music.spotui.ui.utils.AudioDeviceHelper
 import com.music.spotui.ui.utils.AudioDeviceItem
 import com.music.spotui.ui.utils.AudioDeviceType
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,10 +91,10 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = com.music.spotui.ui.theme.Dusk,
-        contentColor = Ivory,
-        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
-        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        containerColor = com.music.spotui.ui.theme.Surface2,
+        contentColor = TextPrimary,
+        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
@@ -115,13 +115,13 @@ fun DevicesSheet(
                     Icon(
                         painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
-                        tint = Gold,
+                        tint = Accent,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Connect to a device",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -140,7 +140,7 @@ fun DevicesSheet(
                 )
             }
 
-            HorizontalDivider(color = Velvet, thickness = 1.dp)
+            HorizontalDivider(color = Surface3, thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
             // Bluetooth Permission Banner if needed (Android 12+)
@@ -151,12 +151,12 @@ fun DevicesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Velvet)
+                        .background(Surface3)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Grant permission to discover paired Bluetooth devices",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 12.sp,
                         modifier = Modifier.weight(1f)
                     )
@@ -164,7 +164,7 @@ fun DevicesSheet(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Gold)
+                            .background(Accent)
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                             }
@@ -172,7 +172,7 @@ fun DevicesSheet(
                     ) {
                         Text(
                             text = "Grant",
-                            color = com.music.spotui.ui.theme.OnGold,
+                            color = com.music.spotui.ui.theme.OnAccent,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -198,20 +198,20 @@ fun DevicesSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Gold.copy(alpha = 0.15f))
+                        .background(Accent.copy(alpha = 0.15f))
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
                         painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
-                        tint = Gold,
+                        tint = Accent,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = activeDevice.name,
-                            color = Gold,
+                            color = Accent,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -219,14 +219,14 @@ fun DevicesSheet(
                         )
                         Text(
                             text = "Listening on this device",
-                            color = Gold.copy(alpha = 0.8f),
+                            color = Accent.copy(alpha = 0.8f),
                             fontSize = 12.sp
                         )
                     }
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Active",
-                        tint = Gold,
+                        tint = Accent,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -264,7 +264,7 @@ fun DevicesSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Velvet, thickness = 1.dp)
+            HorizontalDivider(color = Surface3, thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
             // Open System Audio Switcher / Bluetooth Settings Action Row
@@ -284,12 +284,12 @@ fun DevicesSheet(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Velvet)
+                        .background(Surface3)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null,
-                        tint = Ivory,
+                        tint = TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -297,7 +297,7 @@ fun DevicesSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "System Audio Switcher",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -319,8 +319,8 @@ private fun DeviceItemRow(
     item: AudioDeviceItem,
     onClick: () -> Unit
 ) {
-    val textColor = if (item.isActive) Gold else Ivory
-    val iconColor = if (item.isActive) Gold else TextSecondary
+    val textColor = if (item.isActive) Accent else TextPrimary
+    val iconColor = if (item.isActive) Accent else TextSecondary
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -376,7 +376,7 @@ private fun DeviceItemRow(
             }
             Text(
                 text = subText,
-                color = if (item.isActive) Gold.copy(alpha = 0.8f) else TextTertiary,
+                color = if (item.isActive) Accent.copy(alpha = 0.8f) else TextTertiary,
                 fontSize = 11.sp
             )
         }
@@ -385,7 +385,7 @@ private fun DeviceItemRow(
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Active",
-                tint = Gold,
+                tint = Accent,
                 modifier = Modifier.size(18.dp)
             )
         }

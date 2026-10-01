@@ -41,11 +41,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
-import com.music.spotui.ui.theme.Velvet
-
-private val SoloGold = Gold
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.Surface3
 
 // Fixed thumb height, never changes during scroll
 private val THUMB_HEIGHT = 48.dp
@@ -57,7 +55,7 @@ private val THUMB_HEIGHT = 48.dp
 fun FastScrollbarForLazyList(
     state: LazyListState,
     modifier: Modifier = Modifier,
-    activeColor: Color = SoloGold,
+    activeColor: Color = Accent,
     showBadge: Boolean = true,
 ) {
     val totalItems = state.layoutInfo.totalItemsCount
@@ -163,7 +161,7 @@ fun FastScrollbarForLazyList(
                     val currentTrackIndex = (state.firstVisibleItemIndex + 1).coerceAtMost(totalItems)
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = Velvet,
+                        color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -177,7 +175,7 @@ fun FastScrollbarForLazyList(
                     ) {
                         Text(
                             text = "$currentTrackIndex / $totalItems",
-                            color = Ivory,
+                            color = TextPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -211,7 +209,7 @@ fun FastScrollbarForLazyList(
 fun FastScrollbarForScrollState(
     state: ScrollState,
     modifier: Modifier = Modifier,
-    activeColor: Color = SoloGold,
+    activeColor: Color = Accent,
     showBadge: Boolean = true,
 ) {
     if (state.maxValue <= 0) return
@@ -302,7 +300,7 @@ fun FastScrollbarForScrollState(
                     val percent = (scrollProgress * 100).roundToInt()
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = Velvet,
+                        color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -316,7 +314,7 @@ fun FastScrollbarForScrollState(
                     ) {
                         Text(
                             text = "$percent%",
-                            color = Ivory,
+                            color = TextPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,

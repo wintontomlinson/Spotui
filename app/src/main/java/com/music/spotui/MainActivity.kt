@@ -21,7 +21,7 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.notification.PlaybackService
-import com.music.spotui.ui.theme.SoloTheme
+import com.music.spotui.ui.theme.SonvraTheme
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = false
         setContent {
 
-            SoloTheme {
+            SonvraTheme {
                 App()
 
                 // New-release check (GitHub): prompts Upgrade / Dismiss / Don't show again.

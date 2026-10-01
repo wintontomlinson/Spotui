@@ -67,11 +67,11 @@ import com.music.spotui.data.preferences.isSongLiked
 import com.music.spotui.data.preferences.removeLikedSongId
 import com.music.spotui.di.Palette
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 // SwipeToPlayNextWrapper is in the same package and automatically visible
@@ -95,7 +95,7 @@ fun LikedSongsScreen(
     var likedSongs by remember { mutableStateOf(emptyList<SongsModel>()) }
 
     var dominentColor by remember {
-        mutableStateOf(Color(AppBackground.toArgb()))
+        mutableStateOf(Color(Canvas.toArgb()))
     }
     // Once per cover, not on every recomposition.
     LaunchedEffect(likedAlbumCover) {
@@ -128,11 +128,11 @@ fun LikedSongsScreen(
                         },
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "",
-                        tint = Ivory)
+                        tint = TextPrimary)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = Ivory,
+                    titleContentColor = TextPrimary,
                 ),
                 title = {
                     Text(text = "")
@@ -144,7 +144,7 @@ fun LikedSongsScreen(
 
         Column(modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(Color(Canvas.toArgb()))
             .verticalScroll(rememberScrollState())
         ) {
 
@@ -154,7 +154,7 @@ fun LikedSongsScreen(
                     .height(380.dp)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dominentColor, Color(AppBackground.toArgb())),
+                            colors = listOf(dominentColor, Color(Canvas.toArgb())),
                             startY = -100f,
 
                             ),
@@ -195,9 +195,9 @@ fun LikedSongsScreen(
                     ) {
                         Text(modifier = Modifier,
                             text = "Liked Songs",
-                            color = Ivory,
+                            color = TextPrimary,
                             fontSize = 28.sp,
-                            fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                            fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                             fontWeight = FontWeight.SemiBold)
                         Text(modifier = Modifier,
                             text = " ${likedSongs.size} songs",
@@ -215,7 +215,7 @@ fun LikedSongsScreen(
                         if (likedSongs.isNotEmpty()) {
                             Icon(
                                 painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
-                                tint = Ivory,
+                                tint = TextPrimary,
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable(
@@ -238,9 +238,9 @@ fun LikedSongsScreen(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(56.dp)
-                                    .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.GoldDeep, spotColor = com.music.spotui.ui.theme.GoldDeep)
+                                    .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.AccentDeep, spotColor = com.music.spotui.ui.theme.AccentDeep)
                                     .clip(CircleShape)
-                                    .background(com.music.spotui.ui.theme.GoldBrush)
+                                    .background(com.music.spotui.ui.theme.AccentBrush)
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
@@ -265,7 +265,7 @@ fun LikedSongsScreen(
                             ) {
                                 Icon(
                                     modifier = Modifier.size(25.dp),
-                                    tint = com.music.spotui.ui.theme.OnGold,
+                                    tint = com.music.spotui.ui.theme.OnAccent,
                                     painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                                     contentDescription = ""
                                 )
@@ -302,7 +302,7 @@ fun LikedSongsScreen(
                     }
                     val songId = likedSongs[song].id
                     val currentPlayingIndicatorColor = if(songId == albumViewModel.currentSongId.value) Color(
-                        AppPalette.toArgb()) else Ivory
+                        Accent.toArgb()) else TextPrimary
 
                     SwipeToPlayNextWrapper(
                         onPlayNext = {
@@ -319,7 +319,7 @@ fun LikedSongsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(AppBackground)
+                                .background(Canvas)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null

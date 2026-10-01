@@ -58,11 +58,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 @Composable
 fun UpdatePrompt() {
@@ -78,8 +78,8 @@ fun UpdatePrompt() {
     AlertDialog(
         onDismissRequest = { update = null },
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = Dusk,
-        titleContentColor = Ivory,
+        containerColor = Surface2,
+        titleContentColor = TextPrimary,
         title = {
             Text("Update available, ${info.version}")
         },
@@ -108,7 +108,7 @@ fun UpdatePrompt() {
                 }
                 update = null
             }) {
-                Text("Update", color = Gold)
+                Text("Update", color = Accent)
             }
         },
         dismissButton = {
@@ -119,7 +119,7 @@ fun UpdatePrompt() {
                 Text("Don't show again", color = TextSecondary)
             }
             TextButton(onClick = { update = null }) {
-                Text("Dismiss", color = Ivory)
+                Text("Dismiss", color = TextPrimary)
             }
         },
     )
@@ -240,7 +240,7 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = Ivory
+                    tint = TextPrimary
                 )
             }
         }
@@ -250,8 +250,8 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
 @Composable
 private fun RenderMarkdown(markdown: String) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    val linkColor = Gold
-    val headingColor = Ivory
+    val linkColor = Accent
+    val headingColor = TextPrimary
     val bodyColor = TextSecondary
 
     var enlargedImageUrl by remember { mutableStateOf<String?>(null) }
@@ -306,7 +306,7 @@ private fun RenderMarkdown(markdown: String) {
             trimmed == "---" || trimmed == "***" || trimmed == "___"
                 || (trimmed.length >= 3 && trimmed.all { it == '_' || it == '-' || it == '*' }) -> {
                 HorizontalDivider(
-                    color = Velvet,
+                    color = Surface3,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
             }

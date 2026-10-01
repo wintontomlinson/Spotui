@@ -60,20 +60,19 @@ import com.music.spotui.ui.navigation.navBarScroll
 import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.GoldLight
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.components.shimmer
 import androidx.compose.material.icons.rounded.Settings
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.OnAccent
+import com.music.spotui.ui.theme.Hairline
 
-// Accent comes from the single source of truth in the theme package.
-private val Accent = com.music.spotui.ui.theme.Accent
-private val OnAccent = com.music.spotui.ui.theme.OnAccent
-private val Surface = Dusk
-private val SurfaceHigh = Velvet
-private val Hairline = Ivory.copy(alpha = 0.08f)
+private val Surface = Surface2
+private val SurfaceHigh = Surface3
 private val TextDim = TextSecondary
 
 /**
@@ -135,13 +134,13 @@ fun FreeHomeScreen(navController: NavController) {
             .fillMaxSize()
             .background(com.music.spotui.ui.theme.AppBackgroundBrush),
         indicator = {
-            // Themed refresh effect: a gold spinner on a deep-cyan pill so the
-            // reload gesture matches the app's cyan+gold look.
+            // Themed refresh effect: an accent spinner on a surface pill so the
+            // reload gesture matches the app's Midnight Azure look.
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
                 state = pullState,
                 isRefreshing = isRefreshing,
                 modifier = Modifier.align(Alignment.TopCenter),
-                containerColor = com.music.spotui.ui.theme.Dusk,
+                containerColor = com.music.spotui.ui.theme.Surface2,
                 color = Accent,
             )
         },
@@ -210,7 +209,7 @@ fun FreeHomeScreen(navController: NavController) {
     } // PullToRefreshBox
 }
 
-/** Masthead: the Solo wordmark with a settings shortcut, then a time-aware greeting. */
+/** Masthead: the Sonvra wordmark with a settings shortcut, then a time-aware greeting. */
 @Composable
 private fun HomeHeader(onOpenSettings: () -> Unit) {
     Column(
@@ -219,9 +218,9 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
             .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            com.music.spotui.ui.components.SoloWordmark(markHeight = 24.dp, textSize = 24.sp)
+            com.music.spotui.ui.components.SonvraWordmark(markHeight = 24.dp, textSize = 24.sp)
             Spacer(Modifier.weight(1f))
-            com.music.spotui.ui.components.SoloIconButton(
+            com.music.spotui.ui.components.SonvraIconButton(
                 icon = androidx.compose.material.icons.Icons.Rounded.Settings,
                 contentDescription = "Settings",
                 onClick = onOpenSettings,
@@ -233,7 +232,7 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
         Text(
             text = greeting(),
             style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
-            color = Ivory,
+            color = TextPrimary,
         )
         Spacer(Modifier.height(4.dp))
         Text(
@@ -278,7 +277,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 Text(
                     text = "${index + 1}",
                     color = if (index < 3) Accent else TextDim,
-                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                     fontSize = if (index < 3) 20.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -302,7 +301,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 ) {
                     Text(
                         text = song.title,
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -338,7 +337,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 
 @Composable
 private fun SectionHeader(title: String) {
-    com.music.spotui.ui.components.SoloSectionHeader(title = title)
+    com.music.spotui.ui.components.SonvraSectionHeader(title = title)
 }
 
 private val MOODS = listOf(
@@ -359,7 +358,7 @@ private fun MoodChips(onPick: (String) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(MOODS, key = { it.first }) { (label, query) ->
-            com.music.spotui.ui.components.SoloChip(
+            com.music.spotui.ui.components.SonvraChip(
                 label = label,
                 selected = false,
                 onClick = { onPick(query) },
@@ -370,7 +369,7 @@ private fun MoodChips(onPick: (String) -> Unit) {
 
 /**
  * "Mix for you" hero: a 2×2 artwork collage of the first four tracks, the title and
- * a primary Play mix pill, on an aurora-edged card.
+ * a primary Play mix pill, on an accent-edged card.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -383,10 +382,10 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
             .clip(RoundedCornerShape(24.dp))
             .background(
                 Brush.linearGradient(
-                    listOf(com.music.spotui.ui.theme.RoyalPlum, Surface, SurfaceHigh),
+                    listOf(com.music.spotui.ui.theme.Midnight, Surface, SurfaceHigh),
                 ),
             )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(24.dp))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(24.dp))
             .padding(14.dp),
     ) {
         Box(
@@ -429,7 +428,7 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
             Text(
                 text = "Mix for you",
                 style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                color = Ivory,
+                color = TextPrimary,
                 maxLines = 1,
             )
             Spacer(Modifier.height(2.dp))
@@ -440,7 +439,7 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
                 maxLines = 2,
             )
             Spacer(Modifier.height(10.dp))
-            com.music.spotui.ui.components.SoloPillButton(
+            com.music.spotui.ui.components.SonvraPillButton(
                 text = "Play mix",
                 icon = Icons.Default.PlayArrow,
                 onClick = onPlay,
@@ -481,7 +480,7 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
                         )
                         Text(
                             text = song.title,
-                            color = Ivory,
+                            color = TextPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 2,
@@ -510,7 +509,7 @@ private fun ArtistCircle(name: String, image: String, onClick: () -> Unit) {
             modifier = Modifier
                 .size(84.dp)
                 .clip(CircleShape)
-                .background(com.music.spotui.ui.theme.GoldBrush)
+                .background(com.music.spotui.ui.theme.AccentBrush)
                 .padding(2.dp)
                 .clip(CircleShape)
                 .background(Surface),
@@ -527,7 +526,7 @@ private fun ArtistCircle(name: String, image: String, onClick: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Text(
             text = name,
-            color = Ivory,
+            color = TextPrimary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
@@ -624,7 +623,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
         Spacer(Modifier.height(9.dp))
         Text(
             text = song.title,
-            color = Ivory,
+            color = TextPrimary,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 2,

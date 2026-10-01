@@ -82,16 +82,15 @@ import com.music.spotui.data.preferences.getDownloadsSortOption
 import com.music.spotui.data.preferences.isDownloadsSortDescending
 import com.music.spotui.data.preferences.setDownloadsSortOption
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
-import com.music.spotui.ui.theme.Dusk
-import com.music.spotui.ui.theme.Gold
-import com.music.spotui.ui.theme.Ivory
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
-import com.music.spotui.ui.theme.Velvet
+import com.music.spotui.ui.theme.Surface3
 
 fun DownloadSortOption.getDescriptiveLabel(isDescending: Boolean): String {
     return when (this) {
@@ -165,12 +164,12 @@ fun DownloadsScreen(navController: NavController) {
         }
     }
 
-    val accent = Gold
+    val accent = Accent
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(Color(Canvas.toArgb()))
     ) {
         Scaffold(
             topBar = {
@@ -184,12 +183,12 @@ fun DownloadsScreen(navController: NavController) {
                             ) { navController.navigateUp() },
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "",
-                            tint = Ivory
+                            tint = TextPrimary
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Ivory,
+                        titleContentColor = TextPrimary,
                     ),
                     title = { Text(text = "") }
                 )
@@ -200,7 +199,7 @@ fun DownloadsScreen(navController: NavController) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(AppBackground.toArgb()))
+                        .background(Color(Canvas.toArgb()))
                         .verticalScroll(scrollState)
                 ) {
                 Column(
@@ -211,7 +210,7 @@ fun DownloadsScreen(navController: NavController) {
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     accent.copy(alpha = 0.5f),
-                                    Color(AppBackground.toArgb())
+                                    Color(Canvas.toArgb())
                                 ),
                                 startY = -100f,
                             ),
@@ -238,9 +237,9 @@ fun DownloadsScreen(navController: NavController) {
                     Text(
                         modifier = Modifier.padding(20.dp, 5.dp, 0.dp, 0.dp),
                         text = "Downloaded",
-                        color = Ivory,
+                        color = TextPrimary,
                         fontSize = 28.sp,
-                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
@@ -273,20 +272,20 @@ fun DownloadsScreen(navController: NavController) {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Velvet)
+                                .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
-                                color = Ivory,
+                                color = TextPrimary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
-                                tint = Ivory,
+                                tint = TextPrimary,
                                 modifier = Modifier
                                     .size(16.dp)
                                     .padding(start = 4.dp)
@@ -304,7 +303,7 @@ fun DownloadsScreen(navController: NavController) {
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(Dusk)
+                                .background(Surface2)
                                 .clickable {
                                     showClearConfirmDialog = true
                                 }
@@ -342,7 +341,7 @@ fun DownloadsScreen(navController: NavController) {
                                 }
                                 Text(
                                     text = song.title,
-                                    color = Ivory,
+                                    color = TextPrimary,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1
@@ -356,7 +355,7 @@ fun DownloadsScreen(navController: NavController) {
                                     .height(4.dp)
                                     .clip(RoundedCornerShape(2.dp)),
                                 color = accent,
-                                trackColor = Velvet,
+                                trackColor = Surface3,
                             )
                         }
                         Text(
@@ -370,14 +369,14 @@ fun DownloadsScreen(navController: NavController) {
                 }
 
                 if (songs.isEmpty() && inProgress.isEmpty()) {
-                    com.music.spotui.ui.components.SoloEmptyState(
+                    com.music.spotui.ui.components.SonvraEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.DownloadForOffline,
                         title = "No downloads yet",
                         message = "Tap ⋯ on any track and choose Download to keep it for offline listening.",
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else if (displayedSongs.isEmpty() && inProgress.isEmpty()) {
-                    com.music.spotui.ui.components.SoloEmptyState(
+                    com.music.spotui.ui.components.SonvraEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                         title = "No matches",
                         message = "Nothing in your downloads matches \"$searchQuery\".",
@@ -387,7 +386,7 @@ fun DownloadsScreen(navController: NavController) {
                     repeat(displayedSongs.size) { index ->
                         val song = displayedSongs[index]
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(AppPalette.toArgb()) else Ivory
+                            Color(Accent.toArgb()) else TextPrimary
 
                         SwipeToPlayNextWrapper(
                             onPlayNext = {
@@ -404,7 +403,7 @@ fun DownloadsScreen(navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(AppBackground)
+                                    .background(Canvas)
                                     .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
@@ -471,9 +470,9 @@ fun DownloadsScreen(navController: NavController) {
             if (showSortSheet) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
-                        containerColor = Dusk,
-                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
-                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                        containerColor = Surface2,
+                        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
                         scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(
@@ -483,12 +482,12 @@ fun DownloadsScreen(navController: NavController) {
                         ) {
                             Text(
                                 text = "Sort by",
-                                color = Ivory,
+                                color = TextPrimary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                             )
-                            HorizontalDivider(color = Velvet)
+                            HorizontalDivider(color = Surface3)
                             Spacer(modifier = Modifier.height(4.dp))
                             DownloadSortOption.entries.forEach { option ->
                                 val isSelected = option == currentSort
@@ -517,13 +516,13 @@ fun DownloadsScreen(navController: NavController) {
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                        tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                         modifier = Modifier.size(22.dp)
                                     )
                                     Spacer(modifier = Modifier.width(18.dp))
                                     Text(
                                         text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == DownloadSortOption.DATE),
-                                        color = if (isSelected) Color(AppPalette.toArgb()) else Ivory,
+                                        color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
                                         fontSize = 15.sp,
                                         modifier = Modifier.weight(1f)
                                     )
@@ -531,7 +530,7 @@ fun DownloadsScreen(navController: NavController) {
                                         Icon(
                                             imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                             contentDescription = null,
-                                            tint = Color(AppPalette.toArgb()),
+                                            tint = Color(Accent.toArgb()),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -544,7 +543,7 @@ fun DownloadsScreen(navController: NavController) {
                 if (showClearConfirmDialog) {
                     AlertDialog(
                         onDismissRequest = { showClearConfirmDialog = false },
-                        title = { Text(text = "Clear all downloads?", color = Ivory, fontWeight = FontWeight.Bold) },
+                        title = { Text(text = "Clear all downloads?", color = TextPrimary, fontWeight = FontWeight.Bold) },
                         text = { Text(text = "Are you sure you want to remove all downloaded songs? This action cannot be undone.", color = TextSecondary) },
                         confirmButton = {
                             TextButton(onClick = {
@@ -562,11 +561,11 @@ fun DownloadsScreen(navController: NavController) {
                         },
                         dismissButton = {
                             TextButton(onClick = { showClearConfirmDialog = false }) {
-                                Text("Cancel", color = Ivory)
+                                Text("Cancel", color = TextPrimary)
                             }
                         },
-                        containerColor = Dusk,
-                        titleContentColor = Ivory,
+                        containerColor = Surface2,
+                        titleContentColor = TextPrimary,
                         textContentColor = TextSecondary,
                     )
                 }

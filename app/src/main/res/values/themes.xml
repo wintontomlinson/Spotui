@@ -3,7 +3,7 @@
 
     <!-- App theme after the splash: dark midnight window so there is never a white flash
          between the splash and the Compose UI. -->
-    <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Sonvra" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
     <style name="splashScreenTheme" parent="Theme.SplashScreen">
@@ -12,7 +12,7 @@
              the Android 12+ splash icon mask. -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="postSplashScreenTheme">@style/Theme.Solo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Sonvra</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
