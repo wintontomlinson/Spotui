@@ -18,6 +18,8 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 
 The icon is **Solo Facet**: an original four-facet gem lit from the top right, with a single dot for "solo".
 
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 3.1.0.
+
 ## Install
 
 Download the latest APK from [Releases](https://github.com/wintontomlinson/Spotui/releases) and sideload it (Android 8.0 or later). Allow "install from unknown sources" when asked.
