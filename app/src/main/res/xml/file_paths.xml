@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths the app's FileProvider can hand out content:// URIs for. The share-with-artwork
+     card is rendered into a "shared" subfolder of the app cache, so only that is exposed. -->
+<paths>
+    <cache-path name="shared" path="shared/" />
+</paths>

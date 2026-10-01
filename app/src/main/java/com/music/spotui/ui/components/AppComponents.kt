@@ -108,6 +108,11 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import com.music.spotui.ui.theme.SoloMotion
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.ui.graphics.StrokeCap
 
 /**
  * Shared loading state for album / artist / playlist / liked / show screens: a header
@@ -452,6 +457,16 @@ fun MiniPlayer(navController: NavHostController) {
                             ExplicitBadge()
                             Spacer(Modifier.width(4.dp))
                         }
+                        // Pure-Compose now-playing equalizer glyph: dances while audio is
+                        // playing and freezes when paused. Driven by playback state only —
+                        // no Visualizer / audio-session tap, so playback and permissions
+                        // stay untouched.
+                        EqualizerGlyph(
+                            playing = songPlayingState,
+                            modifier = Modifier
+                                .padding(end = 6.dp)
+                                .size(width = 14.dp, height = 12.dp),
+                        )
                         Text(text = songTitle, color = TextPrimary, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
                     Spacer(Modifier.height(1.dp))
@@ -466,15 +481,28 @@ fun MiniPlayer(navController: NavHostController) {
 
                 // Plus = save; green check = already saved. A second tap opens the
                 // "Saved in" sheet (Liked Songs + playlists) instead of unliking.
+                // The glyph scale-pops and its tint animates to the accent on the
+                // transition so the like registers tactilely.
+                val likeTint by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isLiked) Accent else TextPrimary,
+                    animationSpec = SoloMotion.standard(),
+                    label = "likeTint",
+                )
+                val likeScale by animateFloatAsState(
+                    targetValue = if (isLiked) SoloMotion.TOGGLE_POP_SCALE else 1f,
+                    animationSpec = SoloMotion.toggleSpring(),
+                    label = "likeScale",
+                )
                 if (isLiked) {
                     Icon(
                         imageVector = Icons.Rounded.CheckCircle,
-                        tint = Accent,
+                        tint = likeTint,
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
                             .clickable { showSavedIn = true }
-                            .padding(12.dp),
+                            .padding(12.dp)
+                            .graphicsLayer { scaleX = likeScale; scaleY = likeScale },
                         contentDescription = "Saved",
                     )
                 } else {
@@ -493,9 +521,10 @@ fun MiniPlayer(navController: NavHostController) {
                                 },
                                 onLongClick = { showSavedIn = true },
                             )
-                            .padding(12.dp),
+                            .padding(12.dp)
+                            .graphicsLayer { scaleX = likeScale; scaleY = likeScale },
                         imageVector = Icons.Rounded.AddCircleOutline,
-                        tint = TextPrimary,
+                        tint = likeTint,
                         contentDescription = "Save to Liked Songs",
                     )
                 }
@@ -553,6 +582,55 @@ fun MiniPlayer(navController: NavHostController) {
 
 }
 
+
+/**
+ * A small now-playing equalizer glyph: three accent bars whose heights breathe up and down
+ * on an infinite transition while [playing] is true, and freeze at a steady level when
+ * paused. This is a pure Compose animation driven only by the playback state — it does NOT
+ * read the audio session (no android.media.audiofx.Visualizer), so it needs no permission
+ * and never touches playback.
+ */
+@Composable
+fun EqualizerGlyph(
+    playing: Boolean,
+    modifier: Modifier = Modifier,
+    color: Color = Accent,
+    bars: Int = 3,
+) {
+    val transition = rememberInfiniteTransition(label = "equalizer")
+    // Each bar animates on its own period/phase so they never move in lockstep.
+    val periods = remember(bars) { List(bars) { 520 + it * 170 } }
+    val levels = periods.mapIndexed { index, period ->
+        transition.animateFloat(
+            initialValue = 0.35f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = period, easing = SoloMotion.Standard),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "equalizerBar$index",
+        )
+    }
+    // When paused, hold a calm static silhouette instead of animating.
+    val staticLevels = remember(bars) { List(bars) { 0.45f + (it % 2) * 0.3f } }
+
+    Canvas(modifier = modifier) {
+        val gap = size.width * 0.22f / (bars - 1).coerceAtLeast(1)
+        val barWidth = (size.width - gap * (bars - 1)) / bars
+        for (i in 0 until bars) {
+            val fraction = if (playing) levels[i].value else staticLevels[i]
+            val barHeight = size.height * fraction
+            val left = i * (barWidth + gap)
+            drawLine(
+                color = color,
+                start = Offset(left + barWidth / 2f, size.height),
+                end = Offset(left + barWidth / 2f, size.height - barHeight),
+                strokeWidth = barWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+}
 
 @Composable
 fun CustomSlider(

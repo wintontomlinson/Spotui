@@ -1261,10 +1261,23 @@ fun PlayerInfo(
                 }
             }
 
+            // The like glyph pops and its tint animates to the accent on toggle so the
+            // save registers tactilely.
+            val likeTint by androidx.compose.animation.animateColorAsState(
+                targetValue = if (isLiked.value) Accent else TextPrimary,
+                animationSpec = com.music.spotui.ui.theme.SoloMotion.standard(),
+                label = "playerLikeTint",
+            )
+            val likeScale by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = if (isLiked.value) com.music.spotui.ui.theme.SoloMotion.TOGGLE_POP_SCALE else 1f,
+                animationSpec = com.music.spotui.ui.theme.SoloMotion.toggleSpring(),
+                label = "playerLikeScale",
+            )
             Icon(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
+                    .graphicsLayer { scaleX = likeScale; scaleY = likeScale }
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -1303,7 +1316,7 @@ fun PlayerInfo(
                     )
                     .padding(9.dp),
                 imageVector = if (isLiked.value) Icons.Rounded.CheckCircle else Icons.Rounded.AddCircleOutline,
-                tint = if (isLiked.value) Accent else TextPrimary,
+                tint = likeTint,
                 contentDescription = if (isLiked.value) "Saved to Liked Songs" else "Save to Liked Songs"
             )
         }

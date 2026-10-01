@@ -249,16 +249,34 @@ fun SongOptionsSheet(
                 onDismiss()
             }
             SongMenuRow(Icons.Default.Share, "Share") {
-                // Share the real Spotify track link when we know the id.
-                val shareText = song.spotifyTrackId.takeIf { it.isNotBlank() }
-                    ?.let { "https://open.spotify.com/track/$it" }
-                    ?: "Listening to ${song.title} by ${song.singer}"
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, shareText)
-                }
-                context.startActivity(Intent.createChooser(send, "Share"))
                 onDismiss()
+                // Try the artwork share card first (cover + title/artist + SOLO wordmark on
+                // a Volt gradient), rendered off the main thread because the cover is pulled
+                // synchronously from Glide. Fall back to the existing text link when the
+                // artwork can't be fetched. Detached scope + app context so it survives the
+                // sheet closing.
+                val app = context.applicationContext
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    val shared = runCatching {
+                        com.music.spotui.util.ShareCard.shareSongArtworkCard(app, song)
+                    }.getOrDefault(false)
+                    if (!shared) {
+                        // Share the real Spotify track link when we know the id.
+                        val shareText = song.spotifyTrackId.takeIf { it.isNotBlank() }
+                            ?.let { "https://open.spotify.com/track/$it" }
+                            ?: "Listening to ${song.title} by ${song.singer}"
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        app.startActivity(
+                            Intent.createChooser(send, "Share").apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.padding(8.dp))
         }

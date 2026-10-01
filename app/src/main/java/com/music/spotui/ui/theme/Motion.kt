@@ -16,6 +16,11 @@ object SoloMotion {
     const val EXPAND_MS = 360
     const val ICON_MS = 150
 
+    /** Pop a toggle (like / play) slightly past its resting size before it settles. */
+    const val TOGGLE_POP_SCALE = 1.18f
+    /** Fade a freshly inserted list item in over this long as it slides into place. */
+    const val LIST_ENTER_MS = 260
+
     val Emphasized = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
     val Standard = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
@@ -28,4 +33,8 @@ object SoloMotion {
     fun <T> fade(): TweenSpec<T> = tween(durationMillis = FADE_MS, easing = Standard)
     fun <T> spring(): SpringSpec<T> =
         androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 420f)
+
+    /** A bouncier spring for toggle pops (like / play) so the state change feels tactile. */
+    fun <T> toggleSpring(): SpringSpec<T> =
+        androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 520f)
 }

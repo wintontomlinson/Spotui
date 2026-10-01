@@ -3,9 +3,11 @@ package com.music.spotui.ui.navigation
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.music.spotui.ui.theme.SoloMotion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -76,11 +78,24 @@ fun MyNavHost(
     NavHost(
         navController = navHostController,
         startDestination = startDestination,
-        // Quick fade between screens instead of the default slide/scale animations.
-        enterTransition = { fadeIn(animationSpec = tween(150)) },
-        exitTransition = { fadeOut(animationSpec = tween(150)) },
-        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
-        popExitTransition = { fadeOut(animationSpec = tween(150)) },
+        // Shared premium screen motion: a fade paired with a subtle scale so screens
+        // settle in rather than hard-cut, driven by the SoloMotion tokens (ui/theme/Motion.kt).
+        enterTransition = {
+            fadeIn(animationSpec = SoloMotion.fade()) +
+                scaleIn(initialScale = 0.98f, animationSpec = SoloMotion.standard())
+        },
+        exitTransition = {
+            fadeOut(animationSpec = SoloMotion.fade()) +
+                scaleOut(targetScale = 1.02f, animationSpec = SoloMotion.standard())
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = SoloMotion.fade()) +
+                scaleIn(initialScale = 1.02f, animationSpec = SoloMotion.standard())
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = SoloMotion.fade()) +
+                scaleOut(targetScale = 0.98f, animationSpec = SoloMotion.standard())
+        },
     ){
         composable(Routes.Home.route){
             // Home is the login-free, YouTube-powered screen, the old Spotify

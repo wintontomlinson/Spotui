@@ -61,6 +61,19 @@
             </intent-filter>
         </service>
 
+        <!-- FileProvider for sharing app-generated images (the share-with-artwork
+             card) via content:// URIs. Authority is namespaced to the applicationId
+             (so the .debug build gets its own) and only exposes the cache/shared dir. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Makes SOLO discoverable as a media button target for automation
              apps (MacroDroid, Tasker, etc.) and forwards media key events to
              the active PlaybackService MediaSession. -->

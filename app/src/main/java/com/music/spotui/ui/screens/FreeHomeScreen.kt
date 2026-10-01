@@ -96,6 +96,7 @@ fun FreeHomeScreen(navController: NavController) {
     val isRefreshing by vm.isRefreshing
     val mix by vm.mix
     val topArtists by vm.topArtists
+    val becauseYouLiked by vm.becauseYouLiked
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -185,6 +186,15 @@ fun FreeHomeScreen(navController: NavController) {
             }
         }
 
+        // "Because you liked X": a taste-ranked shelf seeded from a top liked track.
+        becauseYouLiked?.let { row ->
+            item(key = "becauseYouLiked") {
+                Box(Modifier.animateItem()) {
+                    HomeRowSection(row = row, onPlay = play)
+                }
+            }
+        }
+
         // Trending leads the screen, so the newest songs are the first thing seen.
         item {
             SectionHeader(title = "Trending now")
@@ -215,6 +225,7 @@ fun FreeHomeScreen(navController: NavController) {
                             image = image,
                             highlighted = index == 0,
                             onClick = { navController.navigate(com.music.spotui.ui.navigation.artistRoute(name, "")) },
+                            modifier = Modifier.animateItem(),
                         )
                     }
                 }
@@ -222,7 +233,10 @@ fun FreeHomeScreen(navController: NavController) {
         }
 
         items(rows, key = { it.title }) { row ->
-            HomeRowSection(row = row, onPlay = play)
+            // Fade + slide each shelf into place as rows load in and reorder.
+            Box(Modifier.animateItem()) {
+                HomeRowSection(row = row, onPlay = play)
+            }
         }
 
         item { Spacer(Modifier.height(20.dp)) }
@@ -654,10 +668,10 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
 /** Circular artist portrait with the name under it. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun ArtistCircle(name: String, image: String, onClick: () -> Unit, highlighted: Boolean = false) {
+private fun ArtistCircle(name: String, image: String, onClick: () -> Unit, highlighted: Boolean = false, modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .width(92.dp)
             .clickable(onClickLabel = "Open $name", onClick = onClick),
     ) {
@@ -710,8 +724,8 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        itemsIndexed(row.tracks) { index, song ->
-            TrackCard(song = song, onClick = { onPlay(row.tracks, index) })
+        itemsIndexed(row.tracks, key = { _, song -> song.id }) { index, song ->
+            TrackCard(song = song, onClick = { onPlay(row.tracks, index) }, modifier = Modifier.animateItem())
         }
     }
 }
@@ -719,9 +733,9 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
 /** Premium artwork card with a gradient scrim and a play badge. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
+private fun TrackCard(song: SongsModel, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .width(164.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

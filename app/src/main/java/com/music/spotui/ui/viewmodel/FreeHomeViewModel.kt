@@ -132,6 +132,16 @@ class FreeHomeViewModel @Inject constructor(
     private val _topArtists = mutableStateOf<List<Pair<String, String>>>(emptyList())
     val topArtists: State<List<Pair<String, String>>> get() = _topArtists
 
+    /**
+     * "Because you liked X": a shelf seeded from a top liked / high-affinity track, whose
+     * candidates are ranked through [com.music.spotui.data.recommendation.TasteRanker]. The
+     * title carries the seed track so the UI can show "Because you liked <title>". Empty
+     * (shelf hidden) until there is a liked track to seed from. Rebuilt once per day.
+     */
+    private val _becauseYouLiked = mutableStateOf<HomeRow?>(null)
+    val becauseYouLiked: State<HomeRow?> get() = _becauseYouLiked
+    private var becauseDay = -1L
+
     private val _trendingLoading = mutableStateOf(true)
     val trendingLoading: State<Boolean> get() = _trendingLoading
 
@@ -232,6 +242,7 @@ class FreeHomeViewModel @Inject constructor(
             }
         fetchTrending()
         buildTasteBlocks(history)
+        buildBecauseYouLiked(history)
         val sections = buildSections(history)
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
@@ -277,6 +288,62 @@ class FreeHomeViewModel @Inject constructor(
                 }.getOrDefault(emptyList())
             }
             if (ranked.isNotEmpty()) _mix.value = ranked else mixDay = -1L
+        }
+    }
+
+    /**
+     * Builds the "Because you liked X" shelf: pick a seed from the user's liked songs
+     * (preferring the one whose artist has the strongest taste affinity), gather candidates
+     * from YouTube around that track/artist, and rank them through [TasteRanker] with the
+     * liked track as the seed so the running order reflects the on-device taste engine.
+     * Rebuilt at most once per day. Hidden when there is nothing liked to seed from.
+     */
+    private fun buildBecauseYouLiked(history: List<com.music.spotui.data.preferences.HistoryEntry>) {
+        val liked = runCatching { com.music.spotui.data.preferences.getLikedSongs(context) }
+            .getOrDefault(emptyList())
+            .filter { it.title.isNotBlank() }
+        if (liked.isEmpty()) {
+            _becauseYouLiked.value = null
+            return
+        }
+        val today = System.currentTimeMillis() / 86_400_000L
+        if (today == becauseDay && _becauseYouLiked.value != null) return
+        becauseDay = today
+
+        val profile = com.music.spotui.data.recommendation.TasteProfile
+        // Prefer the liked track whose artist the user leans toward most; the daily bucket
+        // breaks ties so the shelf rotates through the user's liked songs over time.
+        val affinity = runCatching { profile.artistAffinity(context) }.getOrDefault(emptyMap())
+        val seed = liked.maxByOrNull { song ->
+            val a = profile.artistKey(song.singer)
+            (affinity[a] ?: 0f).toDouble() + ((song.id.toLong() + today).hashCode().and(0xFF) / 2550.0)
+        } ?: return
+
+        viewModelScope.launch {
+            val artist = seed.singer.substringBefore(",").removeSuffix(" - Topic").trim()
+            val queries = listOfNotNull(
+                "${seed.title} $artist mix".trim(),
+                artist.ifBlank { null }?.let { "$it songs" },
+                "songs like ${seed.title}",
+            )
+            val candidates = queries.flatMap { searchSongs(it, limit = 15) }
+            val ranked = withContext(Dispatchers.Default) {
+                runCatching {
+                    com.music.spotui.data.recommendation.TasteRanker.rank(
+                        context, candidates, seed = seed, recent = history, limit = 20,
+                    )
+                }.getOrDefault(emptyList())
+            }
+            if (ranked.isNotEmpty()) {
+                _becauseYouLiked.value = HomeRow(
+                    title = "Because you liked ${seed.title}",
+                    query = "",
+                    tracks = ranked,
+                    loading = false,
+                )
+            } else {
+                becauseDay = -1L
+            }
         }
     }
 
