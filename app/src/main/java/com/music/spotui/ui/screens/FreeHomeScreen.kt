@@ -157,6 +157,15 @@ fun FreeHomeScreen(navController: NavController) {
     ) {
         item { HomeHeader(onOpenSettings = { navController.navigate(Routes.Settings.route) }) }
 
+        // Image-forward featured carousel: large artwork cards drawn from the trending/mix
+        // state. It leads the screen so the first thing seen is full-bleed cover art.
+        val featured = (trending.ifEmpty { mix }).take(6)
+        if (featured.isNotEmpty()) {
+            item(key = "featured") {
+                FeaturedCarousel(tracks = featured, onPlay = { i -> play(featured, i) })
+            }
+        }
+
         item {
             MoodChips(onPick = openSearch)
             Spacer(Modifier.height(4.dp))
@@ -252,6 +261,128 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
             color = com.music.spotui.ui.theme.TextTertiary,
             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
         )
+    }
+}
+
+/**
+ * Featured carousel: a full-bleed HorizontalPager of large artwork cards built from the
+ * trending/mix state, each with a hero scrim and title overlay, plus an animated page
+ * indicator underneath. Tapping a card plays that track.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun FeaturedCarousel(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { tracks.size })
+    Column(modifier = Modifier.padding(top = 6.dp)) {
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) { page ->
+            val song = tracks[page]
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = SoloShape.lg,
+                        clip = false,
+                        ambientColor = com.music.spotui.ui.theme.Shadow,
+                        spotColor = com.music.spotui.ui.theme.Shadow,
+                    )
+                    .clip(SoloShape.lg)
+                    .background(Surface)
+                    .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onPlay(page) },
+            ) {
+                // Full-bleed cover art with a hero scrim so the overlaid copy reads.
+                com.music.spotui.ui.components.SoloArtwork(
+                    model = song.coverUri,
+                    modifier = Modifier.fillMaxSize(),
+                    shape = SoloShape.lg,
+                    scrim = true,
+                    contentDescription = song.title,
+                )
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "FEATURED",
+                        color = Accent,
+                        style = MaterialTheme.typography.labelSmall,
+                        letterSpacing = 1.6.sp,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        lineHeight = 26.sp,
+                    )
+                    if (song.singer.isNotBlank()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = song.singer,
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(18.dp)
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(com.music.spotui.ui.theme.AccentBrush),
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = OnAccent,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
+            }
+        }
+        // Animated page indicator: the active dot stretches into an accent pill.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(top = 12.dp)
+                .fillMaxWidth(),
+        ) {
+            Spacer(Modifier.weight(1f))
+            repeat(tracks.size) { index ->
+                val selected = pagerState.currentPage == index
+                val width by androidx.compose.animation.core.animateDpAsState(
+                    targetValue = if (selected) 22.dp else 7.dp,
+                    animationSpec = com.music.spotui.ui.theme.SoloMotion.standard(),
+                    label = "indicatorWidth",
+                )
+                Box(
+                    modifier = Modifier
+                        .height(7.dp)
+                        .width(width)
+                        .clip(SoloShape.pill)
+                        .background(if (selected) Accent else Hairline),
+                )
+            }
+            Spacer(Modifier.weight(1f))
+        }
     }
 }
 
@@ -591,7 +722,7 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
 private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(150.dp)
+            .width(164.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -600,7 +731,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(150.dp)
+                .size(164.dp)
                 .shadow(
                     elevation = 12.dp,
                     shape = SoloShape.md,
@@ -611,24 +742,14 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 .clip(SoloShape.md)
                 .background(Surface),
         ) {
-            GlideImage(
-                modifier = Modifier.fillMaxSize(),
+            // Larger cover art rendered through the shared SoloArtwork wrapper so it keeps
+            // the shimmer/placeholder/error fallbacks and a bottom scrim for the play badge.
+            com.music.spotui.ui.components.SoloArtwork(
                 model = song.coverUri,
-                contentScale = ContentScale.Crop,
-                failure = placeholder(R.drawable.placeholder),
-                loading = placeholder(R.drawable.placeholder),
-                contentDescription = null,
-            )
-            // Soft scrim so the play badge stays legible on bright artwork.
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
-                            startY = 150f,
-                        )
-                    ),
+                modifier = Modifier.fillMaxSize(),
+                shape = SoloShape.md,
+                scrim = true,
+                contentDescription = song.title,
             )
             Box(
                 contentAlignment = Alignment.Center,
@@ -708,8 +829,8 @@ private fun CardSkeletonRow() {
         modifier = Modifier.padding(horizontal = 20.dp),
     ) {
         repeat(3) {
-            Column(modifier = Modifier.width(150.dp)) {
-                Box(Modifier.size(150.dp).shimmer(SoloShape.md))
+            Column(modifier = Modifier.width(164.dp)) {
+                Box(Modifier.size(164.dp).shimmer(SoloShape.md))
                 Spacer(Modifier.height(9.dp))
                 Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
                 Spacer(Modifier.height(7.dp))

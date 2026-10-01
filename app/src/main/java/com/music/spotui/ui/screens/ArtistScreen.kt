@@ -180,15 +180,13 @@ private fun ArtistOverviewContent(
         item {
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
+                .height(380.dp)
             ) {
-                GlideImage(
-                    modifier = Modifier.fillMaxSize(),
+                com.music.spotui.ui.components.SoloArtwork(
                     model = overview.headerImage.ifBlank { overview.avatarImage },
-                    contentScale = ContentScale.Crop,
-                    failure = placeholder(R.drawable.placeholder),
-                    loading = placeholder(R.drawable.placeholder),
-                    contentDescription = "",
+                    modifier = Modifier.fillMaxSize(),
+                    shape = androidx.compose.ui.graphics.RectangleShape,
+                    contentDescription = overview.name,
                 )
                 Box(modifier = Modifier
                     .fillMaxSize()

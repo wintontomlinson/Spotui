@@ -371,15 +371,15 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                         Spacer(modifier = Modifier.padding(25.dp))
 
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            GlideImage(
-                                modifier = Modifier
-                            .size(200.dp)
-                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SoloShape.lg),
-                        contentScale = ContentScale.Crop,
+                            // Larger playlist cover via SoloArtwork (shimmer/placeholder/error
+                            // fallbacks); the Palette-tinted header gradient behind it stays.
+                            com.music.spotui.ui.components.SoloArtwork(
                                 model = playlist.coverUri,
-                                failure = placeholder(R.drawable.placeholder),
-                                contentDescription = "",
+                                modifier = Modifier
+                                    .size(220.dp)
+                                    .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow),
+                                shape = SoloShape.lg,
+                                contentDescription = playlist.name.ifBlank { playlistName },
                             )
                         }
                         Spacer(modifier = Modifier.padding(5.dp))

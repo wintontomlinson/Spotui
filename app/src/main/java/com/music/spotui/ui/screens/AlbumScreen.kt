@@ -352,15 +352,16 @@ fun SumUpAlbumScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    GlideImage(
-                        modifier = Modifier
-                            .size(200.dp)
-                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SoloShape.lg),
-                        contentScale = ContentScale.Crop,
+                    // Large album cover routed through SoloArtwork so it keeps the
+                    // shimmer/placeholder/error fallbacks; the Palette-tinted header
+                    // gradient behind it is left intact.
+                    com.music.spotui.ui.components.SoloArtwork(
                         model = album[0].coverUri,
-                        failure = placeholder(R.drawable.placeholder),
-                        contentDescription = "",
+                        modifier = Modifier
+                            .size(220.dp)
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow),
+                        shape = SoloShape.lg,
+                        contentDescription = albumName,
                     )
                 }
                 Spacer(modifier = Modifier.padding(5.dp))

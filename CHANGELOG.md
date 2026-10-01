@@ -5,6 +5,21 @@ compared to the main Spotui repository.
 
 ---
 
+## 6.0.0 — SOLO
+
+* **Image-forward premium redesign.** Home now opens on a full-bleed featured carousel — large
+  artwork cards with a hero scrim and animated page indicator — above richer, larger-artwork
+  shelves. Every cover across Home, Explore, Library and the Album / Playlist / Artist detail
+  pages renders through a shared `SoloArtwork` wrapper with shimmer, placeholder and error
+  fallbacks and a contrast scrim so titles always read.
+* **Code-generated decorative art.** A new `SoloArt` design primitive paints deterministic
+  Volt-family gradient "mesh" backgrounds for the Explore mood / genre / chart tiles, so the
+  browse grid is bold and colourful without pulling in any new image or network dependency.
+* **Motion polish.** The featured carousel, tiles and shelves move on the shared Solo motion
+  tokens for a smoother, more premium feel.
+* **Personalised trending & smoother playback.** Trending and recommendations lean on your taste
+  profile, and playback prefetch/cache tuning keeps songs playing without buffering.
+
 ## 5.0.0 — SOLO
 
 * **New name: SOLO.** The app is now **SOLO** everywhere: launcher label, splash, notification,

@@ -879,7 +879,7 @@ fun SumUpLibraryScreen(
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(64.dp)
                             .clip(SoloShape.sm)
                             .background(Surface3),
                     ) {
@@ -894,7 +894,7 @@ fun SumUpLibraryScreen(
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(64.dp)
                             .clip(SoloShape.sm)
                             .background(com.music.spotui.ui.theme.AccentBrush),
                     ) {
@@ -906,20 +906,16 @@ fun SumUpLibraryScreen(
                         )
                     }
                 } else {
-                    GlideImage(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(if (entry.isPlaylist) SoloShape.sm else SoloShape.xs)
-                            .border(
-                                1.dp,
-                                com.music.spotui.ui.theme.Hairline,
-                                if (entry.isPlaylist) SoloShape.sm else SoloShape.xs,
-                            ),
+                    // Larger library tile art through SoloArtwork so it keeps the
+                    // shimmer/placeholder/error fallbacks and a consistent edge.
+                    val tileShape = if (entry.isPlaylist) SoloShape.sm else SoloShape.xs
+                    com.music.spotui.ui.components.SoloArtwork(
                         model = entry.coverUri,
-                        contentScale = ContentScale.Crop,
-                        failure = placeholder(R.drawable.placeholder),
-                        loading = placeholder(R.drawable.placeholder),
-                        contentDescription = ""
+                        modifier = Modifier
+                            .size(64.dp)
+                            .border(1.dp, com.music.spotui.ui.theme.Hairline, tileShape),
+                        shape = tileShape,
+                        contentDescription = entry.name,
                     )
                 }
                 Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {

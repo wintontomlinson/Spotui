@@ -85,6 +85,7 @@ import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.components.shimmer
+import com.music.spotui.ui.components.soloMeshBackground
 import androidx.compose.material.icons.rounded.SearchOff
 import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.Hairline
@@ -515,49 +516,24 @@ private fun BrowseTile(
     modifier: Modifier = Modifier,
     height: androidx.compose.ui.unit.Dp = 168.dp,
 ) {
-    // The tile art is resolved from the category NAME (its imageQuery) so the
-    // picture visibly matches the label, while the tap still runs `query`.
-    val coverState = androidx.compose.runtime.remember(category.imageQuery) {
-        androidx.compose.runtime.mutableStateOf(
-            com.music.spotui.data.api.BrowseTileImages.cachedFor(category.imageQuery)
-        )
-    }
-    val cover = coverState.value
-    androidx.compose.runtime.LaunchedEffect(category.imageQuery) {
-        if (coverState.value.isBlank()) {
-            coverState.value = com.music.spotui.data.api.BrowseTileImages.coverFor(category.imageQuery)
-        }
-    }
-
     Box(
         modifier = modifier
             .height(height)
-            .clip(SoloShape.md)
-            .background(category.color)
+            // Decorative mood/genre/chart art is generated in code from the label, so the
+            // bold full-bleed background needs no bitmap decode and no network request.
+            .soloMeshBackground(category.label, SoloShape.md)
             .border(1.dp, Hairline, SoloShape.md)
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
-        // Full-bleed artwork: the image related to the category name fills the
-        // WHOLE tile as its background (not a small corner thumbnail).
-        if (cover.isNotBlank()) {
-            GlideImage(
-                model = cover,
-                contentScale = ContentScale.Crop,
-                contentDescription = null,
-                modifier = Modifier.matchParentSize(),
-                loading = placeholder(R.drawable.placeholder),
-                failure = placeholder(R.drawable.placeholder),
-            )
-        }
-        // Category tone at the top, Canvas at the bottom so the label always reads.
+        // A soft category-tone + Canvas scrim over the mesh so the label always reads.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to category.color.copy(alpha = 0.55f),
-                        0.45f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.25f),
-                        1f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.9f),
+                        0f to category.color.copy(alpha = 0.35f),
+                        0.45f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.18f),
+                        1f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.82f),
                     ),
                 ),
         )
