@@ -462,9 +462,41 @@ class FreeHomeViewModel @Inject constructor(
         return personalized.take(MAX_PERSONALIZED_ROWS) + rotatedCurated()
     }
 
+    /**
+     * Fills one Home shelf.
+     *
+     * BEFORE: this rendered the raw `searchSongs(query)` order verbatim, so the generic
+     * personalised shelves (More-like / time / mood / Fresh) and the curated evergreen rows
+     * were ordered by YouTube's global relevance, not the user's taste.
+     *
+     * AFTER: it pulls a slightly wider candidate pool and routes it through
+     * [com.music.spotui.data.recommendation.TasteRanker.rank] (seed=null, recent=local listening
+     * history) before showing it, so every Home shelf now reflects the on-device TasteProfile
+     * (genre/mood/artist affinity, time-of-day, recency) with the ranker's built-in exploration
+     * still surfacing fresh content. Mirrors the fetchTrending() fallback: when ranking returns
+     * nothing (e.g. empty profile plus everything excluded) it falls back to the raw search order
+     * so a shelf is never blanked. Works login-free (local history) and with login; read-only use
+     * of the profile, so recordOutcome and the TasteProfile JSON schema are untouched.
+     */
     private fun fetchRow(index: Int, query: String) {
         viewModelScope.launch {
-            val songs = searchSongs(query, limit = 12)
+            // A wider pool than the 12 slots shown gives the ranker room to reorder by taste
+            // and still spend an exploration slot on something new.
+            val candidates = searchSongs(query, limit = 24)
+            val songs = if (candidates.isNotEmpty()) {
+                val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
+                val ranked = withContext(Dispatchers.Default) {
+                    runCatching {
+                        com.music.spotui.data.recommendation.TasteRanker.rank(
+                            context, candidates, seed = null, recent = history, limit = 12,
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                // Fall back to the raw search order when ranking excludes everything.
+                ranked.ifEmpty { candidates.take(12) }
+            } else {
+                candidates
+            }
             val current = _rows.value.toMutableList()
             if (index in current.indices) {
                 current[index] = current[index].copy(tracks = songs, loading = false)

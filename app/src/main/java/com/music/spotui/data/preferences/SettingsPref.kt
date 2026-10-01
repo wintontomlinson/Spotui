@@ -17,9 +17,9 @@ enum class StreamQuality(
     val detail: String,
     val audioQuality: AudioQuality,
 ) {
-    LOW("Low", "Data saver — smallest size", AudioQuality.LOW),
+    LOW("Low", "Data saver, smallest size", AudioQuality.LOW),
     NORMAL("Normal", "Balanced for your network", AudioQuality.AUTO),
-    HIGH("High", "Best available — Opus/AAC, FLAC via providers when available", AudioQuality.HIGH),
+    HIGH("High", "Best available: Opus/AAC, FLAC via providers when available", AudioQuality.HIGH),
 }
 
 private const val PREF = "settings_prefs"

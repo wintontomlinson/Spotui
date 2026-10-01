@@ -8,6 +8,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.interaction.Interaction
@@ -63,8 +64,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import com.music.spotui.ui.theme.SoloMotion
 import com.music.spotui.ui.components.soloClickable
-import com.music.spotui.ui.components.soloGlass
-import com.music.spotui.ui.theme.GlassFill
 import com.music.spotui.ui.theme.GlassFillStrong
 import com.music.spotui.ui.theme.Hairline
 import com.music.spotui.ui.theme.TextSecondary
@@ -142,14 +141,25 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                     val route = currentRoute
                     if (route != null && route in rootRoutes) currentTab = route
 
-                    // Docked full-width glass bar with a 1dp hairline top edge: 64dp,
-                    // compressing to 56dp (labels fade) while content scrolls down. On API 31+
-                    // the content behind frosts through a RenderEffect blur; below 31 it falls
-                    // back to the stronger opaque fill so the chrome stays legible.
+                    // Docked full-width bar with a 1dp hairline top edge: 64dp, compressing
+                    // to 56dp (labels fade) while content scrolls down. The bar is painted
+                    // with a SOLID opaque fill on every SDK level: a RenderEffect blur has no
+                    // opaque backdrop to frost over the edge-to-edge window here, so relying on
+                    // it (the previous `soloGlass`) washed the bar out against the #0E1013
+                    // canvas and the whole nav read as invisible. A solid GlassFillStrong fill
+                    // plus a soft top shadow keeps the chrome high-contrast and separated from
+                    // content; `.navigationBarsPadding()` keeps it clear of the system gesture
+                    // bar and the mini player above still stacks correctly.
                     androidx.compose.foundation.layout.BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .soloGlass(fill = GlassFill, fallback = GlassFillStrong)
+                            .shadow(
+                                elevation = 10.dp,
+                                clip = false,
+                                ambientColor = Color.Black,
+                                spotColor = Color.Black,
+                            )
+                            .background(GlassFillStrong)
                             .drawBehind {
                                 drawLine(
                                     color = Hairline,

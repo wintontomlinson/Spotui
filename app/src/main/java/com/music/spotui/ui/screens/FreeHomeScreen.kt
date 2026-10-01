@@ -171,11 +171,13 @@ fun FreeHomeScreen(navController: NavController) {
         val featured = (trending.ifEmpty { mix }).take(6)
         if (featured.isNotEmpty()) {
             item(key = "featured") {
+                SectionHeader(title = "Featured", subtitle = "Handpicked for today")
                 FeaturedCarousel(tracks = featured, onPlay = { i -> play(featured, i) })
             }
         }
 
         item {
+            SectionHeader(title = "Browse moods", subtitle = "Pick a vibe to explore")
             MoodChips(onPick = openSearch)
             Spacer(Modifier.height(4.dp))
         }
@@ -183,13 +185,14 @@ fun FreeHomeScreen(navController: NavController) {
         // Daily "Mix for you" hero, only once there is listening history to build it from.
         if (mix.isNotEmpty()) {
             item(key = "mix") {
+                SectionHeader(title = "Made for you", subtitle = "Your daily mix, tuned to your taste")
                 MixForYouCard(mix = mix, onPlay = { play(mix, 0) })
             }
         }
 
         if (recentlyPlayed.isNotEmpty()) {
             item(key = "jump") {
-                SectionHeader(title = "Jump back in")
+                SectionHeader(title = "Jump back in", subtitle = "Pick up where you left off")
                 JumpBackInGrid(tracks = recentlyPlayed.take(6), onPlay = { i -> play(recentlyPlayed, i) })
             }
         }
@@ -205,7 +208,7 @@ fun FreeHomeScreen(navController: NavController) {
 
         // Trending leads the screen, so the newest songs are the first thing seen.
         item {
-            SectionHeader(title = "Trending now")
+            SectionHeader(title = "Trending now", subtitle = "Hot tracks ranked for you")
             when {
                 trendingLoading && trending.isEmpty() -> TrendingSkeleton()
                 trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
@@ -222,7 +225,7 @@ fun FreeHomeScreen(navController: NavController) {
 
         if (topArtists.isNotEmpty()) {
             item(key = "artists") {
-                SectionHeader(title = "Your top artists")
+                SectionHeader(title = "Your top artists", subtitle = "The voices you play the most")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -500,8 +503,8 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    com.music.spotui.ui.components.SoloSectionHeader(title = title)
+private fun SectionHeader(title: String, subtitle: String? = null) {
+    com.music.spotui.ui.components.SoloSectionHeader(title = title, subtitle = subtitle)
 }
 
 private val MOODS = listOf(

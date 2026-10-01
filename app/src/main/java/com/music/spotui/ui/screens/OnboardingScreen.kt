@@ -190,7 +190,7 @@ private fun SlideBrand() {
             }
         },
         title = "Welcome to SOLO",
-        body = "One voice. Pure sound. A premium, distraction-free player built around the music — nothing competing with it.",
+        body = "One voice. Pure sound. A premium, distraction-free player built around the music, nothing competing with it.",
     )
 }
 
@@ -199,7 +199,7 @@ private fun SlideFreePlay() {
     OnboardingSlide(
         hero = { HeroIcon(Icons.Rounded.MusicNote) },
         title = "Free play, no login",
-        body = "Search any song, artist or album and play it instantly. No account, no sign-in — just open and listen, with high-quality smooth streaming.",
+        body = "Search any song, artist or album and play it instantly. No account, no sign-in, just open and listen, with high-quality smooth streaming.",
     )
 }
 

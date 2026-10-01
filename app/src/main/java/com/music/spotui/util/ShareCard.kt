@@ -60,7 +60,7 @@ object ShareCard {
 
         val link = song.spotifyTrackId.takeIf { it.isNotBlank() }
             ?.let { "https://open.spotify.com/track/$it" }
-            ?: "${song.title} — ${song.singer}"
+            ?: "${song.title} - ${song.singer}"
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "image/*"
             putExtra(Intent.EXTRA_STREAM, uri)
