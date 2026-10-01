@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
-// dialogs, menus) picks up the Lumen Indigo palette instead of a stray default or wallpaper tint.
+// dialogs, menus) picks up the Graphite & Azure palette instead of a stray default or wallpaper tint.
 private val SoloColorScheme = darkColorScheme(
     primary = Accent,
     onPrimary = OnAccent,
@@ -49,7 +49,7 @@ private val SoloColorScheme = darkColorScheme(
     onError = Canvas,
     errorContainer = DangerSurface,
     onErrorContainer = Color(0xFFFFDADA),
-    outline = Color(0xFF3B3B55),
+    outline = Color(0xFF3A4049),
     outlineVariant = Surface4,
     scrim = Color.Black,
     surfaceBright = Surface4,

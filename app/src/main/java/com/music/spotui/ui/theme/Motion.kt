@@ -26,8 +26,8 @@ object SoloMotion {
     /** Fade a freshly inserted list item in over this long as it slides into place. */
     const val LIST_ENTER_MS = 260
 
-    val Emphasized = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-    val Standard = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val Standard = CubicBezierEasing(0.3f, 0f, 0.1f, 1f)
 
     val pressSpring: SpringSpec<Float> =
         androidx.compose.animation.core.spring(dampingRatio = 0.85f, stiffness = 500f)

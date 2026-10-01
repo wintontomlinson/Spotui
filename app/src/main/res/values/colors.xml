@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Splash plate: the indigo of the launcher background, so the launch
+    <!-- Splash plate: the graphite of the launcher background, so the launch
          flash matches the icon the user tapped. -->
-    <color name="splash_background">#FF0B0B14</color>
+    <color name="splash_background">#FF0E1013</color>
 </resources>

@@ -15,13 +15,13 @@ import androidx.compose.ui.unit.dp
  * Pills use 50%; sheets use [sheetTop].
  */
 object SoloShape {
-    val xs = RoundedCornerShape(4.dp)
-    val sm = RoundedCornerShape(8.dp)
-    val md = RoundedCornerShape(12.dp)
+    val xs = RoundedCornerShape(5.dp)
+    val sm = RoundedCornerShape(10.dp)
+    val md = RoundedCornerShape(14.dp)
     val lg = RoundedCornerShape(20.dp)
-    val xl = RoundedCornerShape(24.dp)
+    val xl = RoundedCornerShape(26.dp)
     val pill = RoundedCornerShape(50)
-    val sheetTop = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    val sheetTop = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
 }
 
 val SoloShapes = Shapes(

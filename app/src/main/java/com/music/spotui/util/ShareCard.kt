@@ -19,7 +19,7 @@ import java.io.File
 
 /**
  * Builds and shares a "now listening" artwork card: the track's cover art, its title and
- * artist, and the SOLO wordmark on the Lumen gradient, rendered to a PNG in the app cache and
+ * artist, and the SOLO wordmark on the azure gradient, rendered to a PNG in the app cache and
  * handed to the system share sheet as an image via the app's FileProvider.
  *
  * This is a self-contained Android-Canvas render (no Compose capture, no new dependency). The
@@ -29,12 +29,12 @@ import java.io.File
  */
 object ShareCard {
 
-    // Lumen Indigo palette, mirrored here as plain ints so the renderer stays framework-free.
-    private const val CANVAS = 0xFF0B0B14.toInt()
-    private const val SURFACE = 0xFF191926.toInt()
-    private const val ACCENT = 0xFF7C5CFF.toInt()      // Lumen violet
-    private const val ACCENT_SOFT = 0xFFB79CFF.toInt()
-    private const val ON_ACCENT = 0xFF0A0714.toInt()
+    // Graphite & Azure palette, mirrored here as plain ints so the renderer stays framework-free.
+    private const val CANVAS = 0xFF0E1013.toInt()
+    private const val SURFACE = 0xFF1B1F24.toInt()
+    private const val ACCENT = 0xFF3B82F6.toInt()      // refined azure
+    private const val ACCENT_SOFT = 0xFF93C5FD.toInt()
+    private const val ON_ACCENT = 0xFF0A0E14.toInt()
     private const val TEXT_PRIMARY = 0xFFF3F2FA.toInt()
     private const val TEXT_SECONDARY = 0xFFAEADC2.toInt()
 
@@ -91,7 +91,7 @@ object ShareCard {
         val c = Canvas(bmp)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Backdrop: a Lumen violet gradient settling into the indigo canvas.
+        // Backdrop: an azure gradient settling into the graphite canvas.
         paint.shader = LinearGradient(
             0f, 0f, W.toFloat(), H.toFloat(),
             intArrayOf(ACCENT_SOFT, SURFACE, CANVAS),
