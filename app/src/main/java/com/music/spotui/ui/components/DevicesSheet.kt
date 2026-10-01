@@ -1,5 +1,6 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.rounded.Devices
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -112,7 +113,7 @@ fun DevicesSheet(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_devices),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
                         tint = Gold,
                         modifier = Modifier.size(24.dp)
@@ -201,7 +202,7 @@ fun DevicesSheet(
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_devices),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
                         tint = Gold,
                         modifier = Modifier.size(22.dp)
@@ -349,7 +350,7 @@ private fun DeviceItemRow(
             }
             AudioDeviceType.BLUETOOTH, AudioDeviceType.OTHER -> {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_devices),
+                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                     contentDescription = null,
                     tint = iconColor,
                     modifier = Modifier.size(22.dp)

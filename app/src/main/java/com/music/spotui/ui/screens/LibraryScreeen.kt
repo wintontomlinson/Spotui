@@ -1,5 +1,7 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -516,7 +518,7 @@ fun LibraryScreen(navController: NavController) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_search_big),
+                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
                     contentDescription = "Search & Filter",
                     tint = if (isSearchVisible || searchQuery.isNotEmpty()) com.music.spotui.ui.theme.OnGold else Ivory,
                     modifier = Modifier.size(16.dp)
@@ -593,7 +595,7 @@ fun LibraryScreen(navController: NavController) {
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_search_big),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
                         tint = TextTertiary,
                         contentDescription = "Search Library",
                         modifier = Modifier.size(16.dp)
@@ -912,7 +914,7 @@ fun SumUpLibraryScreen(
                             ),
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_download),
+                            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Download),
                             contentDescription = "Downloaded",
                             tint = Gold,
                             modifier = Modifier.size(24.dp)

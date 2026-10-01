@@ -1,5 +1,6 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.rounded.Download
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -182,7 +183,7 @@ fun SongOptionsSheet(
                 com.music.spotui.data.api.SpotifySync.setTrackSaved(context, song.spotifyTrackId, liked)
             }
             SongMenuRow(
-                icon = if (downloaded) Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
+                icon = if (downloaded) Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
                 label = when {
                     downloaded -> "Remove download"
                     downloadingNow -> if (downloadPct in 1..99) "Downloading… $downloadPct%" else "Downloading…"
@@ -204,7 +205,7 @@ fun SongOptionsSheet(
             }
             if (downloaded) {
                 SongMenuRow(
-                    icon = ImageVector.vectorResource(R.drawable.ic_download),
+                    icon = androidx.compose.material.icons.Icons.Rounded.Download,
                     label = "Export to Music",
                 ) {
                     onDismiss()

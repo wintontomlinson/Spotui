@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import android.annotation.SuppressLint
@@ -226,7 +227,7 @@ fun DownloadsScreen(navController: NavController) {
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_download),
+                                imageVector = androidx.compose.material.icons.Icons.Rounded.Download,
                                 contentDescription = "",
                                 tint = accent,
                                 modifier = Modifier.size(90.dp),

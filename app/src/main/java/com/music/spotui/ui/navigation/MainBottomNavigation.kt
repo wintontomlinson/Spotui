@@ -51,6 +51,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -151,8 +155,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                     // Floating glass pill: 64dp, compressing to 52dp (labels fade) on scroll down.
                     val pillShape = RoundedCornerShape(26.dp)
                     val glass = if (Build.VERSION.SDK_INT >= 31) GlassFill else GlassFillStrong
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    androidx.compose.foundation.layout.BoxWithConstraints(
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth()
@@ -177,6 +180,36 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 shape = pillShape,
                             ),
                     ) {
+                        // Aurora pill that slides under the selected tab.
+                        val tabWidth = maxWidth / navItems.size
+                        val selectedIndex = navItems.indexOfFirst { it.route == currentTab }.coerceAtLeast(0)
+                        val pillOffset by androidx.compose.animation.core.animateDpAsState(
+                            targetValue = tabWidth * selectedIndex,
+                            animationSpec = com.music.spotui.ui.theme.Motion.spring(),
+                            label = "navPill",
+                        )
+                        Box(
+                            modifier = Modifier
+                                .offset(x = pillOffset)
+                                .width(tabWidth)
+                                .fillMaxHeight()
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(
+                                            com.music.spotui.ui.theme.GoldLight.copy(alpha = 0.20f),
+                                            Gold.copy(alpha = 0.16f),
+                                            com.music.spotui.ui.theme.GoldDeep.copy(alpha = 0.20f),
+                                        )
+                                    )
+                                )
+                                .border(1.dp, HairlineGold, RoundedCornerShape(20.dp)),
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
                         navItems.forEach { item ->
                             val selected = currentTab == item.route
                             NavTab(
@@ -232,6 +265,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                                 },
                             )
                         }
+                        }
                     }
                 }
             }
@@ -257,6 +291,7 @@ private fun NavTab(
         verticalArrangement = Arrangement.Center,
         modifier = modifier
             .fillMaxHeight()
+            .heightIn(min = 48.dp)
             .soloClickable(onClick = onClick)
             .semantics { this.selected = selected; role = Role.Tab },
     ) {
@@ -277,13 +312,6 @@ private fun NavTab(
                     .graphicsLayer { alpha = labelAlpha },
             )
         }
-        Spacer(Modifier.height(3.dp))
-        Box(
-            modifier = Modifier
-                .size(4.dp)
-                .clip(CircleShape)
-                .background(if (selected) Gold else Color.Transparent),
-        )
     }
 }
 

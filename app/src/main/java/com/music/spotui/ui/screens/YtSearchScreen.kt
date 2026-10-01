@@ -492,6 +492,7 @@ private fun BrowseTile(
     category: BrowseCategory,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 168.dp,
 ) {
     // The tile art is resolved from the category NAME (its imageQuery) so the
     // picture visibly matches the label, while the tap still runs `query`.
@@ -509,11 +510,11 @@ private fun BrowseTile(
 
     Box(
         modifier = modifier
-            .height(138.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .height(height)
+            .clip(RoundedCornerShape(22.dp))
             .background(category.color)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(18.dp))
-            .clickable(onClick = onClick),
+            .border(1.dp, com.music.spotui.ui.theme.HairlineGold, RoundedCornerShape(22.dp))
+            .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
         // WHOLE tile as its background (not a small corner thumbnail).
@@ -544,7 +545,25 @@ private fun BrowseTile(
                     ),
                 ),
         )
-        // A small gold play chip in the top-right — a premium Explore flourish.
+        // Aurora glow rising from the bottom edge: the Solo accent signature on every tile.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.55f to Color.Transparent,
+                        1f to com.music.spotui.ui.theme.GoldDeep.copy(alpha = 0.38f),
+                    ),
+                ),
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(com.music.spotui.ui.theme.AuroraBrush),
+        )
+        // A small accent play chip in the top-right — a premium Explore flourish.
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -565,7 +584,7 @@ private fun BrowseTile(
         Text(
             text = category.label,
             color = Ivory,
-            fontSize = 18.sp,
+            fontSize = if (height > 168.dp) 24.sp else 19.sp,
             fontWeight = FontWeight.ExtraBold,
             maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -674,7 +693,16 @@ private fun DiscoverPane(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                BROWSE_CATEGORIES.chunked(2).forEach { pair ->
+                // The first category leads as a full-width hero tile.
+                BROWSE_CATEGORIES.firstOrNull()?.let { hero ->
+                    BrowseTile(
+                        category = hero,
+                        onClick = { onPick(hero.query) },
+                        modifier = Modifier.fillMaxWidth(),
+                        height = 196.dp,
+                    )
+                }
+                BROWSE_CATEGORIES.drop(1).chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },

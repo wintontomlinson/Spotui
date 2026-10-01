@@ -6,38 +6,39 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 
 /*
- * Solo design tokens: "Midnight Velvet & Gold".
+ * Solo design tokens: "Obsidian Aurora".
  *
- * A plum-black canvas, a layered velvet surface ramp (each step one visible notch
- * lighter), a single warm-gold accent and ivory text. Screens read colours from here
+ * An obsidian canvas, a layered surface ramp (each step one visible notch lighter), a
+ * single apricot-to-rose "aurora" accent and ivory text. Token names are kept from 3.0
+ * (Gold*, Velvet, …) so every screen restyles from here. Screens read colours from here
  * instead of hard-coding hex values, so the whole app stays on one palette.
  */
 
 // Canvas and surface ramp
-val Ink = Color(0xFF0C0912)        // app canvas
-val Night = Color(0xFF141020)      // surface 1: bars, grouped rows
-val Dusk = Color(0xFF1B1529)       // surface 2: cards, sheets, dialogs
-val Velvet = Color(0xFF241C35)     // surface 3: inputs, chips, icon wells
-val Amethyst = Color(0xFF2E2442)   // surface 4: selected / pressed
-val RoyalPlum = Color(0xFF2B1A4D)  // brand plate, gradient crown
-val RoyalViolet = Color(0xFF6B4BB8)
-val Lilac = Color(0xFFBFA8E8)      // secondary accent (status, info)
+val Ink = Color(0xFF08070C)        // app canvas
+val Night = Color(0xFF110F18)      // surface 1: bars, grouped rows
+val Dusk = Color(0xFF181522)       // surface 2: cards, sheets, dialogs
+val Velvet = Color(0xFF211D2E)     // surface 3: inputs, chips, icon wells
+val Amethyst = Color(0xFF2B2640)   // surface 4: selected / pressed
+val RoyalPlum = Color(0xFF1D1636)  // brand plate, gradient crown
+val RoyalViolet = Color(0xFF5B4BD6)
+val Lilac = Color(0xFFAEB6FF)      // secondary accent (status, info)
 
-// Gold accent ramp
-val GoldLight = Color(0xFFFBEFD0)
-val Gold = Color(0xFFE6C27A)
-val GoldDeep = Color(0xFFB8893A)
-val OnGold = Color(0xFF1A1206)     // content drawn on top of gold
+// Aurora accent ramp (names kept from the gold era): light apricot, apricot, rose
+val GoldLight = Color(0xFFFFE3C2)
+val Gold = Color(0xFFFFAE70)
+val GoldDeep = Color(0xFFE2566E)
+val OnGold = Color(0xFF1A0D06)     // content drawn on top of gold
 
 // Text (all pass WCAG AA on Ink through Velvet)
-val Ivory = Color(0xFFF5F0E6)
+val Ivory = Color(0xFFF6F2EC)
 val TextSecondary = Color(0xFFB9B0C4)
 val TextTertiary = Color(0xFF908799)
 val TextDisabled = Color(0xFF5A5366)
 
 // Lines
 val HairlineSoft = Color(0x14F5F0E6)   // 8% ivory: dividers, card edges
-val HairlineGold = Color(0x2EE6C27A)   // 18% gold: premium edges on hero surfaces
+val HairlineGold = Color(0x2EFFAE70)   // 18% apricot: premium edges on hero surfaces
 
 // Status
 val Danger = Color(0xFFF07B7B)
@@ -52,14 +53,14 @@ val Scrim = Color(0xB3000000)
 val ShadowInk = Color(0x5905030A)
 
 // Glass (translucent chrome over scrolling content)
-val GlassFill = Color(0xD9141020)
-val GlassFillStrong = Color(0xF2141020)
+val GlassFill = Color(0xD9110F18)
+val GlassFillStrong = Color(0xF2110F18)
 
-/** Shared screen background: a royal-plum crown that settles into the ink canvas. */
+/** Shared screen background: a soft violet glow at the top that settles into obsidian. */
 val AppBackgroundBrush: Brush = Brush.verticalGradient(
-    0f to Color(0xFF1E1433),
+    0f to Color(0xFF1D1636),
     0.42f to Ink,
-    1f to Color(0xFF08060C),
+    1f to Color(0xFF060509),
 )
 
 /** The accent gradient used for primary actions (play buttons, the Liked tile). */

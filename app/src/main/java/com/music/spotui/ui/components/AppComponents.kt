@@ -1,5 +1,7 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.shadow
@@ -96,6 +98,7 @@ import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Velvet
 import com.music.spotui.ui.theme.Night
 import com.music.spotui.ui.theme.SoloShape
+import androidx.compose.foundation.layout.statusBarsPadding
 import com.music.spotui.ui.theme.ShadowInk
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.shape.CircleShape
@@ -104,24 +107,29 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 
+/**
+ * Shared loading state for album / artist / playlist / liked / show screens: a header
+ * skeleton (artwork + title lines) and track-row skeletons, instead of a bare spinner,
+ * so the layout is already in place when content arrives.
+ */
 @Composable
 fun Loader() {
-    Column(Modifier
-        .fillMaxSize()
-        .background(Color(AppBackground.toArgb())),
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Color(AppBackground.toArgb()))
+            .statusBarsPadding()
+            .padding(top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier
-                .size(45.dp),
-            // The app accent, not the old off brand purple, so every loading screen
-            // stays on palette.
-            color = Gold,
-            strokeWidth = 3.dp,
-        )
+        Box(Modifier.size(200.dp).shimmer(SoloShape.lg))
+        Spacer(Modifier.height(18.dp))
+        Box(Modifier.fillMaxWidth(0.55f).height(18.dp).shimmer())
+        Spacer(Modifier.height(10.dp))
+        Box(Modifier.fillMaxWidth(0.35f).height(12.dp).shimmer())
+        Spacer(Modifier.height(18.dp))
+        SoloShimmerList(count = 6)
     }
-
 }
 
 @Composable
@@ -198,6 +206,12 @@ fun MiniPlayer(navController: NavHostController) {
         }
     }
 
+    val miniTone by androidx.compose.animation.animateColorAsState(
+        targetValue = darkVibrantColor,
+        animationSpec = com.music.spotui.ui.theme.Motion.emphasized(),
+        label = "miniTone",
+    )
+
     var isLiked by remember {
         mutableStateOf(false)
     }
@@ -240,8 +254,8 @@ fun MiniPlayer(navController: NavHostController) {
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Night, 0.20f),
-                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Night, 0.78f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Night, 0.20f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Night, 0.78f),
                     )
                 )
             )
@@ -593,9 +607,13 @@ fun CustomSlider(
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active track
-            drawLine(
-                color = Gold,
+            // Active track in the aurora gradient
+            if (thumbX > 0f) drawLine(
+                brush = Brush.horizontalGradient(
+                    listOf(com.music.spotui.ui.theme.GoldLight, Gold, com.music.spotui.ui.theme.GoldDeep),
+                    startX = 0f,
+                    endX = size.width,
+                ),
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
@@ -663,7 +681,7 @@ fun SwipeToPlayNextWrapper(
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_queue_add),
+                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                     contentDescription = "Play next",
                     // Dark content on the light amber accent keeps the contrast strong.
                     tint = OnGold,
@@ -705,7 +723,7 @@ fun AppSearchBar(
             .padding(horizontal = 14.dp)
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_search_big),
+            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
             tint = TextSecondary,
             contentDescription = "Search",
             modifier = Modifier

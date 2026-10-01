@@ -39,3 +39,13 @@ object SoloSpacing {
     val rowHeight = 64.dp
     val touchTarget = 48.dp
 }
+
+/** Shared motion specs: emphasized for screen-level changes, quick for icons, spring for touch. */
+object Motion {
+    fun <T> emphasized() = androidx.compose.animation.core.tween<T>(
+        durationMillis = 420,
+        easing = androidx.compose.animation.core.FastOutSlowInEasing,
+    )
+    fun <T> quick() = androidx.compose.animation.core.tween<T>(durationMillis = 180)
+    fun <T> spring() = androidx.compose.animation.core.spring<T>(dampingRatio = 0.8f, stiffness = 380f)
+}

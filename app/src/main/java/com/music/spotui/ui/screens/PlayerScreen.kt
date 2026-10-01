@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.Download
 import com.music.spotui.ui.components.soloClickable
 import android.content.Context
 import android.content.Intent
@@ -22,6 +23,9 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import kotlin.math.roundToInt
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -479,6 +483,18 @@ fun PlayerScreen(navController: NavController) {
     var dominentColor by remember {
         mutableStateOf(Color(AppBackground.toArgb()))
     }
+    // The artwork tone eases between tracks instead of snapping.
+    val artTone by androidx.compose.animation.animateColorAsState(
+        targetValue = dominentColor,
+        animationSpec = com.music.spotui.ui.theme.Motion.emphasized(),
+        label = "artTone",
+    )
+    // Artwork breathes down slightly while paused and springs back on play.
+    val artScale by animateFloatAsState(
+        targetValue = if (songPlayingState) 1f else 0.92f,
+        animationSpec = com.music.spotui.ui.theme.Motion.spring(),
+        label = "artScale",
+    )
     var showDevicesSheet by remember { mutableStateOf(false) }
     // Once per cover: this screen recomposes every 300 ms while playing.
     LaunchedEffect(songCoverUri) {
@@ -556,12 +572,12 @@ fun PlayerScreen(navController: NavController) {
             }
     }
 
-    // Warm the stream cache for the adjacent tracks so next/previous start instantly.
+    // The next two tracks are pre-resolved by CurrentSongState; here we only make the
+    // previous one ready (URL only) so a back-skip is instant too.
     LaunchedEffect(songId, queueSongs) {
         val idx = queueSongs.indexOfFirst { it.id == songId }
-        if (idx >= 0) {
-            queueSongs.getOrNull(idx + 1)?.let { SongPlayer.prefetch(it.url, context) }
-            queueSongs.getOrNull(idx - 1)?.let { SongPlayer.prefetch(it.url, context) }
+        if (idx > 0) {
+            queueSongs.getOrNull(idx - 1)?.let { SongPlayer.prefetch(it.url, context, preBuffer = false) }
         }
     }
 
@@ -629,8 +645,8 @@ fun PlayerScreen(navController: NavController) {
             .background(
                 // The artwork's tone crowns the screen and settles into the ink canvas.
                 Brush.verticalGradient(
-                    0f to dominentColor,
-                    0.5f to lerp(dominentColor, Ink, 0.72f),
+                    0f to artTone.copy(alpha = 0.55f),
+                    0.5f to lerp(artTone, Ink, 0.78f),
                     1f to Ink,
                 )
             )
@@ -648,8 +664,8 @@ fun PlayerScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.66f)
-                    .blur(96.dp)
-                    .alpha(0.42f),
+                    .blur(64.dp)
+                    .alpha(0.35f),
             )
             Box(
                 modifier = Modifier
@@ -733,15 +749,16 @@ fun PlayerScreen(navController: NavController) {
                                 modifier = Modifier
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f)
-                                    .padding(16.dp)
+                                    .padding(27.dp)
+                                    .graphicsLayer { scaleX = artScale; scaleY = artScale }
                                     .shadow(
-                                        elevation = 30.dp,
-                                        shape = RoundedCornerShape(22.dp),
+                                        elevation = 34.dp,
+                                        shape = com.music.spotui.ui.theme.SoloShape.xl,
                                         clip = false,
-                                        ambientColor = Color.Black,
-                                        spotColor = dominentColor,
+                                        ambientColor = artTone,
+                                        spotColor = artTone,
                                     )
-                                    .clip(RoundedCornerShape(22.dp))
+                                    .clip(com.music.spotui.ui.theme.SoloShape.xl)
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -762,28 +779,30 @@ fun PlayerScreen(navController: NavController) {
                                     (artworkPagerState.currentPage - page) +
                                         artworkPagerState.currentPageOffsetFraction
                                     ).absoluteValue.coerceIn(0f, 1f)
-                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset)
+                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset) *
+                                    (if (page == currentIndex) artScale else 1f)
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 GlideImage(
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(16.dp)
+                                        .fillMaxSize(0.86f)
                                         .graphicsLayer {
                                             scaleX = scale
                                             scaleY = scale
                                         }
                                         .shadow(
-                                            elevation = 30.dp,
-                                            shape = RoundedCornerShape(22.dp),
+                                            elevation = 34.dp,
+                                            shape = com.music.spotui.ui.theme.SoloShape.xl,
                                             clip = false,
-                                            ambientColor = Color.Black,
-                                            spotColor = dominentColor,
+                                            ambientColor = artTone,
+                                            spotColor = artTone,
                                         )
-                                        .clip(RoundedCornerShape(22.dp))
+                                        .clip(com.music.spotui.ui.theme.SoloShape.xl)
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
-                                    contentDescription = ""
+                                    contentDescription = "Album artwork"
                                 )
+                                }
                             }
                         }
                     }
@@ -1299,6 +1318,11 @@ fun PlayerInfo(
 
 }
 
+/**
+ * Solo seek bar: a 4dp track with the aurora gradient on the played part and a 14dp
+ * thumb that grows to 20dp while dragging, inside a 48dp touch band. Exposes slider
+ * semantics so TalkBack can read and set the position.
+ */
 @Composable
 fun CustomSlider(
     modifier: Modifier = Modifier,
@@ -1310,34 +1334,30 @@ fun CustomSlider(
     colors: Any? = null, // kept for API compat; unused
 ) {
     var isDragging by remember { mutableStateOf(false) }
-
-    // Track height grows slightly while dragging (Spotify micro-animation)
-    val trackHeight by animateDpAsState(
-        targetValue = if (isDragging) 5.dp else 3.dp,
-        animationSpec = tween(durationMillis = 150),
-        label = "trackHeight"
+    val thumbDp by animateDpAsState(
+        targetValue = if (isDragging) 20.dp else 14.dp,
+        animationSpec = com.music.spotui.ui.theme.Motion.spring(),
+        label = "thumbSize",
     )
-    // Thumb alpha: invisible at rest, pops in when dragging
-    val thumbAlpha by animateFloatAsState(
-        targetValue = if (isDragging) 1f else 0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "thumbAlpha"
-    )
-
-    val fraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
-        .coerceIn(0f, 1f)
-
-    val density = LocalDensity.current
+    val span = (valueRange.endInclusive - valueRange.start).takeIf { it > 0f } ?: 1f
+    val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
 
     Box(
         modifier = modifier
-            .height(36.dp) // generous vertical touch target
+            .height(48.dp)
+            .semantics {
+                contentDescription = "Seek"
+                progressBarRangeInfo = androidx.compose.ui.semantics.ProgressBarRangeInfo(value, valueRange)
+                setProgress { target ->
+                    onValueChange(target.coerceIn(valueRange.start, valueRange.endInclusive))
+                    onValueChangeFinished?.invoke()
+                    true
+                }
+            }
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
-                    val newFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                    val mapped =
-                        valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                    onValueChange(mapped)
+                    val f = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                    onValueChange(valueRange.start + f * span)
                     onValueChangeFinished?.invoke()
                 }
             }
@@ -1354,51 +1374,39 @@ fun CustomSlider(
                     },
                     onHorizontalDrag = { change, _ ->
                         change.consume()
-                        val newFraction =
-                            (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
-                        val mapped =
-                            valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                        onValueChange(mapped)
+                        val f = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        onValueChange(valueRange.start + f * span)
                     }
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        val trackHeightPx = with(density) { trackHeight.toPx() }
-        val thumbRadiusPx = with(density) { 6.dp.toPx() }
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(trackHeight)
-        ) {
-            val trackY = size.height / 2f
-            val thumbX = fraction * size.width
-
-            // Inactive (background) track
+        Canvas(modifier = Modifier.fillMaxWidth().height(20.dp)) {
+            val trackPx = 4.dp.toPx()
+            val y = size.height / 2f
+            val thumbR = thumbDp.toPx() / 2f
+            val x = (fraction * size.width).coerceIn(0f, size.width)
             drawLine(
                 color = Ivory.copy(alpha = 0.16f),
-                start = Offset(0f, trackY),
-                end = Offset(size.width, trackY),
-                strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                start = Offset(0f, y),
+                end = Offset(size.width, y),
+                strokeWidth = trackPx,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
             )
-            // Active (played) track in gold
-            drawLine(
-                color = Gold,
-                start = Offset(0f, trackY),
-                end = Offset(thumbX, trackY),
-                strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
-            // Gold thumb, always visible, grows while dragging
-            run {
-                drawCircle(
-                    color = GoldLight,
-                    radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
-                    center = Offset(thumbX, trackY)
+            if (x > 0f) {
+                drawLine(
+                    brush = Brush.horizontalGradient(
+                        listOf(com.music.spotui.ui.theme.GoldLight, Gold, com.music.spotui.ui.theme.GoldDeep),
+                        startX = 0f,
+                        endX = size.width,
+                    ),
+                    start = Offset(0f, y),
+                    end = Offset(x, y),
+                    strokeWidth = trackPx,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
                 )
             }
+            drawCircle(color = Ivory, radius = thumbR, center = Offset(x, y))
         }
     }
 }
@@ -1492,9 +1500,16 @@ fun PlayerFull(
                     strokeWidth = 3.dp
                 )
             } else {
-                androidx.compose.animation.Crossfade(
+                androidx.compose.animation.AnimatedContent(
                     targetState = songPlayingState,
-                    animationSpec = androidx.compose.animation.core.tween(com.music.spotui.ui.components.SoloMotion.ICON_MS),
+                    transitionSpec = {
+                        (androidx.compose.animation.fadeIn(com.music.spotui.ui.theme.Motion.quick()) +
+                            androidx.compose.animation.scaleIn(com.music.spotui.ui.theme.Motion.spring(), initialScale = 0.6f))
+                            .togetherWith(
+                                androidx.compose.animation.fadeOut(com.music.spotui.ui.theme.Motion.quick()) +
+                                    androidx.compose.animation.scaleOut(com.music.spotui.ui.theme.Motion.quick(), targetScale = 0.6f)
+                            )
+                    },
                     label = "playPause",
                 ) { playing ->
                     Icon(
@@ -2106,9 +2121,7 @@ fun PlayerOptionsSheet(
                     onDismiss()
                 }
                 PlayerMenuRow(
-                    icon = if (downloaded) Icons.Default.CheckCircle else ImageVector.vectorResource(
-                        R.drawable.ic_download
-                    ),
+                    icon = if (downloaded) Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
                     iconTint = if (downloaded) Color(AppPalette.toArgb()) else Ivory,
                     label = when {
                         downloaded -> "Remove download"

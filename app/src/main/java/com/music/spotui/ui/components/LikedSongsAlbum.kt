@@ -1,5 +1,9 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.shadow
 import android.annotation.SuppressLint
@@ -210,7 +214,7 @@ fun LikedSongsScreen(
                     ) {
                         if (likedSongs.isNotEmpty()) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_queue_add),
+                                painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                                 tint = Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
@@ -262,7 +266,7 @@ fun LikedSongsScreen(
                                 Icon(
                                     modifier = Modifier.size(25.dp),
                                     tint = com.music.spotui.ui.theme.OnGold,
-                                    painter = painterResource(id = R.drawable.play_svgrepo_com),
+                                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                                     contentDescription = ""
                                 )
                             }
@@ -383,10 +387,10 @@ fun LikedSongsScreen(
                                         onLongClick = { showSavedIn = true },
                                     ),
                                 painter = if (isLiked){
-                                    painterResource(id = R.drawable.added)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                 }
                                 else{
-                                    painterResource(id = R.drawable.ic_add)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline)
                                 }
                                 ,
                                 tint = TextSecondary,

@@ -98,6 +98,7 @@ fun Modifier.soloClickable(ripple: Boolean = false, onClick: () -> Unit): Modifi
         .clickable(
             interactionSource = source,
             indication = if (ripple) LocalIndication.current else null,
+            role = androidx.compose.ui.semantics.Role.Button,
             onClick = onClick,
         )
 }
@@ -114,10 +115,13 @@ fun SoloDragHandle() {
     )
 }
 
-/** Width-to-height ratio of drawable/logo (the tight-bounds Solo mark). */
-private const val MARK_ASPECT = 25.6f / 56f
+/** Width-to-height ratio of drawable/logo (the tight-bounds, square Solo Facet mark). */
+private const val MARK_ASPECT = 1f
 
-/** The Solo "Pure Tone" mark. Pass [tint] for a flat single-colour version. */
+/**
+ * The Solo "Facet" mark (four-facet gem + solo dot), drawn from drawable/logo so the
+ * in-app mark and the launcher share one geometry. Pass [tint] for a flat version.
+ */
 @Composable
 fun SoloMark(
     modifier: Modifier = Modifier,
@@ -219,6 +223,44 @@ fun Modifier.shimmer(shape: Shape = RoundedCornerShape(8.dp)): Modifier = compos
                 ),
             )
         }
+}
+
+/** Skeleton for a list row: square art plus two text lines. */
+@Composable
+fun SoloShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+    ) {
+        Box(Modifier.size(artSize).shimmer(RoundedCornerShape(10.dp)))
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            Box(Modifier.fillMaxWidth(0.62f).height(12.dp).shimmer())
+            Spacer(Modifier.height(8.dp))
+            Box(Modifier.fillMaxWidth(0.38f).height(10.dp).shimmer())
+        }
+    }
+}
+
+/** Skeleton for a square artwork card with a caption. */
+@Composable
+fun SoloShimmerCard(modifier: Modifier = Modifier, size: Dp = 156.dp) {
+    Column(modifier = modifier.width(size)) {
+        Box(Modifier.size(size).shimmer(RoundedCornerShape(16.dp)))
+        Spacer(Modifier.height(9.dp))
+        Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
+        Spacer(Modifier.height(7.dp))
+        Box(Modifier.fillMaxWidth(0.55f).height(10.dp).shimmer())
+    }
+}
+
+/** A column of [count] row skeletons, the standard loading state for track lists. */
+@Composable
+fun SoloShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
+        repeat(count) { SoloShimmerRow() }
+    }
 }
 
 /** Filter / mood chip. Selected chips are gold. */

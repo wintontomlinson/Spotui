@@ -1,5 +1,11 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.shadow
 import android.annotation.SuppressLint
@@ -432,10 +438,10 @@ fun SumUpAlbumScreen(
 
                                     },
                                 painter = if (isAlbumLiked){
-                                    painterResource(id = R.drawable.added)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                 }
                                 else{
-                                    painterResource(id = R.drawable.ic_add)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline)
                                 }
                                 ,
                                 tint = if (isAlbumLiked){
@@ -452,7 +458,7 @@ fun SumUpAlbumScreen(
                             }
                             Icon(
                                 imageVector = if (albumDownloaded)
-                                    Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
+                                    Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
                                 tint = if (albumDownloaded) Color(AppPalette.toArgb()) else Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
@@ -486,7 +492,7 @@ fun SumUpAlbumScreen(
                             Spacer(modifier = Modifier.width(16.dp))
                             if (albumSongs.isNotEmpty()) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_queue_add),
+                                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                                     tint = Ivory,
                                     modifier = Modifier
                                         .size(24.dp)
@@ -507,7 +513,7 @@ fun SumUpAlbumScreen(
                             }
                             // Shuffle-play: start the album in random order.
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_player_shuffle),
+                                painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
                                 tint = Ivory,
                                 modifier = Modifier
                                     .size(24.dp)
@@ -571,9 +577,7 @@ fun SumUpAlbumScreen(
                                     modifier = Modifier
                                         .size(25.dp),
                                     tint = com.music.spotui.ui.theme.OnGold,
-                                    painter = painterResource(
-                                        id = if (currentInList && playing) R.drawable.ic_playing else R.drawable.play_svgrepo_com,
-                                    ),
+                                    painter = if (currentInList && playing) painterResource(id = R.drawable.ic_playing) else androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                                     contentDescription = if (currentInList && playing) "Pause" else "Play")
                             }
                         }
@@ -751,9 +755,9 @@ fun SumUpAlbumScreen(
                                             onLongClick = { showSavedIn = true },
                                         ),
                                     painter = if (isLiked) {
-                                        painterResource(id = R.drawable.added)
+                                        androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                     } else {
-                                        painterResource(id = R.drawable.ic_add)
+                                        androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline)
                                     },
                                     tint = if (isLiked) {
                                         Ivory

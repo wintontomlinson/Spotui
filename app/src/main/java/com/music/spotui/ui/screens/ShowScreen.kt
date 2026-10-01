@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -174,7 +175,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                     if (episodes.isNotEmpty()) {
                         Spacer(Modifier.height(12.dp))
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_queue_add),
+                            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                             tint = Ivory,
                             modifier = Modifier
                                 .size(24.dp)

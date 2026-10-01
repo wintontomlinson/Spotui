@@ -1,5 +1,6 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.Devices
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -233,7 +234,7 @@ fun SettingsScreen(navController: NavController) {
                 subtitleColor = SettingsAccent,
                 leadingIcon = {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_devices),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
                         tint = SettingsAccent,
                         modifier = Modifier.size(20.dp),

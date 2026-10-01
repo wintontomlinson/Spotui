@@ -1,5 +1,10 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Shuffle
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -288,7 +293,7 @@ private fun ArtistOverviewContent(
                     }
                     Spacer(Modifier.width(16.dp))
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_dots),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.MoreVert),
                         contentDescription = "",
                         tint = TextTertiary,
                         modifier = Modifier.size(22.dp),
@@ -297,7 +302,7 @@ private fun ArtistOverviewContent(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_player_shuffle),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
                         contentDescription = "",
                         tint = Ivory,
                         modifier = Modifier
@@ -319,7 +324,7 @@ private fun ArtistOverviewContent(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.play_svgrepo_com),
+                            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                             contentDescription = "",
                             tint = com.music.spotui.ui.theme.OnGold,
                             modifier = Modifier.size(26.dp),
@@ -603,7 +608,7 @@ private fun PopularTrackRow(
                 } ?: Text(text = song.singer, color = TextTertiary, fontSize = 12.sp, maxLines = 1)
             }
             Icon(
-                painter = if (isLiked) painterResource(id = R.drawable.added) else painterResource(id = R.drawable.ic_add),
+                painter = if (isLiked) androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle) else androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline),
                 contentDescription = "",
                 tint = if (isLiked) Ivory else TextTertiary,
                 modifier = Modifier
