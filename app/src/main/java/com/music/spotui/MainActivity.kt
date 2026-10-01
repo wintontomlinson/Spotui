@@ -43,6 +43,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
+        // Apply the saved accent choice (FEAT-003) to the live theme before the first frame, so
+        // the picked accent is in place on launch. Defaults to Azure when nothing is stored.
+        com.music.spotui.data.preferences.applySavedAccent(this)
+
         // Ask for notification permission (Android 13+) so the media notification shows.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)

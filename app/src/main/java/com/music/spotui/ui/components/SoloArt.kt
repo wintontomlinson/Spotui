@@ -48,8 +48,11 @@ import com.music.spotui.ui.theme.artworkTone
  *    so no new dependency is pulled in.
  */
 
-/** The Graphite & Azure ramp a mesh picks its stops from: soft sky -> azure -> cobalt -> steel. */
-private val MeshRamp = listOf(AccentSoft, Accent, AccentDeep, Gold)
+/**
+ * The Graphite & Azure ramp a mesh picks its stops from: soft sky -> accent -> deep -> steel.
+ * A getter so the decorative mesh follows the live accent choice (FEAT-003 accent picker).
+ */
+private val MeshRamp: List<Color> get() = listOf(AccentSoft, Accent, AccentDeep, Gold)
 
 /** A stable 32-bit hash of [seed] so the same label always paints the same mesh. */
 private fun seedHash(seed: String): Int {

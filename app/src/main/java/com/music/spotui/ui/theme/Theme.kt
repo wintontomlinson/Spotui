@@ -24,7 +24,11 @@ import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
 // dialogs, menus) picks up the Graphite & Azure palette instead of a stray default or wallpaper tint.
-private val SoloColorScheme = darkColorScheme(
+//
+// Built as a function (not a val) so it reads the LIVE accent tokens: when the FEAT-003 accent
+// picker retunes [AccentState], recomposing [SoloTheme] rebuilds the scheme and every Material
+// component recolours too. The graphite canvas/surface tokens are fixed, so only the accent moves.
+private fun soloColorScheme() = darkColorScheme(
     primary = Accent,
     onPrimary = OnAccent,
     primaryContainer = Elevated,
@@ -75,7 +79,8 @@ fun SoloTheme(content: @Composable () -> Unit) {
     }
 
     MaterialTheme(
-        colorScheme = SoloColorScheme,
+        // Reads AccentState through the Accent* getters, so an accent change recomposes the scheme.
+        colorScheme = soloColorScheme(),
         typography = Typography,
         shapes = SoloShapes,
     ) {

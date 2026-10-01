@@ -10,6 +10,9 @@ package com.music.spotui.ui.theme
  * derive a surface tint from album art.
  */
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -50,10 +53,43 @@ val Surface3 = Color(0xFF242931)   // inputs, chips, icon wells
 val Surface4 = Color(0xFF2F353E)   // pressed / selected
 val Elevated = Color(0xFF171B20)   // hero plate, brand crown
 
-// Azure accent ramp (soft sky -> signature azure -> deep cobalt)
-val AccentSoft = Color(0xFF93C5FD)
-val Accent = Color(0xFF3B82F6)     // signature refined azure: text, icons and fills
-val AccentDeep = Color(0xFF1D4ED8) // deep cobalt for gradient depth
+// Azure accent ramp (soft sky -> signature azure -> deep cobalt).
+//
+// The accent is the ONE colour the Settings accent picker (FEAT-003) retunes live. The three
+// ramp stops and the two accent-derived tokens below are read through [AccentState], a single
+// Compose-observable holder, so choosing an accent recomposes every consumer at once WITHOUT
+// touching the graphite canvas or any surface token — restraint stays intact. The default triplet
+// is the FEAT-002 refined azure, so a fresh/upgraded install is unchanged until the user picks.
+
+/** The default azure accent ramp (soft sky -> signature azure -> deep cobalt). */
+val DefaultAccentSoft = Color(0xFF93C5FD)
+val DefaultAccent = Color(0xFF3B82F6)
+val DefaultAccentDeep = Color(0xFF1D4ED8)
+
+/**
+ * Compose-observable accent ramp. The accent picker writes [set]; every token that reads
+ * [AccentState.soft]/[accent]/[deep] (and thus [Accent], [AccentSoft], [AccentDeep],
+ * [HairlineAccent], [AccentBrush]) recomposes, so the whole app recolours live. Defaults to the
+ * FEAT-002 azure, so nothing changes until a choice is made.
+ */
+object AccentState {
+    var soft by mutableStateOf(DefaultAccentSoft)
+        private set
+    var accent by mutableStateOf(DefaultAccent)
+        private set
+    var deep by mutableStateOf(DefaultAccentDeep)
+        private set
+
+    fun set(soft: Color, accent: Color, deep: Color) {
+        this.soft = soft
+        this.accent = accent
+        this.deep = deep
+    }
+}
+
+val AccentSoft: Color get() = AccentState.soft
+val Accent: Color get() = AccentState.accent     // signature accent: text, icons and fills
+val AccentDeep: Color get() = AccentState.deep    // deep stop for gradient depth
 val OnAccent = Color(0xFF0A0E14)   // content drawn on accent fills
 
 // Cool steel highlight (hero edges only, used sparingly)
@@ -67,7 +103,8 @@ val TextDisabled = Color(0xFF4A525C)
 
 // Lines
 val Hairline = Color(0x14F4F6F8)        // 8% off-white: dividers, card edges
-val HairlineAccent = Color(0x383B82F6)  // 22% azure: premium edges on hero surfaces
+/** 22% accent: premium edges on hero surfaces. Follows the live accent choice. */
+val HairlineAccent: Color get() = Accent.copy(alpha = 0.22f)
 
 // Status
 val Danger = Color(0xFFF26D6D)
@@ -92,8 +129,8 @@ val AppBackgroundBrush: Brush = Brush.verticalGradient(
     1f to Color(0xFF0A0C0F),
 )
 
-/** The accent gradient used for primary actions (play buttons, the Liked tile): soft sky -> azure -> cobalt. */
-val AccentBrush: Brush = Brush.linearGradient(listOf(AccentSoft, Accent, AccentDeep))
+/** The accent gradient used for primary actions (play buttons, the Liked tile). Follows the live accent choice. */
+val AccentBrush: Brush get() = Brush.linearGradient(listOf(AccentSoft, Accent, AccentDeep))
 
 /**
  * Keeps an artwork-derived colour rich but dark enough for light text on top
