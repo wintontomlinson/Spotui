@@ -92,6 +92,7 @@ import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.components.shimmer
+import com.music.spotui.ui.components.SoloArtwork
 import com.music.spotui.ui.components.soloMeshBackground
 import androidx.compose.material.icons.rounded.SearchOff
 import com.music.spotui.ui.theme.Accent
@@ -524,16 +525,34 @@ private fun BrowseTile(
     modifier: Modifier = Modifier,
     height: androidx.compose.ui.unit.Dp = 168.dp,
 ) {
+    // Curated, always-available photo for this category (Unsplash CDN). When present it draws
+    // as the full-bleed tile artwork; the mesh underneath shows while it loads and whenever the
+    // url is blank, so a tile is never an empty box.
+    val img = remember(category.imageQuery) {
+        com.music.spotui.data.api.BrowseTileImages.cachedFor(category.imageQuery)
+    }
     Box(
         modifier = modifier
             .height(height)
-            // Decorative mood/genre/chart art is generated in code from the label, so the
-            // bold full-bleed background needs no bitmap decode and no network request.
+            // A deterministic Graphite & Azure mesh painted from the label: it shows while the
+            // curated photo loads and stays as a premium, legible fallback if the url is blank
+            // or the image fails to decode — so the tile always paints something.
             .soloMeshBackground(category.label, SoloShape.md)
             .border(1.dp, Hairline, SoloShape.md)
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
-        // A soft category-tone + Canvas scrim over the mesh so the label always reads.
+        // Real curated artwork over the mesh. Only drawn when a url exists, so a blank url
+        // leaves the mesh visible rather than an empty Glide box.
+        if (img.isNotBlank()) {
+            SoloArtwork(
+                model = img,
+                modifier = Modifier.matchParentSize(),
+                shape = SoloShape.md,
+                contentScale = ContentScale.Crop,
+                contentDescription = category.label,
+            )
+        }
+        // A soft category-tone + Canvas scrim over the art/mesh so the label always reads.
         Box(
             modifier = Modifier
                 .matchParentSize()
