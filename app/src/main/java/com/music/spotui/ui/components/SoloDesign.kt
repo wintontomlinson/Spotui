@@ -1,5 +1,13 @@
 package com.music.spotui.ui.components
 
+/**
+ * Core SOLO design primitives shared across screens: the brand [SoloMark] / [SoloWordmark], the
+ * [SoloPillButton], and reusable [Modifier] helpers — `shimmer()`, `soloPress()`,
+ * `soloClickable()` and `soloGlass()` (API 31+ `RenderEffect` blur with an opaque fallback below).
+ * Keeping these here means buttons, loading states and glass surfaces look and behave the same
+ * everywhere.
+ */
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.LocalIndication

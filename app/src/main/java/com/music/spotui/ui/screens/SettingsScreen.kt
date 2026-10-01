@@ -1,5 +1,13 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Settings tab (`SettingsScreen`).
+ *
+ * Groups the app's preferences — playback/audio, appearance, backup, updates — and hosts the
+ * compact [AboutCard] (mark, name + version, tagline, maintainer/credits/disclaimer) rather than
+ * a separate About screen. Reads and writes through the settings preferences store.
+ */
+
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.MaterialTheme

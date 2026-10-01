@@ -1,5 +1,12 @@
 package com.music.spotui.ui.theme
 
+/**
+ * SOLO typography scale.
+ *
+ * Defines the font families (Space Grotesk for display/headings, Plus Jakarta Sans for body) and
+ * the Material 3 [Typography] text styles used across the app.
+ */
+
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font

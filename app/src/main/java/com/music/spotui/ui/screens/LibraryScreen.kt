@@ -1,5 +1,13 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Library tab (`LibraryScreen`).
+ *
+ * The user's saved content — playlists, liked songs, albums, artists, downloads and local files —
+ * presented as a single consistent list with filter chips ([LibraryFilterChips]). Entries
+ * navigate into the matching detail screens.
+ */
+
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.MaterialTheme
 import com.music.spotui.ui.theme.SoloShape

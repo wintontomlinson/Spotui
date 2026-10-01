@@ -1,5 +1,10 @@
 package com.music.spotui.ui.theme
 
+/**
+ * SOLO corner-radius / shape tokens, exposed as the Material 3 [Shapes] set and the `SoloShape`
+ * helpers so cards, sheets and buttons share a consistent rounding language.
+ */
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp

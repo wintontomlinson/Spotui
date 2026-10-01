@@ -1,5 +1,12 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Explore / Search tab (`YtSearchScreen`).
+ *
+ * Shows the browse categories as decorative mesh tiles (see `BROWSE_CATEGORIES`) and hosts the
+ * search field + results. Takes an optional [initialQuery] to open straight into a search.
+ */
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.material3.MaterialTheme
 import com.music.spotui.ui.theme.SoloShape

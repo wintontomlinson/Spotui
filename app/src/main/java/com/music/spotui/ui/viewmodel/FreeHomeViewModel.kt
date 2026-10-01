@@ -36,6 +36,10 @@ data class HomeRow(
  * artists / songs), so it updates according to what they actually play. Curated
  * evergreen sections follow (and are the only content on a fresh install).
  */
+/**
+ * Backs the Home tab: assembles the featured carousel and the personalised shelves (trending,
+ * recents, "Because you liked") from the repository and the taste profile.
+ */
 @HiltViewModel
 class FreeHomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,

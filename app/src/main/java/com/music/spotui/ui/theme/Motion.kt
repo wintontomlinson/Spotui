@@ -1,5 +1,10 @@
 package com.music.spotui.ui.theme
 
+/**
+ * Shared motion tokens (`SoloMotion`): the easing curves and spring/tween specs that drive the
+ * app's animations, so transitions feel consistent across screens.
+ */
+
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.TweenSpec

@@ -20,6 +20,7 @@ enum class LibraryFilterType {
 }
 
 @HiltViewModel
+/** Backs the Library tab: exposes the user's saved playlists, albums, artists and liked content. */
 class LibraryViewModel @Inject constructor(private val repository: AppRepository) : ViewModel() {
 
     private val _entries: MutableStateFlow<Response<List<LibraryEntry>>> = MutableStateFlow(Response.Loading())

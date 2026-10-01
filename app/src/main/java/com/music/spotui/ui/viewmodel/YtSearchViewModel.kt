@@ -31,6 +31,7 @@ import javax.inject.Inject
  * Spotify backed tracks. The audio engine already resolves YouTube streams
  * without any login.
  */
+/** Backs the Explore/Search tab: runs search queries and exposes the result lists to the UI. */
 @HiltViewModel
 class YtSearchViewModel @Inject constructor(
     @ApplicationContext private val context: Context,

@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
+/** Resolves an alternative playable source for a track when the primary lookup comes up short. */
 @HiltViewModel
 class AlternativeSearchViewModel @Inject constructor(
     @ApplicationContext private val context: Context,

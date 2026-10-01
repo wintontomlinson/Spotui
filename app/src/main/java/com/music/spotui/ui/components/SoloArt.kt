@@ -1,5 +1,14 @@
 package com.music.spotui.ui.components
 
+/**
+ * Image and decorative-art primitives.
+ *
+ * [SoloArtwork] wraps Glide image loading with shimmer, placeholder and error states plus an
+ * optional hero scrim, so every cover across the app renders consistently. `Modifier.soloMeshBackground`
+ * paints a deterministic, seeded gradient mesh for decorative tiles (pure drawing — no bitmap or
+ * network), used by the Explore category tiles.
+ */
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

@@ -1,5 +1,13 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Home tab (`FreeHomeScreen`).
+ *
+ * The app's landing screen: a full-bleed featured carousel over personalised shelves
+ * ("Because you liked", trending, recents). Reads its state from the home ViewModel and renders
+ * covers through the shared `SoloArtwork` wrapper; rows navigate into the detail screens.
+ */
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.material3.MaterialTheme
 import com.music.spotui.ui.theme.SoloShape

@@ -1,5 +1,13 @@
 package com.music.spotui.ui.theme
 
+/**
+ * App-wide Compose theme entry point.
+ *
+ * Maps the [Color] tokens into a single, always-dark Material 3 colour scheme (dynamic colour is
+ * intentionally off) and wires in the SOLO typography, shapes and motion. Wrap the app content in
+ * this theme so every screen shares one palette and type scale.
+ */
+
 import android.app.Activity
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle

@@ -5,6 +5,16 @@ compared to the main Spotui repository.
 
 ---
 
+## 8.0.0 — SOLO
+
+* **Phase A: codebase cleanup & clarity.** The first phase of the v8 release focuses on a clean,
+  readable tree ahead of the new design system and features. Removed dead/unused code, files,
+  resources and dependencies — each removal backed by a usage search — stripped dead commented-out
+  blocks and purely-debug logging, and fixed the misspelled Library screen filename to
+  `LibraryScreen.kt`. Added concise KDoc/section comments to the main screens, ViewModels and the
+  theme/design-system files. No behaviour change: the package `com.music.spotui`, all internal
+  identifiers, prefs/DB names, the SpotuiBridge and the audio/stream paths are untouched.
+
 ## 7.0.0 — SOLO
 
 * **New look: Lumen Indigo.** The warm-obsidian + Volt-lime palette is retired for a deep indigo

@@ -1,5 +1,15 @@
 package com.music.spotui.ui.theme
 
+/**
+ * Central palette for the SOLO design system.
+ *
+ * Every colour the app uses is defined here as a named token (e.g. [Canvas], [Surface1],
+ * [Accent], [TextPrimary]) and consumed by ~28 UI files plus [Theme]'s Material scheme. Changing
+ * a token *body* while keeping its *name* re-skins the whole app in one place. Also exposes a few
+ * ready-made brushes ([AppBackgroundBrush], [AccentBrush]) and the [artworkTone] helper used to
+ * derive a surface tint from album art.
+ */
+
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb

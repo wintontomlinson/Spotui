@@ -25,6 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
+/**
+ * Observes and exposes playback state (current song, progress, queue) for the player UI and the
+ * mini-player. It surfaces engine state to Compose; it does not resolve streams itself.
+ */
 class PlayerViewModel @Inject constructor(private val currentSongState: CurrentSongState, private val repository: AppRepository) : ViewModel(){
 
     val currentSongTitle: State<String> get() = currentSongState.title

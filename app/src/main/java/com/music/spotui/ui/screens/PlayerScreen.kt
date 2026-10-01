@@ -1,5 +1,14 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Full-screen player (`PlayerScreen`).
+ *
+ * The expanded now-playing surface: artwork pager, transport controls, seek bar, queue/lyrics
+ * access and track actions. Blur effects use `RenderEffect` guarded to API 31+ with a tint
+ * fallback below. Observes playback state from the player ViewModel; it does not touch stream
+ * resolution or the playback engine.
+ */
+
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.MaterialTheme
 import com.music.spotui.ui.theme.SoloShape
