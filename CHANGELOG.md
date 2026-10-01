@@ -5,6 +5,28 @@ compared to the main Spotui repository.
 
 ---
 
+## 7.0.0 — SOLO
+
+* **New look: Lumen Indigo.** The warm-obsidian + Volt-lime palette is retired for a deep indigo
+  canvas with a two-tone "Lumen" accent — a vivid violet that refracts into a cyan-teal highlight,
+  with a reserved premium gold. All ~28 token consumers, the Material scheme, the share card, the
+  splash and the Explore tiles move onto it, so every screen reads as one intentional, high-end
+  palette that stays clear of every competitor's brand hue.
+* **New logo, "Lumen Prism".** An original mark built from scratch: an upright beam of light
+  descends from a gold tip, strikes a refraction node and fans into a short violet → cyan spectrum —
+  "one voice, one light, a spectrum". It replaces the Spotlight-O ring on the launcher, round,
+  themed and notification icons, the splash, the in-app wordmark and every raster, and reads cleanly
+  at 48dp and white-only at 24px.
+* **Craftier Explore art.** The code-generated mesh tiles now layer two offset prism-coloured glows
+  and a faint diagonal sheen over a seeded wash, so each category reads as its own crafted surface —
+  still pure drawing, no bitmap or network.
+* **Tasteful effects & motion.** Added a guarded frosted-glass helper (API 31+ RenderEffect blur
+  with a tint fallback below) on the bottom nav, plus press-scale and a light haptic tick on the
+  primary call-to-action.
+* **Tighter About.** The About card is now a compact single-row block: the mark, name + version, a
+  one-line tagline and one line that still carries the maintainer, GPL-3.0, the four project credits
+  + fonts and the disclaimer.
+
 ## 6.0.0 — SOLO
 
 * **Image-forward premium redesign.** Home now opens on a full-bleed featured carousel — large
