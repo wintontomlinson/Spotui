@@ -231,6 +231,24 @@ fun UpdatePrompt() {
                     Spacer(Modifier.height(14.dp))
                     Text(it, color = com.music.spotui.ui.theme.Danger, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
                 }
+                // A short, calm note so the Android Play Protect safety scan and the system
+                // install screen don't surprise anyone: both are a normal step for apps
+                // installed outside the Play Store, not a sign anything is wrong. No alarming
+                // wording, and no em-dash.
+                Spacer(Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(SoloShape.sm)
+                        .background(Surface3)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                ) {
+                    Text(
+                        "Installing from outside the Play Store, Android may run a quick Play Protect safety check and show its own install screen. This is a normal security step, so just follow the prompt to finish.",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    )
+                }
             }
         },
         confirmButton = {
@@ -250,7 +268,7 @@ fun UpdatePrompt() {
                     }
                 })
                 UpdatePhase.ERROR -> SoloDialogConfirm(text = "Retry", onClick = startUpdate)
-                else -> SoloDialogConfirm(text = "Update", onClick = startUpdate)
+                else -> SoloDialogConfirm(text = "Update now", onClick = startUpdate)
             }
         },
         dismissButton = {
