@@ -5,6 +5,25 @@ compared to the main Spotui repository.
 
 ---
 
+## 10.0.0 - SOLO
+
+* **Explore now shows real artwork.** The mood, genre and chart tiles on Explore previously drew
+  only a code gradient and never used the curated photo set, so they looked image-less. Each tile
+  now renders its curated, on-theme photo over a deterministic Graphite and Azure gradient, and the
+  gradient stays as a premium, legible fallback while a photo loads or if its URL is blank, so a
+  tile is never an empty box.
+* **Stable, headed Home shelves.** The shelves below "Your top artists" no longer reshuffle through
+  the day and no longer show a duplicate "Trending now" heading. The curated tail renders in a
+  fixed, sensible order, personalised shelves stay ranked by the on-device TasteRanker, and every
+  shelf carries a clear section header bound to its real title. The recordOutcome signature and the
+  TasteProfile schema are unchanged.
+* **Premium update dialog with a reassurance note.** The update dialog now adds a short, calm note
+  explaining that Android may run a Play Protect safety check and show its own install screen when
+  installing outside the Play Store, and that this is a normal security step. The primary action
+  reads "Update now", with the Aperture logo and accent header, a formatted "What's new", an in-app
+  download progress bar, and a secondary Later. The in-app download to FileProvider to
+  system-installer flow is kept, with no browser redirect, and no em-dash in the new copy.
+
 ## 9.0.0 - SOLO
 
 * **Home section headings.** Every Home shelf now carries a clear, premium section header bound to
