@@ -41,6 +41,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -67,6 +68,37 @@ import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Danger
 import com.music.spotui.ui.theme.DangerSurface
 import androidx.compose.foundation.layout.heightIn
+
+/**
+ * Premium frosted-glass chrome. On API 31+ the surface behind this element is blurred with a
+ * [RenderEffect] and tinted with a translucent [fill]; below 31 (no RenderEffect) it falls back
+ * to the opaque [fallback] tint so the chrome stays legible. Mirrors the API-31 blur guard used
+ * on the player backdrop. Place this before the content/padding modifiers.
+ */
+fun Modifier.soloGlass(
+    fill: Color,
+    fallback: Color,
+    blurRadius: Dp = 24.dp,
+    shape: Shape = androidx.compose.ui.graphics.RectangleShape,
+): Modifier = composed {
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val radiusPx = with(density) { blurRadius.toPx() }
+        this
+            .clip(shape)
+            .graphicsLayer {
+                // A clamped blur of whatever renders behind this layer, for a frosted backdrop.
+                renderEffect = android.graphics.RenderEffect
+                    .createBlurEffect(radiusPx, radiusPx, android.graphics.Shader.TileMode.CLAMP)
+                    .asComposeRenderEffect()
+            }
+            .background(fill)
+    } else {
+        this
+            .clip(shape)
+            .background(fallback)
+    }
+}
 
 /**
  * Press feedback: the element eases down to 97% while held and springs back on release.
@@ -107,13 +139,13 @@ fun SoloDragHandle() {
     )
 }
 
-/** Width-to-height ratio of drawable/logo (the tight-bounds Spotlight-O mark, viewport 62 x 62). */
+/** Width-to-height ratio of drawable/logo (the tight-bounds Lumen Prism mark, viewport 62 x 62). */
 private const val MARK_ASPECT = 62f / 62f
 
 /**
- * The SOLO Spotlight-O mark (a Volt-gradient notched ring with a centred dot), drawn from
- * drawable/logo so the in-app mark and the launcher share one geometry. Pass [tint] for a
- * flat version.
+ * The SOLO Lumen Prism mark (a gold-tipped violet beam fanning into a violet->cyan spectrum),
+ * drawn from drawable/logo so the in-app mark and the launcher share one geometry. Pass [tint]
+ * for a flat version.
  */
 @Composable
 fun SoloMark(
@@ -245,7 +277,7 @@ fun SoloShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
     }
 }
 
-/** Filter / mood chip. Selected chips are Volt. */
+/** Filter / mood chip. Selected chips are Lumen violet. */
 @Composable
 fun SoloChip(
     label: String,
@@ -275,6 +307,8 @@ fun SoloPillButton(
     icon: ImageVector? = null,
     primary: Boolean = true,
 ) {
+    // A light tactile tick on the primary CTA so it feels premium under the thumb.
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -282,7 +316,12 @@ fun SoloPillButton(
             .clip(SoloShape.pill)
             .then(if (primary) Modifier.background(AccentBrush) else Modifier.background(Surface3))
             .border(1.dp, if (primary) Color.Transparent else Hairline, SoloShape.pill)
-            .clickable(onClick = onClick)
+            .clickable {
+                if (primary) {
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                }
+                onClick()
+            }
             .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
         if (icon != null) {

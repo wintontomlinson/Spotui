@@ -22,6 +22,7 @@ import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.AccentDeep
 import com.music.spotui.ui.theme.AccentSoft
 import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Gold
 import com.music.spotui.ui.theme.SoloShape
 import com.music.spotui.ui.theme.artworkTone
 
@@ -34,12 +35,12 @@ import com.music.spotui.ui.theme.artworkTone
  *    app's shimmer/placeholder/error fallbacks (see AppComponents.kt) and can lay an optional
  *    contrast scrim under overlaid text.
  *  • Decorative tiles with no real artwork (mood / genre / chart cards) paint a deterministic
- *    Volt-family gradient "mesh" via [Modifier.soloMeshBackground]; no bitmap, no network, so
+ *    Lumen-prism gradient "mesh" via [Modifier.soloMeshBackground]; no bitmap, no network, so
  *    no new dependency is pulled in.
  */
 
-/** The Volt accent ramp a mesh picks its stops from, biased toward the premium lime-citron family. */
-private val VoltMeshRamp = listOf(AccentSoft, Accent, AccentDeep)
+/** The Lumen prism ramp a mesh picks its stops from: violet -> cyan -> gold. */
+private val LumenMeshRamp = listOf(AccentSoft, Accent, AccentDeep, Gold)
 
 /** A stable 32-bit hash of [seed] so the same label always paints the same mesh. */
 private fun seedHash(seed: String): Int {
@@ -52,26 +53,33 @@ private fun seedHash(seed: String): Int {
 }
 
 /**
- * Paints a deterministic decorative "mesh": a Volt-family radial glow blended over a
- * seed-tinted linear gradient that settles into the obsidian canvas, so a tile reads as its
- * own colourful surface while staying on the Aurora Noir palette. [seed] (usually the tile's
- * label) picks the stops, so the art is stable across recompositions and process restarts.
+ * Paints a deterministic decorative "mesh": two offset prism-coloured radial glows blended
+ * over a seed-tinted diagonal gradient that settles into the indigo canvas, finished with a
+ * faint diagonal sheen so each tile reads as its own crafted surface while staying on the
+ * Lumen Indigo palette. [seed] (usually the tile's label) picks the stops and anchors, so the
+ * art is stable across recompositions and process restarts.
  *
  * Pure drawing — no bitmap decode and no network — so decorative art adds no dependency.
  */
 fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modifier = composed {
     val hash = remember(seed) { seedHash(seed) }
-    // Derive the accent stop and the glow anchor deterministically from the hash.
-    val accent = VoltMeshRamp[(hash ushr 3).mod(VoltMeshRamp.size)]
+    // Derive two distinct accent stops and both glow anchors deterministically from the hash.
+    val accent = LumenMeshRamp[(hash ushr 3).mod(LumenMeshRamp.size)]
+    val accent2 = LumenMeshRamp[(hash ushr 15).mod(LumenMeshRamp.size)]
     // artworkTone keeps the base dark enough that light labels stay legible on top.
-    val base = artworkTone(VoltMeshRamp[(hash ushr 9).mod(VoltMeshRamp.size)])
-    val anchorX = 0.2f + ((hash ushr 2) and 0xFF) / 255f * 0.6f
-    val anchorY = 0.15f + ((hash ushr 11) and 0xFF) / 255f * 0.45f
+    val base = artworkTone(LumenMeshRamp[(hash ushr 9).mod(LumenMeshRamp.size)])
+    val anchorX = 0.18f + ((hash ushr 2) and 0xFF) / 255f * 0.64f
+    val anchorY = 0.12f + ((hash ushr 11) and 0xFF) / 255f * 0.5f
+    // Second glow sits opposite-ish the first for depth, nudged by its own hash bits.
+    val anchor2X = 0.9f - ((hash ushr 19) and 0xFF) / 255f * 0.6f
+    val anchor2Y = 0.95f - ((hash ushr 23) and 0xFF) / 255f * 0.55f
+    // A faint diagonal sheen angle, so no two tiles share the same highlight direction.
+    val sheenDown = (hash ushr 1) and 1 == 0
 
     this
         .clip(shape)
         .drawBehind {
-            // Base linear wash: a seed-tinted top settling into the canvas.
+            // Base diagonal wash: a seed-tinted corner settling into the indigo canvas.
             drawRect(
                 Brush.linearGradient(
                     colors = listOf(base, Canvas),
@@ -79,14 +87,28 @@ fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modi
                     end = Offset(size.width, size.height),
                 ),
             )
-            // Radial Volt glow anchored at the seeded point, fading out well before the edges.
-            val cx = size.width * anchorX
-            val cy = size.height * anchorY
+            // Primary prism glow anchored at the seeded point, fading out before the edges.
             drawRect(
                 Brush.radialGradient(
-                    colors = listOf(accent.copy(alpha = 0.55f), accent.copy(alpha = 0.14f), Color.Transparent),
-                    center = Offset(cx, cy),
-                    radius = size.maxDimension * 0.75f,
+                    colors = listOf(accent.copy(alpha = 0.52f), accent.copy(alpha = 0.13f), Color.Transparent),
+                    center = Offset(size.width * anchorX, size.height * anchorY),
+                    radius = size.maxDimension * 0.78f,
+                ),
+            )
+            // Secondary, cooler/warmer glow offset for depth and variety.
+            drawRect(
+                Brush.radialGradient(
+                    colors = listOf(accent2.copy(alpha = 0.30f), Color.Transparent),
+                    center = Offset(size.width * anchor2X, size.height * anchor2Y),
+                    radius = size.maxDimension * 0.6f,
+                ),
+            )
+            // Faint diagonal sheen for a crafted, non-flat finish.
+            drawRect(
+                Brush.linearGradient(
+                    colors = listOf(Color.White.copy(alpha = 0.05f), Color.Transparent, Color.Black.copy(alpha = 0.12f)),
+                    start = if (sheenDown) Offset(0f, 0f) else Offset(size.width, 0f),
+                    end = if (sheenDown) Offset(size.width, size.height) else Offset(0f, size.height),
                 ),
             )
         }

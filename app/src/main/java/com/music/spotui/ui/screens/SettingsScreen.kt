@@ -712,13 +712,14 @@ fun SettingsScreen(navController: NavController) {
 }
 
 /**
- * About card: the SOLO mark on its obsidian plate, the version, the maintainer and the
- * open-source projects SOLO is built on.
+ * About card (compact): the SOLO Lumen Prism mark, name + version on one tight block, a
+ * one-line tagline, and a single compact line that still carries the maintainer, the GPL-3.0
+ * notice, the four project credits + fonts and the disclaimer. No source-code links.
  */
 @Composable
 private fun AboutCard() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clip(SoloShape.lg)
@@ -728,34 +729,40 @@ private fun AboutCard() {
                 )
             )
             .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
-        com.music.spotui.ui.components.SoloMark(height = 52.dp)
-        Spacer(Modifier.height(14.dp))
-        Text(
-            "SOLO",
-            color = TextPrimary,
-            style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            "Version ${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
-            color = TextSecondary,
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Spacer(Modifier.height(14.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Maintained with ♥ by ", color = TextTertiary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-            Text("SATYAN SHARMA", color = Accent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        com.music.spotui.ui.components.SoloMark(height = 36.dp)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "SOLO",
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "v${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+            Spacer(Modifier.height(1.dp))
+            Text(
+                "One voice. Pure sound.",
+                color = Accent,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "By SATYAN SHARMA · GPL-3.0 · built on Neptune, Metrolist, SpotiFLAC, SimpMusic + open fonts · not affiliated with Spotify or YouTube.",
+                color = TextTertiary,
+                style = MaterialTheme.typography.labelSmall,
+                lineHeight = 14.sp,
+            )
         }
-        Spacer(Modifier.height(10.dp))
-        Text(
-            "Built on Neptune, Metrolist, SpotiFLAC and SimpMusic. Free software under GPL-3.0.",
-            color = TextTertiary,
-            style = MaterialTheme.typography.bodySmall,
-            lineHeight = 17.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
     }
 }
 

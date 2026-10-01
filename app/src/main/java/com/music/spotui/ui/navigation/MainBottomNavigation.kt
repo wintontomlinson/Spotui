@@ -45,7 +45,6 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.Canvas
-import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -64,6 +63,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import com.music.spotui.ui.theme.SoloMotion
 import com.music.spotui.ui.components.soloClickable
+import com.music.spotui.ui.components.soloGlass
 import com.music.spotui.ui.theme.GlassFill
 import com.music.spotui.ui.theme.GlassFillStrong
 import com.music.spotui.ui.theme.Hairline
@@ -143,12 +143,13 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                     if (route != null && route in rootRoutes) currentTab = route
 
                     // Docked full-width glass bar with a 1dp hairline top edge: 64dp,
-                    // compressing to 56dp (labels fade) while content scrolls down.
-                    val glass = if (Build.VERSION.SDK_INT >= 31) GlassFill else GlassFillStrong
+                    // compressing to 56dp (labels fade) while content scrolls down. On API 31+
+                    // the content behind frosts through a RenderEffect blur; below 31 it falls
+                    // back to the stronger opaque fill so the chrome stays legible.
                     androidx.compose.foundation.layout.BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(glass)
+                            .soloGlass(fill = GlassFill, fallback = GlassFillStrong)
                             .drawBehind {
                                 drawLine(
                                     color = Hairline,
