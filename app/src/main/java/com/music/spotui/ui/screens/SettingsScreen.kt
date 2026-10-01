@@ -720,7 +720,7 @@ fun SettingsScreen(navController: NavController) {
 }
 
 /**
- * About card (compact): the SOLO Lumen Prism mark, name + version on one tight block, a
+ * About card (compact): the SOLO Aperture S mark, name + version on one tight block, a
  * one-line tagline, and a single compact line that still carries the maintainer, the GPL-3.0
  * notice, the four project credits + fonts and the disclaimer. No source-code links.
  */

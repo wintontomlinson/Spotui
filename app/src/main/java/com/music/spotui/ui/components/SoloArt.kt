@@ -44,12 +44,12 @@ import com.music.spotui.ui.theme.artworkTone
  *    app's shimmer/placeholder/error fallbacks (see AppComponents.kt) and can lay an optional
  *    contrast scrim under overlaid text.
  *  • Decorative tiles with no real artwork (mood / genre / chart cards) paint a deterministic
- *    Lumen-prism gradient "mesh" via [Modifier.soloMeshBackground]; no bitmap, no network, so
- *    no new dependency is pulled in.
+ *    Graphite & Azure gradient "mesh" via [Modifier.soloMeshBackground]; no bitmap, no network,
+ *    so no new dependency is pulled in.
  */
 
-/** The Lumen prism ramp a mesh picks its stops from: violet -> cyan -> gold. */
-private val LumenMeshRamp = listOf(AccentSoft, Accent, AccentDeep, Gold)
+/** The Graphite & Azure ramp a mesh picks its stops from: soft sky -> azure -> cobalt -> steel. */
+private val MeshRamp = listOf(AccentSoft, Accent, AccentDeep, Gold)
 
 /** A stable 32-bit hash of [seed] so the same label always paints the same mesh. */
 private fun seedHash(seed: String): Int {
@@ -62,10 +62,10 @@ private fun seedHash(seed: String): Int {
 }
 
 /**
- * Paints a deterministic decorative "mesh": two offset prism-coloured radial glows blended
- * over a seed-tinted diagonal gradient that settles into the indigo canvas, finished with a
+ * Paints a deterministic decorative "mesh": two offset azure-steel radial glows blended
+ * over a seed-tinted diagonal gradient that settles into the graphite canvas, finished with a
  * faint diagonal sheen so each tile reads as its own crafted surface while staying on the
- * Lumen Indigo palette. [seed] (usually the tile's label) picks the stops and anchors, so the
+ * Graphite & Azure palette. [seed] (usually the tile's label) picks the stops and anchors, so the
  * art is stable across recompositions and process restarts.
  *
  * Pure drawing — no bitmap decode and no network — so decorative art adds no dependency.
@@ -73,10 +73,10 @@ private fun seedHash(seed: String): Int {
 fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modifier = composed {
     val hash = remember(seed) { seedHash(seed) }
     // Derive two distinct accent stops and both glow anchors deterministically from the hash.
-    val accent = LumenMeshRamp[(hash ushr 3).mod(LumenMeshRamp.size)]
-    val accent2 = LumenMeshRamp[(hash ushr 15).mod(LumenMeshRamp.size)]
+    val accent = MeshRamp[(hash ushr 3).mod(MeshRamp.size)]
+    val accent2 = MeshRamp[(hash ushr 15).mod(MeshRamp.size)]
     // artworkTone keeps the base dark enough that light labels stay legible on top.
-    val base = artworkTone(LumenMeshRamp[(hash ushr 9).mod(LumenMeshRamp.size)])
+    val base = artworkTone(MeshRamp[(hash ushr 9).mod(MeshRamp.size)])
     val anchorX = 0.18f + ((hash ushr 2) and 0xFF) / 255f * 0.64f
     val anchorY = 0.12f + ((hash ushr 11) and 0xFF) / 255f * 0.5f
     // Second glow sits opposite-ish the first for depth, nudged by its own hash bits.
@@ -88,7 +88,7 @@ fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modi
     this
         .clip(shape)
         .drawBehind {
-            // Base diagonal wash: a seed-tinted corner settling into the indigo canvas.
+            // Base diagonal wash: a seed-tinted corner settling into the graphite canvas.
             drawRect(
                 Brush.linearGradient(
                     colors = listOf(base, Canvas),
@@ -96,7 +96,7 @@ fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modi
                     end = Offset(size.width, size.height),
                 ),
             )
-            // Primary prism glow anchored at the seeded point, fading out before the edges.
+            // Primary azure glow anchored at the seeded point, fading out before the edges.
             drawRect(
                 Brush.radialGradient(
                     colors = listOf(accent.copy(alpha = 0.52f), accent.copy(alpha = 0.13f), Color.Transparent),

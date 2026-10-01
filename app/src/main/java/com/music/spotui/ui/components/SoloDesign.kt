@@ -147,13 +147,13 @@ fun SoloDragHandle() {
     )
 }
 
-/** Width-to-height ratio of drawable/logo (the tight-bounds Lumen Prism mark, viewport 62 x 62). */
-private const val MARK_ASPECT = 62f / 62f
+/** Width-to-height ratio of drawable/logo (the tight-bounds Aperture S mark, viewport 52.4 x 80.4). */
+private const val MARK_ASPECT = 52.4f / 80.4f
 
 /**
- * The SOLO Lumen Prism mark (a gold-tipped violet beam fanning into a violet->cyan spectrum),
- * drawn from drawable/logo so the in-app mark and the launcher share one geometry. Pass [tint]
- * for a flat version.
+ * The SOLO Aperture S mark (an upright azure S whose counters read as a focused lens aperture,
+ * with a cool-steel focal dot at its centre), drawn from drawable/logo so the in-app mark and
+ * the launcher share one geometry. Pass [tint] for a flat version.
  */
 @Composable
 fun SoloMark(
@@ -285,7 +285,7 @@ fun SoloShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
     }
 }
 
-/** Filter / mood chip. Selected chips are Lumen violet. */
+/** Filter / mood chip. Selected chips are refined azure. */
 @Composable
 fun SoloChip(
     label: String,

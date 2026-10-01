@@ -14,6 +14,25 @@ compared to the main Spotui repository.
   `LibraryScreen.kt`. Added concise KDoc/section comments to the main screens, ViewModels and the
   theme/design-system files. No behaviour change: the package `com.music.spotui`, all internal
   identifiers, prefs/DB names, the SpotuiBridge and the audio/stream paths are untouched.
+* **Phase B: new design system — Graphite & Azure.** Retired the Lumen Indigo palette for a
+  near-black graphite canvas with a layered steel-slate surface ramp and ONE restrained
+  refined-azure accent (`#3B82F6`), high-contrast off-white text and a sparse cool-steel hero
+  highlight. The swap lives in the central `Color.kt` tokens (every val name kept, so all ~28
+  consumers recolour at once) and the handful of hardcoded-hex spots — the share card, the splash
+  background and the Explore category tints — plus a refined type / shape / elevation / motion
+  scale for a quieter, more professional feel. Azure (~217°) stays clear of every named
+  competitor's brand hue.
+* **New logo, "Aperture S".** An original mark built from scratch: one continuous stroke sweeps
+  through two tangent arcs to form an upright S whose counters read as the open blades of a focused
+  lens aperture, with a cool-steel focal dot at its centre. It carries the azure gradient and
+  replaces the retired Lumen Prism beam across the launcher, round, themed and notification icons,
+  the splash, the in-app wordmark and every raster — crisp at 48dp and white-only at 24px, and
+  resembling no competitor.
+* **A-to-Z re-skin.** Every screen and component — Home, Explore, Library, the Album / Artist /
+  Playlist / Liked / Downloads / History / Local-files / Show detail pages, the Player, Lyrics,
+  Queue and Equalizer, Settings (every row and the compact About card), the mini player, top bars,
+  sheets, dialogs, navigation chrome and the loading / empty / error states — moves onto Graphite &
+  Azure, so nothing retains the old look. UI layer only; audio, data and stream paths untouched.
 
 ## 7.0.0 — SOLO
 
