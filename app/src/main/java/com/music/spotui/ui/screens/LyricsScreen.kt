@@ -1,6 +1,9 @@
 package com.music.spotui.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -18,7 +21,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -90,6 +92,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.Surface1
@@ -307,23 +310,19 @@ fun LyricsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 8.dp)
+                    .padding(start = 24.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
             ) {
-                Column(modifier = Modifier.padding(end = 12.dp)) {
-                    Text("LYRICS", color = Accent, fontSize = 11.sp, letterSpacing = 1.4.sp, fontWeight = FontWeight.Bold)
-                    Text(title, color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text("LYRICS", color = Accent, style = MaterialTheme.typography.labelSmall, letterSpacing = 1.4.sp)
+                    Text(title, color = TextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Close",
-                        tint = TextPrimary,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { dismissLyrics() }
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "Close lyrics",
+                        onClick = { dismissLyrics() },
+                        filled = true,
+                        iconSize = 26.dp,
                     )
                 }
             }
@@ -334,7 +333,7 @@ fun LyricsScreen(
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = TextPrimary)
+                        CircularProgressIndicator(color = Accent)
                     }
                 is LyricsViewModel.State.NotFound ->
                     Column(
@@ -345,27 +344,16 @@ fun LyricsScreen(
                         Text(
                             "Couldn't find lyrics for this track",
                             color = TextPrimary.copy(alpha = 0.7f),
-                            fontSize = 15.sp,
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                         Spacer(Modifier.height(14.dp))
                         // A lookup can fail for a reason that has nothing to do with the
                         // song, such as a provider timing out. Without this the only way to
                         // try again was to change track and come back.
-                        Text(
+                        com.music.spotui.ui.components.SonvraPillButton(
                             text = "Try again",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(TextPrimary.copy(alpha = 0.16f))
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
-                                    vm.retry(title, artist, album)
-                                }
-                                .padding(horizontal = 22.dp, vertical = 10.dp),
+                            onClick = { vm.retry(title, artist, album) },
+                            primary = false,
                         )
                     }
                 is LyricsViewModel.State.Loaded -> {
@@ -394,8 +382,9 @@ fun LyricsScreen(
                             LyricLineText(
                                 text = line.text,
                                 isActive = index == activeIndex,
+                                isPast = index < activeIndex,
                                 synced = lyrics.synced,
-                                fontSize = 24.sp,
+                                fontSize = 26.sp,
                                 onTap = if (lyrics.synced) ({ jumpTo(line.timeMs) }) else null,
                                 translatedText = if (showTranslations && translated != null && index < translated.size) translated[index].translatedText else null,
                             )
@@ -415,7 +404,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
         if (vm.showLanguageBar) {
             Column(
                 modifier = Modifier
-                    .background(Surface2.copy(alpha = 0.8f), shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                    .background(Surface2.copy(alpha = 0.8f), shape = SonvraShape.md)
                     .padding(10.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -443,7 +432,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
                     Text(
                         text = error,
                         color = com.music.spotui.ui.theme.Danger,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(start = 24.dp, top = 4.dp),
@@ -455,7 +444,7 @@ private fun TranslateFloatingPanel(vm: LyricsViewModel, modifier: Modifier = Mod
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .background(Surface2.copy(alpha = 0.8f), shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+                .background(Surface2.copy(alpha = 0.8f), shape = SonvraShape.md)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -500,25 +489,21 @@ fun InlineLyrics(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp, 8.dp, 16.dp, 40.dp)
-            .shadow(
-                elevation = 8.dp,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                clip = false
-            )
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+            .clip(SonvraShape.md)
+            .background(Surface2)
+            // A faint wash of the artwork tone at the top keeps the card tied to the track.
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        accentColor.copy(alpha = 0.45f),
-                        accentColor.copy(alpha = 0.35f)
+                        accentColor.copy(alpha = 0.22f),
+                        Color.Transparent,
                     )
                 )
             )
-            .background(com.music.spotui.ui.theme.Surface1.copy(alpha = 0.55f))
             .border(
                 width = 1.dp,
-                color = TextPrimary.copy(alpha = 0.25f),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                color = com.music.spotui.ui.theme.Hairline,
+                shape = SonvraShape.md
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -531,15 +516,24 @@ fun InlineLyrics(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Lyrics preview", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Lyrics preview", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = if ((state as? LyricsViewModel.State.Loaded)?.lyrics?.synced == true) "SYNCED" else "LYRICS",
+                color = TextSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .clip(SonvraShape.pill)
+                    .background(com.music.spotui.ui.theme.Surface3)
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
         }
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(12.dp))
 
         when (val s = state) {
             is LyricsViewModel.State.Loading ->
-                Text("Loading lyrics…", color = TextPrimary.copy(alpha = 0.8f), fontSize = 15.sp)
+                Text("Loading lyrics…", color = com.music.spotui.ui.theme.TextSecondary, style = MaterialTheme.typography.bodyLarge)
             is LyricsViewModel.State.NotFound ->
-                Text("No lyrics found for this track", color = TextPrimary.copy(alpha = 0.8f), fontSize = 15.sp)
+                Text("No lyrics found for this track", color = com.music.spotui.ui.theme.TextSecondary, style = MaterialTheme.typography.bodyLarge)
             is LyricsViewModel.State.Loaded -> {
                 val lyrics = s.lyrics
                 val activeIndex = activeIndexFor(lyrics, positionMs)
@@ -556,6 +550,7 @@ fun InlineLyrics(
                         LyricLineText(
                             text = line.text,
                             isActive = globalIndex == activeIndex,
+                            isPast = globalIndex < activeIndex,
                             synced = lyrics.synced,
                             fontSize = 22.sp,
                             onTap = if (lyrics.synced) ({ jumpTo(line.timeMs) }) else null,
@@ -566,14 +561,15 @@ fun InlineLyrics(
                 androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(18.dp))
                 Box(
                     modifier = Modifier
-                        .background(com.music.spotui.ui.theme.AccentBrush, shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .background(com.music.spotui.ui.theme.AccentBrush, shape = SonvraShape.pill)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { onExpand() }
-                        .padding(18.dp, 9.dp)
+                        .heightIn(min = 40.dp)
+                        .padding(20.dp, 10.dp)
                 ) {
-                    Text("Show lyrics", color = com.music.spotui.ui.theme.OnAccent, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("Show lyrics", color = com.music.spotui.ui.theme.OnAccent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -602,7 +598,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
         Text(
             text = "  \u2192  ",
             color = TextPrimary.copy(alpha = 0.5f),
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .clickable(
@@ -624,7 +620,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(start = 10.dp)
-                        .background(TextPrimary.copy(alpha = 0.15f), shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .background(com.music.spotui.ui.theme.Surface3, shape = SonvraShape.pill)
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                 ) {
                     CircularProgressIndicator(
@@ -635,8 +631,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
                     Text(
                         text = "  Downloading\u2026",
                         color = TextPrimary.copy(alpha = 0.8f),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                     )
                 }
@@ -646,7 +641,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(start = 10.dp)
-                        .background(TextPrimary.copy(alpha = 0.15f), shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .background(com.music.spotui.ui.theme.Surface3, shape = SonvraShape.pill)
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                 ) {
                     CircularProgressIndicator(
@@ -657,8 +652,7 @@ private fun TranslationBar(vm: LyricsViewModel) {
                     Text(
                         text = "  Translating\u2026",
                         color = TextPrimary.copy(alpha = 0.8f),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
                     )
                 }
@@ -667,14 +661,14 @@ private fun TranslationBar(vm: LyricsViewModel) {
                 Box(
                     modifier = Modifier
                         .padding(start = 10.dp)
-                        .background(TextPrimary, shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .background(Accent, shape = SonvraShape.pill)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { vm.startTranslation() }
                         .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
-                    Text("Translate", color = com.music.spotui.ui.theme.Canvas, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    Text("Translate", color = com.music.spotui.ui.theme.OnAccent, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                 }
             }
         }
@@ -694,7 +688,7 @@ private fun LangChip(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .background(TextPrimary.copy(alpha = 0.12f), shape = androidx.compose.foundation.shape.RoundedCornerShape(50))
+                .background(com.music.spotui.ui.theme.Surface3, shape = SonvraShape.pill)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -704,8 +698,7 @@ private fun LangChip(
             Text(
                 text = label,
                 color = TextPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium,
             )
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
@@ -764,7 +757,7 @@ private fun LanguagePickerBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Surface2, // Sleek dark gray
+        containerColor = Surface2,
         contentColor = TextPrimary,
         shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
         dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
@@ -786,8 +779,7 @@ private fun LanguagePickerBottomSheet(
             ) {
                 Text(
                     text = "Select Language",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary
                 )
                 IconButton(onClick = onDismiss) {
@@ -803,7 +795,7 @@ private fun LanguagePickerBottomSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search languages...", color = TextPrimary.copy(alpha = 0.4f), fontSize = 14.sp) },
+                placeholder = { Text("Search languages...", color = TextPrimary.copy(alpha = 0.4f), style = MaterialTheme.typography.bodyMedium) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -830,12 +822,12 @@ private fun LanguagePickerBottomSheet(
                     unfocusedTextColor = TextPrimary,
                     focusedContainerColor = TextPrimary.copy(alpha = 0.05f),
                     unfocusedContainerColor = TextPrimary.copy(alpha = 0.05f),
-                    focusedBorderColor = Accent, // Spotify Green
+                    focusedBorderColor = Accent,
                     unfocusedBorderColor = TextPrimary.copy(alpha = 0.2f),
                     cursorColor = Accent
                 ),
                 singleLine = true,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                shape = SonvraShape.sm
             )
 
             // Languages List
@@ -849,8 +841,7 @@ private fun LanguagePickerBottomSheet(
                     Text(
                         text = "No languages found",
                         color = TextPrimary.copy(alpha = 0.5f),
-                        fontSize = 14.sp
-                    )
+                        style = MaterialTheme.typography.bodyMedium)
                 }
             } else {
                 LazyColumn(
@@ -874,7 +865,7 @@ private fun LanguagePickerBottomSheet(
                                 text = name,
                                 color = if (isSelected) Accent else TextPrimary,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSelected) {
@@ -902,6 +893,7 @@ private fun LyricLineText(
     isActive: Boolean,
     synced: Boolean,
     fontSize: androidx.compose.ui.unit.TextUnit,
+    isPast: Boolean = false,
     onTap: (() -> Unit)?,
     translatedText: String? = null,
 ) {
@@ -909,10 +901,12 @@ private fun LyricLineText(
         Box(modifier = Modifier.size(1.dp))
         return
     }
+    // Active line full strength; sung lines recede to 35%, upcoming ones wait at 55%.
     val target = when {
         !synced -> TextPrimary.copy(alpha = 0.95f)
         isActive -> TextPrimary
-        else -> TextPrimary.copy(alpha = 0.45f)
+        isPast -> TextPrimary.copy(alpha = 0.35f)
+        else -> TextPrimary.copy(alpha = 0.55f)
     }
     val color by animateColorAsState(
         targetValue = target,
@@ -929,12 +923,16 @@ private fun LyricLineText(
             Text(
                 text = text,
                 color = color,
+                fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
                 fontSize = fontSize,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = (fontSize.value * 1.25f).sp,
+                letterSpacing = (-0.3).sp,
             )
             Text(
                 text = translatedText,
                 color = color.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodyLarge,
                 fontSize = (fontSize.value * 0.7f).sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(top = 2.dp),
@@ -944,8 +942,11 @@ private fun LyricLineText(
         Text(
             text = text,
             color = color,
+            fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
             fontSize = fontSize,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = (fontSize.value * 1.25f).sp,
+            letterSpacing = (-0.3).sp,
             modifier = clickModifier,
         )
     }

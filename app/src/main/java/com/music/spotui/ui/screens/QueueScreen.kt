@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.QueueMusic
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -24,7 +26,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -90,7 +92,7 @@ fun QueueSheet(
         sheetState = sheetState,
         containerColor = Surface2,
         contentColor = TextPrimary,
-        dragHandle = null,
+        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
         shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
         modifier = Modifier.fillMaxHeight(0.92f),
         scrimColor = com.music.spotui.ui.theme.Scrim,
@@ -164,7 +166,7 @@ fun QueueContent(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp, 12.dp)
+                .padding(start = 8.dp, end = 16.dp, top = 4.dp, bottom = 8.dp)
         ) {
             com.music.spotui.ui.components.SonvraIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
@@ -172,7 +174,7 @@ fun QueueContent(
                 onClick = onClose,
                 iconSize = 28.dp,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             Text("Queue", color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
         }
 
@@ -197,9 +199,8 @@ fun QueueContent(
                         Text(
                             "NOW PLAYING",
                             color = com.music.spotui.ui.theme.Accent,
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             letterSpacing = 1.4.sp,
-                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 6.dp)
                         )
                         QueueRow(
@@ -215,9 +216,8 @@ fun QueueContent(
                         Text(
                             "NEXT UP",
                             color = com.music.spotui.ui.theme.Accent,
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             letterSpacing = 1.4.sp,
-                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 18.dp, 16.dp, 6.dp)
                         )
                     }
@@ -312,6 +312,15 @@ private fun QueueRow(
             .fillMaxWidth()
             .heightIn(min = 64.dp)
             .background(if (highlight) com.music.spotui.ui.theme.Surface4 else Surface2)
+            // Now playing: a 3dp accent bar on the leading edge.
+            .then(
+                if (highlight) Modifier.drawBehind {
+                    drawRect(
+                        color = com.music.spotui.ui.theme.Accent,
+                        size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height),
+                    )
+                } else Modifier
+            )
             .combinedClickable(
                 onLongClick = onLongClick,
                 onClick = onClick,
@@ -321,7 +330,7 @@ private fun QueueRow(
         GlideImage(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(10.dp)),
+                .clip(SonvraShape.sm),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             loading = placeholder(R.drawable.placeholder),
@@ -349,6 +358,16 @@ private fun QueueRow(
                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (highlight) {
+            Icon(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_playing),
+                contentDescription = "Now playing",
+                tint = com.music.spotui.ui.theme.Accent,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .size(20.dp),
             )
         }
         if (!highlight && dragHandle != null) {

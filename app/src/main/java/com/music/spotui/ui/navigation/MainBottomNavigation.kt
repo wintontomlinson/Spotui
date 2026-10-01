@@ -1,14 +1,15 @@
 package com.music.spotui.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -56,7 +57,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -66,9 +66,7 @@ import com.music.spotui.ui.theme.SonvraMotion
 import com.music.spotui.ui.components.sonvraClickable
 import com.music.spotui.ui.theme.GlassFill
 import com.music.spotui.ui.theme.GlassFillStrong
-import com.music.spotui.ui.theme.HairlineAccent
 import com.music.spotui.ui.theme.Hairline
-import com.music.spotui.ui.theme.Shadow
 import com.music.spotui.ui.theme.TextSecondary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -102,17 +100,11 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                 animationSpec = tween(SonvraMotion.NAV_MS),
                 label = "navBarCompression",
             )
-            // As the user scrolls down, the floating bar shrinks toward the bottom,
-            // shrinks a little and stays fully visible so the tabs are always
-            // reachable — it never fades away. Springs back to full size on scroll up.
-            val barScale = 1f - 0.04f * compression
-            val barTranslateY = 6f * compression
-
             Box(
                 contentAlignment = Alignment.BottomCenter,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // A soft ink scrim so content fades out beneath the floating bar
+                    // A soft canvas scrim so content fades out behind the mini player
                     // instead of being cut off by a hard edge.
                     .background(
                         Brush.verticalGradient(
@@ -126,9 +118,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                     )
             ) {
 
-                Column(
-                    modifier = Modifier.navigationBarsPadding()
-                ) {
+                Column {
 
                     AnimatedVisibility(
                         visible = bottomBarPlayerState.value,
@@ -152,59 +142,39 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                     val route = currentRoute
                     if (route != null && route in rootRoutes) currentTab = route
 
-                    // Floating glass pill: 64dp, compressing to 52dp (labels fade) on scroll down.
-                    val pillShape = RoundedCornerShape(26.dp)
+                    // Docked full-width glass bar with a 1dp hairline top edge: 64dp,
+                    // compressing to 56dp (labels fade) while content scrolls down.
                     val glass = if (Build.VERSION.SDK_INT >= 31) GlassFill else GlassFillStrong
                     androidx.compose.foundation.layout.BoxWithConstraints(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
                             .fillMaxWidth()
-                            .height(64.dp - 12.dp * compression)
-                            .graphicsLayer {
-                                scaleX = barScale
-                                scaleY = barScale
-                                translationY = barTranslateY
-                            }
-                            .shadow(
-                                elevation = 12.dp,
-                                shape = pillShape,
-                                clip = false,
-                                ambientColor = Shadow,
-                                spotColor = Shadow,
-                            )
-                            .clip(pillShape)
                             .background(glass)
-                            .border(
-                                width = 1.dp,
-                                brush = Brush.verticalGradient(listOf(HairlineAccent, Hairline)),
-                                shape = pillShape,
-                            ),
+                            .drawBehind {
+                                drawLine(
+                                    color = Hairline,
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, 0f),
+                                    strokeWidth = 1.dp.toPx(),
+                                )
+                            }
+                            .navigationBarsPadding()
+                            .height(64.dp - 8.dp * compression),
                     ) {
-                        // Accent pill that slides under the selected tab.
+                        // 3x22dp accent indicator that slides above the selected icon.
                         val tabWidth = maxWidth / navItems.size
                         val selectedIndex = navItems.indexOfFirst { it.route == currentTab }.coerceAtLeast(0)
-                        val pillOffset by androidx.compose.animation.core.animateDpAsState(
-                            targetValue = tabWidth * selectedIndex,
-                            animationSpec = com.music.spotui.ui.theme.SonvraMotion.spring(),
-                            label = "navPill",
+                        val indicatorWidth = 22.dp
+                        val indicatorOffset by androidx.compose.animation.core.animateDpAsState(
+                            targetValue = tabWidth * selectedIndex + (tabWidth - indicatorWidth) / 2,
+                            animationSpec = SonvraMotion.spring(),
+                            label = "navIndicator",
                         )
                         Box(
                             modifier = Modifier
-                                .offset(x = pillOffset)
-                                .width(tabWidth)
-                                .fillMaxHeight()
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(
-                                            com.music.spotui.ui.theme.AccentSoft.copy(alpha = 0.20f),
-                                            Accent.copy(alpha = 0.16f),
-                                            com.music.spotui.ui.theme.AccentDeep.copy(alpha = 0.20f),
-                                        )
-                                    )
-                                )
-                                .border(1.dp, HairlineAccent, RoundedCornerShape(20.dp)),
+                                .offset(x = indicatorOffset)
+                                .size(width = indicatorWidth, height = 3.dp)
+                                .clip(SonvraShape.pill)
+                                .background(Accent),
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,

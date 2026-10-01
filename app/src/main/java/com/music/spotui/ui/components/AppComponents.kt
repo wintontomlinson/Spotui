@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -97,6 +96,8 @@ import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.theme.Surface1
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Hairline
 import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import com.music.spotui.ui.theme.Shadow
@@ -118,7 +119,7 @@ fun Loader() {
     Column(
         Modifier
             .fillMaxWidth()
-            .background(Color(Canvas.toArgb()))
+            .background(com.music.spotui.ui.theme.Canvas)
             .statusBarsPadding()
             .padding(top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,7 +145,7 @@ fun ExplicitBadge(
         fontSize = size,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .background(Surface3, RoundedCornerShape(3.dp))
+            .background(Surface3, SonvraShape.xs)
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )
 }
@@ -238,14 +239,14 @@ fun MiniPlayer(navController: NavHostController) {
     Column(
         modifier = Modifier
 
-            .padding(horizontal = 12.dp)
+            .padding(horizontal = 8.dp)
             .graphicsLayer {
                 translationY = swipeOffsetY
                 alpha = (1f + swipeOffsetY / 150f).coerceIn(0f, 1f)
             }
-            // Lifted surface card tinted by the artwork, with a light-catching top edge.
+            // Surface2 card docked above the nav, with a faint artwork tint on the leading edge.
             .shadow(
-                elevation = 12.dp,
+                elevation = 8.dp,
                 shape = SonvraShape.md,
                 clip = false,
                 ambientColor = Shadow,
@@ -255,25 +256,30 @@ fun MiniPlayer(navController: NavHostController) {
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        androidx.compose.ui.graphics.lerp(miniTone, Surface1, 0.20f),
-                        androidx.compose.ui.graphics.lerp(miniTone, Surface1, 0.78f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Surface2, 0.72f),
+                        Surface2,
                     )
                 )
             )
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    listOf(TextPrimary.copy(alpha = 0.14f), TextPrimary.copy(alpha = 0.03f))
-                ),
-                shape = SonvraShape.md,
-            )
-            .padding(start = 8.dp, end = 8.dp, top = 6.dp)
+            .border(1.dp, Hairline, SonvraShape.md)
 
     ) {
+        // 2dp accent progress along the top edge (tap or drag to seek).
+        CustomSlider(
+            value = songProgress,
+            onValueChange = { newValue ->
+                val dur = SongPlayer.getDuration()
+                if (dur > 0) SongPlayer.seekTo((newValue * dur).toLong())
+            },
+            valueRange = 0f..1f,
+            steps = 0,
+            modifier = Modifier.fillMaxWidth()
+        )
         Row(horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(start = 8.dp, end = 4.dp, bottom = 6.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -541,20 +547,6 @@ fun MiniPlayer(navController: NavHostController) {
 
 
         }
-
-
-        CustomSlider(
-            value = songProgress,
-            onValueChange = { newValue ->
-                val dur = SongPlayer.getDuration()
-                if (dur > 0) SongPlayer.seekTo((newValue * dur).toLong())
-            },
-            valueRange = 0f..1f,
-            steps = 0,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp)
-        )
     }
 
 
@@ -577,7 +569,7 @@ fun CustomSlider(
 
     Box(
         modifier = modifier
-            .height(14.dp) // compact touch target
+            .height(10.dp) // compact touch target; the line sits on its top edge
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
                     val newFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
@@ -593,7 +585,7 @@ fun CustomSlider(
                     onValueChange(mapped)
                 }
             },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Canvas(modifier = Modifier.fillMaxWidth().height(2.dp)) {
             val trackHeightPx = with(density) { 2.dp.toPx() }
@@ -602,23 +594,19 @@ fun CustomSlider(
 
             // Inactive track
             drawLine(
-                color = TextPrimary.copy(alpha = 0.14f),
+                color = Surface4,
                 start = Offset(0f, trackY),
                 end = Offset(size.width, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active track in the accent gradient
+            // Active track in the accent
             if (thumbX > 0f) drawLine(
-                brush = Brush.horizontalGradient(
-                    listOf(com.music.spotui.ui.theme.AccentSoft, Accent, com.music.spotui.ui.theme.AccentDeep),
-                    startX = 0f,
-                    endX = size.width,
-                ),
+                color = Accent,
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                cap = androidx.compose.ui.graphics.StrokeCap.Butt
             )
         }
     }
@@ -631,14 +619,13 @@ fun Snackbar(showMessage : String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(14.dp))
+            .clip(SonvraShape.md)
             .background(Surface3)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(14.dp)),
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md),
         contentAlignment = Alignment.Center
     ){
         Text(
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.labelLarge,
             color = TextPrimary,
             text = showMessage
         )
@@ -684,7 +671,7 @@ fun SwipeToPlayNextWrapper(
                 Icon(
                     painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                     contentDescription = "Play next",
-                    // Dark content on the light amber accent keeps the contrast strong.
+                    // Dark content on the azure accent keeps the contrast strong.
                     tint = OnAccent,
                     modifier = Modifier.size(24.dp)
                 )
@@ -712,20 +699,22 @@ fun AppSearchBar(
 ) {
     val internalFocusRequester = remember { FocusRequester() }
     val effectiveFocusRequester = focusRequester ?: internalFocusRequester
+    // Visual only: the field gains an accent edge and icon while focused.
+    var focused by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(SonvraShape.md)
             .background(Surface3)
-            .border(1.dp, TextPrimary.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .border(1.dp, if (focused) Accent else Hairline, SonvraShape.md)
             .height(height)
             .padding(horizontal = 14.dp)
     ) {
         Icon(
             painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
-            tint = TextSecondary,
+            tint = if (focused) Accent else TextSecondary,
             contentDescription = "Search",
             modifier = Modifier
                 .size(22.dp)
@@ -741,21 +730,14 @@ fun AppSearchBar(
             enabled = enabled,
             modifier = Modifier
                 .weight(1f)
-                .then(
-                    if (onFocusChange != null) {
-                        Modifier.onFocusChanged { onFocusChange(it.isFocused) }
-                    } else {
-                        Modifier
-                    }
-                )
+                .onFocusChanged {
+                    focused = it.isFocused
+                    onFocusChange?.invoke(it.isFocused)
+                }
                 .focusRequester(effectiveFocusRequester),
             value = query,
             onValueChange = onQueryChange,
-            textStyle = TextStyle.Default.copy(
-                fontSize = 15.sp,
-                color = TextPrimary,
-                fontWeight = FontWeight.Medium
-            ),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = TextPrimary),
             colors = TextFieldDefaults.colors(
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary,
@@ -774,8 +756,7 @@ fun AppSearchBar(
                 Text(
                     text = placeholder,
                     color = TextSecondary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Start
                 )
             }
@@ -787,17 +768,16 @@ fun AppSearchBar(
                 contentDescription = "Clear",
                 tint = TextSecondary,
                 modifier = Modifier
-                    .size(20.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .clickable {
                         if (onClear != null) {
                             onClear()
                         } else {
                             onQueryChange("")
                         }
                     }
+                    .padding(10.dp)
             )
         }
     }
