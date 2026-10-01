@@ -33,7 +33,7 @@ private const val KEY_WEB_PLAYBACK = "web_playback_enabled"
 private const val KEY_VIDEO_FALLBACK = "video_fallback_enabled"
 private const val KEY_AUTO_PLAY = "auto_play_startup"
 private const val KEY_UPDATE_REPO_URL = "update_repo_url"
-const val DEFAULT_UPDATE_REPO_URL = "https://github.com/H4zh4n/Spotui"
+const val DEFAULT_UPDATE_REPO_URL = "https://github.com/wintontomlinson/Spotui"
 
 /** Off (0s) … 12s. 0 disables crossfade. */
 const val CROSSFADE_MIN_MS = 0
@@ -48,17 +48,16 @@ private fun readQ(c: Context, key: String, def: StreamQuality): StreamQuality =
 private fun writeQ(c: Context, key: String, q: StreamQuality) =
     prefs(c).edit().putString(key, q.name).apply()
 
-// Default is Normal (the automatic selector). This is safe now that AUTO no longer
-// picks the lowest bitrate on a metered network: findFormat's AUTO branch takes the
-// best stream under a 160 kbps ceiling on cellular and the full best on wifi, so
-// Normal means good quality that adapts to the connection rather than poor mobile audio.
-fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.NORMAL)
+// Default is High on every network: findFormat's HIGH branch takes the best bitrate
+// and prefers Opus, so a fresh install gets the best audio YouTube serves. A choice
+// the user saved in Settings still wins (readQ only falls back when nothing is stored).
+fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.HIGH)
 fun setWifiQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_WIFI_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.NORMAL)
+fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.HIGH)
 fun setCellularQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_CELL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
@@ -115,8 +114,11 @@ fun isCrossfadeDjMode(c: Context): Boolean = prefs(c).getBoolean(KEY_CROSSFADE_D
 fun setCrossfadeDjMode(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_CROSSFADE_DJ, v).apply()
 
 
-fun getUpdateRepoUrl(c: Context): String =
-    prefs(c).getString(KEY_UPDATE_REPO_URL, DEFAULT_UPDATE_REPO_URL).orEmpty().ifBlank { DEFAULT_UPDATE_REPO_URL }
+/** Installs that stored the old upstream repo are migrated to this fork's releases. */
+fun getUpdateRepoUrl(c: Context): String {
+    val stored = prefs(c).getString(KEY_UPDATE_REPO_URL, null).orEmpty()
+    return if (stored.isBlank() || stored.contains("H4zh4n/Spotui")) DEFAULT_UPDATE_REPO_URL else stored
+}
 
 fun setUpdateRepoUrl(c: Context, url: String) =
     prefs(c).edit().putString(KEY_UPDATE_REPO_URL, url).apply()

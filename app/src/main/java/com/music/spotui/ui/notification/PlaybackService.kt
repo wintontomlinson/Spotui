@@ -130,6 +130,7 @@ class PlaybackService : MediaLibraryService() {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
+                SongPlayer.logTimeToReady()
                 SongPlayer.releaseWakeLock()
                 // A different track is playing, so allow it its own recovery attempt.
                 val playing = currentSongState.songUrl.value

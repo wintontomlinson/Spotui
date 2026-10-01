@@ -146,6 +146,8 @@ class YtSearchViewModel @Inject constructor(
                     val songs = items.filterIsInstance<SongItem>().distinctBy { it.id }
                     _results.value = songs.map { it.toSongsModel() }
                     found = songs.size
+                    // The top hit is the likeliest tap: have its URL ready before it.
+                    com.music.spotui.di.SongPlayer.prefetchList(_results.value.map { it.url }, context, 1)
                 }
                 SearchTab.ARTISTS -> {
                     val list = items.filterIsInstance<ArtistItem>()

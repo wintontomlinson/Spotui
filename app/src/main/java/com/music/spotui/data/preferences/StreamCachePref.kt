@@ -43,6 +43,11 @@ fun getCachedStream(
     return Triple(url, source, quality)
 }
 
+/** Wall-clock expiry of the stored entry for [query], with the same 60 s safety margin. */
+fun getCachedStreamExpiresAt(context: Context, query: String): Long =
+    context.getSharedPreferences(PREF_STREAM_CACHE, Context.MODE_PRIVATE)
+        .getLong(query + SUFFIX_EXPIRES, 0L) - 60_000L
+
 /**
  * Persist a resolved stream URL so the next play of the same query can skip the
  * full resolution pipeline. [expiresInSeconds] is the value from the YouTube
