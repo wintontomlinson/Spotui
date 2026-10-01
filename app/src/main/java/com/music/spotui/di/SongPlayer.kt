@@ -2142,7 +2142,8 @@ object SongPlayer {
     }
 
     // ── Loudness normalization ──
-    // With normalization on, the enhancer gain is 4 dB minus the track's YouTube
+    // With normalization on, the enhancer gain is 7 dB (the same base as
+    // normalization off, so the average level matches 3.0) minus the track's YouTube
     // loudness offset, clamped to 0..10 dB: loud masters get less boost, quiet ones
     // more, so consecutive tracks land at a similar level. Off keeps the fixed 7 dB.
     private fun rememberLoudness(song: String, loudnessDb: Double, ctx: Context) {
@@ -2160,7 +2161,7 @@ object SongPlayer {
         currentLoudnessQuery = song
         val ctx = appCtx ?: return
         currentLoudnessGain = if (com.music.spotui.data.preferences.isNormalizeVolume(ctx)) {
-            (400 - (loudnessFor(song, ctx) ?: 0.0) * 100).toInt().coerceIn(0, 1000)
+            (LOUDNESS_TARGET_MB - (loudnessFor(song, ctx) ?: 0.0) * 100).toInt().coerceIn(0, 1000)
         } else LOUDNESS_TARGET_MB
         runCatching { loudnessEnhancer?.setTargetGain(currentLoudnessGain) }
     }

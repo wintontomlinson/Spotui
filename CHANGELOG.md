@@ -21,7 +21,9 @@ compared to the main Spotui repository.
   repeats. This works with or without a Spotify login.
 * **Mix for you.** A daily 25-song mix on Home, plus "Jump back in" and "Your top artists".
 * **Playback speed and pitch**, an **equalizer** with seven presets and per-band control, and
-  **volume normalization** that evens out loud and quiet tracks.
+  **volume normalization** (on by default) that evens out loud and quiet tracks. It starts from
+  the same +7 dB boost as 3.0, so the average volume doesn't drop, and each track's loudness is
+  remembered so a song always plays at the same level.
 * **Obsidian Aurora redesign.** An obsidian canvas with an apricot-to-rose accent. The player is
   tinted by the artwork colour, with a new seek bar and animated controls. Home and Explore are
   richer, the glass tab bar has a sliding highlight, loading screens use skeletons, and the icon
