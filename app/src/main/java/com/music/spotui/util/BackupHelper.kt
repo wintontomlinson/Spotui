@@ -101,7 +101,7 @@ object BackupHelper {
     }
 
     /**
-     * Validates if [jsonString] is a genuine Sonvra backup file (the format keeps its
+     * Validates if [jsonString] is a genuine SOLO backup file (the format keeps its
      * original "spotui" identifiers so older backups still restore).
      * Returns the root [JSONObject] if valid, or null if invalid.
      */
@@ -189,7 +189,7 @@ object BackupHelper {
         }
 
         val root = validateBackupJson(jsonString)
-            ?: return@withContext Pair(false, "Invalid backup file: Not a valid Sonvra backup")
+            ?: return@withContext Pair(false, "Invalid backup file: Not a valid SOLO backup")
 
         runCatching {
             val data = root.getJSONObject("data")

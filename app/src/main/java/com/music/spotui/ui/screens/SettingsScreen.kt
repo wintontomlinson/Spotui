@@ -529,7 +529,7 @@ fun SettingsScreen(navController: NavController) {
                 Column(Modifier.weight(1f)) {
                     Text("Restore from File", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Sonvra backup file",
+                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a SOLO backup file",
                         color = TextSecondary,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -687,7 +687,7 @@ fun SettingsScreen(navController: NavController) {
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = "You're using Sonvra for free: search and play any song, no account needed.",
+                            text = "You're using SOLO for free: search and play any song, no account needed.",
                             color = SettingsTextDim,
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -712,8 +712,8 @@ fun SettingsScreen(navController: NavController) {
 }
 
 /**
- * About card: the Sonvra mark on its midnight plate, the version, the maintainer and the
- * open-source projects Sonvra is built on.
+ * About card: the SOLO mark on its obsidian plate, the version, the maintainer and the
+ * open-source projects SOLO is built on.
  */
 @Composable
 private fun AboutCard() {
@@ -733,7 +733,7 @@ private fun AboutCard() {
         com.music.spotui.ui.components.SonvraMark(height = 52.dp)
         Spacer(Modifier.height(14.dp))
         Text(
-            "Sonvra",
+            "SOLO",
             color = TextPrimary,
             style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
@@ -980,7 +980,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                             .getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                                 as android.content.ClipboardManager
                         clipboard.setPrimaryClip(
-                            android.content.ClipData.newPlainText("Sonvra playback log", PlaybackLog.asText()),
+                            android.content.ClipData.newPlainText("SOLO playback log", PlaybackLog.asText()),
                         )
                         android.widget.Toast
                             .makeText(context, "Playback log copied", android.widget.Toast.LENGTH_SHORT)

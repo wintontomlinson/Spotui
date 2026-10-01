@@ -93,7 +93,7 @@ fun UpdatePrompt() {
                     RenderMarkdown(info.releaseBody)
                 } else {
                     Text(
-                        "A new version of Sonvra is available.",
+                        "A new version of SOLO is available.",
                         color = TextSecondary,
                     )
                 }

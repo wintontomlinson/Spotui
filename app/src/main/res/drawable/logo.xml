@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  In-app Sonvra Sonic V mark (tight bounds, transparent): wordmark, About card, splash.
-  The launcher geometry shifted by (-27,-30): viewport 54 x 52 (1-unit padding), so the
-  width-to-height ratio is 54/52 = 1.0385. No shadow.
+  In-app SOLO "Spotlight O" mark (tight bounds, transparent): wordmark, About card, splash.
+  The launcher ring (centre 54,54, outer r 30) shifted by (-23,-23) to centre (31,31) with a
+  1-unit pad, so the viewport is 62 x 62 (square mark). Volt gradient, no shadow.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="37.8dp"
-    android:height="36.4dp"
-    android:viewportWidth="54"
-    android:viewportHeight="52">
-    <path android:pathData="M1.81,11.27 L20.81,47.27 A7.00,7.00 0,0 0 33.19,40.73 L14.19,4.73 A7.00,7.00 0,0 0 1.81,11.27 Z M39.81,4.73 L20.81,40.73 A7.00,7.00 0,0 0 33.19,47.27 L52.19,11.27 A7.00,7.00 0,0 0 39.81,4.73 Z">
+    android:width="37dp"
+    android:height="37dp"
+    android:viewportWidth="62"
+    android:viewportHeight="62">
+    <path android:pathData="M59.978,23.235 A30.000,30.000 0 1 1 46.000,5.019 L40.500,14.546 A19.000,19.000 0 1 0 49.353,26.082 Z">
         <aapt:attr name="android:fillColor">
-            <gradient android:type="linear" android:startX="8" android:startY="1" android:endX="27" android:endY="51">
-                <item android:offset="0.0" android:color="#FF9CCBFF" />
-                <item android:offset="0.5" android:color="#FF5B9BFF" />
-                <item android:offset="1.0" android:color="#FF3F7BFF" />
+            <gradient android:type="linear" android:startX="7" android:startY="7" android:endX="55" android:endY="55">
+                <item android:offset="0.0" android:color="#FFE8FF8F" />
+                <item android:offset="0.5" android:color="#FFD8FF3E" />
+                <item android:offset="1.0" android:color="#FF9BE64B" />
             </gradient>
         </aapt:attr>
     </path>
-    <path android:fillColor="#FFF2F5FA" android:pathData="M27.00,7.00 A5.00,5.00 0,1 1 27.00,17.00 A5.00,5.00 0,1 1 27.00,7.00 Z" />
+    <path android:fillColor="#FFF4F5F2" android:pathData="M25.000,31.000 A6.000,6.000 0 1 1 37.000,31.000 A6.000,6.000 0 1 1 25.000,31.000 Z" />
 </vector>

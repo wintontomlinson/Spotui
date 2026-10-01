@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Status-bar / media-notification small icon: the Sonvra Sonic V mark, white only (Android
-  draws small icons from alpha alone). Launcher geometry mapped by x' = 12 + (x-54)*0.423,
-  y' = 12 + (y-56)*0.423: arms (3.96,4.39)->(12,19.61) and (20.04,4.39)->(12,19.61) r 2.96,
-  source dot (12,6.08) r 2.12, 1.24 units clear of each arm.
+  Status-bar / media-notification small icon: the SOLO "Spotlight O" mark, white only (Android
+  draws small icons from alpha alone). The launcher ring scaled about (12,12) to outer r 9.6,
+  inner r 6.1, with the same lower-right notch (300deg-345deg), and a centred dot r 1.9, each
+  with >=1 unit clearance inside the 24-unit artboard. Filename kept as ic_spotui_notification
+  (referenced by PlaybackService and media3_notification_small_icon).
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M1.34,5.77 L9.38,20.99 A2.96,2.96 0,0 0 14.62,18.23 L6.58,3.01 A2.96,2.96 0,0 0 1.34,5.77 Z M17.42,3.01 L9.38,18.23 A2.96,2.96 0,0 0 14.62,20.99 L22.66,5.77 A2.96,2.96 0,0 0 17.42,3.01 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M12.00,3.96 A2.12,2.12 0,1 1 12.00,8.20 A2.12,2.12 0,1 1 12.00,3.96 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M21.273,9.515 A9.600,9.600 0 1 1 16.800,3.686 L15.050,6.717 A6.100,6.100 0 1 0 17.892,10.421 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M10.100,12.000 A1.900,1.900 0 1 1 13.900,12.000 A1.900,1.900 0 1 1 10.100,12.000 Z" />
 </vector>

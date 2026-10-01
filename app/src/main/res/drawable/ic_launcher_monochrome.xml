@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed-icon (Android 13+) layer: the Sonvra Sonic V mark as a flat silhouette the system tints. -->
+<!-- Themed-icon (Android 13+) layer: the SOLO Spotlight-O mark as a flat silhouette the system tints. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M28.81,41.27 L47.81,77.27 A7.00,7.00 0,0 0 60.19,70.73 L41.19,34.73 A7.00,7.00 0,0 0 28.81,41.27 Z M66.81,34.73 L47.81,70.73 A7.00,7.00 0,0 0 60.19,77.27 L79.19,41.27 A7.00,7.00 0,0 0 66.81,34.73 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M54.00,37.00 A5.00,5.00 0,1 1 54.00,47.00 A5.00,5.00 0,1 1 54.00,37.00 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M82.978,46.235 A30.000,30.000 0 1 1 69.000,28.019 L63.500,37.546 A19.000,19.000 0 1 0 72.353,49.082 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M48.000,54.000 A6.000,6.000 0 1 1 60.000,54.000 A6.000,6.000 0 1 1 48.000,54.000 Z" />
 </vector>

@@ -702,7 +702,7 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> =
-            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "Sonvra"), params))
+            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "SOLO"), params))
 
         override fun onGetChildren(
             session: MediaLibrarySession,

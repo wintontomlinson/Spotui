@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Sonvra launcher foreground: the "Sonic V" mark. Two rounded capsule arms, (35,38)->(54,74)
-  and (73,38)->(54,74), r 7, meet in a soft vertex (one path, non-zero union), filled with an
-  azure gradient #9CCBFF -> #5B9BFF -> #3F7BFF from (35,31) to (54,81). A solid "source" dot
-  at (54,42) r 5 sits in the V's mouth, 2.9 units clear of each arm. A 30% black copy offset
-  +1.4 Y is the shadow. Farthest point 31.8 units from centre, inside the 33-unit safe
-  circle. Same geometry as tools/generate_launcher_icons.py.
+  SOLO launcher foreground: the "Spotlight O" mark. A bold ring (the O of SOLO) — a filled
+  annulus, outer r 30, inner r 19, centre (54,54) — with a crisp wedge notch cut from its
+  lower-right between 300deg and 345deg, filled with the Volt gradient #E8FF8F -> #D8FF3E ->
+  #9BE64B from (30,30) to (78,78). One solid "spotlight" dot at (54,54) r 6 (#F4F5F2) sits
+  centred inside. A 28% black copy offset +1.4 Y is the shadow. Outer radius 30 stays inside
+  the 33-unit safe circle. Same geometry as tools/generate_launcher_icons.py.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
@@ -14,17 +14,17 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group android:translateY="1.4">
-        <path android:fillColor="#4D000000" android:pathData="M28.81,41.27 L47.81,77.27 A7.00,7.00 0,0 0 60.19,70.73 L41.19,34.73 A7.00,7.00 0,0 0 28.81,41.27 Z M66.81,34.73 L47.81,70.73 A7.00,7.00 0,0 0 60.19,77.27 L79.19,41.27 A7.00,7.00 0,0 0 66.81,34.73 Z" />
-        <path android:fillColor="#4D000000" android:pathData="M54.00,37.00 A5.00,5.00 0,1 1 54.00,47.00 A5.00,5.00 0,1 1 54.00,37.00 Z" />
+        <path android:fillColor="#47000000" android:pathData="M82.978,46.235 A30.000,30.000 0 1 1 69.000,28.019 L63.500,37.546 A19.000,19.000 0 1 0 72.353,49.082 Z" />
+        <path android:fillColor="#47000000" android:pathData="M48.000,54.000 A6.000,6.000 0 1 1 60.000,54.000 A6.000,6.000 0 1 1 48.000,54.000 Z" />
     </group>
-    <path android:pathData="M28.81,41.27 L47.81,77.27 A7.00,7.00 0,0 0 60.19,70.73 L41.19,34.73 A7.00,7.00 0,0 0 28.81,41.27 Z M66.81,34.73 L47.81,70.73 A7.00,7.00 0,0 0 60.19,77.27 L79.19,41.27 A7.00,7.00 0,0 0 66.81,34.73 Z">
+    <path android:pathData="M82.978,46.235 A30.000,30.000 0 1 1 69.000,28.019 L63.500,37.546 A19.000,19.000 0 1 0 72.353,49.082 Z">
         <aapt:attr name="android:fillColor">
-            <gradient android:type="linear" android:startX="35" android:startY="31" android:endX="54" android:endY="81">
-                <item android:offset="0.0" android:color="#FF9CCBFF" />
-                <item android:offset="0.5" android:color="#FF5B9BFF" />
-                <item android:offset="1.0" android:color="#FF3F7BFF" />
+            <gradient android:type="linear" android:startX="30" android:startY="30" android:endX="78" android:endY="78">
+                <item android:offset="0.0" android:color="#FFE8FF8F" />
+                <item android:offset="0.5" android:color="#FFD8FF3E" />
+                <item android:offset="1.0" android:color="#FF9BE64B" />
             </gradient>
         </aapt:attr>
     </path>
-    <path android:fillColor="#FFF2F5FA" android:pathData="M54.00,37.00 A5.00,5.00 0,1 1 54.00,47.00 A5.00,5.00 0,1 1 54.00,37.00 Z" />
+    <path android:fillColor="#FFF4F5F2" android:pathData="M48.000,54.000 A6.000,6.000 0 1 1 60.000,54.000 A6.000,6.000 0 1 1 48.000,54.000 Z" />
 </vector>
