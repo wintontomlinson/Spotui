@@ -4,7 +4,7 @@ import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -96,8 +96,8 @@ fun DevicesSheet(
         sheetState = sheetState,
         containerColor = com.music.spotui.ui.theme.Surface2,
         contentColor = TextPrimary,
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
@@ -149,7 +149,7 @@ fun DevicesSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SonvraShape.sm)
+                        .clip(SoloShape.sm)
                         .background(Surface3)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
@@ -162,7 +162,7 @@ fun DevicesSheet(
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .clip(SonvraShape.pill)
+                            .clip(SoloShape.pill)
                             .background(com.music.spotui.ui.theme.AccentBrush)
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
@@ -195,9 +195,9 @@ fun DevicesSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SonvraShape.md)
+                        .clip(SoloShape.md)
                         .background(com.music.spotui.ui.theme.Surface4)
-                        .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md)
+                        .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
@@ -269,7 +269,7 @@ fun DevicesSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SonvraShape.sm)
+                    .clip(SoloShape.sm)
                     .clickable {
                         AudioDeviceHelper.openSystemAudioSwitcher(context)
                         onDismiss()
@@ -321,7 +321,7 @@ private fun DeviceItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 52.dp)
-            .clip(SonvraShape.sm)
+            .clip(SoloShape.sm)
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {

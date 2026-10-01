@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -51,9 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.music.spotui.di.SongPlayer
-import com.music.spotui.ui.components.SonvraChip
-import com.music.spotui.ui.components.SonvraEmptyState
-import com.music.spotui.ui.components.SonvraIconButton
+import com.music.spotui.ui.components.SoloChip
+import com.music.spotui.ui.components.SoloEmptyState
+import com.music.spotui.ui.components.SoloIconButton
 import com.music.spotui.ui.theme.AppBackgroundBrush
 import com.music.spotui.ui.theme.AccentBrush
 import com.music.spotui.ui.theme.Surface2
@@ -93,7 +93,7 @@ fun EqualizerScreen(navController: NavController) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
         ) {
-            SonvraIconButton(
+            SoloIconButton(
                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
                 contentDescription = "Back",
                 onClick = { navController.popBackStack() },
@@ -126,7 +126,7 @@ fun EqualizerScreen(navController: NavController) {
         }
 
         if (!supported || levels.isEmpty()) {
-            SonvraEmptyState(
+            SoloEmptyState(
                 icon = Icons.Rounded.GraphicEq,
                 title = "Equalizer isn't supported on this device",
                 message = "Your phone doesn't expose an audio equalizer to apps.",
@@ -151,12 +151,12 @@ fun EqualizerScreen(navController: NavController) {
         ) {
             (SongPlayer.EQ_PRESETS.map { it.first } + if (preset == "Custom") listOf("Custom") else emptyList())
                 .forEach { name ->
-                    SonvraChip(
+                    SoloChip(
                         label = name,
                         selected = preset == name,
                         modifier = Modifier.heightIn(min = 48.dp),
                         onClick = {
-                            if (name == "Custom") return@SonvraChip
+                            if (name == "Custom") return@SoloChip
                             preset = name
                             SongPlayer.applyEqPreset(context, name)
                             levels = SongPlayer.eqBandLevels()
@@ -175,9 +175,9 @@ fun EqualizerScreen(navController: NavController) {
                 .padding(20.dp)
                 .padding(top = 8.dp)
                 .fillMaxWidth()
-                .clip(SonvraShape.lg)
+                .clip(SoloShape.lg)
                 .background(Surface2)
-                .border(1.dp, Hairline, SonvraShape.lg)
+                .border(1.dp, Hairline, SoloShape.lg)
                 .padding(vertical = 20.dp, horizontal = 6.dp),
         ) {
             levels.forEachIndexed { band, level ->

@@ -9,25 +9,29 @@ import androidx.compose.ui.unit.sp
 import com.music.spotui.R
 
 /**
- * Display face: Sora (SIL OFL 1.1), a confident geometric sans used for display, headline
- * and titleLarge styles, the wordmark and the player title. Static SemiBold and Bold
- * instances cut from the variable font; see licenses/fonts.
+ * Display face: Space Grotesk (SIL OFL 1.1), a distinctive geometric grotesk used for display,
+ * headline and titleLarge styles, the wordmark and the player title. Static Medium, SemiBold
+ * and Bold instances cut from the variable font; see licenses/fonts.
  */
-val SonvraDisplay = FontFamily(
-    Font(R.font.sora_semibold, weight = FontWeight.SemiBold),
-    Font(R.font.sora_bold, weight = FontWeight.Bold),
+val SoloDisplay = FontFamily(
+    Font(R.font.space_grotesk_medium, weight = FontWeight.Medium),
+    Font(R.font.space_grotesk_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.space_grotesk_bold, weight = FontWeight.Bold),
 )
 
-/** UI face: Inter (SIL OFL 1.1, static instances at opsz 14), used for everything else. */
-val SonvraSans = FontFamily(
-    Font(R.font.inter_regular, weight = FontWeight.Normal),
-    Font(R.font.inter_medium, weight = FontWeight.Medium),
-    Font(R.font.inter_semibold, weight = FontWeight.SemiBold),
-    Font(R.font.inter_bold, weight = FontWeight.Bold),
+/**
+ * UI face: Plus Jakarta Sans (SIL OFL 1.1), a warm humanist sans used for everything else.
+ * Static Regular, Medium, SemiBold and Bold instances cut from the variable font.
+ */
+val SoloSans = FontFamily(
+    Font(R.font.jakarta_regular, weight = FontWeight.Normal),
+    Font(R.font.jakarta_medium, weight = FontWeight.Medium),
+    Font(R.font.jakarta_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.jakarta_bold, weight = FontWeight.Bold),
 )
 
-private val display = TextStyle(fontFamily = SonvraDisplay, fontWeight = FontWeight.SemiBold)
-private val sans = TextStyle(fontFamily = SonvraSans)
+private val display = TextStyle(fontFamily = SoloDisplay, fontWeight = FontWeight.SemiBold)
+private val sans = TextStyle(fontFamily = SoloSans)
 
 val Typography = Typography(
     displayLarge = display.copy(fontSize = 44.sp, lineHeight = 50.sp, letterSpacing = (-0.8).sp),

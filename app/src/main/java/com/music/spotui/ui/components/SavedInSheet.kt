@@ -2,7 +2,7 @@ package com.music.spotui.ui.components
 
 import android.content.Context
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -140,8 +140,8 @@ fun SavedInSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface2,
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
@@ -158,7 +158,7 @@ fun SavedInSheet(
                     color = Accent,
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
-                        .clip(SonvraShape.pill)
+                        .clip(SoloShape.pill)
                         .clickable(enabled = !isCreatingPlaylist) { creating = true }
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                 )
@@ -185,7 +185,7 @@ fun SavedInSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp, 0.dp, 20.dp, 8.dp)
-                        .clip(SonvraShape.md),
+                        .clip(SoloShape.md),
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -197,7 +197,7 @@ fun SavedInSheet(
                         color = if (isCreatingPlaylist) TextTertiary else com.music.spotui.ui.theme.OnAccent,
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
-                            .clip(SonvraShape.pill)
+                            .clip(SoloShape.pill)
                             .then(
                                 if (isCreatingPlaylist) Modifier.background(Surface3)
                                 else Modifier.background(com.music.spotui.ui.theme.AccentBrush)
@@ -211,7 +211,7 @@ fun SavedInSheet(
                         color = TextPrimary,
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
-                            .clip(SonvraShape.pill)
+                            .clip(SoloShape.pill)
                             .clickable(enabled = !isCreatingPlaylist) { creating = false; newName = "" }
                             .padding(horizontal = 14.dp, vertical = 14.dp),
                     )
@@ -231,7 +231,7 @@ fun SavedInSheet(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(SonvraShape.sm)
+                                    .clip(SoloShape.sm)
                                     .background(
                                         com.music.spotui.ui.theme.AccentBrush
                                     ),
@@ -262,7 +262,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(SonvraShape.sm),
+                                    .clip(SoloShape.sm),
                                 model = pl.coverUri,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
@@ -305,7 +305,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(SonvraShape.sm),
+                                    .clip(SoloShape.sm),
                                 model = pl.images.firstOrNull()?.url,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),

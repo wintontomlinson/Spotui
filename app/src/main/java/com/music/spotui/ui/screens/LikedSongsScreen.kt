@@ -3,7 +3,7 @@ package com.music.spotui.ui.screens
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -186,7 +186,7 @@ fun LikedSongsScreen(navController: NavController) {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -239,8 +239,8 @@ fun LikedSongsScreen(navController: NavController) {
                                 Box(
                                     modifier = Modifier
                                         .size(200.dp)
-                                        .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                                        .clip(SonvraShape.lg)
+                                        .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                                        .clip(SoloShape.lg)
                                         .background(com.music.spotui.ui.theme.AccentBrush),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -258,7 +258,7 @@ fun LikedSongsScreen(navController: NavController) {
                                 text = "Liked Songs",
                                 color = TextPrimary,
                                 style = MaterialTheme.typography.headlineLarge,
-                                fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
+                                fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                             Text(
                                 modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                                 text = "${songs.size} songs",
@@ -417,7 +417,7 @@ fun LikedSongsScreen(navController: NavController) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
-                                        .clip(SonvraShape.pill)
+                                        .clip(SoloShape.pill)
                                         .background(Surface3)
                                         .clickable { showSortSheet = true }
                                         .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -441,7 +441,7 @@ fun LikedSongsScreen(navController: NavController) {
 
                     if (filteredSongs.isEmpty() && searchQuery.isNotBlank()) {
                         item {
-                            com.music.spotui.ui.components.SonvraEmptyState(
+                            com.music.spotui.ui.components.SoloEmptyState(
                                 icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                                 title = "No matches",
                                 message = "Nothing here matches \"$searchQuery\".",
@@ -492,7 +492,7 @@ fun LikedSongsScreen(navController: NavController) {
                                     GlideImage(
                                         modifier = Modifier
                                             .size(48.dp)
-                                            .clip(SonvraShape.xs),
+                                            .clip(SoloShape.xs),
                                         model = song.coverUri,
                                         failure = placeholder(R.drawable.placeholder),
                                         contentScale = ContentScale.Crop,
@@ -537,8 +537,8 @@ fun LikedSongsScreen(navController: NavController) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
                         containerColor = Surface2,
-                        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                         scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(

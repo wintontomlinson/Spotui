@@ -1,7 +1,7 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -124,7 +124,7 @@ fun LikedSongsScreen(
             CenterAlignedTopAppBar(
                 modifier = Modifier.padding(horizontal = 4.dp),
                 navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -179,8 +179,8 @@ fun LikedSongsScreen(
                     GlideImage(
                         modifier = Modifier
                             .size(200.dp)
-                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SonvraShape.lg),
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SoloShape.lg),
                         contentScale = ContentScale.Crop,
                         // Fall back to the first liked track's art when the library has
                         // no Liked Songs entry to take a cover from.
@@ -208,7 +208,7 @@ fun LikedSongsScreen(
                             text = "Liked Songs",
                             color = TextPrimary,
                             style = MaterialTheme.typography.headlineLarge,
-                            fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
+                            fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                         Text(modifier = Modifier,
                             text = " ${likedSongs.size} songs",
                             color = TextTertiary,

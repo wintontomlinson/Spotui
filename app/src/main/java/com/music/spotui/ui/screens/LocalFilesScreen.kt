@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -129,7 +129,7 @@ fun LocalFilesScreen(navController: NavController) {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -157,7 +157,7 @@ fun LocalFilesScreen(navController: NavController) {
                     text = "On this device",
                     color = TextPrimary,
                     style = MaterialTheme.typography.headlineLarge,
-                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                     modifier = Modifier.padding(20.dp, 8.dp, 20.dp, 2.dp),
                 )
                 Text(
@@ -191,7 +191,7 @@ fun LocalFilesScreen(navController: NavController) {
                 Spacer(Modifier.height(8.dp))
 
                 if (songs.isEmpty()) {
-                    com.music.spotui.ui.components.SonvraEmptyState(
+                    com.music.spotui.ui.components.SoloEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.LibraryMusic,
                         title = "No local music yet",
                         message = "Tap “Add songs” or “Add folder” to import music from your device.",
@@ -225,7 +225,7 @@ fun LocalFilesScreen(navController: NavController) {
                                 ),
                         ) {
                             GlideImage(
-                                modifier = Modifier.size(48.dp).clip(SonvraShape.xs),
+                                modifier = Modifier.size(48.dp).clip(SoloShape.xs),
                                 model = song.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
                                 loading = placeholder(R.drawable.placeholder),
@@ -267,7 +267,7 @@ private fun ImportButton(
         fontWeight = FontWeight.Bold,
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         modifier = modifier
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .background(if (enabled) container else Surface3)
             .clickable(enabled = enabled) { onClick() }
             .padding(vertical = 12.dp),

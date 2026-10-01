@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
  * mini player), lg 20 (hero cards, detail art), xl 24 (player artwork, dialogs).
  * Pills use 50%; sheets use [sheetTop].
  */
-object SonvraShape {
+object SoloShape {
     val xs = RoundedCornerShape(4.dp)
     val sm = RoundedCornerShape(8.dp)
     val md = RoundedCornerShape(12.dp)
@@ -19,16 +19,16 @@ object SonvraShape {
     val sheetTop = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
 }
 
-val SonvraShapes = Shapes(
-    extraSmall = SonvraShape.xs,
-    small = SonvraShape.sm,
-    medium = SonvraShape.md,
-    large = SonvraShape.lg,
-    extraLarge = SonvraShape.xl,
+val SoloShapes = Shapes(
+    extraSmall = SoloShape.xs,
+    small = SoloShape.sm,
+    medium = SoloShape.md,
+    large = SoloShape.lg,
+    extraLarge = SoloShape.xl,
 )
 
 /** Spacing scale. Screen gutter is 20dp; list rows are at least 64dp tall. */
-object SonvraSpacing {
+object SoloSpacing {
     val xxs = 4.dp
     val xs = 8.dp
     val sm = 12.dp

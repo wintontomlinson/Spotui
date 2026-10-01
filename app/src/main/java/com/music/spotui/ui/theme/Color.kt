@@ -6,48 +6,50 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 
 /*
- * Sonvra design tokens: Midnight Azure.
+ * Solo design tokens: Aurora Noir.
  *
- * A graphite-midnight canvas, a layered surface ramp (each step one visible notch lighter)
- * and one cool, vivid azure signature accent. The azure is premium and calm, and it stays
- * clear of every competitor's brand hue (green, red, orange, pink-red, purple, teal/cyan).
+ * A warm obsidian canvas, a layered surface ramp (each step one visible notch lighter)
+ * and one electric lime-citron "Volt" signature accent. Volt is premium and high-energy,
+ * and it stays clear of every competitor's brand hue: it sits in a different hue family
+ * (~75deg lime-citron) from Spotify's grass green (~141deg) and avoids red, orange, pink,
+ * purple and teal/cyan, so it reads as its own brand rather than a green fill.
  *
- * Contrast (WCAG): Accent on Canvas 7.2:1, on Surface2 6.3:1; OnAccent on Accent 6.7:1,
- * on AccentDeep 4.9:1; TextTertiary on Canvas 5.4:1, on Surface2 4.8:1.
+ * Contrast (WCAG): Accent #D8FF3E on Canvas #0A0A0C 17.23:1; OnAccent #0C1400 on Accent 16.40:1,
+ * on AccentDeep 12.38:1; TextTertiary #7F837A on Canvas 5.11:1.
  *
  * Screens read colours from here instead of hard-coding hex values, so the whole app stays
  * on one palette.
  */
 
 // Canvas and surface ramp
-val Canvas = Color(0xFF07090D)     // app canvas
-val Surface1 = Color(0xFF0E1117)   // bars, grouped rows
-val Surface2 = Color(0xFF151922)   // cards, sheets, dialogs
-val Surface3 = Color(0xFF1C212C)   // inputs, chips, icon wells
-val Surface4 = Color(0xFF262C3A)   // pressed / selected
-val Midnight = Color(0xFF0F1A33)   // brand plate, gradient crown
+val Canvas = Color(0xFF0A0A0C)     // app canvas
+val Surface1 = Color(0xFF121214)   // bars, grouped rows
+val Surface2 = Color(0xFF17181C)   // cards, sheets, dialogs
+val Surface3 = Color(0xFF202126)   // inputs, chips, icon wells
+val Surface4 = Color(0xFF2B2D34)   // pressed / selected
+val Elevated = Color(0xFF1E2416)   // hero plate, brand crown
 
-// Azure accent ramp
-val AccentSoft = Color(0xFF9CCBFF)
-val Accent = Color(0xFF5B9BFF)     // signature azure: text, icons and fills
-val AccentDeep = Color(0xFF3F7BFF)
-val OnAccent = Color(0xFF06122A)   // content drawn on accent fills
+// Volt accent ramp (lime -> volt -> spring)
+val AccentSoft = Color(0xFFE8FF8F)
+val Accent = Color(0xFFD8FF3E)     // signature Volt: text, icons and fills
+val AccentDeep = Color(0xFF9BE64B)
+val OnAccent = Color(0xFF0C1400)   // content drawn on accent fills
 
 // Text
-val TextPrimary = Color(0xFFF2F5FA)
-val TextSecondary = Color(0xFFA6AFBF)
-val TextTertiary = Color(0xFF7D8698)
-val TextDisabled = Color(0xFF4A5263)
+val TextPrimary = Color(0xFFF4F5F2)
+val TextSecondary = Color(0xFFADB0A8)
+val TextTertiary = Color(0xFF7F837A)
+val TextDisabled = Color(0xFF4C4F49)
 
 // Lines
-val Hairline = Color(0x14F2F5FA)        // 8% white: dividers, card edges
-val HairlineAccent = Color(0x335B9BFF)  // 20% azure: premium edges on hero surfaces
+val Hairline = Color(0x14F4F5F2)        // 8% white: dividers, card edges
+val HairlineAccent = Color(0x38D8FF3E)  // 22% Volt: premium edges on hero surfaces
 
 // Status
-val Danger = Color(0xFFFF6B7A)
-val DangerSurface = Color(0xFF3A1720)
-val Success = Color(0xFF4FD1A1)
-val Warning = Color(0xFFFFC15C)
+val Danger = Color(0xFFFF6B6B)
+val DangerSurface = Color(0xFF3A1A1A)
+val Success = Color(0xFF5BD6A0)
+val Warning = Color(0xFFFFCB5C)
 
 // Scrim behind sheets and dialogs (70% black)
 val Scrim = Color(0xB3000000)
@@ -56,14 +58,14 @@ val Scrim = Color(0xB3000000)
 val Shadow = Color(0x66000000)
 
 // Glass (translucent chrome over scrolling content)
-val GlassFill = Color(0xD90E1117)
-val GlassFillStrong = Color(0xF20E1117)
+val GlassFill = Color(0xD9121214)
+val GlassFillStrong = Color(0xF2121214)
 
-/** Shared screen background: a faint midnight-blue glow at the top that settles into the canvas. */
+/** Shared screen background: a faint warm glow at the top that settles into the obsidian canvas. */
 val AppBackgroundBrush: Brush = Brush.verticalGradient(
-    0f to Color(0xFF0E1A33),
-    0.42f to Canvas,
-    1f to Color(0xFF05070A),
+    0f to Color(0xFF141A0E),
+    0.4f to Canvas,
+    1f to Color(0xFF060607),
 )
 
 /** The accent gradient used for primary actions (play buttons, the Liked tile). */

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App theme after the splash: dark midnight window so there is never a white flash
+    <!-- App theme after the splash: dark obsidian window so there is never a white flash
          between the splash and the Compose UI. -->
     <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>

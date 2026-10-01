@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -110,30 +110,30 @@ private data class BrowseCategory(
 )
 
 private val BROWSE_CATEGORIES = listOf(
-    // Each category carries a deep, cool-leaning tone (it tints the tile's scrim)
-    // plus a name-matched `imageQuery`, so
-    // the full-bleed tile artwork clearly reflects the label. `query` is what
+    // Each category carries a deep, warm-leaning tone (it tints the tile's scrim)
+    // that sits on the Aurora Noir obsidian canvas, plus a name-matched `imageQuery`,
+    // so the full-bleed tile artwork clearly reflects the label. `query` is what
     // actually runs on tap.
     // imageQuery points at recognisable, current hit albums/artists so each tile
     // shows relatable, latest cover art (resolved to a square album cover) rather
     // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF2D4FD6), imageQuery = "trending"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFA3364A), imageQuery = "charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF1E5A9E), imageQuery = "new"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF3A47A8), imageQuery = "madeforyou"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF8E3B55), imageQuery = "bollywood"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFB4532F), imageQuery = "punjabi"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2C6E4F), imageQuery = "hiphop"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF24519A), imageQuery = "pop"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF1F6F78), imageQuery = "lofi"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF9C3F3A), imageQuery = "workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF33518A), imageQuery = "romance"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF4B5160), imageQuery = "party"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF9A5B2E), imageQuery = "devotional"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF3E4C66), imageQuery = "retro"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF4A6380), imageQuery = "sad"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F5E5A), imageQuery = "english"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF4F6B36), imageQuery = "instrumental"),
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF4A5A1E), imageQuery = "trending"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF7A3A2A), imageQuery = "charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF2F5A3A), imageQuery = "new"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF5A4A1E), imageQuery = "madeforyou"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF7A3348), imageQuery = "bollywood"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF8A4A24), imageQuery = "punjabi"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF3D5A2A), imageQuery = "hiphop"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF6E4A2E), imageQuery = "pop"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2E5A52), imageQuery = "lofi"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF8A3A30), imageQuery = "workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF6E3350), imageQuery = "romance"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF5A5024), imageQuery = "party"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF8A5A2A), imageQuery = "devotional"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF4A4432), imageQuery = "retro"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF3A4A44), imageQuery = "sad"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F5648), imageQuery = "english"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF55602E), imageQuery = "instrumental"),
 )
 
 /**
@@ -295,7 +295,7 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     }
 }
 
-/** Songs / Artists / Albums / Playlists selector, styled as azure-selected pills. */
+/** Songs / Artists / Albums / Playlists selector, styled as Volt-selected pills. */
 @Composable
 private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
     LazyRow(
@@ -304,7 +304,7 @@ private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
         modifier = Modifier.padding(bottom = 6.dp),
     ) {
         items(SearchTab.entries.toList(), key = { it.name }) { entry ->
-            com.music.spotui.ui.components.SonvraChip(
+            com.music.spotui.ui.components.SoloChip(
                 label = entry.label,
                 selected = entry == selected,
                 onClick = { onSelect(entry) },
@@ -361,7 +361,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(SonvraShape.sm),
+                .clip(SoloShape.sm),
             model = album.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -404,7 +404,7 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(SonvraShape.sm),
+                .clip(SoloShape.sm),
             model = playlist.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -450,9 +450,9 @@ private fun SearchField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp)
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(SurfaceHigh)
-            .border(1.dp, if (focused) Accent else Hairline, SonvraShape.md)
+            .border(1.dp, if (focused) Accent else Hairline, SoloShape.md)
             .height(52.dp)
             .padding(start = 14.dp, end = 4.dp),
     ) {
@@ -532,9 +532,9 @@ private fun BrowseTile(
     Box(
         modifier = modifier
             .height(height)
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(category.color)
-            .border(1.dp, Hairline, SonvraShape.md)
+            .border(1.dp, Hairline, SoloShape.md)
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
@@ -623,7 +623,7 @@ private fun DiscoverPane(
                         color = Accent,
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
-                            .clip(SonvraShape.pill)
+                            .clip(SoloShape.pill)
                             .clickable(onClick = onClearRecent)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
@@ -726,7 +726,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(SonvraShape.sm),
+                .clip(SoloShape.sm),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -781,7 +781,7 @@ private fun ResultSkeleton(circular: Boolean = false) {
             ) {
                 // Match the shape of the rows being waited for, so the list does not
                 // visibly change form when the results land.
-                Box(Modifier.size(52.dp).shimmer(if (circular) CircleShape else SonvraShape.sm))
+                Box(Modifier.size(52.dp).shimmer(if (circular) CircleShape else SoloShape.sm))
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -798,7 +798,7 @@ private fun ResultSkeleton(circular: Boolean = false) {
 
 @Composable
 private fun EmptyState(title: String, message: String) {
-    com.music.spotui.ui.components.SonvraEmptyState(
+    com.music.spotui.ui.components.SoloEmptyState(
         icon = Icons.Rounded.SearchOff,
         title = title,
         message = message,

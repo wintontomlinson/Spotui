@@ -1,7 +1,7 @@
 package com.music.spotui.ui.components
 
 import android.content.Intent
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -100,7 +100,7 @@ fun UpdatePrompt() {
             }
         },
         confirmButton = {
-            SonvraDialogConfirm(text = "Update", onClick = {
+            SoloDialogConfirm(text = "Update", onClick = {
                 runCatching {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse(info.downloadUrl))
@@ -116,7 +116,7 @@ fun UpdatePrompt() {
             }) {
                 Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
             }
-            SonvraDialogDismiss(text = "Dismiss", onClick = { update = null })
+            SoloDialogDismiss(text = "Dismiss", onClick = { update = null })
         },
     )
 }
@@ -167,7 +167,7 @@ private fun RenderImagesRow(images: List<ImageItem>, onImageClick: (String) -> U
                 modifier = Modifier
                     .weight(weight)
                     .aspectRatio(aspectRatio)
-                    .clip(SonvraShape.sm)
+                    .clip(SoloShape.sm)
                     .clickable { onImageClick(image.url) }
             ) {
                 GlideImage(

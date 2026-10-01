@@ -2,7 +2,7 @@ package com.music.spotui.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -161,7 +161,7 @@ fun FastScrollbarForLazyList(
                 if (showBadge && isDragging) {
                     val currentTrackIndex = (state.firstVisibleItemIndex + 1).coerceAtMost(totalItems)
                     Surface(
-                        shape = SonvraShape.lg,
+                        shape = SoloShape.lg,
                         color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
@@ -195,7 +195,7 @@ fun FastScrollbarForLazyList(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(SonvraShape.xs)
+                        .clip(SoloShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }
@@ -300,7 +300,7 @@ fun FastScrollbarForScrollState(
                 if (showBadge && isDragging) {
                     val percent = (scrollProgress * 100).roundToInt()
                     Surface(
-                        shape = SonvraShape.lg,
+                        shape = SoloShape.lg,
                         color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
@@ -334,7 +334,7 @@ fun FastScrollbarForScrollState(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(SonvraShape.xs)
+                        .clip(SoloShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }

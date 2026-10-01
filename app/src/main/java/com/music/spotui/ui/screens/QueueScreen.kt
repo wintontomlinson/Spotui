@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -92,8 +92,8 @@ fun QueueSheet(
         sheetState = sheetState,
         containerColor = Surface2,
         contentColor = TextPrimary,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
         modifier = Modifier.fillMaxHeight(0.92f),
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
@@ -168,7 +168,7 @@ fun QueueContent(
                 .fillMaxWidth()
                 .padding(start = 8.dp, end = 16.dp, top = 4.dp, bottom = 8.dp)
         ) {
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Close queue",
                 onClick = onClose,
@@ -181,7 +181,7 @@ fun QueueContent(
         val listState = androidx.compose.foundation.lazy.rememberLazyListState()
         Box(modifier = Modifier.fillMaxSize()) {
             if (queue.isEmpty()) {
-                com.music.spotui.ui.components.SonvraEmptyState(
+                com.music.spotui.ui.components.SoloEmptyState(
                     icon = androidx.compose.material.icons.Icons.Rounded.QueueMusic,
                     title = "Your queue is empty",
                     message = "Play a song and what comes next shows up here.",
@@ -330,7 +330,7 @@ private fun QueueRow(
         GlideImage(
             modifier = Modifier
                 .size(48.dp)
-                .clip(SonvraShape.sm),
+                .clip(SoloShape.sm),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             loading = placeholder(R.drawable.placeholder),

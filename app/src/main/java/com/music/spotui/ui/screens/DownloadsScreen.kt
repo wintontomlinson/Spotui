@@ -3,7 +3,7 @@ package com.music.spotui.ui.screens
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import android.annotation.SuppressLint
@@ -181,7 +181,7 @@ fun DownloadsScreen(navController: NavController) {
                 CenterAlignedTopAppBar(
                     modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -218,7 +218,7 @@ fun DownloadsScreen(navController: NavController) {
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    com.music.spotui.ui.theme.Midnight,
+                                    com.music.spotui.ui.theme.Elevated,
                                     Canvas
                                 ),
                                 startY = -100f,
@@ -231,10 +231,10 @@ fun DownloadsScreen(navController: NavController) {
                         Box(
                             modifier = Modifier
                                 .size(200.dp)
-                                .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                                .clip(SonvraShape.lg)
+                                .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                                .clip(SoloShape.lg)
                                 .background(Surface3)
-                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.lg),
+                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SoloShape.lg),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -251,7 +251,7 @@ fun DownloadsScreen(navController: NavController) {
                         text = "Downloaded",
                         color = TextPrimary,
                         style = MaterialTheme.typography.headlineLarge,
-                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
+                        fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                     Text(
                         modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                         text = "${songs.size} songs • available offline",
@@ -281,7 +281,7 @@ fun DownloadsScreen(navController: NavController) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -309,7 +309,7 @@ fun DownloadsScreen(navController: NavController) {
                             color = com.music.spotui.ui.theme.Danger,
                             style = MaterialTheme.typography.labelLarge,
                             modifier = Modifier
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .background(Surface2)
                                 .clickable {
                                     showClearConfirmDialog = true
@@ -330,7 +330,7 @@ fun DownloadsScreen(navController: NavController) {
                         GlideImage(
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(SonvraShape.xs),
+                                .clip(SoloShape.xs),
                             model = song.coverUri,
                             failure = placeholder(R.drawable.placeholder),
                             contentScale = ContentScale.Crop,
@@ -360,7 +360,7 @@ fun DownloadsScreen(navController: NavController) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(4.dp)
-                                    .clip(SonvraShape.xs),
+                                    .clip(SoloShape.xs),
                                 color = accent,
                                 trackColor = Surface3,
                             )
@@ -376,14 +376,14 @@ fun DownloadsScreen(navController: NavController) {
                 }
 
                 if (songs.isEmpty() && inProgress.isEmpty()) {
-                    com.music.spotui.ui.components.SonvraEmptyState(
+                    com.music.spotui.ui.components.SoloEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.DownloadForOffline,
                         title = "No downloads yet",
                         message = "Tap ⋯ on any track and choose Download to keep it for offline listening.",
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else if (displayedSongs.isEmpty() && inProgress.isEmpty()) {
-                    com.music.spotui.ui.components.SonvraEmptyState(
+                    com.music.spotui.ui.components.SoloEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                         title = "No matches",
                         message = "Nothing in your downloads matches \"$searchQuery\".",
@@ -429,7 +429,7 @@ fun DownloadsScreen(navController: NavController) {
                                 GlideImage(
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .clip(SonvraShape.xs),
+                                        .clip(SoloShape.xs),
                                     model = song.coverUri,
                                     failure = placeholder(R.drawable.placeholder),
                                     contentScale = ContentScale.Crop,
@@ -478,8 +478,8 @@ fun DownloadsScreen(navController: NavController) {
                     ModalBottomSheet(
                         onDismissRequest = { showSortSheet = false },
                         containerColor = Surface2,
-                        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                         scrimColor = com.music.spotui.ui.theme.Scrim,
                     ) {
                         Column(
@@ -553,7 +553,7 @@ fun DownloadsScreen(navController: NavController) {
                         title = { Text(text = "Clear all downloads?", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
                         text = { Text(text = "Are you sure you want to remove all downloaded songs? This action cannot be undone.", color = TextSecondary) },
                         confirmButton = {
-                            com.music.spotui.ui.components.SonvraDialogConfirm(
+                            com.music.spotui.ui.components.SoloDialogConfirm(
                                 text = "Clear",
                                 danger = true,
                                 onClick = {
@@ -569,7 +569,7 @@ fun DownloadsScreen(navController: NavController) {
                             )
                         },
                         dismissButton = {
-                            com.music.spotui.ui.components.SonvraDialogDismiss(
+                            com.music.spotui.ui.components.SoloDialogDismiss(
                                 text = "Cancel",
                                 onClick = { showClearConfirmDialog = false },
                             )

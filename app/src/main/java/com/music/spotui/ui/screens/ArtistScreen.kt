@@ -4,7 +4,7 @@ import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -202,7 +202,7 @@ private fun ArtistOverviewContent(
                         )
                     )
                 )
-                com.music.spotui.ui.components.SonvraIconButton(
+                com.music.spotui.ui.components.SoloIconButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     onClick = { navController.navigateUp() },
@@ -214,7 +214,7 @@ private fun ArtistOverviewContent(
                     color = TextPrimary,
                     style = MaterialTheme.typography.displaySmall,
                     lineHeight = 46.sp,
-                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                     maxLines = 2,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -264,8 +264,8 @@ private fun ArtistOverviewContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier
                         .heightIn(min = 36.dp)
-                        .clip(SonvraShape.pill)
-                        .border(1.dp, if (following) Accent else TextTertiary, SonvraShape.pill)
+                        .clip(SoloShape.pill)
+                        .border(1.dp, if (following) Accent else TextTertiary, SoloShape.pill)
                         .clickable {
                             following = !following
                             // Persist locally and mirror the follow to the real
@@ -392,7 +392,7 @@ private fun ArtistOverviewContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(SonvraShape.sm)
+                        .clip(SoloShape.sm)
                         .background(TextPrimary.copy(alpha = 0.05f))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -405,7 +405,7 @@ private fun ArtistOverviewContent(
                     GlideImage(
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(SonvraShape.sm),
+                            .clip(SoloShape.sm),
                         model = playlist.coverUri,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.placeholder),
@@ -440,7 +440,7 @@ private fun ArtistOverviewContent(
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 4.dp)
-                    .clip(SonvraShape.sm)
+                    .clip(SoloShape.sm)
                     .background(TextPrimary.copy(alpha = 0.06f))
                 ) {
                     Column {
@@ -576,7 +576,7 @@ private fun PopularTrackRow(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 12.dp, 0.dp)
                     .size(48.dp)
-                    .clip(SonvraShape.xs),
+                    .clip(SoloShape.xs),
                 model = song.coverUri,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.placeholder),
@@ -625,7 +625,7 @@ private fun SectionHeader(title: String) {
         text = title,
         color = TextPrimary,
         style = MaterialTheme.typography.headlineSmall,
-        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
         modifier = Modifier.padding(16.dp, 22.dp, 16.dp, 10.dp),
     )
 }
@@ -645,7 +645,7 @@ private fun ReleaseCard(album: AlbumsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(132.dp)
-                .clip(SonvraShape.xs),
+                .clip(SoloShape.xs),
             model = album.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -679,7 +679,7 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(88.dp)
-                .clip(SonvraShape.xs),
+                .clip(SoloShape.xs),
             model = album.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -706,8 +706,8 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
 private fun ShowAllButton(label: String = "Show all", onClick: () -> Unit) {
     Box(modifier = Modifier
         .padding(16.dp, 10.dp, 16.dp, 4.dp)
-        .clip(SonvraShape.lg)
-        .border(1.dp, TextTertiary, SonvraShape.lg)
+        .clip(SoloShape.lg)
+        .border(1.dp, TextTertiary, SoloShape.lg)
         .clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
@@ -835,7 +835,7 @@ private fun ReleaseSectionHeader(title: String) {
         text = title,
         color = TextPrimary,
         style = MaterialTheme.typography.headlineSmall,
-        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
         modifier = Modifier.padding(16.dp, 18.dp, 16.dp, 8.dp),
     )
 }
@@ -844,7 +844,7 @@ private fun ReleaseSectionHeader(title: String) {
 private fun ReleaseFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .clip(SonvraShape.lg)
+            .clip(SoloShape.lg)
             .background(if (selected) TextPrimary else Surface3)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },

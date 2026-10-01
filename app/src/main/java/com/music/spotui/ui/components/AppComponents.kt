@@ -98,7 +98,7 @@ import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.theme.Surface1
 import com.music.spotui.ui.theme.Surface2
 import com.music.spotui.ui.theme.Hairline
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.layout.statusBarsPadding
 import com.music.spotui.ui.theme.Shadow
 import androidx.compose.material3.MaterialTheme
@@ -107,7 +107,7 @@ import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import com.music.spotui.ui.theme.SonvraMotion
+import com.music.spotui.ui.theme.SoloMotion
 
 /**
  * Shared loading state for album / artist / playlist / liked / show screens: a header
@@ -124,13 +124,13 @@ fun Loader() {
             .padding(top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(Modifier.size(200.dp).shimmer(SonvraShape.lg))
+        Box(Modifier.size(200.dp).shimmer(SoloShape.lg))
         Spacer(Modifier.height(18.dp))
         Box(Modifier.fillMaxWidth(0.55f).height(18.dp).shimmer())
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth(0.35f).height(12.dp).shimmer())
         Spacer(Modifier.height(18.dp))
-        SonvraShimmerList(count = 6)
+        SoloShimmerList(count = 6)
     }
 }
 
@@ -145,7 +145,7 @@ fun ExplicitBadge(
         fontSize = size,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .background(Surface3, SonvraShape.xs)
+            .background(Surface3, SoloShape.xs)
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )
 }
@@ -210,7 +210,7 @@ fun MiniPlayer(navController: NavHostController) {
 
     val miniTone by androidx.compose.animation.animateColorAsState(
         targetValue = darkVibrantColor,
-        animationSpec = com.music.spotui.ui.theme.SonvraMotion.emphasized(),
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.emphasized(),
         label = "miniTone",
     )
 
@@ -247,12 +247,12 @@ fun MiniPlayer(navController: NavHostController) {
             // Surface2 card docked above the nav, with a faint artwork tint on the leading edge.
             .shadow(
                 elevation = 8.dp,
-                shape = SonvraShape.md,
+                shape = SoloShape.md,
                 clip = false,
                 ambientColor = Shadow,
                 spotColor = Shadow,
             )
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
@@ -261,7 +261,7 @@ fun MiniPlayer(navController: NavHostController) {
                     )
                 )
             )
-            .border(1.dp, Hairline, SonvraShape.md)
+            .border(1.dp, Hairline, SoloShape.md)
 
     ) {
         // 2dp accent progress along the top edge (tap or drag to seek).
@@ -435,7 +435,7 @@ fun MiniPlayer(navController: NavHostController) {
                     modifier = Modifier
                         .padding(end = 12.dp)
                         .size(44.dp)
-                        .clip(SonvraShape.sm),
+                        .clip(SoloShape.sm),
                     model = songCoverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -508,7 +508,7 @@ fun MiniPlayer(navController: NavHostController) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .sonvraPress(playSource)
+                        .soloPress(playSource)
                         .padding(4.dp)
                         .clip(CircleShape)
                         .background(com.music.spotui.ui.theme.AccentBrush)
@@ -531,7 +531,7 @@ fun MiniPlayer(navController: NavHostController) {
                     } else {
                         androidx.compose.animation.Crossfade(
                             targetState = songPlayingState,
-                            animationSpec = tween(SonvraMotion.ICON_MS),
+                            animationSpec = tween(SoloMotion.ICON_MS),
                             label = "miniPlayPause",
                         ) { playing ->
                             Icon(
@@ -619,9 +619,9 @@ fun Snackbar(showMessage : String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(Surface3)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md),
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md),
         contentAlignment = Alignment.Center
     ){
         Text(
@@ -671,7 +671,7 @@ fun SwipeToPlayNextWrapper(
                 Icon(
                     painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                     contentDescription = "Play next",
-                    // Dark content on the azure accent keeps the contrast strong.
+                    // Dark content on the Volt accent keeps the contrast strong.
                     tint = OnAccent,
                     modifier = Modifier.size(24.dp)
                 )
@@ -706,9 +706,9 @@ fun AppSearchBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(Surface3)
-            .border(1.dp, if (focused) Accent else Hairline, SonvraShape.md)
+            .border(1.dp, if (focused) Accent else Hairline, SoloShape.md)
             .height(height)
             .padding(horizontal = 14.dp)
     ) {

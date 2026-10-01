@@ -2,7 +2,7 @@ package com.music.spotui.ui.components
 
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -120,8 +120,8 @@ fun SongOptionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface2,
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
@@ -134,7 +134,7 @@ fun SongOptionsSheet(
                 GlideImage(
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(SonvraShape.sm),
+                        .clip(SoloShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     contentDescription = ""

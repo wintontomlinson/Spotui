@@ -2,8 +2,8 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
-import com.music.spotui.ui.components.sonvraClickable
+import com.music.spotui.ui.theme.SoloShape
+import com.music.spotui.ui.components.soloClickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -484,13 +484,13 @@ fun PlayerScreen(navController: NavController) {
     // The artwork tone eases between tracks instead of snapping.
     val artTone by androidx.compose.animation.animateColorAsState(
         targetValue = dominentColor,
-        animationSpec = com.music.spotui.ui.theme.SonvraMotion.emphasized(),
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.emphasized(),
         label = "artTone",
     )
     // Artwork breathes down slightly while paused and springs back on play.
     val artScale by animateFloatAsState(
         targetValue = if (songPlayingState) 1f else 0.92f,
-        animationSpec = com.music.spotui.ui.theme.SonvraMotion.spring(),
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.spring(),
         label = "artScale",
     )
     var showDevicesSheet by remember { mutableStateOf(false) }
@@ -751,12 +751,12 @@ fun PlayerScreen(navController: NavController) {
                                     .graphicsLayer { scaleX = artScale; scaleY = artScale }
                                     .shadow(
                                         elevation = 34.dp,
-                                        shape = com.music.spotui.ui.theme.SonvraShape.xl,
+                                        shape = com.music.spotui.ui.theme.SoloShape.xl,
                                         clip = false,
                                         ambientColor = artTone,
                                         spotColor = artTone,
                                     )
-                                    .clip(com.music.spotui.ui.theme.SonvraShape.xl)
+                                    .clip(com.music.spotui.ui.theme.SoloShape.xl)
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -789,12 +789,12 @@ fun PlayerScreen(navController: NavController) {
                                         }
                                         .shadow(
                                             elevation = 34.dp,
-                                            shape = com.music.spotui.ui.theme.SonvraShape.xl,
+                                            shape = com.music.spotui.ui.theme.SoloShape.xl,
                                             clip = false,
                                             ambientColor = artTone,
                                             spotColor = artTone,
                                         )
-                                        .clip(com.music.spotui.ui.theme.SonvraShape.xl)
+                                        .clip(com.music.spotui.ui.theme.SoloShape.xl)
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
@@ -988,7 +988,7 @@ fun PlayerTopBar(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        com.music.spotui.ui.components.SonvraIconButton(
+        com.music.spotui.ui.components.SoloIconButton(
             icon = Icons.Rounded.KeyboardArrowDown,
             contentDescription = "Close player",
             onClick = onBackClick,
@@ -1019,20 +1019,20 @@ fun PlayerTopBar(
             )
         }
         if (onLyricsClick != null) {
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = Icons.Rounded.Lyrics,
                 contentDescription = "Lyrics",
                 onClick = onLyricsClick,
             )
         }
         if (onQueueClick != null) {
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = Icons.AutoMirrored.Rounded.QueueMusic,
                 contentDescription = "Up next",
                 onClick = onQueueClick,
             )
         }
-        com.music.spotui.ui.components.SonvraIconButton(
+        com.music.spotui.ui.components.SoloIconButton(
             icon = Icons.Rounded.MoreVert,
             contentDescription = "More options",
             onClick = onMenuClick,
@@ -1104,7 +1104,7 @@ fun PlayerInfo(
                             lineHeight = 16.sp,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(SonvraShape.sm)
+                                .clip(SoloShape.sm)
                                 .background(com.music.spotui.ui.theme.Warning.copy(alpha = 0.13f))
                                 .padding(10.dp)
                         )
@@ -1117,7 +1117,7 @@ fun PlayerInfo(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 220.dp)
-                                .clip(SonvraShape.sm)
+                                .clip(SoloShape.sm)
                                 .background(Canvas)
                                 .padding(10.dp)
                                 .verticalScroll(rememberScrollState())
@@ -1149,7 +1149,7 @@ fun PlayerInfo(
                         Text("Close", color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
                     }
                     Spacer(Modifier.width(8.dp))
-                    com.music.spotui.ui.components.SonvraPillButton(text = "Copy Logs", onClick = {
+                    com.music.spotui.ui.components.SoloPillButton(text = "Copy Logs", onClick = {
                         val logs = com.music.spotui.di.SongPlayer.resolutionLogs.toList()
                         val text = logs.joinToString("\n").ifBlank { "No logs available" }
                         clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(text))
@@ -1158,7 +1158,7 @@ fun PlayerInfo(
                 }
             },
             containerColor = Surface2,
-            shape = SonvraShape.xl,
+            shape = SoloShape.xl,
             titleContentColor = TextPrimary,
             textContentColor = TextPrimary,
         )
@@ -1231,9 +1231,9 @@ fun PlayerInfo(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .padding(top = 8.dp)
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .background(Surface3)
-                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.pill)
+                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SoloShape.pill)
                                 .clickable { showStreamDetailDialog = true }
                                 .padding(horizontal = 10.dp, vertical = 5.dp),
                         ) {
@@ -1330,7 +1330,7 @@ fun CustomSlider(
     var isDragging by remember { mutableStateOf(false) }
     val thumbDp by animateDpAsState(
         targetValue = if (isDragging) 18.dp else 12.dp,
-        animationSpec = com.music.spotui.ui.theme.SonvraMotion.spring(),
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.spring(),
         label = "thumbSize",
     )
     val span = (valueRange.endInclusive - valueRange.start).takeIf { it > 0f } ?: 1f
@@ -1431,7 +1431,7 @@ fun PlayerFull(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .sonvraClickable(ripple = true) {
+                .soloClickable(ripple = true) {
                     if (shuffle) {
                         playerViewModel.updateShuffleState(false)
                     } else {
@@ -1466,7 +1466,7 @@ fun PlayerFull(
             modifier = Modifier
                 .size(52.dp)
                 .clip(CircleShape)
-                .sonvraClickable(ripple = true) {
+                .soloClickable(ripple = true) {
                     // The queue itself is already in shuffled order when shuffle
                     // is on (reordered once at toggle), never re-shuffle per tap.
                     playerViewModel.playPreviousSong(queueSongs, context)
@@ -1493,7 +1493,7 @@ fun PlayerFull(
                 )
                 .clip(CircleShape)
                 .background(com.music.spotui.ui.theme.AccentBrush)
-                .sonvraClickable(ripple = true) {
+                .soloClickable(ripple = true) {
                     // Single source of truth: toggle based on the engine's real
                     // state so the button never gets stuck showing the wrong icon.
                     playerViewModel.togglePlayPause()
@@ -1513,11 +1513,11 @@ fun PlayerFull(
                 androidx.compose.animation.AnimatedContent(
                     targetState = songPlayingState,
                     transitionSpec = {
-                        (androidx.compose.animation.fadeIn(com.music.spotui.ui.theme.SonvraMotion.quick()) +
-                            androidx.compose.animation.scaleIn(com.music.spotui.ui.theme.SonvraMotion.spring(), initialScale = 0.6f))
+                        (androidx.compose.animation.fadeIn(com.music.spotui.ui.theme.SoloMotion.quick()) +
+                            androidx.compose.animation.scaleIn(com.music.spotui.ui.theme.SoloMotion.spring(), initialScale = 0.6f))
                             .togetherWith(
-                                androidx.compose.animation.fadeOut(com.music.spotui.ui.theme.SonvraMotion.quick()) +
-                                    androidx.compose.animation.scaleOut(com.music.spotui.ui.theme.SonvraMotion.quick(), targetScale = 0.6f)
+                                androidx.compose.animation.fadeOut(com.music.spotui.ui.theme.SoloMotion.quick()) +
+                                    androidx.compose.animation.scaleOut(com.music.spotui.ui.theme.SoloMotion.quick(), targetScale = 0.6f)
                             )
                     },
                     label = "playPause",
@@ -1537,7 +1537,7 @@ fun PlayerFull(
             modifier = Modifier
                 .size(52.dp)
                 .clip(CircleShape)
-                .sonvraClickable(ripple = true) {
+                .soloClickable(ripple = true) {
 
                     playerViewModel.playNextSongs(queueSongs, context)
                     isLiked.value =
@@ -1554,7 +1554,7 @@ fun PlayerFull(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .sonvraClickable(ripple = true) {
+                .soloClickable(ripple = true) {
                     val nextRepeat = when (repeat) {
                         RepeatMode.OFF -> RepeatMode.ALL
                         RepeatMode.ALL -> RepeatMode.ONE
@@ -1635,9 +1635,9 @@ fun PlayerConnectRow(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(SonvraShape.pill)
+                .clip(SoloShape.pill)
                 .background(Surface3)
-                .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.pill)
+                .border(1.dp, com.music.spotui.ui.theme.Hairline, SoloShape.pill)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -1782,8 +1782,8 @@ fun ArtistsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface2,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
@@ -1864,15 +1864,15 @@ fun ArtistsSheet(
                         Box(
                             modifier = Modifier
                                 .heightIn(min = 36.dp)
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .border(
                                     1.dp,
                                     if (following) Color.Transparent else TextTertiary,
-                                    SonvraShape.pill,
+                                    SoloShape.pill,
                                 )
                                 .background(
                                     if (following) Accent else Color.Transparent,
-                                    SonvraShape.pill,
+                                    SoloShape.pill,
                                 )
                                 .clickable {
                                     following = !following
@@ -2005,8 +2005,8 @@ fun PlayerOptionsSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Surface2,
-        dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
-        shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
         scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
@@ -2087,7 +2087,7 @@ fun PlayerOptionsSheet(
                     GlideImage(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(SonvraShape.sm),
+                            .clip(SoloShape.sm),
                         model = cover,
                         contentScale = ContentScale.Crop,
                         contentDescription = ""
@@ -2261,7 +2261,7 @@ fun PlayerOptionsSheet(
                         .padding(horizontal = 4.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { showSleep = false },
@@ -2321,7 +2321,7 @@ private fun PlaybackSpeedPanel(context: Context, onBack: () -> Unit) {
             .padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        com.music.spotui.ui.components.SonvraIconButton(
+        com.music.spotui.ui.components.SoloIconButton(
             icon = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = "Back",
             onClick = onBack,
@@ -2350,7 +2350,7 @@ private fun PlaybackSpeedPanel(context: Context, onBack: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
         listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { option ->
-            com.music.spotui.ui.components.SonvraChip(
+            com.music.spotui.ui.components.SoloChip(
                 label = "${formatSpeed(option)}×",
                 selected = speed == option,
                 onClick = { speed = option; apply() },
@@ -2385,7 +2385,7 @@ private fun PlaybackSpeedPanel(context: Context, onBack: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        com.music.spotui.ui.components.SonvraPillButton(
+        com.music.spotui.ui.components.SoloPillButton(
             text = "Reset",
             primary = false,
             onClick = { speed = 1f; pitch = 1f; apply() },
@@ -2411,7 +2411,7 @@ fun AlternativeStreamEditor(
             .padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Back",
                 onClick = onBack,
@@ -2432,7 +2432,7 @@ fun AlternativeStreamEditor(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SonvraShape.sm)
+                    .clip(SoloShape.sm)
                     .background(Surface3)
                     .clickable {
                         val intent = Intent(
@@ -2447,7 +2447,7 @@ fun AlternativeStreamEditor(
                     model = thumbnailUrl,
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(SonvraShape.xs),
+                        .clip(SoloShape.xs),
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                 )
@@ -2497,8 +2497,8 @@ fun AlternativeStreamEditor(
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
             label = { Text("YouTube link or video ID", color = TextSecondary) },
-            shape = SonvraShape.md,
-            colors = sonvraFieldColors(),
+            shape = SoloShape.md,
+            colors = soloFieldColors(),
             modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
         )
         Row(
@@ -2507,7 +2507,7 @@ fun AlternativeStreamEditor(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (enabled && youtubeText.isNotBlank()) {
-                com.music.spotui.ui.components.SonvraPillButton(
+                com.music.spotui.ui.components.SoloPillButton(
                     text = "Use YouTube",
                     onClick = { onUseYouTube(youtubeText) },
                     modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
@@ -2573,7 +2573,7 @@ fun YouTubeSearchView(
             .padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
                 contentDescription = "Back",
                 onClick = { viewModel.stopPreview(); onBack() },
@@ -2593,8 +2593,8 @@ fun YouTubeSearchView(
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
             label = { Text("Search query", color = TextSecondary) },
-            shape = SonvraShape.md,
-            colors = sonvraFieldColors(),
+            shape = SoloShape.md,
+            colors = soloFieldColors(),
             modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
         )
         Spacer(Modifier.height(12.dp))
@@ -2691,7 +2691,7 @@ private fun YouTubeSearchResultRow(
             model = song.thumbnail,
             modifier = Modifier
                 .size(44.dp)
-                .clip(SonvraShape.sm),
+                .clip(SoloShape.sm),
             contentScale = ContentScale.Crop,
             contentDescription = null,
         )
@@ -2861,7 +2861,7 @@ private fun CanvasVideo(url: String, modifier: Modifier = Modifier, onError: (()
 
 /** Outlined field colours for sheets: Surface3 fill, hairline edge, accent when focused. */
 @Composable
-private fun sonvraFieldColors() = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+private fun soloFieldColors() = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Accent,
     unfocusedBorderColor = com.music.spotui.ui.theme.Hairline,
     focusedContainerColor = Surface3,

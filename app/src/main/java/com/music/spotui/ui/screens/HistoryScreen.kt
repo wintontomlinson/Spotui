@@ -3,7 +3,7 @@ package com.music.spotui.ui.screens
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -192,7 +192,7 @@ fun HistoryScreen(navController: NavController) {
                             .padding(16.dp, 16.dp, 16.dp, 8.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            com.music.spotui.ui.components.SonvraIconButton(
+                            com.music.spotui.ui.components.SoloIconButton(
                                 icon = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
                                 onClick = { navController.navigateUp() },
@@ -217,7 +217,7 @@ fun HistoryScreen(navController: NavController) {
 
                 if (history.isEmpty()) {
                     item {
-                        com.music.spotui.ui.components.SonvraEmptyState(
+                        com.music.spotui.ui.components.SoloEmptyState(
                             icon = androidx.compose.material.icons.Icons.Rounded.History,
                             title = "No listening history yet",
                             message = "Songs you play show up here, with your top artists and stats.",
@@ -231,16 +231,16 @@ fun HistoryScreen(navController: NavController) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clip(SonvraShape.md)
+                                .clip(SoloShape.md)
                                 .background(
                                     Brush.linearGradient(
                                         colors = listOf(
-                                            com.music.spotui.ui.theme.Midnight,
+                                            com.music.spotui.ui.theme.Elevated,
                                             Surface2,
                                         )
                                     )
                                 )
-                                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md)
+                                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md)
                                 .padding(16.dp),
                         ) {
                             Column {
@@ -354,7 +354,7 @@ fun HistoryScreen(navController: NavController) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clip(SonvraShape.pill)
+                                    .clip(SoloShape.pill)
                                     .background(Surface3)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -377,7 +377,7 @@ fun HistoryScreen(navController: NavController) {
 
                     if (filteredHistory.isEmpty() && searchQuery.isNotBlank()) {
                         item {
-                            com.music.spotui.ui.components.SonvraEmptyState(
+                            com.music.spotui.ui.components.SoloEmptyState(
                                 icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                                 title = "No matches",
                                 message = "Nothing here matches \"$searchQuery\".",
@@ -420,8 +420,8 @@ fun HistoryScreen(navController: NavController) {
                 ModalBottomSheet(
                     onDismissRequest = { showSortSheet = false },
                     containerColor = Surface2,
-                    shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                    dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                    shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                    dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                     scrimColor = com.music.spotui.ui.theme.Scrim,
                 ) {
                     Column(
@@ -496,7 +496,7 @@ fun HistoryScreen(navController: NavController) {
                     title = { Text("Clear listening history?", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
                     text = { Text("This will remove all ${history.size} plays. This action cannot be undone.", color = MutedText) },
                     confirmButton = {
-                        com.music.spotui.ui.components.SonvraDialogConfirm(
+                        com.music.spotui.ui.components.SoloDialogConfirm(
                             text = "Clear",
                             danger = true,
                             onClick = {
@@ -507,7 +507,7 @@ fun HistoryScreen(navController: NavController) {
                         )
                     },
                     dismissButton = {
-                        com.music.spotui.ui.components.SonvraDialogDismiss(
+                        com.music.spotui.ui.components.SoloDialogDismiss(
                             text = "Cancel",
                             onClick = { showClearDialog = false },
                         )
@@ -544,7 +544,7 @@ private fun TopArtistRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(SonvraShape.sm)
+            .clip(SoloShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -588,7 +588,7 @@ private fun TopArtistRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(SonvraShape.xs),
+                    .clip(SoloShape.xs),
                 color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
@@ -619,7 +619,7 @@ private fun TopTrackRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(SonvraShape.sm)
+            .clip(SoloShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -637,7 +637,7 @@ private fun TopTrackRow(
         GlideImage(
             modifier = Modifier
                 .size(48.dp)
-                .clip(SonvraShape.xs),
+                .clip(SoloShape.xs),
             model = imageUrl.ifBlank { null },
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -672,7 +672,7 @@ private fun TopTrackRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(SonvraShape.xs),
+                    .clip(SoloShape.xs),
                 color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
@@ -700,7 +700,7 @@ private fun HistoryRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp, 6.dp)
-            .clip(SonvraShape.sm)
+            .clip(SoloShape.sm)
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -711,7 +711,7 @@ private fun HistoryRow(
         GlideImage(
             modifier = Modifier
                 .size(44.dp)
-                .clip(SonvraShape.xs),
+                .clip(SoloShape.xs),
             model = entry.image,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),

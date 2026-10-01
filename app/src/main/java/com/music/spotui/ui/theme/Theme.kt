@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
 // One deliberate dark scheme, so every Material component (switches, sliders, sheets,
-// dialogs, menus) picks up the Midnight Azure palette instead of a stray default or wallpaper tint.
-private val SonvraColorScheme = darkColorScheme(
+// dialogs, menus) picks up the Aurora Noir palette instead of a stray default or wallpaper tint.
+private val SoloColorScheme = darkColorScheme(
     primary = Accent,
     onPrimary = OnAccent,
-    primaryContainer = Color(0xFF12264D),
+    primaryContainer = Elevated,
     onPrimaryContainer = AccentSoft,
     secondary = AccentSoft,
     onSecondary = Canvas,
@@ -40,8 +40,8 @@ private val SonvraColorScheme = darkColorScheme(
     error = Danger,
     onError = Canvas,
     errorContainer = DangerSurface,
-    onErrorContainer = Color(0xFFFFDADF),
-    outline = Color(0xFF3A4254),
+    onErrorContainer = Color(0xFFFFDADA),
+    outline = Color(0xFF40433C),
     outlineVariant = Surface4,
     scrim = Color.Black,
     surfaceBright = Surface4,
@@ -53,9 +53,9 @@ private val SonvraColorScheme = darkColorScheme(
     surfaceContainerHighest = Surface4,
 )
 
-/** Sonvra is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
+/** Solo is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
 @Composable
-fun SonvraTheme(content: @Composable () -> Unit) {
+fun SoloTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -67,11 +67,11 @@ fun SonvraTheme(content: @Composable () -> Unit) {
     }
 
     MaterialTheme(
-        colorScheme = SonvraColorScheme,
+        colorScheme = SoloColorScheme,
         typography = Typography,
-        shapes = SonvraShapes,
+        shapes = SoloShapes,
     ) {
-        // Bare Text() reads LocalTextStyle, so Inter is provided as the global default here.
+        // Bare Text() reads LocalTextStyle, so Plus Jakarta Sans is the global default here.
         // Provided directly (not merged over M3's bodyLarge) and without a fixed line height,
         // so a Text that only sets a larger fontSize (lyrics, hero titles) gets line boxes
         // that scale with it instead of overlapping when it wraps.

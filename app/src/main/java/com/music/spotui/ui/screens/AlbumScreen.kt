@@ -3,7 +3,7 @@ package com.music.spotui.ui.screens
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
@@ -300,7 +300,7 @@ fun SumUpAlbumScreen(
             CenterAlignedTopAppBar(
                 modifier = Modifier.padding(horizontal = 4.dp),
                 navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -355,8 +355,8 @@ fun SumUpAlbumScreen(
                     GlideImage(
                         modifier = Modifier
                             .size(200.dp)
-                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SonvraShape.lg),
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SoloShape.lg),
                         contentScale = ContentScale.Crop,
                         model = album[0].coverUri,
                         failure = placeholder(R.drawable.placeholder),
@@ -369,7 +369,7 @@ fun SumUpAlbumScreen(
                     text = albumName,
                     color = TextPrimary,
                     style = MaterialTheme.typography.headlineLarge,
-                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                 if (albumArtists.isNotBlank()) {
                     Text(
                         modifier = Modifier
@@ -421,7 +421,7 @@ fun SumUpAlbumScreen(
                                     .height(60.dp)
                                     .width(32.dp)
                                     .padding(0.dp, 5.dp)
-                                    .clip(SonvraShape.xs)
+                                    .clip(SoloShape.xs)
                                 ,
                                 model = album[0].coverUri,
                                 failure = placeholder(R.drawable.placeholder),
@@ -613,7 +613,7 @@ fun SumUpAlbumScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clip(SonvraShape.pill)
+                            .clip(SoloShape.pill)
                             .background(Surface3)
                             .clickable { showSortSheet = true }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -634,7 +634,7 @@ fun SumUpAlbumScreen(
                 }
 
                 if (filteredSongs.isEmpty() && searchQuery.isNotBlank()) {
-                    com.music.spotui.ui.components.SonvraEmptyState(
+                    com.music.spotui.ui.components.SoloEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                         title = "No matches",
                         message = "Nothing here matches \"$searchQuery\".",
@@ -780,8 +780,8 @@ fun SumUpAlbumScreen(
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
                 containerColor = Surface2,
-                shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                 scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(

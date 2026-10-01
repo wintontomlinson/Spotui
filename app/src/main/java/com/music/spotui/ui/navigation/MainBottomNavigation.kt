@@ -1,7 +1,7 @@
 package com.music.spotui.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -62,8 +62,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import com.music.spotui.ui.theme.SonvraMotion
-import com.music.spotui.ui.components.sonvraClickable
+import com.music.spotui.ui.theme.SoloMotion
+import com.music.spotui.ui.components.soloClickable
 import com.music.spotui.ui.theme.GlassFill
 import com.music.spotui.ui.theme.GlassFillStrong
 import com.music.spotui.ui.theme.Hairline
@@ -97,7 +97,7 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
             // 0f = fully expanded (idle / at top), 1f = compressed (scrolling down).
             val compression by animateFloatAsState(
                 targetValue = NavBarScrollState.compression,
-                animationSpec = tween(SonvraMotion.NAV_MS),
+                animationSpec = tween(SoloMotion.NAV_MS),
                 label = "navBarCompression",
             )
             Box(
@@ -166,14 +166,14 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                         val indicatorWidth = 22.dp
                         val indicatorOffset by androidx.compose.animation.core.animateDpAsState(
                             targetValue = tabWidth * selectedIndex + (tabWidth - indicatorWidth) / 2,
-                            animationSpec = SonvraMotion.spring(),
+                            animationSpec = SoloMotion.spring(),
                             label = "navIndicator",
                         )
                         Box(
                             modifier = Modifier
                                 .offset(x = indicatorOffset)
                                 .size(width = indicatorWidth, height = 3.dp)
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .background(Accent),
                         )
                         Row(
@@ -253,7 +253,7 @@ private fun NavTab(
 ) {
     val tint by animateColorAsState(
         targetValue = if (selected) Accent else TextSecondary,
-        animationSpec = tween(SonvraMotion.NAV_MS),
+        animationSpec = tween(SoloMotion.NAV_MS),
         label = "navTint",
     )
     Column(
@@ -262,7 +262,7 @@ private fun NavTab(
         modifier = modifier
             .fillMaxHeight()
             .heightIn(min = 48.dp)
-            .sonvraClickable(onClick = onClick)
+            .soloClickable(onClick = onClick)
             .semantics { this.selected = selected; role = Role.Tab },
     ) {
         Icon(

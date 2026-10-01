@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -138,7 +138,7 @@ fun FreeHomeScreen(navController: NavController) {
             .background(com.music.spotui.ui.theme.AppBackgroundBrush),
         indicator = {
             // Themed refresh effect: an accent spinner on a surface pill so the
-            // reload gesture matches the app's Midnight Azure look.
+            // reload gesture matches the app's Aurora Noir look.
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
                 state = pullState,
                 isRefreshing = isRefreshing,
@@ -182,7 +182,7 @@ fun FreeHomeScreen(navController: NavController) {
             when {
                 trendingLoading && trending.isEmpty() -> TrendingSkeleton()
                 trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
-                !trendingLoading -> com.music.spotui.ui.components.SonvraEmptyState(
+                !trendingLoading -> com.music.spotui.ui.components.SoloEmptyState(
                     icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
                     title = "Couldn't load Home",
                     message = "Check your connection and try again.",
@@ -221,7 +221,7 @@ fun FreeHomeScreen(navController: NavController) {
     } // PullToRefreshBox
 }
 
-/** Masthead: the Sonvra wordmark with a settings shortcut, then a time-aware greeting. */
+/** Masthead: the Solo wordmark with a settings shortcut, then a time-aware greeting. */
 @Composable
 private fun HomeHeader(onOpenSettings: () -> Unit) {
     Column(
@@ -230,9 +230,9 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
             .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            com.music.spotui.ui.components.SonvraWordmark(markHeight = 24.dp, textSize = 24.sp)
+            com.music.spotui.ui.components.SoloWordmark(markHeight = 24.dp, textSize = 24.sp)
             Spacer(Modifier.weight(1f))
-            com.music.spotui.ui.components.SonvraIconButton(
+            com.music.spotui.ui.components.SoloIconButton(
                 icon = androidx.compose.material.icons.Icons.Rounded.Settings,
                 contentDescription = "Settings",
                 onClick = onOpenSettings,
@@ -265,13 +265,13 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
     Column(
         modifier = Modifier
             .padding(horizontal = 20.dp)
-            .clip(SonvraShape.lg)
+            .clip(SoloShape.lg)
             // A soft top down gradient inside the card plus a hairline edge gives the
             // quick picks block real depth instead of a flat panel.
             .background(
                 Brush.verticalGradient(colors = listOf(SurfaceHigh, Surface)),
             )
-            .border(1.dp, Hairline, SonvraShape.lg)
+            .border(1.dp, Hairline, SoloShape.lg)
             .padding(vertical = 4.dp),
     ) {
         tracks.forEachIndexed { index, song ->
@@ -289,7 +289,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 Text(
                     text = "${index + 1}",
                     color = if (index < 3) Accent else TextDim,
-                    fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                     fontSize = if (index < 3) 20.sp else 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -299,7 +299,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 GlideImage(
                     modifier = Modifier
                         .size(50.dp)
-                        .clip(SonvraShape.sm),
+                        .clip(SoloShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -348,7 +348,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 
 @Composable
 private fun SectionHeader(title: String) {
-    com.music.spotui.ui.components.SonvraSectionHeader(title = title)
+    com.music.spotui.ui.components.SoloSectionHeader(title = title)
 }
 
 private val MOODS = listOf(
@@ -369,7 +369,7 @@ private fun MoodChips(onPick: (String) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(MOODS, key = { it.first }) { (label, query) ->
-            com.music.spotui.ui.components.SonvraChip(
+            com.music.spotui.ui.components.SoloChip(
                 label = label,
                 selected = false,
                 onClick = { onPick(query) },
@@ -380,7 +380,7 @@ private fun MoodChips(onPick: (String) -> Unit) {
 
 /**
  * "Mix for you" hero: a full-width 184dp card. The 2x2 artwork collage fills the
- * trailing side, a Midnight-to-transparent scrim carries the title, and an accent
+ * trailing side, a Elevated-to-transparent scrim carries the title, and an accent
  * "Play mix" pill starts it.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -393,14 +393,14 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
             .height(184.dp)
             .shadow(
                 elevation = 14.dp,
-                shape = SonvraShape.lg,
+                shape = SoloShape.lg,
                 clip = false,
                 ambientColor = com.music.spotui.ui.theme.Shadow,
                 spotColor = com.music.spotui.ui.theme.Shadow,
             )
-            .clip(SonvraShape.lg)
-            .background(com.music.spotui.ui.theme.Midnight)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.lg),
+            .clip(SoloShape.lg)
+            .background(com.music.spotui.ui.theme.Elevated)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg),
     ) {
         val covers = mix.map { it.coverUri }.filter { it.isNotBlank() }.distinct().take(4)
         Column(
@@ -425,14 +425,14 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
                 }
             }
         }
-        // Midnight -> transparent scrim so the copy reads over the collage.
+        // Elevated -> transparent scrim so the copy reads over the collage.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.horizontalGradient(
-                        0f to com.music.spotui.ui.theme.Midnight,
-                        0.48f to com.music.spotui.ui.theme.Midnight.copy(alpha = 0.92f),
+                        0f to com.music.spotui.ui.theme.Elevated,
+                        0.48f to com.music.spotui.ui.theme.Elevated.copy(alpha = 0.92f),
                         1f to Color.Transparent,
                     )
                 ),
@@ -465,7 +465,7 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
                 maxLines = 2,
             )
             Spacer(Modifier.height(14.dp))
-            com.music.spotui.ui.components.SonvraPillButton(
+            com.music.spotui.ui.components.SoloPillButton(
                 text = "Play mix",
                 icon = Icons.Default.PlayArrow,
                 onClick = onPlay,
@@ -491,9 +491,9 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
                         modifier = Modifier
                             .weight(1f)
                             .height(56.dp)
-                            .clip(SonvraShape.sm)
+                            .clip(SoloShape.sm)
                             .background(com.music.spotui.ui.theme.Surface1)
-                            .border(1.dp, Hairline, SonvraShape.sm)
+                            .border(1.dp, Hairline, SoloShape.sm)
                             .clickable(onClickLabel = "Play ${song.title}") { onPlay(index) },
                     ) {
                         GlideImage(
@@ -603,12 +603,12 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 .size(150.dp)
                 .shadow(
                     elevation = 12.dp,
-                    shape = SonvraShape.md,
+                    shape = SoloShape.md,
                     clip = false,
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
                 )
-                .clip(SonvraShape.md)
+                .clip(SoloShape.md)
                 .background(Surface),
         ) {
             GlideImage(
@@ -642,7 +642,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 Icon(
                     Icons.Default.PlayArrow,
                     contentDescription = null,
-                    // Dark glyph on the azure badge for strong contrast.
+                    // Dark glyph on the Volt badge for strong contrast.
                     tint = OnAccent,
                     modifier = Modifier.size(20.dp),
                 )
@@ -674,7 +674,7 @@ private fun TrendingSkeleton() {
     Column(
         modifier = Modifier
             .padding(horizontal = 20.dp)
-            .clip(SonvraShape.lg)
+            .clip(SoloShape.lg)
             .background(Surface)
             .padding(vertical = 4.dp),
     ) {
@@ -685,7 +685,7 @@ private fun TrendingSkeleton() {
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             ) {
-                Box(Modifier.size(50.dp).shimmer(SonvraShape.sm))
+                Box(Modifier.size(50.dp).shimmer(SoloShape.sm))
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -709,7 +709,7 @@ private fun CardSkeletonRow() {
     ) {
         repeat(3) {
             Column(modifier = Modifier.width(150.dp)) {
-                Box(Modifier.size(150.dp).shimmer(SonvraShape.md))
+                Box(Modifier.size(150.dp).shimmer(SoloShape.md))
                 Spacer(Modifier.height(9.dp))
                 Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
                 Spacer(Modifier.height(7.dp))

@@ -2,7 +2,7 @@ package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -204,11 +204,11 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SonvraShape.sm)
+                        .clip(SoloShape.sm)
                 )
             },
             confirmButton = {
-                com.music.spotui.ui.components.SonvraDialogConfirm(
+                com.music.spotui.ui.components.SoloDialogConfirm(
                     text = "Save",
                     onClick = {
                             val name = newPlaylistNameInput.trim()
@@ -223,7 +223,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                 )
             },
             dismissButton = {
-                com.music.spotui.ui.components.SonvraDialogDismiss(
+                com.music.spotui.ui.components.SoloDialogDismiss(
                     text = "Cancel",
                     onClick = { showRenameDialog = false },
                 )
@@ -238,7 +238,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             title = { Text("Delete Playlist", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
             text = { Text("Are you sure you want to delete this playlist?", color = TextSecondary) },
             confirmButton = {
-                com.music.spotui.ui.components.SonvraDialogConfirm(
+                com.music.spotui.ui.components.SoloDialogConfirm(
                     text = "Delete",
                     danger = true,
                     onClick = {
@@ -251,7 +251,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                 )
             },
             dismissButton = {
-                com.music.spotui.ui.components.SonvraDialogDismiss(
+                com.music.spotui.ui.components.SoloDialogDismiss(
                     text = "Cancel",
                     onClick = { showDeleteDialog = false },
                 )
@@ -324,7 +324,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                 CenterAlignedTopAppBar(
                     modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.navigateUp() },
@@ -374,8 +374,8 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             GlideImage(
                                 modifier = Modifier
                             .size(200.dp)
-                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SonvraShape.lg),
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SoloShape.lg),
                         contentScale = ContentScale.Crop,
                                 model = playlist.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
@@ -401,7 +401,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 text = playlist.name.ifBlank { playlistName },
                                 color = TextPrimary,
                                 style = MaterialTheme.typography.headlineLarge,
-                                fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
+                                fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                             if (isLocalPlaylist) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
@@ -646,7 +646,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clip(SonvraShape.pill)
+                                    .clip(SoloShape.pill)
                                     .background(Surface3)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -711,7 +711,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(SonvraShape.xs),
+                                    .clip(SoloShape.xs),
                                 model = song.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
                                 contentScale = ContentScale.Crop,
@@ -755,8 +755,8 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
                 containerColor = Surface2,
-                shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                 scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(

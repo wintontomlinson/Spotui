@@ -5,7 +5,7 @@ import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -137,7 +137,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                 .statusBarsPadding(),
         ) {
             item {
-                com.music.spotui.ui.components.SonvraIconButton(
+                com.music.spotui.ui.components.SoloIconButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     onClick = { navController.navigateUp() },
@@ -156,8 +156,8 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         failure = placeholder(R.drawable.placeholder),
                         modifier = Modifier
                             .size(200.dp)
-                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
-                            .clip(SonvraShape.lg),
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SoloShape.lg),
                         contentDescription = null,
                     )
                     Spacer(Modifier.height(12.dp))
@@ -165,7 +165,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         text = show?.name ?: showName,
                         color = TextPrimary,
                         style = MaterialTheme.typography.headlineLarge,
-                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
+                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -221,7 +221,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(SonvraShape.pill)
+                                .clip(SoloShape.pill)
                                 .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -245,7 +245,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
 
             if (filteredEpisodes.isEmpty() && searchQuery.isNotBlank()) {
                 item {
-                    com.music.spotui.ui.components.SonvraEmptyState(
+                    com.music.spotui.ui.components.SoloEmptyState(
                         icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
                         title = "No matches",
                         message = "Nothing here matches \"$searchQuery\".",
@@ -286,7 +286,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                                 model = ep.coverUri,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
-                                modifier = Modifier.size(48.dp).clip(SonvraShape.xs),
+                                modifier = Modifier.size(48.dp).clip(SoloShape.xs),
                                 contentDescription = null,
                             )
                             Column(modifier = Modifier.padding(start = 12.dp)) {
@@ -310,8 +310,8 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
                 containerColor = Surface2,
-                shape = com.music.spotui.ui.theme.SonvraShape.sheetTop,
-                dragHandle = { com.music.spotui.ui.components.SonvraDragHandle() },
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
                 scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(

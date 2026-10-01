@@ -9,7 +9,7 @@ import androidx.compose.animation.core.tween
  * Shared motion tokens so every surface moves with the same rhythm: emphasized for
  * screen-level changes, standard for most transitions, quick for icons, spring for touch.
  */
-object SonvraMotion {
+object SoloMotion {
     const val PRESS_SCALE = 0.97f
     const val FADE_MS = 220
     const val NAV_MS = 200

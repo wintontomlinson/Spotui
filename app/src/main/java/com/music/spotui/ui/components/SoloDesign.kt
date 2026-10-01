@@ -57,12 +57,12 @@ import com.music.spotui.ui.theme.AccentBrush
 import com.music.spotui.ui.theme.Hairline
 import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.OnAccent
-import com.music.spotui.ui.theme.SonvraDisplay
+import com.music.spotui.ui.theme.SoloDisplay
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Surface3
-import com.music.spotui.ui.theme.SonvraMotion
-import com.music.spotui.ui.theme.SonvraShape
-import com.music.spotui.ui.theme.SonvraSpacing
+import com.music.spotui.ui.theme.SoloMotion
+import com.music.spotui.ui.theme.SoloShape
+import com.music.spotui.ui.theme.SoloSpacing
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Danger
 import com.music.spotui.ui.theme.DangerSurface
@@ -72,21 +72,21 @@ import androidx.compose.foundation.layout.heightIn
  * Press feedback: the element eases down to 97% while held and springs back on release.
  * Pass the same [interactionSource] to the element's clickable.
  */
-fun Modifier.sonvraPress(interactionSource: MutableInteractionSource): Modifier = composed {
+fun Modifier.soloPress(interactionSource: MutableInteractionSource): Modifier = composed {
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) SonvraMotion.PRESS_SCALE else 1f,
-        animationSpec = SonvraMotion.pressSpring,
-        label = "sonvraPress",
+        targetValue = if (pressed) SoloMotion.PRESS_SCALE else 1f,
+        animationSpec = SoloMotion.pressSpring,
+        label = "soloPress",
     )
     graphicsLayer { scaleX = scale; scaleY = scale }
 }
 
-/** Clickable with the Sonvra press-scale. [ripple] off suits artwork tiles, on suits rows. */
-fun Modifier.sonvraClickable(ripple: Boolean = false, onClick: () -> Unit): Modifier = composed {
+/** Clickable with the Solo press-scale. [ripple] off suits artwork tiles, on suits rows. */
+fun Modifier.soloClickable(ripple: Boolean = false, onClick: () -> Unit): Modifier = composed {
     val source = remember { MutableInteractionSource() }
     this
-        .sonvraPress(source)
+        .soloPress(source)
         .clickable(
             interactionSource = source,
             indication = if (ripple) LocalIndication.current else null,
@@ -97,25 +97,26 @@ fun Modifier.sonvraClickable(ripple: Boolean = false, onClick: () -> Unit): Modi
 
 /** Sheet grab handle: a 32x4dp TextTertiary pill at 40%. */
 @Composable
-fun SonvraDragHandle() {
+fun SoloDragHandle() {
     Box(
         modifier = Modifier
             .padding(top = 10.dp, bottom = 6.dp)
             .size(width = 32.dp, height = 4.dp)
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .background(TextTertiary.copy(alpha = 0.4f)),
     )
 }
 
-/** Width-to-height ratio of drawable/logo (the tight-bounds Sonvra Sonic V mark, viewport 54 x 52). */
-private const val MARK_ASPECT = 54f / 52f
+/** Width-to-height ratio of drawable/logo (the tight-bounds Spotlight-O mark, viewport 62 x 62). */
+private const val MARK_ASPECT = 62f / 62f
 
 /**
- * The Sonvra Sonic V mark (two capsule arms + source dot), drawn from drawable/logo so the
- * in-app mark and the launcher share one geometry. Pass [tint] for a flat version.
+ * The SOLO Spotlight-O mark (a Volt-gradient notched ring with a centred dot), drawn from
+ * drawable/logo so the in-app mark and the launcher share one geometry. Pass [tint] for a
+ * flat version.
  */
 @Composable
-fun SonvraMark(
+fun SoloMark(
     modifier: Modifier = Modifier,
     height: Dp = 28.dp,
     tint: Color? = null,
@@ -128,30 +129,30 @@ fun SonvraMark(
     )
 }
 
-/** Mark + the lowercase "sonvra" wordmark set in Sora Bold. */
+/** Mark + the "SOLO" wordmark set in Space Grotesk Bold, all caps. */
 @Composable
-fun SonvraWordmark(
+fun SoloWordmark(
     modifier: Modifier = Modifier,
     markHeight: Dp = 26.dp,
     textSize: TextUnit = 26.sp,
 ) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        SonvraMark(height = markHeight)
+        SoloMark(height = markHeight)
         Spacer(Modifier.width(9.dp))
         Text(
-            text = "sonvra",
+            text = "SOLO",
             color = TextPrimary,
-            fontFamily = SonvraDisplay,
+            fontFamily = SoloDisplay,
             fontWeight = FontWeight.Bold,
             fontSize = textSize,
-            letterSpacing = (-0.5).sp,
+            letterSpacing = 0.5.sp,
         )
     }
 }
 
 /** Section heading used by Home, Explore, Library and detail screens. */
 @Composable
-fun SonvraSectionHeader(
+fun SoloSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
@@ -162,7 +163,7 @@ fun SonvraSectionHeader(
         verticalAlignment = Alignment.Bottom,
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = SonvraSpacing.gutter, end = SonvraSpacing.sm, top = SonvraSpacing.xl, bottom = SonvraSpacing.sm),
+            .padding(start = SoloSpacing.gutter, end = SoloSpacing.sm, top = SoloSpacing.xl, bottom = SoloSpacing.sm),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -182,7 +183,7 @@ fun SonvraSectionHeader(
                 style = MaterialTheme.typography.labelLarge,
                 color = Accent,
                 modifier = Modifier
-                    .clip(SonvraShape.pill)
+                    .clip(SoloShape.pill)
                     .clickable(onClick = onAction)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
@@ -191,7 +192,7 @@ fun SonvraSectionHeader(
 }
 
 /** Loading placeholder: a Surface3 block with a soft light sweep. */
-fun Modifier.shimmer(shape: Shape = SonvraShape.sm): Modifier = composed {
+fun Modifier.shimmer(shape: Shape = SoloShape.sm): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "shimmer")
     val progress by transition.animateFloat(
         initialValue = 0f,
@@ -220,14 +221,14 @@ fun Modifier.shimmer(shape: Shape = SonvraShape.sm): Modifier = composed {
 
 /** Skeleton for a list row: square art plus two text lines. */
 @Composable
-fun SonvraShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
+fun SoloShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = SonvraSpacing.gutter, vertical = 8.dp),
+            .padding(horizontal = SoloSpacing.gutter, vertical = 8.dp),
     ) {
-        Box(Modifier.size(artSize).shimmer(SonvraShape.sm))
+        Box(Modifier.size(artSize).shimmer(SoloShape.sm))
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Box(Modifier.fillMaxWidth(0.62f).height(12.dp).shimmer())
             Spacer(Modifier.height(8.dp))
@@ -238,15 +239,15 @@ fun SonvraShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
 
 /** A column of [count] row skeletons, the standard loading state for track lists. */
 @Composable
-fun SonvraShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
+fun SoloShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth().padding(top = 8.dp)) {
-        repeat(count) { SonvraShimmerRow() }
+        repeat(count) { SoloShimmerRow() }
     }
 }
 
-/** Filter / mood chip. Selected chips are azure. */
+/** Filter / mood chip. Selected chips are Volt. */
 @Composable
-fun SonvraChip(
+fun SoloChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -257,9 +258,9 @@ fun SonvraChip(
         style = MaterialTheme.typography.labelLarge,
         color = if (selected) OnAccent else TextPrimary,
         modifier = modifier
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .background(if (selected) Accent else Surface3)
-            .border(1.dp, if (selected) Color.Transparent else Hairline, SonvraShape.pill)
+            .border(1.dp, if (selected) Color.Transparent else Hairline, SoloShape.pill)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
     )
@@ -267,7 +268,7 @@ fun SonvraChip(
 
 /** Pill button: accent primary or Surface3 secondary. */
 @Composable
-fun SonvraPillButton(
+fun SoloPillButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -278,9 +279,9 @@ fun SonvraPillButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .then(if (primary) Modifier.background(AccentBrush) else Modifier.background(Surface3))
-            .border(1.dp, if (primary) Color.Transparent else Hairline, SonvraShape.pill)
+            .border(1.dp, if (primary) Color.Transparent else Hairline, SoloShape.pill)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
@@ -294,7 +295,7 @@ fun SonvraPillButton(
 
 /** Centered empty / error message with an optional action. */
 @Composable
-fun SonvraEmptyState(
+fun SoloEmptyState(
     icon: ImageVector,
     title: String,
     message: String,
@@ -311,9 +312,9 @@ fun SonvraEmptyState(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(64.dp)
-                .clip(SonvraShape.md)
+                .clip(SoloShape.md)
                 .background(Surface3)
-                .border(1.dp, Hairline, SonvraShape.md),
+                .border(1.dp, Hairline, SoloShape.md),
         ) {
             Icon(icon, contentDescription = null, tint = Accent, modifier = Modifier.size(28.dp))
         }
@@ -333,7 +334,7 @@ fun SonvraEmptyState(
         )
         if (actionLabel != null && onAction != null) {
             Spacer(Modifier.height(18.dp))
-            SonvraPillButton(text = actionLabel, onClick = onAction)
+            SoloPillButton(text = actionLabel, onClick = onAction)
         }
     }
 }
@@ -343,7 +344,7 @@ fun SonvraEmptyState(
  * actions ([danger]) use a DangerSurface pill with Danger text instead.
  */
 @Composable
-fun SonvraDialogConfirm(
+fun SoloDialogConfirm(
     text: String,
     onClick: () -> Unit,
     danger: Boolean = false,
@@ -352,7 +353,7 @@ fun SonvraDialogConfirm(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .heightIn(min = 44.dp)
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .then(if (danger) Modifier.background(DangerSurface) else Modifier.background(AccentBrush))
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 10.dp),
@@ -363,12 +364,12 @@ fun SonvraDialogConfirm(
 
 /** Dialog dismiss action: plain TextPrimary text with a 48dp touch target. */
 @Composable
-fun SonvraDialogDismiss(text: String, onClick: () -> Unit) {
+fun SoloDialogDismiss(text: String, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .heightIn(min = 48.dp)
-            .clip(SonvraShape.pill)
+            .clip(SoloShape.pill)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp),
     ) {
@@ -378,7 +379,7 @@ fun SonvraDialogDismiss(text: String, onClick: () -> Unit) {
 
 /** Round icon button with a 48dp touch target (optionally on a Surface3 well). */
 @Composable
-fun SonvraIconButton(
+fun SoloIconButton(
     icon: ImageVector,
     contentDescription: String?,
     onClick: () -> Unit,
@@ -393,7 +394,7 @@ fun SonvraIconButton(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
-            .sonvraPress(source)
+            .soloPress(source)
             .clip(CircleShape)
             .then(if (filled) Modifier.background(Surface3) else Modifier)
             .clickable(interactionSource = source, indication = LocalIndication.current, onClick = onClick),

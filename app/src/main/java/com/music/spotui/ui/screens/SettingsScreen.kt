@@ -3,7 +3,7 @@ package com.music.spotui.ui.screens
 import androidx.compose.material.icons.rounded.Devices
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.MaterialTheme
-import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SoloShape
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -201,7 +201,7 @@ fun SettingsScreen(navController: NavController) {
                     )
                 },
                 navigationIcon = {
-                    com.music.spotui.ui.components.SonvraIconButton(
+                    com.music.spotui.ui.components.SoloIconButton(
                         icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         onClick = { navController.popBackStack() },
@@ -291,9 +291,9 @@ fun SettingsScreen(navController: NavController) {
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SonvraShape.md)
+                        .clip(SoloShape.md)
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 )
                 Spacer(Modifier.height(8.dp))
@@ -320,13 +320,13 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SonvraShape.md)
+                    .clip(SoloShape.md)
                     .clickable {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                     }
                     .background(SettingsCard)
-                    .border(1.dp, SettingsHairline, SonvraShape.md)
+                    .border(1.dp, SettingsHairline, SoloShape.md)
                     .padding(horizontal = 14.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -417,13 +417,13 @@ fun SettingsScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(top = 10.dp),
             ) {
-                com.music.spotui.ui.components.SonvraPillButton(
+                com.music.spotui.ui.components.SoloPillButton(
                     text = "View playback log",
                     onClick = { showPlaybackLog = true },
                     primary = false,
                 )
                 Spacer(Modifier.width(8.dp))
-                com.music.spotui.ui.components.SonvraDialogDismiss(
+                com.music.spotui.ui.components.SoloDialogDismiss(
                     text = "Clear",
                     onClick = {
                         PlaybackLog.clear()
@@ -444,7 +444,7 @@ fun SettingsScreen(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(SonvraShape.md)
+                        .clip(SoloShape.md)
                         .clickable(enabled = !isBackingUp) {
                             if (backupDirUri.isNullOrBlank()) {
                                 dirPickerLauncher.launch(null)
@@ -458,7 +458,7 @@ fun SettingsScreen(navController: NavController) {
                             }
                         }
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                         .padding(horizontal = 12.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -496,9 +496,9 @@ fun SettingsScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .clip(SonvraShape.md)
+                            .clip(SoloShape.md)
                             .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                             .clickable(enabled = !isBackingUp) { dirPickerLauncher.launch(null) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -517,12 +517,12 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SonvraShape.md)
+                    .clip(SoloShape.md)
                     .clickable(enabled = !isRestoring) {
                         restoreFileLauncher.launch(arrayOf("application/json", "*/*"))
                     }
                     .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -573,7 +573,7 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(SonvraShape.md)
+                    .clip(SoloShape.md)
                     .clickable {
                         scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             com.music.spotui.di.SongPlayer.clearCaches(context)
@@ -587,7 +587,7 @@ fun SettingsScreen(navController: NavController) {
                         }
                     }
                     .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -620,9 +620,9 @@ fun SettingsScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .clip(SonvraShape.md)
+                        .clip(SoloShape.md)
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                         .clickable {
                             com.music.spotui.data.api.SpotifySession.setSpDc(context, "")
                             com.music.spotui.data.api.Api.HomeCache.clear()
@@ -636,7 +636,7 @@ fun SettingsScreen(navController: NavController) {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(SonvraShape.sm)
+                            .clip(SoloShape.sm)
                             .background(com.music.spotui.ui.theme.DangerSurface),
                     ) {
                         Icon(
@@ -659,16 +659,16 @@ fun SettingsScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(SonvraShape.md)
+                        .clip(SoloShape.md)
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .border(1.dp, SettingsHairline, SoloShape.md)
                         .padding(horizontal = 14.dp, vertical = 14.dp),
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(SonvraShape.sm)
+                            .clip(SoloShape.sm)
                             .background(Surface3),
                     ) {
                         Icon(
@@ -721,16 +721,16 @@ private fun AboutCard() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SonvraShape.lg)
+            .clip(SoloShape.lg)
             .background(
                 androidx.compose.ui.graphics.Brush.verticalGradient(
-                    listOf(com.music.spotui.ui.theme.Midnight, Surface2)
+                    listOf(com.music.spotui.ui.theme.Elevated, Surface2)
                 )
             )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.lg)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
-        com.music.spotui.ui.components.SonvraMark(height = 52.dp)
+        com.music.spotui.ui.components.SoloMark(height = 52.dp)
         Spacer(Modifier.height(14.dp))
         Text(
             "SOLO",
@@ -798,9 +798,9 @@ private fun SettingsClickRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, SonvraShape.md)
+            .border(1.dp, SettingsHairline, SoloShape.md)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -810,7 +810,7 @@ private fun SettingsClickRow(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(38.dp)
-                    .clip(SonvraShape.sm)
+                    .clip(SoloShape.sm)
                     .background(Surface3),
             ) { leadingIcon() }
             Spacer(Modifier.width(12.dp))
@@ -838,9 +838,9 @@ private fun SettingsSwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, SonvraShape.md)
+            .border(1.dp, SettingsHairline, SoloShape.md)
             .clickable { onCheckedChange(!checked) }
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -855,7 +855,7 @@ private fun SettingsSwitchRow(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                // Dark thumb on the azure track keeps the active state crisp.
+                // Dark thumb on the Volt track keeps the active state crisp.
                 checkedThumbColor = OnAccent,
                 checkedTrackColor = SettingsAccent,
                 uncheckedThumbColor = TextSecondary,
@@ -876,9 +876,9 @@ private fun QualityPicker(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(SonvraShape.md)
+            .clip(SoloShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, SonvraShape.md)
+            .border(1.dp, SettingsHairline, SoloShape.md)
             .padding(vertical = 12.dp),
     ) {
         Text(
@@ -970,7 +970,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            com.music.spotui.ui.components.SonvraDialogConfirm(text = "Close", onClick = onDismiss)
+            com.music.spotui.ui.components.SoloDialogConfirm(text = "Close", onClick = onDismiss)
         },
         dismissButton = {
             if (lines.isNotEmpty()) {
