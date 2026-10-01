@@ -89,7 +89,7 @@ jobs:
       - name: Upload APKs as workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Solo-v${{ steps.ver.outputs.version }}-apks
+          name: Sonvra-v${{ steps.ver.outputs.version }}-apks
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
@@ -100,9 +100,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
-          name: Solo v${{ steps.ver.outputs.version }}
+          name: Sonvra v${{ steps.ver.outputs.version }}
           body: |
-            Automated build of **Solo v${{ steps.ver.outputs.version }}** (versionCode ${{ steps.ver.outputs.code }}).
+            Automated build of **Sonvra v${{ steps.ver.outputs.version }}** (versionCode ${{ steps.ver.outputs.code }}).
 
             Download the single universal APK below — it installs on any device.
           files: app/build/outputs/apk/release/*.apk

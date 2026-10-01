@@ -61,7 +61,7 @@
             </intent-filter>
         </service>
 
-        <!-- Makes Solo discoverable as a media button target for automation
+        <!-- Makes Sonvra discoverable as a media button target for automation
              apps (MacroDroid, Tasker, etc.) and forwards media key events to
              the active PlaybackService MediaSession. -->
         <receiver

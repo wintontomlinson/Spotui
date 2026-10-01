@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Splash plate: the royal-plum midpoint of the launcher background, so the launch
+    <!-- Splash plate: the midnight midpoint of the launcher background, so the launch
          flash matches the icon the user tapped. -->
-    <color name="splash_background">#FF141022</color>
+    <color name="splash_background">#FF0B1226</color>
 </resources>

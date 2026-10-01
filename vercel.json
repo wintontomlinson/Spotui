@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "mkdir -p public && printf '%s' '<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Solo</title><body style=\"font-family:Georgia,serif;background:#0C0912;color:#F5F0E6;display:grid;place-items:center;height:100vh;margin:0;text-align:center\"><div><h1 style=\"color:#E6C27A;font-weight:600;font-size:56px;margin:0\">Solo</h1><p style=\"font-family:system-ui,sans-serif;color:#B9B0C4\">Solo is an Android music app. There is no web version.</p><p style=\"font-family:system-ui,sans-serif\"><a style=\"color:#E6C27A\" href=\"https://github.com/wintontomlinson/Spotui\">Get Solo on GitHub</a></p></div>' > public/index.html",
+  "buildCommand": "mkdir -p public && printf '%s' '<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Sonvra</title><body style=\"font-family:system-ui,sans-serif;background:#07090D;color:#F2F5FA;display:grid;place-items:center;height:100vh;margin:0;text-align:center\"><div><h1 style=\"color:#5B9BFF;font-weight:700;font-size:56px;letter-spacing:-1px;margin:0\">Sonvra</h1><p style=\"color:#A6AFBF\">Sonvra is an Android music app. There is no web version.</p><p><a style=\"color:#5B9BFF\" href=\"https://github.com/wintontomlinson/Spotui/releases\">Get Sonvra on GitHub</a></p></div>' > public/index.html",
   "outputDirectory": "public",
   "framework": null,
   "installCommand": "echo \"no install needed\""

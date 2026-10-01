@@ -543,7 +543,7 @@ fun SettingsScreen(navController: NavController) {
                 Column(Modifier.weight(1f)) {
                     Text("Restore from File", color = Ivory, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Text(
-                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Solo backup file",
+                        if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Sonvra backup file",
                         color = TextSecondary,
                         fontSize = 12.sp,
                     )
@@ -654,7 +654,7 @@ fun SettingsScreen(navController: NavController) {
                     modifier = Modifier.padding(vertical = 6.dp),
                 )
                 Text(
-                    text = "You're using Solo for free: search and play any song, no account needed.",
+                    text = "You're using Sonvra for free: search and play any song, no account needed.",
                     color = TextTertiary,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(bottom = 6.dp),
@@ -698,7 +698,7 @@ private fun AboutSoloCard() {
         com.music.spotui.ui.components.SoloMark(height = 52.dp)
         Spacer(Modifier.height(14.dp))
         Text(
-            "Solo",
+            "Sonvra",
             color = Gold,
             style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
         )
@@ -947,7 +947,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                             .getSystemService(android.content.Context.CLIPBOARD_SERVICE)
                                 as android.content.ClipboardManager
                         clipboard.setPrimaryClip(
-                            android.content.ClipData.newPlainText("Solo playback log", PlaybackLog.asText()),
+                            android.content.ClipData.newPlainText("Sonvra playback log", PlaybackLog.asText()),
                         )
                         android.widget.Toast
                             .makeText(context, "Playback log copied", android.widget.Toast.LENGTH_SHORT)

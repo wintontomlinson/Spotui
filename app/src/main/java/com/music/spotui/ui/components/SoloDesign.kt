@@ -115,11 +115,11 @@ fun SoloDragHandle() {
     )
 }
 
-/** Width-to-height ratio of drawable/logo (the tight-bounds, square Solo Facet mark). */
-private const val MARK_ASPECT = 1f
+/** Width-to-height ratio of drawable/logo (the tight-bounds Sonvra Sonic V mark, viewport 54 x 52). */
+private const val MARK_ASPECT = 54f / 52f
 
 /**
- * The Solo "Facet" mark (four-facet gem + solo dot), drawn from drawable/logo so the
+ * The Sonvra Sonic V mark (two capsule arms + source dot), drawn from drawable/logo so the
  * in-app mark and the launcher share one geometry. Pass [tint] for a flat version.
  */
 @Composable
@@ -136,7 +136,7 @@ fun SoloMark(
     )
 }
 
-/** Mark + "Solo" set in the display face. */
+/** Mark + the lowercase "sonvra" wordmark set in the display face. */
 @Composable
 fun SoloWordmark(
     modifier: Modifier = Modifier,
@@ -147,7 +147,7 @@ fun SoloWordmark(
         SoloMark(height = markHeight)
         Spacer(Modifier.width(9.dp))
         Text(
-            text = "Solo",
+            text = "sonvra",
             color = Gold,
             fontFamily = SoloDisplay,
             fontSize = textSize,

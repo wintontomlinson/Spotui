@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Regenerates every raster version of the Solo mark so it matches the vector icons.
+"""Regenerates every raster version of the Sonvra mark so it matches the vector icons.
 
 The launcher itself uses the adaptive icon (minSdk is 26). The bitmaps written here are
 the legacy mipmaps, the Play Store listing icon, the README icon and the artwork
 placeholder, all drawn from the same geometry as drawable/ic_launcher_foreground.xml
-(the "Solo Facet" mark in the 108-unit adaptive grid) and
-drawable/ic_launcher_background.xml (the obsidian radial plate).
+(the "Sonic V" mark in the 108-unit adaptive grid) and
+drawable/ic_launcher_background.xml (the midnight radial plate).
 
-Solo Facet: a rhombus split into four facets that meet at an off-centre apex, so the
-gem reads as lit from the top right, plus one small "solo" dot. Each facet is inset
-toward its own incentre so neighbouring facets are separated by an even 1.4-unit gap.
+Sonic V: a bold V monogram made of two thick rounded capsule strokes that meet in a soft
+vertex, filled with one azure gradient, plus a solid "source" dot inside the V's mouth,
+like sound rising out of a resonance chamber.
 
 Requires Pillow. Run from the repository root:
     python3 tools/generate_launcher_icons.py            # write every raster
@@ -32,43 +32,26 @@ PLACEHOLDER = os.path.join(RES, "drawable", "placeholder.webp")
 UNITS = 108.0  # adaptive icon grid
 SUPERSAMPLE = 4
 
-# Plate: radial obsidian glow, off-centre toward the top left.
-PLATE_CENTRE = (38.0, 30.0)
-PLATE_RADIUS = 96.0
-PLATE_STOPS = [(0.0, (0x2A, 0x1F, 0x4E)), (0.55, (0x14, 0x10, 0x22)), (1.0, (0x08, 0x07, 0x0C))]
+# Plate: radial midnight glow, off-centre toward the top left.
+PLATE_CENTRE = (40.0, 30.0)
+PLATE_RADIUS = 100.0
+PLATE_STOPS = [(0.0, (0x16, 0x24, 0x4A)), (0.55, (0x0B, 0x12, 0x26)), (1.0, (0x07, 0x09, 0x0D))]
 
 # Mark geometry (108-unit grid), identical to the vector drawables.
-N, E, S, W = (54.0, 29.0), (79.0, 54.0), (54.0, 79.0), (29.0, 54.0)
-APEX = (57.0, 51.0)
-GAP = 1.4
-FACETS = [  # (triangle, colour)
-    ((N, E, APEX), (0xFF, 0xE3, 0xC2)),
-    ((E, S, APEX), (0xFF, 0xAE, 0x70)),
-    ((S, W, APEX), (0xE2, 0x56, 0x6E)),
-    ((W, N, APEX), (0xFF, 0xC8, 0x96)),
-]
-DOT = (73.0, 35.0, 3.4)
-DOT_COLOUR = (0xFF, 0xE3, 0xC2)
-SHADOW = (0x05, 0x03, 0x0A)
-SHADOW_ALPHA = 0x4D / 255
+ARMS = [((35.0, 38.0), (54.0, 74.0)), ((73.0, 38.0), (54.0, 74.0))]  # capsule centre lines
+ARM_R = 7.0
+DOT = (54.0, 42.0, 5.0)
+DOT_COLOUR = (0xF2, 0xF5, 0xFA)
+V_START, V_END = (35.0, 31.0), (54.0, 81.0)  # linear gradient axis
+V_STOPS = [(0.0, (0x9C, 0xCB, 0xFF)), (0.5, (0x5B, 0x9B, 0xFF)), (1.0, (0x3F, 0x7B, 0xFF))]
+SHADOW = (0, 0, 0)
+SHADOW_ALPHA = 0.30
 SHADOW_DY = 1.4
 
-
-def inset_triangle(tri, d):
-    """Offsets every edge of [tri] inward by [d] (scales about the incentre)."""
-    (ax, ay), (bx, by), (cx, cy) = tri
-    a = math.dist((bx, by), (cx, cy))
-    b = math.dist((ax, ay), (cx, cy))
-    c = math.dist((ax, ay), (bx, by))
-    p = a + b + c
-    ix, iy = (a * ax + b * bx + c * cx) / p, (a * ay + b * by + c * cy) / p
-    area = abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) / 2
-    r = area / (p / 2)
-    k = (r - d) / r
-    return [(ix + (x - ix) * k, iy + (y - iy) * k) for x, y in tri]
-
-
-INSET_FACETS = [(inset_triangle(tri, GAP / 2), colour) for tri, colour in FACETS]
+# Notification small icon (24-unit artboard, white only).
+NOTIF_ARMS = [((3.96, 4.39), (12.0, 19.61)), ((20.04, 4.39), (12.0, 19.61))]
+NOTIF_ARM_R = 2.96
+NOTIF_DOT = (12.0, 6.08, 2.12)
 
 
 def _lerp(a, b, t):
@@ -84,15 +67,15 @@ def _ramp(stops, t):
     return stops[-1][1]
 
 
-def _field(size, fn, mode="RGB"):
+def _field(size, fn, mode="RGB", units=UNITS):
     """Evaluates a smooth colour field at a small size and scales it up."""
     work = min(size, 216)
     img = Image.new(mode, (work, work))
     px = img.load()
     for y in range(work):
-        uy = (y + 0.5) / work * UNITS
+        uy = (y + 0.5) / work * units
         for x in range(work):
-            ux = (x + 0.5) / work * UNITS
+            ux = (x + 0.5) / work * units
             px[x, y] = fn(ux, uy)
     return img.resize((size, size), Image.BICUBIC) if work != size else img
 
@@ -102,26 +85,57 @@ def plate(size):
     return _field(size, lambda x, y: _ramp(PLATE_STOPS, math.hypot(x - gx, y - gy) / PLATE_RADIUS))
 
 
-def _pt(x, y, k, scale, dy):
-    return (54 + (x - 54) * scale) * k, (54 + (y - 54) * scale + dy) * k
+def _v_gradient(x, y, scale=1.0):
+    """Colour of the V's linear gradient at canvas point (x, y) for a mark scaled about 54,54."""
+    sx, sy = 54 + (V_START[0] - 54) * scale, 54 + (V_START[1] - 54) * scale
+    ex, ey = 54 + (V_END[0] - 54) * scale, 54 + (V_END[1] - 54) * scale
+    dx, dy = ex - sx, ey - sy
+    return _ramp(V_STOPS, ((x - sx) * dx + (y - sy) * dy) / (dx * dx + dy * dy))
+
+
+def _capsules(draw, arms, r, to_px):
+    """Draws each capsule (rectangle + two round ends) of [arms] into an L mask."""
+    for a, b in arms:
+        (ax, ay), (bx, by) = to_px(*a), to_px(*b)
+        rp = r * math.dist((ax, ay), (bx, by)) / math.dist(a, b)
+        length = math.dist((ax, ay), (bx, by))
+        nx, ny = -(by - ay) / length * rp, (bx - ax) / length * rp
+        draw.polygon([(ax + nx, ay + ny), (bx + nx, by + ny), (bx - nx, by - ny), (ax - nx, ay - ny)], fill=255)
+        for cx, cy in ((ax, ay), (bx, by)):
+            draw.ellipse((cx - rp, cy - rp, cx + rp, cy + rp), fill=255)
 
 
 def draw_mark(canvas, scale=1.0, dy=0.0, colour=None, alpha=255):
-    """Draws the facets and the dot onto an RGBA [canvas]. [colour] forces one fill."""
+    """Draws the V and the dot onto an RGBA [canvas]. [colour] forces one flat fill."""
     size = canvas.size[0]
     k = size / UNITS
-    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    for tri, fill in INSET_FACETS:
-        d.polygon([_pt(x, y, k, scale, dy) for x, y in tri], fill=(colour or fill) + (alpha,))
-    cx, cy = _pt(DOT[0], DOT[1], k, scale, dy)
+
+    def to_px(x, y):
+        return (54 + (x - 54) * scale) * k, (54 + (y - 54) * scale + dy) * k
+
+    v_mask = Image.new("L", canvas.size, 0)
+    _capsules(ImageDraw.Draw(v_mask), ARMS, ARM_R, to_px)  # radius follows to_px's scale
+    dot_mask = Image.new("L", canvas.size, 0)
+    cx, cy = to_px(DOT[0], DOT[1])
     r = DOT[2] * scale * k
-    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(colour or DOT_COLOUR) + (alpha,))
+    ImageDraw.Draw(dot_mask).ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
+
+    if colour is not None:
+        v_fill = Image.new("RGB", canvas.size, colour)
+        dot_fill = v_fill
+    else:
+        v_fill = _field(size, lambda x, y: _v_gradient(x, y - dy, scale))
+        dot_fill = Image.new("RGB", canvas.size, DOT_COLOUR)
+    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    for fill, mask in ((v_fill, v_mask), (dot_fill, dot_mask)):
+        piece = fill.convert("RGBA")
+        piece.putalpha(mask.point(lambda v: v * alpha // 255))
+        layer = Image.alpha_composite(layer, piece)
     return Image.alpha_composite(canvas, layer)
 
 
 def artwork(size, scale=1.0, with_plate=True):
-    """Full 108-unit canvas: plate (optional), soft shadow and the facet mark."""
+    """Full 108-unit canvas: plate (optional), soft shadow and the Sonic V mark."""
     work = size * SUPERSAMPLE
     if with_plate:
         canvas = plate(work).convert("RGBA")
@@ -160,9 +174,9 @@ def launcher_bitmap(size, shape):
 
 
 def placeholder(size):
-    """Artwork placeholder: a quiet obsidian tile with a faint facet mark."""
+    """Artwork placeholder: a quiet graphite tile with a faint Sonic V."""
     work = size * SUPERSAMPLE
-    base = _field(work, lambda x, y: _lerp((0x21, 0x1D, 0x2E), (0x11, 0x0F, 0x18), (x + y) / (2 * UNITS)))
+    base = _field(work, lambda x, y: _lerp((0x1C, 0x21, 0x2C), (0x0E, 0x11, 0x17), (x + y) / (2 * UNITS)))
     base = draw_mark(base.convert("RGBA"), 0.9, alpha=46)
     return base.convert("RGB").resize((size, size), Image.LANCZOS)
 
@@ -170,14 +184,14 @@ def placeholder(size):
 def notification(size):
     """White-only small icon preview (24-unit artboard)."""
     work = size * SUPERSAMPLE
-    img = Image.new("RGBA", (work, work), (0, 0, 0, 0))
     k = work / 24.0
-    d = ImageDraw.Draw(img)
-    n, e, s, w, a = (12, 2.5), (21.5, 12), (12, 21.5), (2.5, 12), (12.6, 11.4)
-    for tri in ((n, e, a), (e, s, a), (s, w, a), (w, n, a)):
-        d.polygon([(x * k, y * k) for x, y in inset_triangle(tri, 0.5)], fill=(255, 255, 255, 255))
-    r = 1.5 * k
-    d.ellipse((19.6 * k - r, 4.4 * k - r, 19.6 * k + r, 4.4 * k + r), fill=(255, 255, 255, 255))
+    mask = Image.new("L", (work, work), 0)
+    d = ImageDraw.Draw(mask)
+    _capsules(d, NOTIF_ARMS, NOTIF_ARM_R, lambda x, y: (x * k, y * k))
+    cx, cy, r = NOTIF_DOT[0] * k, NOTIF_DOT[1] * k, NOTIF_DOT[2] * k
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
+    img = Image.new("RGBA", (work, work), (255, 255, 255, 0))
+    img.putalpha(mask)
     return img.resize((size, size), Image.LANCZOS)
 
 
@@ -207,14 +221,8 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == "--preview":
         preview(sys.argv[2])
         return
-    densities = {
-        "mdpi": (48, 108),
-        "hdpi": (72, 162),
-        "xhdpi": (96, 216),
-        "xxhdpi": (144, 324),
-        "xxxhdpi": (192, 432),
-    }
-    for density, (icon_size, foreground_size) in densities.items():
+    densities = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
+    for density, icon_size in densities.items():
         folder = os.path.join(RES, "mipmap-" + density)
         os.makedirs(folder, exist_ok=True)
         launcher_bitmap(icon_size, "squircle").save(
@@ -222,9 +230,6 @@ def main():
         )
         launcher_bitmap(icon_size, "circle").save(
             os.path.join(folder, "ic_launcher_round.webp"), "WEBP", lossless=True
-        )
-        artwork(foreground_size, with_plate=False).save(
-            os.path.join(folder, "ic_launcher_foreground.webp"), "WEBP", lossless=True
         )
         print("wrote", folder)
 

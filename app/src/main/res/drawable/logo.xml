@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- In-app Solo Facet mark (tight square bounds, transparent): wordmark, About card, splash. -->
+<!--
+  In-app Sonvra Sonic V mark (tight bounds, transparent): wordmark, About card, splash.
+  The launcher geometry shifted by (-27,-30): viewport 54 x 52 (1-unit padding), so the
+  width-to-height ratio is 54/52 = 1.0385. No shadow.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="36dp"
-    android:height="36dp"
-    android:viewportWidth="52"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="37.8dp"
+    android:height="36.4dp"
+    android:viewportWidth="54"
     android:viewportHeight="52">
-    <path android:fillColor="#FFFFE3C2" android:pathData="M26.97,2.96 L49.04,25.03 L29.62,22.38 Z" />
-    <path android:fillColor="#FFFFAE70" android:pathData="M49.51,26.50 L26.91,49.10 L29.62,23.79 Z" />
-    <path android:fillColor="#FFE2566E" android:pathData="M25.46,49.47 L2.53,26.54 L28.21,23.79 Z" />
-    <path android:fillColor="#FFFFC896" android:pathData="M2.90,25.09 L25.50,2.49 L28.21,22.38 Z" />
-    <path android:fillColor="#FFFFE3C2" android:pathData="M45.00,3.60 A3.40,3.40 0,1 1 45.00,10.40 A3.40,3.40 0,1 1 45.00,3.60 Z" />
+    <path android:pathData="M1.81,11.27 L20.81,47.27 A7.00,7.00 0,0 0 33.19,40.73 L14.19,4.73 A7.00,7.00 0,0 0 1.81,11.27 Z M39.81,4.73 L20.81,40.73 A7.00,7.00 0,0 0 33.19,47.27 L52.19,11.27 A7.00,7.00 0,0 0 39.81,4.73 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="8" android:startY="1" android:endX="27" android:endY="51">
+                <item android:offset="0.0" android:color="#FF9CCBFF" />
+                <item android:offset="0.5" android:color="#FF5B9BFF" />
+                <item android:offset="1.0" android:color="#FF3F7BFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FFF2F5FA" android:pathData="M27.00,7.00 A5.00,5.00 0,1 1 27.00,17.00 A5.00,5.00 0,1 1 27.00,7.00 Z" />
 </vector>

@@ -14,8 +14,8 @@ android {
         applicationId = "com.music.spotui"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2026100110
-        versionName = "3.1.0"
+        versionCode = 2026100210
+        versionName = "4.0.0"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -96,7 +96,7 @@ androidComponents {
                 ?.filters?.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }
                 ?.identifier
             val suffix = if (abi != null) "_$abi" else ""
-            output.outputFileName.set("Solo_v${android.defaultConfig.versionName}$suffix.apk")
+            output.outputFileName.set("Sonvra_v${android.defaultConfig.versionName}$suffix.apk")
         }
     }
 }

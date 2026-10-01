@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?){
-        // Must run before super.onCreate: swaps the splash theme for Theme.Solo once the
+        // Must run before super.onCreate: swaps the splash theme for the app theme once the
         // first frame is ready, and draws the compat splash icon on Android 8 to 11.
         installSplashScreen()
         super.onCreate(savedInstanceState)

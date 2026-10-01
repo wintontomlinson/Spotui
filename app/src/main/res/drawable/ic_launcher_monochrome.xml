@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed-icon (Android 13+) layer: the Solo Facet mark as a flat silhouette the system tints. -->
+<!-- Themed-icon (Android 13+) layer: the Sonvra Sonic V mark as a flat silhouette the system tints. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M54.97,30.96 L77.04,53.03 L57.62,50.38 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M77.51,54.50 L54.91,77.10 L57.62,51.79 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M53.46,77.47 L30.53,54.54 L56.21,51.79 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M30.90,53.09 L53.50,30.49 L56.21,50.38 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M73.00,31.60 A3.40,3.40 0,1 1 73.00,38.40 A3.40,3.40 0,1 1 73.00,31.60 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M28.81,41.27 L47.81,77.27 A7.00,7.00 0,0 0 60.19,70.73 L41.19,34.73 A7.00,7.00 0,0 0 28.81,41.27 Z M66.81,34.73 L47.81,70.73 A7.00,7.00 0,0 0 60.19,77.27 L79.19,41.27 A7.00,7.00 0,0 0 66.81,34.73 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M54.00,37.00 A5.00,5.00 0,1 1 54.00,47.00 A5.00,5.00 0,1 1 54.00,37.00 Z" />
 </vector>

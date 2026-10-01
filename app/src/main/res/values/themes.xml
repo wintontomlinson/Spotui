@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- App theme after the splash: dark plum window so there is never a white flash
+    <!-- App theme after the splash: dark midnight window so there is never a white flash
          between the splash and the Compose UI. -->
     <style name="Theme.Solo" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
     <style name="splashScreenTheme" parent="Theme.SplashScreen">
-        <!-- The gold Solo mark on the plum plate, exactly like the launcher icon. The mark
+        <!-- The Sonvra Sonic V on the midnight plate, exactly like the launcher icon. The mark
              lives inside the 66dp safe circle of the 108dp foreground, which keeps it inside
              the Android 12+ splash icon mask. -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
