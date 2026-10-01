@@ -18,12 +18,16 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 - 📝 **Lyrics**: synced lyrics with a live preview on the player, a full-screen view and on-device translation.
 - 📀 **Spotify (optional)**: sign in to bring your playlists, liked songs, followed artists, history and recommendations.
 - 🔊 **Premium audio**: a tasteful "Premium" equalizer preset and retuned loudness normalization keep levels even and full, alongside gapless and crossfade mixing.
-- 🎛️ **Redesigned player**: large artwork with artwork-driven dynamic colour, a custom violet→cyan seek bar with a gold scrubber, animated controls with haptics, a "Next up" peek and quick lyrics access.
-- ✨ **"Lumen Indigo" design**: a deep indigo canvas with a two-tone "Lumen" accent — a vivid violet that refracts into a cyan-teal highlight — and a reserved premium gold, set in Space Grotesk and Plus Jakarta Sans, with an artwork-tinted player, craftier Explore mesh tiles and guarded frosted-glass chrome.
+- 🎛️ **Redesigned player**: large artwork with artwork-driven dynamic colour, an azure seek bar with a steel scrubber, animated controls with haptics, a "Next up" peek and quick lyrics access.
+- 🎨 **Accent picker**: choose the app's signature highlight — Azure, Teal, Indigo or Steel — and the whole UI recolours live while the graphite canvas stays constant.
+- 👋 **First-run onboarding**: a short intro to free play and your accent choice, shown once on first launch.
+- 📊 **Listening recap**: a read-only summary built on-device from your taste model — top artists and tracks, total listens, estimated minutes and a day streak.
+- 🔄 **In-app updates**: the newest release APK is downloaded and installed from inside the app with a progress bar — no browser hand-off (Android still shows its own install confirmation).
+- ✨ **"Graphite & Azure" design**: a near-black graphite canvas with a layered steel-slate surface ramp and one restrained refined-azure accent, high-contrast off-white text and a sparse cool-steel highlight, set in Space Grotesk and Plus Jakarta Sans, with an artwork-tinted player, code-generated Explore mesh tiles and guarded frosted-glass chrome.
 
-The icon is the **Lumen Prism**: an original mark built from scratch — an upright beam of light that descends from a gold tip, strikes a refraction node and fans into a short violet→cyan spectrum, for "one voice, one light, a spectrum". It reads clearly from the launcher down to the small notification icon.
+The icon is the **Aperture S**: an original mark built from scratch — a single continuous stroke sweeps through two tangent arcs to form an upright S whose counters read as the open blades of a focused lens aperture, with a cool-steel focal dot at its centre. It carries the azure accent and reads clearly from the launcher down to the small notification icon.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 7.0.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 8.0.0.
 
 ## Install
 
