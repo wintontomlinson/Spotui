@@ -89,6 +89,19 @@ class FreeHomeViewModel @Inject constructor(
     private val _trending = mutableStateOf<List<SongsModel>>(emptyList())
     val trending: State<List<SongsModel>> get() = _trending
 
+    /**
+     * "Mix for you": a daily 25-track mix from the user's strongest artists, ranked
+     * by [com.music.spotui.data.recommendation.TasteRanker]. Empty (card hidden)
+     * until there is listening history.
+     */
+    private val _mix = mutableStateOf<List<SongsModel>>(emptyList())
+    val mix: State<List<SongsModel>> get() = _mix
+    private var mixDay = -1L
+
+    /** Strongest artists (display name to an artwork from history) for the circle row. */
+    private val _topArtists = mutableStateOf<List<Pair<String, String>>>(emptyList())
+    val topArtists: State<List<Pair<String, String>>> get() = _topArtists
+
     private val _trendingLoading = mutableStateOf(true)
     val trendingLoading: State<Boolean> get() = _trendingLoading
 
@@ -184,9 +197,44 @@ class FreeHomeViewModel @Inject constructor(
                 )
             }
         fetchTrending()
+        buildTasteBlocks(history)
         val sections = buildSections(history)
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
+    }
+
+    /** Top-artist circles every rebuild; the mix once per day (and once history exists). */
+    private fun buildTasteBlocks(history: List<com.music.spotui.data.preferences.HistoryEntry>) {
+        val profile = com.music.spotui.data.recommendation.TasteProfile
+        val top = runCatching { profile.topArtists(context, 8) }.getOrDefault(emptyList())
+        _topArtists.value = top.map { name ->
+            val key = profile.artistKey(name)
+            name to (history.firstOrNull { profile.artistKey(it.singer) == key && it.image.isNotBlank() }?.image.orEmpty())
+        }
+        if (history.isEmpty()) {
+            _mix.value = emptyList()
+            return
+        }
+        val today = System.currentTimeMillis() / 86_400_000L
+        if (today == mixDay && _mix.value.isNotEmpty()) return
+        mixDay = today
+        viewModelScope.launch {
+            val seedArtists = top.take(3).ifEmpty {
+                history.mapNotNull { it.singer.substringBefore(",").removeSuffix(" - Topic").trim().ifBlank { null } }
+                    .distinct().take(3)
+            }
+            val queries = seedArtists.map { "$it songs" }.toMutableList()
+            if (seedArtists.size < 3) seedArtists.forEach { queries += "songs like $it" }
+            val candidates = queries.flatMap { searchSongs(it, limit = 15) }
+            val ranked = withContext(Dispatchers.Default) {
+                runCatching {
+                    com.music.spotui.data.recommendation.TasteRanker.rank(
+                        context, candidates, seed = null, recent = history, limit = 25,
+                    )
+                }.getOrDefault(emptyList())
+            }
+            if (ranked.isNotEmpty()) _mix.value = ranked else mixDay = -1L
+        }
     }
 
     /** Loads the trending block that leads Home. */
@@ -214,11 +262,20 @@ class FreeHomeViewModel @Inject constructor(
         val usedTitles = LinkedHashSet<String>()
 
         if (history.isNotEmpty()) {
-            // "More like <artist>" for the most recent distinct artists.
+            // "More like <artist>" for the recent artists the user likes most: ordered by
+            // taste affinity (recency breaks ties), and artists they keep skipping drop out.
+            val affinity = runCatching {
+                com.music.spotui.data.recommendation.TasteProfile.artistAffinity(context)
+            }.getOrDefault(emptyMap())
             val artists = history
                 .mapNotNull { it.singer.substringBefore(",").trim().ifBlank { null } }
                 .map { it.removeSuffix(" - Topic").trim() }
                 .distinct()
+                .take(12)
+                .map { it to (affinity[com.music.spotui.data.recommendation.TasteProfile.artistKey(it)] ?: 0f) }
+                .filter { it.second >= 0f }
+                .sortedByDescending { it.second }
+                .map { it.first }
                 .take(3)
             for (artist in artists) {
                 personalized += "More like $artist" to "$artist songs"

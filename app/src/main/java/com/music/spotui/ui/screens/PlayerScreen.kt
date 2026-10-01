@@ -18,6 +18,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import kotlin.math.roundToInt
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.basicMarquee
@@ -1894,6 +1900,7 @@ fun PlayerOptionsSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSleep by remember { mutableStateOf(false) }
+    var showSpeed by remember { mutableStateOf(false) }
     var showSavedIn by remember { mutableStateOf(false) }
     var showAlternativeStream by remember { mutableStateOf(false) }
     var showYouTubeSearch by remember { mutableStateOf(false) }
@@ -2045,6 +2052,8 @@ fun PlayerOptionsSheet(
                     },
                     onOpenYouTubeSearch = { showYouTubeSearch = true },
                 )
+            } else if (showSpeed) {
+                PlaybackSpeedPanel(context = context, onBack = { showSpeed = false })
             } else if (!showSleep) {
                 // ── Now-playing header ──
                 Row(
@@ -2210,6 +2219,21 @@ fun PlayerOptionsSheet(
                     subtitle = if (minutesLeft > 0) "$minutesLeft min left" else null,
                     trailingArrow = true
                 ) { showSleep = true }
+                val speedNow = com.music.spotui.data.preferences.getPlaybackSpeed(context)
+                PlayerMenuRow(
+                    icon = androidx.compose.material.icons.Icons.Rounded.Speed,
+                    label = "Playback speed",
+                    subtitle = if (speedNow != 1f) "${formatSpeed(speedNow)}×" else null,
+                    trailingArrow = true,
+                ) { showSpeed = true }
+                PlayerMenuRow(
+                    icon = androidx.compose.material.icons.Icons.Rounded.GraphicEq,
+                    label = "Equalizer",
+                    trailingArrow = true,
+                ) {
+                    onDismiss()
+                    navController.navigate(com.music.spotui.ui.navigation.Routes.Equalizer.route)
+                }
             } else {
                 Row(
                     modifier = Modifier
@@ -2262,6 +2286,93 @@ fun PlayerOptionsSheet(
                 }
             }
         }
+    }
+}
+
+private fun formatSpeed(v: Float): String =
+    if (v == v.toInt().toFloat()) v.toInt().toString() else "%.2f".format(v).trimEnd('0').trimEnd('.')
+
+/** Speed chips, a pitch slider and Reset, shown inside the player options sheet. */
+@Composable
+private fun PlaybackSpeedPanel(context: Context, onBack: () -> Unit) {
+    var speed by remember { mutableStateOf(com.music.spotui.data.preferences.getPlaybackSpeed(context)) }
+    var pitch by remember { mutableStateOf(com.music.spotui.data.preferences.getPlaybackPitch(context)) }
+    fun apply() = SongPlayer.setPlaybackSpeedPitch(context, speed, pitch)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Back",
+            onClick = onBack,
+        )
+        Text(
+            "Playback speed",
+            color = Ivory,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "${formatSpeed(speed)}×",
+            color = Gold,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 16.dp),
+        )
+    }
+    androidx.compose.material3.HorizontalDivider(color = Velvet)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+    ) {
+        listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { option ->
+            com.music.spotui.ui.components.SoloChip(
+                label = "${formatSpeed(option)}×",
+                selected = speed == option,
+                onClick = { speed = option; apply() },
+                modifier = Modifier.heightIn(min = 48.dp),
+            )
+        }
+    }
+    Text(
+        "Pitch  ${"%.2f".format(pitch)}",
+        color = TextSecondary,
+        fontSize = 13.sp,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
+    androidx.compose.material3.Slider(
+        value = pitch,
+        onValueChange = { pitch = (it * 20).roundToInt() / 20f },
+        onValueChangeFinished = { apply() },
+        valueRange = 0.5f..1.5f,
+        colors = androidx.compose.material3.SliderDefaults.colors(
+            thumbColor = Gold,
+            activeTrackColor = Gold,
+            inactiveTrackColor = Velvet,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .semantics { contentDescription = "Pitch" },
+    )
+    Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        com.music.spotui.ui.components.SoloPillButton(
+            text = "Reset",
+            primary = false,
+            onClick = { speed = 1f; pitch = 1f; apply() },
+        )
     }
 }
 

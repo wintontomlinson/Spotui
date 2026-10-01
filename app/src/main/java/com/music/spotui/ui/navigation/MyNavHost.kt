@@ -133,6 +133,10 @@ fun MyNavHost(
             LocalFilesScreen(navHostController)
         }
 
+        composable(Routes.Equalizer.route) {
+            com.music.spotui.ui.screens.EqualizerScreen(navHostController)
+        }
+
 
         composable(
             "${Routes.Album.route}/{uString}?artist={artist}&id={albumId}",

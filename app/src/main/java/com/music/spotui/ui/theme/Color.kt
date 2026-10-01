@@ -62,8 +62,9 @@ val AppBackgroundBrush: Brush = Brush.verticalGradient(
     1f to Color(0xFF08060C),
 )
 
-/** The gold used for primary actions (play buttons, the Liked tile). */
-val GoldBrush: Brush = Brush.linearGradient(listOf(GoldLight, Gold, GoldDeep))
+/** The accent gradient used for primary actions (play buttons, the Liked tile). */
+val AuroraBrush: Brush = Brush.linearGradient(listOf(GoldLight, Gold, GoldDeep))
+val GoldBrush: Brush = AuroraBrush
 
 /**
  * Keeps an artwork-derived colour rich but dark enough for ivory text on top

@@ -156,6 +156,7 @@ class PlaybackService : MediaLibraryService() {
                             "catalogue says ${known / 1000}s, crossfading=${SongPlayer.isCrossfadeActive()}",
                     )
                 }
+                if (!SongPlayer.isCrossfadeActive()) SongPlayer.onTrackEnded()
                 if (SongPlayer.isCrossfadeActive()) {
                     // Ignore the old player's STATE_ENDED event during an active crossfade.
                     // The crossfade routine itself handles the transition and promotes the new player.

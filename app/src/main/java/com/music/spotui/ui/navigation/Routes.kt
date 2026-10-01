@@ -20,6 +20,7 @@ sealed class Routes(
     object Settings : Routes("Settings", "settings")
     object History : Routes("History", "history")
     object LocalFiles : Routes("LocalFiles", "localfiles")
+    object Equalizer : Routes("Equalizer", "equalizer")
 }
 
 /** Builds a playlist route carrying the Spotify playlist id (and a display name). */

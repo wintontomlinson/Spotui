@@ -127,6 +127,7 @@ fun SettingsScreen(navController: NavController) {
     var crossfadeMs by remember { mutableStateOf(getCrossfadeMs(context).toFloat()) }
     var videoFallback by remember { mutableStateOf(isVideoFallbackEnabled(context)) }
     var autoPlay by remember { mutableStateOf(isAutoPlayEnabled(context)) }
+    var normalize by remember { mutableStateOf(com.music.spotui.data.preferences.isNormalizeVolume(context)) }
     var batteryOptExempt by remember { mutableStateOf(BatteryOptimizationHelper.isIgnoringBatteryOptimization(context)) }
 
     var backupDirUri by remember { mutableStateOf(BackupPref.getDirectoryUri(context)) }
@@ -360,6 +361,19 @@ fun SettingsScreen(navController: NavController) {
                 autoPlay = it
                 setAutoPlayEnabled(context, it)
             }
+            SettingsSwitchRow(
+                title = "Normalize volume",
+                subtitle = "Even out loud and quiet tracks using each song's loudness",
+                checked = normalize,
+            ) {
+                normalize = it
+                com.music.spotui.data.preferences.setNormalizeVolume(context, it)
+            }
+            SettingsClickRow(
+                title = "Equalizer",
+                subtitle = "Presets and a band-by-band sound curve",
+                onClick = { navController.navigate(com.music.spotui.ui.navigation.Routes.Equalizer.route) },
+            )
 
             Spacer(Modifier.height(12.dp))
             SectionTitle("Crossfade")

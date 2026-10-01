@@ -115,6 +115,34 @@ fun setCrossfadeDjMode(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_
 
 
 /** Installs that stored the old upstream repo are migrated to this fork's releases. */
+// ── Playback speed / pitch, equalizer, loudness normalization ──
+private const val KEY_SPEED = "playback_speed"
+private const val KEY_PITCH = "playback_pitch"
+private const val KEY_EQ_ENABLED = "eq_enabled"
+private const val KEY_EQ_PRESET = "eq_preset"
+private const val KEY_EQ_BANDS = "eq_bands"
+private const val KEY_NORMALIZE = "normalize_volume"
+
+fun getPlaybackSpeed(c: Context): Float = prefs(c).getFloat(KEY_SPEED, 1f).coerceIn(0.5f, 2f)
+fun getPlaybackPitch(c: Context): Float = prefs(c).getFloat(KEY_PITCH, 1f).coerceIn(0.5f, 1.5f)
+fun setPlaybackSpeedPitch(c: Context, speed: Float, pitch: Float) =
+    prefs(c).edit().putFloat(KEY_SPEED, speed.coerceIn(0.5f, 2f)).putFloat(KEY_PITCH, pitch.coerceIn(0.5f, 1.5f)).apply()
+
+fun isEqEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_EQ_ENABLED, false)
+fun setEqEnabledPref(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_EQ_ENABLED, v).apply()
+fun getEqPreset(c: Context): String = prefs(c).getString(KEY_EQ_PRESET, "Flat") ?: "Flat"
+/** Per-device-band levels in millibels, empty when never customised. */
+fun getEqBands(c: Context): List<Int> =
+    prefs(c).getString(KEY_EQ_BANDS, "").orEmpty().split(',').mapNotNull { it.trim().toIntOrNull() }
+fun setEqState(c: Context, preset: String, bands: List<Int>) =
+    prefs(c).edit().putString(KEY_EQ_PRESET, preset).putString(KEY_EQ_BANDS, bands.joinToString(",")).apply()
+
+fun isNormalizeVolume(c: Context): Boolean = prefs(c).getBoolean(KEY_NORMALIZE, true)
+fun setNormalizeVolume(c: Context, v: Boolean) {
+    prefs(c).edit().putBoolean(KEY_NORMALIZE, v).apply()
+    com.music.spotui.di.SongPlayer.refreshLoudness()
+}
+
 fun getUpdateRepoUrl(c: Context): String {
     val stored = prefs(c).getString(KEY_UPDATE_REPO_URL, null).orEmpty()
     return if (stored.isBlank() || stored.contains("H4zh4n/Spotui")) DEFAULT_UPDATE_REPO_URL else stored

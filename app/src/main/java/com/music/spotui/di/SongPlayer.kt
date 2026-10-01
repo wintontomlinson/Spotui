@@ -518,6 +518,26 @@ object SongPlayer {
     // Tap time of the current playSong, for the time-to-first-audio log.
     @Volatile private var tapAtMs = 0L
 
+    // The track whose outcome (skip / play / complete) is still to be recorded:
+    // (taste key = play query, title, artist).
+    @Volatile private var nowTrack: Triple<String, String, String>? = null
+
+    /** Folds the current track's listening outcome into the taste profile, once. */
+    private fun recordNowTrack(playedMs: Long, durationMs: Long) {
+        val t = nowTrack ?: return
+        nowTrack = null
+        val ctx = appCtx ?: return
+        com.music.spotui.data.recommendation.TasteProfile.recordOutcome(
+            ctx, t.first, t.second, t.third, playedMs, durationMs,
+        )
+    }
+
+    /** STATE_ENDED from the media service: the track played to the end. */
+    fun onTrackEnded() {
+        val p = player ?: return
+        recordNowTrack(p.currentPosition, p.duration.coerceAtLeast(0L))
+    }
+
     /** Called by the media service on STATE_READY: logs tap → ready latency once per play. */
     fun logTimeToReady() {
         val t = tapAtMs
@@ -558,6 +578,10 @@ object SongPlayer {
         // Do not clear the media items while resolving the next song in the background.
         // Keeping the player paused with the previous track active keeps the Media3
         // foreground service and lockscreen notification alive, avoiding background start bans.
+        // The previous track is being replaced: record how far it got.
+        runCatching {
+            player?.let { p -> recordNowTrack(p.currentPosition, p.duration.coerceAtLeast(0L)) }
+        }
         runCatching {
             ensurePlayer(appContext)
             player?.pause()
@@ -665,6 +689,8 @@ object SongPlayer {
                     }
                     activePlayer.setMediaItem(buildMediaItem(streamUrl, streamMimeType(streamUrl), song))
                     activePlayer.prepare()
+                    applyPlaybackParams()
+                    applyLoudnessFor(song)
                     // Restored session: continue from where the last run stopped.
                     if (song == restoreQuery && restorePositionMs > 0) {
                         activePlayer.seekTo(restorePositionMs)
@@ -672,6 +698,11 @@ object SongPlayer {
                     restoreQuery = null
                     activePlayer.playWhenReady = playWhenResolved
                     loadedQuery = song
+                    nowTrack = Triple(
+                        song,
+                        matchTrack?.title?.ifBlank { null } ?: metaTitle,
+                        matchTrack?.singer?.ifBlank { null } ?: metaArtist,
+                    )
                     updateResolveStatus(false)
                 }
                 startPositionWatch()
@@ -1049,6 +1080,7 @@ object SongPlayer {
                         updateResolveStatus(false)
                     }
 
+                    playback.audioConfig?.loudnessDb?.let { loudnessRegistry[song] = it }
                     putStream(
                         song, playback.streamUrl,
                         if (forPlayback) currentSource else "Alternative YouTube",
@@ -1212,6 +1244,7 @@ object SongPlayer {
             updateResolveStatus(false)
         }
         putStream(song, playback.streamUrl, "YouTube", ytQuality, expectedTier, ytExpiresAt(playback.streamExpiresInSeconds))
+        playback.audioConfig?.loudnessDb?.let { loudnessRegistry[song] = it }
         // Persist to disk so replays after an app restart skip the whole pipeline.
         com.music.spotui.data.preferences.setCachedStream(
             appContext, song, playback.streamUrl, "YouTube", ytQuality,
@@ -2053,19 +2086,140 @@ object SongPlayer {
     // asynchronously), so we (re)attach whenever the session id changes.
     @Volatile private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
     // Boost in millibels (100 mB = 1 dB). ~7 dB is clearly louder while staying
-    // safe from hard clipping on most tracks.
+    // safe from hard clipping on most tracks. Used when normalization is off.
     private const val LOUDNESS_TARGET_MB = 700
+    @Volatile private var currentLoudnessGain = LOUDNESS_TARGET_MB
+    // YouTube's per-track loudness (dB relative to its reference), keyed by play query.
+    private val loudnessRegistry = java.util.concurrent.ConcurrentHashMap<String, Double>()
+    @Volatile private var currentLoudnessQuery: String? = null
+
+    /** Equalizer on the active session; null when the device doesn't support one. */
+    @Volatile private var equalizer: android.media.audiofx.Equalizer? = null
 
     @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-    private fun attachLoudness(sessionId: Int) {
+    private fun attachAudioEffects(sessionId: Int) {
         if (sessionId == androidx.media3.common.C.AUDIO_SESSION_ID_UNSET) return
         runCatching {
             loudnessEnhancer?.release()
             loudnessEnhancer = android.media.audiofx.LoudnessEnhancer(sessionId).apply {
-                setTargetGain(LOUDNESS_TARGET_MB)
+                setTargetGain(currentLoudnessGain)
                 enabled = true
             }
         }.onFailure { Log.w(TAG, "LoudnessEnhancer attach failed", it) }
+        runCatching {
+            equalizer?.release()
+            equalizer = null
+            val ctx = appCtx ?: return@runCatching
+            equalizer = android.media.audiofx.Equalizer(0, sessionId).also { eq ->
+                val saved = com.music.spotui.data.preferences.getEqBands(ctx)
+                val levels = if (saved.size == eq.numberOfBands.toInt()) saved
+                    else presetLevels(eq, com.music.spotui.data.preferences.getEqPreset(ctx))
+                levels.forEachIndexed { i, mB -> eq.setBandLevel(i.toShort(), clampBand(eq, mB).toShort()) }
+                eq.enabled = com.music.spotui.data.preferences.isEqEnabled(ctx)
+            }
+        }.onFailure { Log.w(TAG, "Equalizer attach failed", it) }
+    }
+
+    // ── Loudness normalization ──
+    // With normalization on, the enhancer gain is 4 dB minus the track's YouTube
+    // loudness offset, clamped to 0..10 dB: loud masters get less boost, quiet ones
+    // more, so consecutive tracks land at a similar level. Off keeps the fixed 7 dB.
+    private fun applyLoudnessFor(song: String) {
+        currentLoudnessQuery = song
+        val ctx = appCtx ?: return
+        currentLoudnessGain = if (com.music.spotui.data.preferences.isNormalizeVolume(ctx)) {
+            (400 - (loudnessRegistry[song] ?: 0.0) * 100).toInt().coerceIn(0, 1000)
+        } else LOUDNESS_TARGET_MB
+        runCatching { loudnessEnhancer?.setTargetGain(currentLoudnessGain) }
+    }
+
+    /** Re-apply the gain after the normalization setting changes. */
+    fun refreshLoudness() {
+        currentLoudnessQuery?.let { applyLoudnessFor(it) }
+    }
+
+    // ── Playback speed / pitch ──
+    private fun currentPlaybackParameters(ctx: Context) = androidx.media3.common.PlaybackParameters(
+        com.music.spotui.data.preferences.getPlaybackSpeed(ctx),
+        com.music.spotui.data.preferences.getPlaybackPitch(ctx),
+    )
+
+    /** Push the saved speed and pitch to the player(s). Main thread. */
+    fun applyPlaybackParams() {
+        val ctx = appCtx ?: return
+        val params = currentPlaybackParameters(ctx)
+        runCatching { player?.playbackParameters = params }
+        runCatching { secondaryPlayer?.playbackParameters = params }
+    }
+
+    fun setPlaybackSpeedPitch(context: Context, speed: Float, pitch: Float) {
+        appCtx = context.applicationContext
+        com.music.spotui.data.preferences.setPlaybackSpeedPitch(context, speed, pitch)
+        applyPlaybackParams()
+    }
+
+    // ── Equalizer ──
+    /** Preset curves on five reference bands (60, 230, 910, 3.6k, 14k Hz), in mB. */
+    val EQ_PRESETS: List<Pair<String, IntArray>> = listOf(
+        "Flat" to intArrayOf(0, 0, 0, 0, 0),
+        "Bass boost" to intArrayOf(600, 400, 0, 0, 0),
+        "Vocal" to intArrayOf(-200, 0, 400, 300, 0),
+        "Treble" to intArrayOf(0, 0, 0, 400, 600),
+        "Loudness" to intArrayOf(500, 200, -100, 200, 500),
+        "Acoustic" to intArrayOf(300, 100, 200, 300, 200),
+        "Electronic" to intArrayOf(450, 300, 0, 200, 450),
+    )
+    private val EQ_REF_HZ = doubleArrayOf(60.0, 230.0, 910.0, 3600.0, 14000.0)
+
+    private fun clampBand(eq: android.media.audiofx.Equalizer, mB: Int): Int {
+        val r = eq.bandLevelRange
+        return mB.coerceIn(r[0].toInt(), r[1].toInt())
+    }
+
+    /** Map a 5-band preset onto the device's bands by nearest centre frequency (log scale). */
+    private fun presetLevels(eq: android.media.audiofx.Equalizer, name: String): List<Int> {
+        val curve = EQ_PRESETS.firstOrNull { it.first == name }?.second ?: return List(eq.numberOfBands.toInt()) { 0 }
+        return (0 until eq.numberOfBands.toInt()).map { i ->
+            val hz = (eq.getCenterFreq(i.toShort()) / 1000.0).coerceAtLeast(1.0)
+            val nearest = EQ_REF_HZ.indices.minByOrNull { kotlin.math.abs(ln(EQ_REF_HZ[it]) - ln(hz)) } ?: 0
+            curve[nearest]
+        }
+    }
+
+    /** Make sure an equalizer exists (creates the player if needed). False if unsupported. */
+    fun ensureEqualizer(context: Context): Boolean {
+        ensurePlayer(context.applicationContext)
+        if (equalizer == null) player?.let { attachAudioEffects(it.audioSessionId) }
+        return equalizer != null
+    }
+
+    fun eqBandLevels(): List<Int> = equalizer?.let { eq ->
+        (0 until eq.numberOfBands.toInt()).map { eq.getBandLevel(it.toShort()).toInt() }
+    }.orEmpty()
+
+    fun eqBandRange(): Pair<Int, Int> = equalizer?.bandLevelRange?.let { it[0].toInt() to it[1].toInt() } ?: (-1500 to 1500)
+
+    /** Centre frequency of each band in Hz. */
+    fun eqCenterFreqs(): List<Int> = equalizer?.let { eq ->
+        (0 until eq.numberOfBands.toInt()).map { eq.getCenterFreq(it.toShort()) / 1000 }
+    }.orEmpty()
+
+    fun setEqBand(context: Context, band: Int, mB: Int) {
+        val eq = equalizer ?: return
+        runCatching { eq.setBandLevel(band.toShort(), clampBand(eq, mB).toShort()) }
+        com.music.spotui.data.preferences.setEqState(context, "Custom", eqBandLevels())
+    }
+
+    fun setEqEnabled(context: Context, on: Boolean) {
+        com.music.spotui.data.preferences.setEqEnabledPref(context, on)
+        runCatching { equalizer?.enabled = on }
+    }
+
+    fun applyEqPreset(context: Context, name: String) {
+        val eq = equalizer ?: return
+        val levels = presetLevels(eq, name)
+        levels.forEachIndexed { i, mB -> runCatching { eq.setBandLevel(i.toShort(), clampBand(eq, mB).toShort()) } }
+        com.music.spotui.data.preferences.setEqState(context, name, levels)
     }
 
     private fun ensurePlayer(context: Context) {
@@ -2076,16 +2230,17 @@ object SongPlayer {
             currentPlayerFilter = filter
             // Attach the loudness boost now and again if ExoPlayer swaps the
             // audio session id later.
-            attachLoudness(p.audioSessionId)
+            attachAudioEffects(p.audioSessionId)
             p.addAnalyticsListener(object : androidx.media3.exoplayer.analytics.AnalyticsListener {
                 override fun onAudioSessionIdChanged(
                     eventTime: androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,
                     audioSessionId: Int,
                 ) {
-                    attachLoudness(audioSessionId)
+                    attachAudioEffects(audioSessionId)
                 }
             })
             onPlayerCreated?.invoke(p)
+            applyPlaybackParams()
         }
     }
 
@@ -2571,6 +2726,7 @@ object SongPlayer {
                         .build()
                     sp.setMediaItem(item)
                     sp.prepare()
+                    sp.playbackParameters = currentPlaybackParameters(ctx)
                     sp.volume = 0f
                     sp.playWhenReady = true
                 }
@@ -2638,6 +2794,7 @@ object SongPlayer {
                 return@withContext
             }
             val old = player
+            val outgoingDurationMs = runCatching { old?.duration ?: 0L }.getOrDefault(0L).coerceAtLeast(0L)
             // Promote the incoming (secondary) player to primary.
             currentPlayerFilter?.enabled = false
             secondaryPlayerFilter?.enabled = false
@@ -2662,6 +2819,12 @@ object SongPlayer {
             incoming.setAudioAttributes(buildAudioAttributes(), /* handleAudioFocus = */ true)
             incoming.setHandleAudioBecomingNoisy(true)
             runCatching { old?.stop(); old?.release() }
+            // The outgoing track faded out at its end; the incoming one is now "playing".
+            recordNowTrack(outgoingDurationMs, outgoingDurationMs)
+            nowTrack = Triple(nextSong.url, nextSong.title, nextSong.singer)
+            // Effects follow the audible player: re-attach to the promoted session.
+            attachAudioEffects(incoming.audioSessionId)
+            applyLoudnessFor(nextSong.url)
             isCrossfading = false
             releaseWakeLock("spotui:crossfade")
             // Re-bind the media session to the new player.
