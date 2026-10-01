@@ -1,6 +1,9 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -199,14 +201,12 @@ fun SettingsScreen(navController: NavController) {
                     )
                 },
                 navigationIcon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = TextPrimary,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(26.dp)
-                            .clickable { navController.popBackStack() }
+                        onClick = { navController.popBackStack() },
+                        filled = true,
+                        modifier = Modifier.padding(start = 4.dp),
                     )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Canvas)
@@ -220,7 +220,7 @@ fun SettingsScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(top = padding.calculateTopPadding())
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 20.dp)
                 // Clear the bottom nav + mini player so the last section
                 // (account / log out) isn't hidden under the bar.
                 .padding(bottom = 200.dp)
@@ -282,19 +282,18 @@ fun SettingsScreen(navController: NavController) {
                 Text(
                     text = "Tip for $name",
                     color = TextSecondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
                 )
                 Text(
                     text = tip,
                     color = TextTertiary,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(SonvraShape.md)
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 )
                 Spacer(Modifier.height(8.dp))
@@ -321,18 +320,19 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(SonvraShape.md)
                     .clickable {
                         com.music.spotui.di.SongPlayer.clearCaches(context)
                         android.widget.Toast.makeText(context, "Stream cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                    .background(Surface4)
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .background(SettingsCard)
+                    .border(1.dp, SettingsHairline, SonvraShape.md)
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Clear Audio Stream Cache", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    Text("Unlocks all cached streams and forces re-resolution", color = TextTertiary, fontSize = 11.sp)
+                    Text("Clear Audio Stream Cache", color = TextPrimary, style = MaterialTheme.typography.titleSmall)
+                    Text("Unlocks all cached streams and forces re-resolution", color = TextTertiary, style = MaterialTheme.typography.bodySmall)
                 }
                 Icon(
                     imageVector = Icons.Default.Refresh,
@@ -380,18 +380,17 @@ fun SettingsScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Crossfade", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("Crossfade", color = TextPrimary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Text(
                     if (crossfadeMs <= 0f) "Off" else "${(crossfadeMs / 1000f).let { String.format("%.0f", it) }}s",
                     color = if (crossfadeMs <= 0f) TextSecondary else Accent,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleSmall,
                 )
             }
             Text(
                 "Blend the end of a song into the start of the next",
                 color = TextSecondary,
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodyMedium,
             )
             Slider(
                 value = crossfadeMs,
@@ -402,7 +401,7 @@ fun SettingsScreen(navController: NavController) {
                 colors = SliderDefaults.colors(
                     thumbColor = Accent,
                     activeTrackColor = Accent,
-                    inactiveTrackColor = Surface3,
+                    inactiveTrackColor = Surface4,
                 ),
             )
             Spacer(Modifier.height(12.dp))
@@ -411,38 +410,27 @@ fun SettingsScreen(navController: NavController) {
                 "If a song stops before it ends, open this straight afterwards. It records why " +
                     "playback stopped and how much of the stream arrived.",
                 color = TextSecondary,
-                fontSize = 13.sp,
+                style = MaterialTheme.typography.bodyMedium,
             )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
             ) {
-                Text(
-                    "View playback log",
-                    color = Accent,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .clickable { showPlaybackLog = true }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                com.music.spotui.ui.components.SonvraPillButton(
+                    text = "View playback log",
+                    onClick = { showPlaybackLog = true },
+                    primary = false,
                 )
                 Spacer(Modifier.width(8.dp))
-                Text(
-                    "Clear",
-                    color = TextSecondary,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
-                        .clickable {
-                            PlaybackLog.clear()
-                            android.widget.Toast
-                                .makeText(context, "Playback log cleared", android.widget.Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                com.music.spotui.ui.components.SonvraDialogDismiss(
+                    text = "Clear",
+                    onClick = {
+                        PlaybackLog.clear()
+                        android.widget.Toast
+                            .makeText(context, "Playback log cleared", android.widget.Toast.LENGTH_SHORT)
+                            .show()
+                    },
                 )
             }
 
@@ -456,7 +444,7 @@ fun SettingsScreen(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(SonvraShape.md)
                         .clickable(enabled = !isBackingUp) {
                             if (backupDirUri.isNullOrBlank()) {
                                 dirPickerLauncher.launch(null)
@@ -470,12 +458,12 @@ fun SettingsScreen(navController: NavController) {
                             }
                         }
                         .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                         .padding(horizontal = 12.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Back Up Now", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Back Up Now", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                         Text(
                             when {
                                 isBackingUp -> "Creating backup in background…"
@@ -483,7 +471,7 @@ fun SettingsScreen(navController: NavController) {
                                 else -> "Folder: $folderName"
                             },
                             color = if (backupDirUri.isNullOrBlank()) com.music.spotui.ui.theme.Warning else TextSecondary,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                         )
                     }
@@ -508,9 +496,9 @@ fun SettingsScreen(navController: NavController) {
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(SonvraShape.md)
                             .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                             .clickable(enabled = !isBackingUp) { dirPickerLauncher.launch(null) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -529,21 +517,21 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(SonvraShape.md)
                     .clickable(enabled = !isRestoring) {
                         restoreFileLauncher.launch(arrayOf("application/json", "*/*"))
                     }
                     .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Restore from File", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Restore from File", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                     Text(
                         if (isRestoring) "Restoring backup in background…" else "Import playlists and settings from a Sonvra backup file",
                         color = TextSecondary,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 if (isRestoring) {
@@ -585,7 +573,7 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(SonvraShape.md)
                     .clickable {
                         scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             com.music.spotui.di.SongPlayer.clearCaches(context)
@@ -599,16 +587,16 @@ fun SettingsScreen(navController: NavController) {
                         }
                     }
                     .background(SettingsCard)
-                        .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                     .padding(horizontal = 12.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Reset YouTube & Bot Session", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Reset YouTube & Bot Session", color = TextPrimary, style = MaterialTheme.typography.titleMedium)
                     Text(
                         "Clears session tokens, visitor ID, PoToken generator, and resolved stream caches",
                         color = TextSecondary,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 Icon(
@@ -626,14 +614,15 @@ fun SettingsScreen(navController: NavController) {
             // when a Spotify session exists.
             val loggedIn = com.music.spotui.data.api.SpotifySession.spDc(context).isNotBlank()
             if (loggedIn) {
-                Text(
-                    text = "Log out of Spotify",
-                    color = com.music.spotui.ui.theme.Danger,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
+                // Destructive row: Danger text and icon on a Surface1 card.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
+                        .heightIn(min = 56.dp)
+                        .clip(SonvraShape.md)
+                        .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
                         .clickable {
                             com.music.spotui.data.api.SpotifySession.setSpDc(context, "")
                             com.music.spotui.data.api.Api.HomeCache.clear()
@@ -641,22 +630,70 @@ fun SettingsScreen(navController: NavController) {
                                 popUpTo(0) { inclusive = true }
                             }
                         }
-                        .padding(vertical = 14.dp)
-                )
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(SonvraShape.sm)
+                            .background(com.music.spotui.ui.theme.DangerSurface),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = com.music.spotui.ui.theme.Danger,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = "Log out of Spotify",
+                        color = com.music.spotui.ui.theme.Danger,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
             } else {
-                Text(
-                    text = "Free mode",
-                    color = TextPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(vertical = 6.dp),
-                )
-                Text(
-                    text = "You're using Sonvra for free: search and play any song, no account needed.",
-                    color = TextTertiary,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(bottom = 6.dp),
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(SonvraShape.md)
+                        .background(SettingsCard)
+                        .border(1.dp, SettingsHairline, SonvraShape.md)
+                        .padding(horizontal = 14.dp, vertical = 14.dp),
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(SonvraShape.sm)
+                            .background(Surface3),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = SettingsAccent,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            text = "Free mode",
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = "You're using Sonvra for free: search and play any song, no account needed.",
+                            color = SettingsTextDim,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
             }
             Spacer(Modifier.height(12.dp))
             SectionTitle("About")
@@ -684,37 +721,38 @@ private fun AboutCard() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(SonvraShape.lg)
             .background(
                 androidx.compose.ui.graphics.Brush.verticalGradient(
                     listOf(com.music.spotui.ui.theme.Midnight, Surface2)
                 )
             )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(20.dp))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.lg)
             .padding(horizontal = 20.dp, vertical = 24.dp),
     ) {
         com.music.spotui.ui.components.SonvraMark(height = 52.dp)
         Spacer(Modifier.height(14.dp))
         Text(
             "Sonvra",
-            color = Accent,
+            color = TextPrimary,
             style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
         )
         Text(
             "Version ${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
             color = TextSecondary,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.bodySmall,
         )
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Maintained with ♥ by ", color = TextTertiary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            Text("SATYAN SHARMA", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("Maintained with ♥ by ", color = TextTertiary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text("SATYAN SHARMA", color = Accent, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(10.dp))
         Text(
             "Built on Neptune, Metrolist, SpotiFLAC and SimpMusic. Free software under GPL-3.0.",
             color = TextTertiary,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.bodySmall,
             lineHeight = 17.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
@@ -723,8 +761,8 @@ private fun AboutCard() {
 
 // Shared surfaces so every settings group reads as one consistent card system.
 private val SettingsAccent = com.music.spotui.ui.theme.Accent
-private val SettingsCard = Surface2
-private val SettingsHairline = Accent.copy(alpha = 0.1f)
+private val SettingsCard = com.music.spotui.ui.theme.Surface1
+private val SettingsHairline = com.music.spotui.ui.theme.Hairline
 private val SettingsTextDim = TextSecondary
 
 /**
@@ -736,8 +774,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text.uppercase(),
         color = SettingsAccent,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.labelSmall,
         letterSpacing = 1.2.sp,
         modifier = Modifier.padding(start = 4.dp, top = 22.dp, bottom = 10.dp)
     )
@@ -761,9 +798,9 @@ private fun SettingsClickRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(SonvraShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+            .border(1.dp, SettingsHairline, SonvraShape.md)
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -773,15 +810,15 @@ private fun SettingsClickRow(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(38.dp)
-                    .clip(RoundedCornerShape(11.dp))
-                    .background(SettingsAccent.copy(alpha = 0.14f)),
+                    .clip(SonvraShape.sm)
+                    .background(Surface3),
             ) { leadingIcon() }
             Spacer(Modifier.width(12.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = TextPrimary, style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, color = subtitleColor, fontSize = 12.sp, lineHeight = 16.sp)
+            Text(subtitle, color = subtitleColor, style = MaterialTheme.typography.bodySmall, lineHeight = 16.sp)
         }
         if (trailing != null) {
             Spacer(Modifier.width(12.dp))
@@ -801,28 +838,29 @@ private fun SettingsSwitchRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(SonvraShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+            .border(1.dp, SettingsHairline, SonvraShape.md)
             .clickable { onCheckedChange(!checked) }
             .padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(title, color = TextPrimary, style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, color = SettingsTextDim, fontSize = 12.sp, lineHeight = 16.sp)
+            Text(subtitle, color = SettingsTextDim, style = MaterialTheme.typography.bodySmall, lineHeight = 16.sp)
         }
         Spacer(Modifier.width(12.dp))
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                // Amber is a light accent, so the thumb goes dark when active.
+                // Dark thumb on the azure track keeps the active state crisp.
                 checkedThumbColor = OnAccent,
                 checkedTrackColor = SettingsAccent,
                 uncheckedThumbColor = TextSecondary,
                 uncheckedTrackColor = Surface3,
+                uncheckedBorderColor = com.music.spotui.ui.theme.Hairline,
             ),
         )
     }
@@ -838,16 +876,15 @@ private fun QualityPicker(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(SonvraShape.md)
             .background(SettingsCard)
-            .border(1.dp, SettingsHairline, RoundedCornerShape(14.dp))
+            .border(1.dp, SettingsHairline, SonvraShape.md)
             .padding(vertical = 12.dp),
     ) {
         Text(
             title,
             color = TextPrimary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.padding(horizontal = 14.dp),
         )
         Spacer(Modifier.height(10.dp))
@@ -857,7 +894,8 @@ private fun QualityPicker(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onSelect(q) }
-                    .background(if (isSel) SettingsAccent.copy(alpha = 0.12f) else Color.Transparent)
+                    .heightIn(min = 52.dp)
+                    .background(if (isSel) Surface4 else Color.Transparent)
                     .padding(horizontal = 14.dp, vertical = 11.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -865,11 +903,11 @@ private fun QualityPicker(
                     Text(
                         q.label,
                         color = if (isSel) SettingsAccent else TextPrimary,
-                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = if (isSel) FontWeight.SemiBold else FontWeight.Normal,
                     )
                     Spacer(Modifier.height(1.dp))
-                    Text(q.detail, color = SettingsTextDim, fontSize = 12.sp)
+                    Text(q.detail, color = SettingsTextDim, style = MaterialTheme.typography.bodySmall)
                 }
                 if (isSel) {
                     Icon(
@@ -903,8 +941,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
             Text(
                 "Playback log",
                 color = TextPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
             )
         },
         text = {
@@ -912,7 +949,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                 Text(
                     "Nothing recorded yet. Play a song, and if it stops early come straight back here.",
                     color = TextSecondary,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             } else {
                 Column(
@@ -924,7 +961,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                         Text(
                             line,
                             color = TextSecondary,
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             fontFamily = FontFamily.Monospace,
                             modifier = Modifier.padding(vertical = 2.dp),
                         )
@@ -933,9 +970,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close", color = Accent, fontWeight = FontWeight.SemiBold)
-            }
+            com.music.spotui.ui.components.SonvraDialogConfirm(text = "Close", onClick = onDismiss)
         },
         dismissButton = {
             if (lines.isNotEmpty()) {
@@ -952,7 +987,7 @@ private fun PlaybackLogDialog(onDismiss: () -> Unit) {
                             .show()
                     },
                 ) {
-                    Text("Copy", color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                    Text("Copy", color = TextPrimary, style = MaterialTheme.typography.labelLarge)
                 }
             }
         },

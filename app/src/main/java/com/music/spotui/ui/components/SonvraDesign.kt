@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,6 +61,12 @@ import com.music.spotui.ui.theme.SonvraDisplay
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.theme.SonvraMotion
+import com.music.spotui.ui.theme.SonvraShape
+import com.music.spotui.ui.theme.SonvraSpacing
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Danger
+import com.music.spotui.ui.theme.DangerSurface
+import androidx.compose.foundation.layout.heightIn
 
 /**
  * Press feedback: the element eases down to 97% while held and springs back on release.
@@ -90,15 +95,15 @@ fun Modifier.sonvraClickable(ripple: Boolean = false, onClick: () -> Unit): Modi
         )
 }
 
-/** Sheet grab handle: a 36x4dp soft light pill. */
+/** Sheet grab handle: a 32x4dp TextTertiary pill at 40%. */
 @Composable
 fun SonvraDragHandle() {
     Box(
         modifier = Modifier
             .padding(top = 10.dp, bottom = 6.dp)
-            .size(width = 36.dp, height = 4.dp)
-            .clip(RoundedCornerShape(50))
-            .background(TextPrimary.copy(alpha = 0.22f)),
+            .size(width = 32.dp, height = 4.dp)
+            .clip(SonvraShape.pill)
+            .background(TextTertiary.copy(alpha = 0.4f)),
     )
 }
 
@@ -157,7 +162,7 @@ fun SonvraSectionHeader(
         verticalAlignment = Alignment.Bottom,
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 18.dp, end = 12.dp, top = 24.dp, bottom = 12.dp),
+            .padding(start = SonvraSpacing.gutter, end = SonvraSpacing.sm, top = SonvraSpacing.xl, bottom = SonvraSpacing.sm),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -177,7 +182,7 @@ fun SonvraSectionHeader(
                 style = MaterialTheme.typography.labelLarge,
                 color = Accent,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
+                    .clip(SonvraShape.pill)
                     .clickable(onClick = onAction)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
@@ -186,7 +191,7 @@ fun SonvraSectionHeader(
 }
 
 /** Loading placeholder: a Surface3 block with a soft light sweep. */
-fun Modifier.shimmer(shape: Shape = RoundedCornerShape(8.dp)): Modifier = composed {
+fun Modifier.shimmer(shape: Shape = SonvraShape.sm): Modifier = composed {
     val transition = rememberInfiniteTransition(label = "shimmer")
     val progress by transition.animateFloat(
         initialValue = 0f,
@@ -220,9 +225,9 @@ fun SonvraShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 8.dp),
+            .padding(horizontal = SonvraSpacing.gutter, vertical = 8.dp),
     ) {
-        Box(Modifier.size(artSize).shimmer(RoundedCornerShape(10.dp)))
+        Box(Modifier.size(artSize).shimmer(SonvraShape.sm))
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Box(Modifier.fillMaxWidth(0.62f).height(12.dp).shimmer())
             Spacer(Modifier.height(8.dp))
@@ -235,7 +240,7 @@ fun SonvraShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
 @Composable
 fun SonvraShimmerCard(modifier: Modifier = Modifier, size: Dp = 156.dp) {
     Column(modifier = modifier.width(size)) {
-        Box(Modifier.size(size).shimmer(RoundedCornerShape(16.dp)))
+        Box(Modifier.size(size).shimmer(SonvraShape.md))
         Spacer(Modifier.height(9.dp))
         Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
         Spacer(Modifier.height(7.dp))
@@ -264,9 +269,9 @@ fun SonvraChip(
         style = MaterialTheme.typography.labelLarge,
         color = if (selected) OnAccent else TextPrimary,
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(SonvraShape.pill)
             .background(if (selected) Accent else Surface3)
-            .border(1.dp, if (selected) Color.Transparent else Hairline, RoundedCornerShape(50))
+            .border(1.dp, if (selected) Color.Transparent else Hairline, SonvraShape.pill)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
     )
@@ -285,9 +290,9 @@ fun SonvraPillButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(SonvraShape.pill)
             .then(if (primary) Modifier.background(AccentBrush) else Modifier.background(Surface3))
-            .border(1.dp, if (primary) Color.Transparent else Hairline, RoundedCornerShape(50))
+            .border(1.dp, if (primary) Color.Transparent else Hairline, SonvraShape.pill)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
@@ -317,12 +322,12 @@ fun SonvraEmptyState(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(68.dp)
-                .clip(CircleShape)
+                .size(64.dp)
+                .clip(SonvraShape.md)
                 .background(Surface3)
-                .border(1.dp, Hairline, CircleShape),
+                .border(1.dp, Hairline, SonvraShape.md),
         ) {
-            Icon(icon, contentDescription = null, tint = Accent, modifier = Modifier.size(30.dp))
+            Icon(icon, contentDescription = null, tint = Accent, modifier = Modifier.size(28.dp))
         }
         Spacer(Modifier.height(16.dp))
         Text(
@@ -342,6 +347,44 @@ fun SonvraEmptyState(
             Spacer(Modifier.height(18.dp))
             SonvraPillButton(text = actionLabel, onClick = onAction)
         }
+    }
+}
+
+/**
+ * Dialog confirm action: an accent-gradient pill with OnAccent text. Destructive
+ * actions ([danger]) use a DangerSurface pill with Danger text instead.
+ */
+@Composable
+fun SonvraDialogConfirm(
+    text: String,
+    onClick: () -> Unit,
+    danger: Boolean = false,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .heightIn(min = 44.dp)
+            .clip(SonvraShape.pill)
+            .then(if (danger) Modifier.background(DangerSurface) else Modifier.background(AccentBrush))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = if (danger) Danger else OnAccent)
+    }
+}
+
+/** Dialog dismiss action: plain TextPrimary text with a 48dp touch target. */
+@Composable
+fun SonvraDialogDismiss(text: String, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .clip(SonvraShape.pill)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+    ) {
+        Text(text = text, style = MaterialTheme.typography.labelLarge, color = TextPrimary)
     }
 }
 

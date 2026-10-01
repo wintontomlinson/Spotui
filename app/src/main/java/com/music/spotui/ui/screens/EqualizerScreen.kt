@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -115,6 +116,7 @@ fun EqualizerScreen(navController: NavController) {
                         checkedTrackColor = Accent,
                         uncheckedThumbColor = TextSecondary,
                         uncheckedTrackColor = Surface3,
+                        uncheckedBorderColor = Hairline,
                     ),
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -135,18 +137,17 @@ fun EqualizerScreen(navController: NavController) {
 
         Text(
             "PRESETS",
-            color = TextTertiary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            color = Accent,
+            style = MaterialTheme.typography.labelSmall,
             letterSpacing = 1.4.sp,
-            modifier = Modifier.padding(start = 18.dp, top = 12.dp, bottom = 10.dp),
+            modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 10.dp),
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 20.dp),
         ) {
             (SongPlayer.EQ_PRESETS.map { it.first } + if (preset == "Custom") listOf("Custom") else emptyList())
                 .forEach { name ->
@@ -171,12 +172,12 @@ fun EqualizerScreen(navController: NavController) {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
-                .padding(16.dp)
-                .padding(top = 12.dp)
+                .padding(20.dp)
+                .padding(top = 8.dp)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(SonvraShape.lg)
                 .background(Surface2)
-                .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                .border(1.dp, Hairline, SonvraShape.lg)
                 .padding(vertical = 20.dp, horizontal = 6.dp),
         ) {
             levels.forEachIndexed { band, level ->
@@ -184,7 +185,7 @@ fun EqualizerScreen(navController: NavController) {
                     Text(
                         formatDb(level),
                         color = if (enabled) Accent else TextTertiary,
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(Modifier.height(8.dp))
@@ -201,15 +202,15 @@ fun EqualizerScreen(navController: NavController) {
                         onChangeFinished = { SongPlayer.setEqBand(context, band, levels[band]) },
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(formatHz(freqs.getOrNull(band) ?: 0), color = TextSecondary, fontSize = 11.sp)
+                    Text(formatHz(freqs.getOrNull(band) ?: 0), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
         Text(
             "Changes apply instantly and are kept for every song.",
             color = TextTertiary,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 18.dp),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(horizontal = 20.dp),
         )
     }
 }
@@ -226,7 +227,7 @@ private fun formatDb(mB: Int): String {
     return if (db > 0) "+$txt" else txt
 }
 
-/** A 48dp-wide vertical slider: accent fill from 0 dB toward the thumb. */
+/** A 48dp-wide vertical slider: Surface4 track, accent fill from 0 dB toward the thumb. */
 @Composable
 private fun VerticalBandSlider(
     value: Int,
@@ -275,7 +276,7 @@ private fun VerticalBandSlider(
         val h = size.height
         fun yOf(v: Int) = h * (1f - (v - min).toFloat() / span)
         drawRoundRect(
-            color = Surface3,
+            color = com.music.spotui.ui.theme.Surface4,
             topLeft = Offset(cx - trackW / 2, 0f),
             size = Size(trackW, h),
             cornerRadius = CornerRadius(trackW / 2),

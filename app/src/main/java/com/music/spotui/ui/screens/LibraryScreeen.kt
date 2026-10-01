@@ -1,6 +1,10 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
+import androidx.compose.foundation.layout.heightIn
+import com.music.spotui.ui.components.shimmer
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.animation.AnimatedVisibility
@@ -35,7 +39,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -153,13 +156,10 @@ private fun LibraryRowMenu(
         contentDescription = "More options for ${entry.name}",
         tint = TextTertiary,
         modifier = Modifier
-            .size(34.dp)
+            .size(48.dp)
             .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { showSheet = true }
-            .padding(7.dp),
+            .clickable { showSheet = true }
+            .padding(13.dp),
     )
 
     if (showSheet) {
@@ -179,7 +179,7 @@ private fun LibraryRowMenu(
                 Text(
                     text = entry.name,
                     color = TextPrimary,
-                    fontSize = 15.sp,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -189,6 +189,7 @@ private fun LibraryRowMenu(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = 52.dp)
                         .clickable {
                             showSheet = false
                             confirmDelete = true
@@ -204,7 +205,7 @@ private fun LibraryRowMenu(
                     Text(
                         text = if (isLocalPlaylist) "Delete playlist" else "Remove from library",
                         color = TextPrimary,
-                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(start = 16.dp),
                     )
                 }
@@ -220,7 +221,7 @@ private fun LibraryRowMenu(
                 Text(
                     text = if (isLocalPlaylist) "Delete playlist?" else "Remove from library?",
                     color = TextPrimary,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge,
                 )
             },
             text = {
@@ -232,17 +233,15 @@ private fun LibraryRowMenu(
                         "\"${entry.name}\" will be taken out of your library. " +
                             "You can always open it again from search."
                     },
-                    color = TextTertiary,
-                    fontSize = 14.sp,
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
-                Text(
+                com.music.spotui.ui.components.SonvraDialogConfirm(
                     text = if (isLocalPlaylist) "Delete" else "Remove",
-                    color = com.music.spotui.ui.theme.Danger,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clickable {
+                    danger = true,
+                    onClick = {
                             if (isLocalPlaylist) {
                                 LocalPlaylistPref.deletePlaylist(context, entry.spotifyId)
                             }
@@ -255,17 +254,13 @@ private fun LibraryRowMenu(
                             Api.HomeCache.library = null
                             confirmDelete = false
                             onChanged()
-                        }
-                        .padding(8.dp),
+                        },
                 )
             },
             dismissButton = {
-                Text(
+                com.music.spotui.ui.components.SonvraDialogDismiss(
                     text = "Cancel",
-                    color = accent,
-                    modifier = Modifier
-                        .clickable { confirmDelete = false }
-                        .padding(8.dp),
+                    onClick = { confirmDelete = false },
                 )
             },
         )
@@ -294,7 +289,7 @@ fun LibraryFilterChips(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -302,8 +297,8 @@ fun LibraryFilterChips(
             item {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
+                        .size(36.dp)
+                        .clip(SonvraShape.sm)
                         .background(Surface3)
                         .clickable { onClearFilters() },
                     contentAlignment = Alignment.Center
@@ -361,26 +356,26 @@ private fun LibraryChipItem(
     onClick: () -> Unit
 ) {
     val backgroundColor = if (isSelected) Accent else Surface3
-    val textColor = if (isSelected) Surface3 else TextPrimary
+    val textColor = if (isSelected) com.music.spotui.ui.theme.OnAccent else TextPrimary
 
+    // Segmented look: sm-radius chips rather than round pills.
     Box(
         modifier = Modifier
-            .height(34.dp)
-            .clip(RoundedCornerShape(17.dp))
+            .height(36.dp)
+            .clip(SonvraShape.sm)
             .background(backgroundColor)
             .then(
                 if (isSelected) Modifier
-                else Modifier.border(1.dp, TextPrimary.copy(alpha = 0.10f), RoundedCornerShape(17.dp))
+                else Modifier.border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.sm)
             )
             .clickable { onClick() }
-            .padding(horizontal = 15.dp),
+            .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
             color = textColor,
-            fontSize = 13.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
@@ -417,7 +412,7 @@ fun LibraryScreen(navController: NavController) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
             containerColor = Surface2,
-            title = { Text("Create Local Playlist", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text("Create Local Playlist", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
             text = {
                 TextField(
                     value = playlistNameInput,
@@ -425,8 +420,8 @@ fun LibraryScreen(navController: NavController) {
                     placeholder = { Text("Playlist name", color = TextTertiary) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Surface4,
-                        unfocusedContainerColor = Surface4,
+                        focusedContainerColor = Surface3,
+                        unfocusedContainerColor = Surface3,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         cursorColor = Accent,
@@ -435,35 +430,26 @@ fun LibraryScreen(navController: NavController) {
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(SonvraShape.md)
                 )
             },
             confirmButton = {
-                Text(
-                    "Create",
-                    color = Accent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable {
+                com.music.spotui.ui.components.SonvraDialogConfirm(
+                    text = "Create",
+                    onClick = {
                             val name = playlistNameInput.trim().ifBlank { "My Playlist" }
                             val created = LocalPlaylistPref.createPlaylist(context, name)
                             Api.HomeCache.library = null
                             libraryViewModel.load()
                             showCreateDialog = false
                             navController.navigate(playlistRoute(created.id, created.name))
-                        }
-                        .padding(8.dp)
+                        },
                 )
             },
             dismissButton = {
-                Text(
-                    "Cancel",
-                    color = TextTertiary,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable { showCreateDialog = false }
-                        .padding(8.dp)
+                com.music.spotui.ui.components.SonvraDialogDismiss(
+                    text = "Cancel",
+                    onClick = { showCreateDialog = false },
                 )
             }
         )
@@ -485,62 +471,66 @@ fun LibraryScreen(navController: NavController) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp, 12.dp, 16.dp, 8.dp),
+                .padding(20.dp, 12.dp, 12.dp, 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Library",
-                style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+                style = androidx.compose.material3.MaterialTheme.typography.headlineLarge,
                 color = TextPrimary,
                 modifier = Modifier.weight(1f)
             )
             // Add Playlist Button
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(Surface3)
-                    .clickable { showCreateDialog = true },
+                    .clickable { showCreateDialog = true }
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .background(Surface3),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Playlist", tint = TextPrimary, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Add, contentDescription = "Create Playlist", tint = TextPrimary, modifier = Modifier.size(20.dp))
             }
-            Spacer(modifier = Modifier.width(8.dp))
 
             // Search & Filter Toggle Button
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Accent else Surface3)
-                    .clickable { isSearchVisible = !isSearchVisible },
+                    .clickable { isSearchVisible = !isSearchVisible }
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .background(if (isSearchVisible || searchQuery.isNotEmpty()) Accent else Surface3),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
                     contentDescription = "Search & Filter",
                     tint = if (isSearchVisible || searchQuery.isNotEmpty()) com.music.spotui.ui.theme.OnAccent else TextPrimary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
 
             // Grid/list toggle removed: the library is a single, consistent list view.
 
             // Profile / Settings Button
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
-                    .background(Surface4)
-                    .clickable { navController.navigate(Routes.Settings.route) },
+                    .clickable { navController.navigate(Routes.Settings.route) }
+                    .padding(4.dp)
+                    .clip(CircleShape)
+                    .background(Surface4),
                 contentAlignment = Alignment.Center
             ) {
                 val avatar = (account as? Response.Success)?.data?.imageUrl.orEmpty()
                 if (avatar.isNotBlank()) {
-                    AccountAvatar(avatar, 34.dp)
+                    AccountAvatar(avatar, 40.dp)
                 } else {
-                    Icon(Icons.Default.Person, contentDescription = "Account", tint = TextPrimary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Person, contentDescription = "Account", tint = TextPrimary, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -588,9 +578,10 @@ fun LibraryScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
-                        .height(36.dp)
+                        .clip(SonvraShape.md)
+                        .height(40.dp)
                         .background(Surface3)
+                        .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.md)
                         .padding(horizontal = 10.dp)
                 ) {
                     Icon(
@@ -604,11 +595,7 @@ fun LibraryScreen(navController: NavController) {
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         modifier = Modifier.weight(1f),
-                        textStyle = TextStyle.Default.copy(
-                            fontSize = 13.sp,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        ),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
                         singleLine = true,
                         cursorBrush = SolidColor(Accent),
                         decorationBox = { innerTextField ->
@@ -617,8 +604,7 @@ fun LibraryScreen(navController: NavController) {
                                     Text(
                                         text = "Search in library",
                                         color = TextTertiary,
-                                        fontSize = 13.sp
-                                    )
+                                        style = MaterialTheme.typography.bodyMedium)
                                 }
                                 innerTextField()
                             }
@@ -631,8 +617,10 @@ fun LibraryScreen(navController: NavController) {
                             contentDescription = "Clear search",
                             tint = TextTertiary,
                             modifier = Modifier
-                                .size(16.dp)
+                                .size(36.dp)
+                                .clip(CircleShape)
                                 .clickable { searchQuery = "" }
+                                .padding(10.dp)
                         )
                     }
                 }
@@ -642,9 +630,10 @@ fun LibraryScreen(navController: NavController) {
                 // Sort Pill Button
                 Box(
                     modifier = Modifier
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(18.dp))
+                        .height(40.dp)
+                        .clip(SonvraShape.sm)
                         .background(Surface3)
+                        .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.sm)
                         .clickable { showSortSheet = true }
                         .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center
@@ -653,9 +642,7 @@ fun LibraryScreen(navController: NavController) {
                         Text(
                             text = currentSort.label,
                             color = TextPrimary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                            style = MaterialTheme.typography.labelMedium)
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = "Sort Options",
@@ -751,11 +738,10 @@ fun LibraryScreen(navController: NavController) {
                     Text(
                         text = "Sort by",
                         color = TextPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Surface3)
+                    HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
                     Spacer(modifier = Modifier.height(4.dp))
                     LibrarySortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -778,7 +764,8 @@ fun LibraryScreen(navController: NavController) {
                                     setLibrarySortOption(context, currentSort, isDescending)
                                     showSortSheet = false
                                 }
-                                .padding(16.dp, 14.dp),
+                                .heightIn(min = 52.dp)
+                                .padding(20.dp, 14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -791,7 +778,7 @@ fun LibraryScreen(navController: NavController) {
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == LibrarySortOption.RECENTS),
                                 color = if (isSelected) Accent else TextPrimary,
-                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSelected) {
@@ -844,7 +831,7 @@ fun SumUpLibraryScreen(
             Text(
                 text = "Nothing else here yet",
                 color = TextPrimary,
-                fontSize = 17.sp,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
@@ -852,24 +839,14 @@ fun SumUpLibraryScreen(
             Text(
                 text = "Songs you save and playlists you create will appear here.",
                 color = TextTertiary,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(20.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Accent)
-                    .clickable { onClearFilters() }
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = "Clear filters",
-                    color = Surface3,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            com.music.spotui.ui.components.SonvraPillButton(
+                text = "Clear filters",
+                onClick = { onClearFilters() },
+            )
         }
         return
     }
@@ -894,23 +871,17 @@ fun SumUpLibraryScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp, 6.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { openLibraryEntry(entry, navController) }
+                    .heightIn(min = 64.dp)
+                    .clickable { openLibraryEntry(entry, navController) }
+                    .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp)
             ) {
                 if (entry.spotifyId == Api.HomeCache.DOWNLOADS_ID) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(55.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(Surface3, Surface1)
-                                )
-                            ),
+                            .size(56.dp)
+                            .clip(SonvraShape.sm)
+                            .background(Surface3),
                     ) {
                         Icon(
                             painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Download),
@@ -923,18 +894,14 @@ fun SumUpLibraryScreen(
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(55.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(AccentDeep, Midnight)
-                                )
-                            ),
+                            .size(56.dp)
+                            .clip(SonvraShape.sm)
+                            .background(com.music.spotui.ui.theme.AccentBrush),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = "Liked Songs",
-                            tint = TextPrimary,
+                            tint = com.music.spotui.ui.theme.OnAccent,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -942,11 +909,11 @@ fun SumUpLibraryScreen(
                     GlideImage(
                         modifier = Modifier
                             .size(56.dp)
-                            .clip(RoundedCornerShape(if (entry.isPlaylist) 10.dp else 6.dp))
+                            .clip(if (entry.isPlaylist) SonvraShape.sm else SonvraShape.xs)
                             .border(
                                 1.dp,
-                                TextPrimary.copy(alpha = 0.06f),
-                                RoundedCornerShape(if (entry.isPlaylist) 10.dp else 6.dp),
+                                com.music.spotui.ui.theme.Hairline,
+                                if (entry.isPlaylist) SonvraShape.sm else SonvraShape.xs,
                             ),
                         model = entry.coverUri,
                         contentScale = ContentScale.Crop,
@@ -956,7 +923,7 @@ fun SumUpLibraryScreen(
                     )
                 }
                 Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                    Text(text = entry.name, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text = entry.name, color = TextPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (entry.isLocal) {
                             Icon(
@@ -968,7 +935,7 @@ fun SumUpLibraryScreen(
                                     .padding(end = 3.dp)
                             )
                         }
-                        Text(text = entry.subtitle, color = TextTertiary, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(text = entry.subtitle, color = TextTertiary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 // Deleting a playlist used to mean opening it and finding a small icon in
@@ -991,9 +958,8 @@ fun SumUpLibraryScreen(
                 Text(
                     text = "Artists you follow",
                     color = TextPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(20.dp, 16.dp, 20.dp, 4.dp),
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(20.dp, 24.dp, 20.dp, 8.dp),
                 )
             }
             items(followedArtists) { artist ->
@@ -1016,8 +982,8 @@ fun SumUpLibraryScreen(
                         contentDescription = ""
                     )
                     Column(modifier = Modifier.padding(start = 12.dp)) {
-                        Text(text = artist.name, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(text = "Artist", color = TextTertiary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text(text = artist.name, color = TextPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(text = "Artist", color = TextTertiary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -1059,11 +1025,11 @@ private fun LibrarySkeleton(padding: PaddingValues) {
                     .fillMaxWidth()
                     .padding(20.dp, 6.dp)
             ) {
-                Box(modifier = Modifier.size(55.dp).clip(RoundedCornerShape(4.dp)).background(Surface3))
+                Box(modifier = Modifier.size(56.dp).shimmer(SonvraShape.sm))
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Box(modifier = Modifier.height(14.dp).width(160.dp).clip(RoundedCornerShape(3.dp)).background(Surface3))
+                    Box(modifier = Modifier.height(14.dp).width(160.dp).shimmer(SonvraShape.xs))
                     Spacer(modifier = Modifier.height(6.dp))
-                    Box(modifier = Modifier.height(11.dp).width(90.dp).clip(RoundedCornerShape(3.dp)).background(Surface3))
+                    Box(modifier = Modifier.height(11.dp).width(90.dp).shimmer(SonvraShape.xs))
                 }
             }
         }
@@ -1092,7 +1058,7 @@ private fun LibraryEmptyState(navController: NavController) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
             containerColor = Surface2,
-            title = { Text("Create playlist", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text("Create playlist", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
             text = {
                 TextField(
                     value = name,
@@ -1100,35 +1066,33 @@ private fun LibraryEmptyState(navController: NavController) {
                     placeholder = { Text("Playlist name", color = TextTertiary) },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Surface4,
-                        unfocusedContainerColor = Surface4,
+                        focusedContainerColor = Surface3,
+                        unfocusedContainerColor = Surface3,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
                         cursorColor = accent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier.fillMaxWidth().clip(SonvraShape.md),
                 )
             },
             confirmButton = {
-                Text(
-                    "Create", color = accent, fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clickable {
+                com.music.spotui.ui.components.SonvraDialogConfirm(
+                    text = "Create",
+                    onClick = {
                             val n = name.trim().ifBlank { "My Playlist" }
                             val created = LocalPlaylistPref.createPlaylist(context, n)
                             Api.HomeCache.library = null
                             showCreate = false
                             navController.navigate(playlistRoute(created.id, created.name))
-                        }
-                        .padding(8.dp),
+                        },
                 )
             },
             dismissButton = {
-                Text(
-                    "Cancel", color = TextTertiary,
-                    modifier = Modifier.clickable { showCreate = false }.padding(8.dp),
+                com.music.spotui.ui.components.SonvraDialogDismiss(
+                    text = "Cancel",
+                    onClick = { showCreate = false },
                 )
             },
         )
@@ -1143,55 +1107,41 @@ private fun LibraryEmptyState(navController: NavController) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(64.dp)
-                .clip(CircleShape)
-                .background(accent.copy(alpha = 0.14f)),
+                .clip(SonvraShape.md)
+                .background(Surface3)
+                .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.md),
         ) {
             Icon(
                 Icons.Default.Add,
                 contentDescription = null,
                 tint = accent,
-                modifier = Modifier.size(30.dp),
+                modifier = Modifier.size(28.dp),
             )
         }
         Spacer(Modifier.height(16.dp))
         Text(
             "Build your collection",
             color = TextPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleLarge,
         )
         Spacer(Modifier.height(6.dp))
         Text(
             "Create a playlist, or like and download songs from Explore. They will all show up here.",
             color = TextSecondary,
-            fontSize = 13.sp,
+            style = MaterialTheme.typography.bodyMedium,
             lineHeight = 18.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                "Create playlist",
-                color = Surface3,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(accent)
-                    .clickable { showCreate = true }
-                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            com.music.spotui.ui.components.SonvraPillButton(
+                text = "Create playlist",
+                onClick = { showCreate = true },
             )
-            Text(
-                "Explore",
-                color = TextPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Surface3)
-                    .border(1.dp, TextPrimary.copy(alpha = 0.10f), RoundedCornerShape(50))
-                    .clickable { navController.navigate(Routes.YtSearch.route) }
-                    .padding(horizontal = 20.dp, vertical = 11.dp),
+            com.music.spotui.ui.components.SonvraPillButton(
+                text = "Explore",
+                onClick = { navController.navigate(Routes.YtSearch.route) },
+                primary = false,
             )
         }
     }
@@ -1208,9 +1158,8 @@ private fun LibraryQuickAccess(navController: NavController) {
         val route: String,
     )
 
-    // One cohesive palette instead of the old blue/teal/purple mix. Liked songs leads in
-    // the amber accent; the rest are graded dark surfaces with an amber tinted icon, so
-    // the grid reads as one premium set rather than four unrelated colours.
+    // One cohesive palette. Liked songs leads in the azure accent gradient; the rest are
+    // Surface3 tiles with an azure icon, so the grid reads as one premium set.
     // Each tile states how much is actually in it. A tile captioned "Saved offline" that
     // opens an empty screen is a dead end; a live count sets the expectation up front and
     // makes the tiles worth glancing at.
@@ -1241,33 +1190,33 @@ private fun LibraryQuickAccess(navController: NavController) {
         Tile(
             "Recently played", caption(counts[1], "Nothing played yet", "play"),
             Icons.Default.DateRange,
-            Surface4, Surface1,
+            Surface3, Surface3,
             Routes.History.route,
         ),
         Tile(
             "Downloads", caption(counts[2], "Nothing saved offline"),
-            Icons.Default.Add,
-            Surface4, Surface1,
+            androidx.compose.material.icons.Icons.Rounded.Download,
+            Surface3, Surface3,
             Routes.Downloads.route,
         ),
         Tile(
             "Local files", caption(counts[3], "Music on this device", "track"),
             Icons.Default.PhoneAndroid,
-            Surface4, Surface1,
+            Surface3, Surface3,
             Routes.LocalFiles.route,
         ),
     )
     val accent = com.music.spotui.ui.theme.Accent
 
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         tiles.chunked(2).forEach { pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 pair.forEach { tile ->
-                    // The Liked tile is the amber one, so its content is dark for contrast;
-                    // the dark tiles use an amber icon and white text.
+                    // The Liked tile is the azure one, so its content is dark for contrast;
+                    // the Surface3 tiles use an azure icon and light text.
                     val onTile = if (tile.route == Routes.Liked.route) com.music.spotui.ui.theme.OnAccent else TextPrimary
                     val iconTint = if (tile.route == Routes.Liked.route) com.music.spotui.ui.theme.OnAccent else accent
                     Column(
@@ -1275,22 +1224,20 @@ private fun LibraryQuickAccess(navController: NavController) {
                             .weight(1f)
                             .shadow(
                                 elevation = 8.dp,
-                                shape = RoundedCornerShape(16.dp),
+                                shape = SonvraShape.md,
                                 clip = false,
                                 ambientColor = Color.Black,
                                 spotColor = Color.Black,
                             )
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(
-                                androidx.compose.ui.graphics.Brush.linearGradient(
-                                    listOf(tile.start, tile.end)
+                            .clip(SonvraShape.md)
+                            .then(
+                                if (tile.route == Routes.Liked.route) Modifier.background(com.music.spotui.ui.theme.AccentBrush)
+                                else Modifier.background(
+                                    androidx.compose.ui.graphics.Brush.linearGradient(listOf(tile.start, tile.end))
                                 )
                             )
-                            .border(1.dp, TextPrimary.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { navController.navigate(tile.route) }
+                            .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.md)
+                            .clickable { navController.navigate(tile.route) }
                             .padding(16.dp),
                     ) {
                         // Icon sits in a soft rounded chip so each tile has a clear,
@@ -1298,12 +1245,12 @@ private fun LibraryQuickAccess(navController: NavController) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .size(40.dp)
+                                .clip(SonvraShape.sm)
                                 .background(
                                     if (tile.route == Routes.Liked.route)
                                         com.music.spotui.ui.theme.OnAccent.copy(alpha = 0.12f)
-                                    else accent.copy(alpha = 0.14f)
+                                    else Surface4
                                 ),
                         ) {
                             Icon(
@@ -1317,15 +1264,14 @@ private fun LibraryQuickAccess(navController: NavController) {
                         Text(
                             text = tile.label,
                             color = onTile,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall,
                             maxLines = 1,
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
                             text = tile.caption,
                             color = onTile.copy(alpha = 0.72f),
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                         )
                     }

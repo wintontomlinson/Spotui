@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
@@ -68,6 +69,8 @@ import com.music.spotui.ui.theme.Surface2
 import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextTertiary
 import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextDisabled
 
 /**
  * Long-press context menu for a single track. Mirrors Spotify's "3-dot" sheet:
@@ -126,23 +129,23 @@ fun SongOptionsSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 4.dp, 16.dp, 12.dp)
+                    .padding(20.dp, 4.dp, 20.dp, 12.dp)
             ) {
                 GlideImage(
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .clip(SonvraShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     contentDescription = ""
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(song.title, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(song.singer, color = TextTertiary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.title, color = TextPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.singer, color = TextSecondary, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            HorizontalDivider(color = Surface3)
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
 
             SongMenuRow(Icons.Default.PlayArrow, "Play next") {
                 playerViewModel.playNext(song)
@@ -173,7 +176,7 @@ fun SongOptionsSheet(
             SongMenuRow(
                 icon = if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 label = if (liked) "Remove from Liked Songs" else "Add to Liked Songs",
-                iconTint = if (liked) Color(Accent.toArgb()) else TextPrimary,
+                iconTint = if (liked) com.music.spotui.ui.theme.Accent else TextPrimary,
             ) {
                 if (liked) removeLikedSongId(context, song.id.toString())
                 // Save the whole track so Liked Songs can show it without any account.
@@ -189,7 +192,7 @@ fun SongOptionsSheet(
                     downloadingNow -> if (downloadPct in 1..99) "Downloading… $downloadPct%" else "Downloading…"
                     else -> "Download"
                 },
-                iconTint = if (downloaded) Color(Accent.toArgb()) else TextPrimary,
+                iconTint = if (downloaded) com.music.spotui.ui.theme.Accent else TextPrimary,
                 enabled = !downloadingNow,
             ) {
                 if (downloaded) {
@@ -276,20 +279,21 @@ private fun SongMenuRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 52.dp)
             .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
-            .padding(16.dp, 14.dp)
+            .padding(20.dp, 12.dp)
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = label,
-            tint = if (enabled) iconTint else TextTertiary.copy(alpha = 0.4f),
+            contentDescription = null,
+            tint = if (enabled) iconTint else TextDisabled,
             modifier = Modifier.size(22.dp)
         )
         Spacer(modifier = Modifier.width(18.dp))
         Text(
             text = label,
-            color = if (enabled) TextPrimary else TextTertiary.copy(alpha = 0.4f),
-            fontSize = 15.sp,
+            color = if (enabled) TextPrimary else TextDisabled,
+            style = MaterialTheme.typography.bodyLarge,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)

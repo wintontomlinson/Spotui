@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import com.music.spotui.ui.theme.SonvraShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.rounded.AddCircleOutline
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -95,7 +97,7 @@ fun LikedSongsScreen(
     var likedSongs by remember { mutableStateOf(emptyList<SongsModel>()) }
 
     var dominentColor by remember {
-        mutableStateOf(Color(Canvas.toArgb()))
+        mutableStateOf(com.music.spotui.ui.theme.Canvas)
     }
     // Once per cover, not on every recomposition.
     LaunchedEffect(likedAlbumCover) {
@@ -114,28 +116,33 @@ fun LikedSongsScreen(
     }
 
 
+    val scrollState = rememberScrollState()
+    // The top bar turns to strong glass once the header has scrolled away.
+    val barCollapsed by remember { androidx.compose.runtime.derivedStateOf { scrollState.value > 400 } }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                modifier = Modifier.padding(16.dp, 0.dp),
+                modifier = Modifier.padding(horizontal = 4.dp),
                 navigationIcon = {
-                    Icon(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            navController.navigateUp()
-                        },
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "",
-                        tint = TextPrimary)
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = { navController.navigateUp() },
+                        filled = true,
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
+                    containerColor = if (barCollapsed) com.music.spotui.ui.theme.GlassFillStrong else Color.Transparent,
+                        scrolledContainerColor = com.music.spotui.ui.theme.GlassFillStrong,
                     titleContentColor = TextPrimary,
                 ),
                 title = {
-                    Text(text = "")
+                    if (barCollapsed) Text(
+                        text = "Liked Songs",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             )
         }
@@ -144,8 +151,8 @@ fun LikedSongsScreen(
 
         Column(modifier = Modifier
             .fillMaxSize()
-            .background(Color(Canvas.toArgb()))
-            .verticalScroll(rememberScrollState())
+            .background(Canvas)
+            .verticalScroll(scrollState)
         ) {
 
             Column(
@@ -154,7 +161,7 @@ fun LikedSongsScreen(
                     .height(380.dp)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dominentColor, Color(Canvas.toArgb())),
+                            colors = listOf(com.music.spotui.ui.theme.artworkTone(dominentColor), Canvas),
                             startY = -100f,
 
                             ),
@@ -170,7 +177,11 @@ fun LikedSongsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     GlideImage(
-                        modifier = Modifier.size(180.dp),
+                        modifier = Modifier
+                            .size(200.dp)
+                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SonvraShape.lg),
+                        contentScale = ContentScale.Crop,
                         // Fall back to the first liked track's art when the library has
                         // no Liked Songs entry to take a cover from.
                         model = likedAlbumCover ?: likedSongs.firstOrNull()?.coverUri,
@@ -196,20 +207,19 @@ fun LikedSongsScreen(
                         Text(modifier = Modifier,
                             text = "Liked Songs",
                             color = TextPrimary,
-                            fontSize = 28.sp,
-                            fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
-                            fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
                         Text(modifier = Modifier,
                             text = " ${likedSongs.size} songs",
                             color = TextTertiary,
                             letterSpacing = 0.sp,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium)
                     }
 
 
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (likedSongs.isNotEmpty()) {
@@ -217,18 +227,17 @@ fun LikedSongsScreen(
                                 painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                                 tint = TextPrimary,
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
                                         playerViewModel.addAllToQueue(likedSongs)
                                         android.widget.Toast.makeText(
                                             context,
                                             "${likedSongs.size} track(s) added to queue",
                                             android.widget.Toast.LENGTH_SHORT,
                                         ).show()
-                                    },
+                                    }
+                                    .padding(12.dp),
                                 contentDescription = "Add to queue",
                             )
                         }
@@ -301,8 +310,7 @@ fun LikedSongsScreen(
                         )
                     }
                     val songId = likedSongs[song].id
-                    val currentPlayingIndicatorColor = if(songId == albumViewModel.currentSongId.value) Color(
-                        Accent.toArgb()) else TextPrimary
+                    val currentPlayingIndicatorColor = if(songId == albumViewModel.currentSongId.value) com.music.spotui.ui.theme.Accent else TextPrimary
 
                     SwipeToPlayNextWrapper(
                         onPlayNext = {
@@ -358,13 +366,13 @@ fun LikedSongsScreen(
                                     Text(
                                         text = likedSongs[song].title,
                                         color = currentPlayingIndicatorColor,
-                                        fontSize = 14.sp,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         text = likedSongs[song].singer,
                                         color = TextTertiary,
-                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
@@ -372,7 +380,8 @@ fun LikedSongsScreen(
 
                             Icon(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .size(48.dp)
+                                    .clip(CircleShape)
                                     .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
@@ -385,7 +394,8 @@ fun LikedSongsScreen(
                                             albumViewModel.updateLikeState(!albumViewModel.likeState.value)
                                         },
                                         onLongClick = { showSavedIn = true },
-                                    ),
+                                    )
+                                    .padding(14.dp),
                                 painter = if (isLiked){
                                     androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                 }

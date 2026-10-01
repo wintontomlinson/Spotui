@@ -1,6 +1,10 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.border
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -24,7 +28,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -122,25 +125,21 @@ fun DevicesSheet(
                     Text(
                         text = "Connect to a device",
                         color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                        style = MaterialTheme.typography.titleLarge)
                 }
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Close",
                     tint = TextSecondary,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onDismiss() }
+                        .clickable { onDismiss() }
+                        .padding(12.dp)
                 )
             }
 
-            HorizontalDivider(color = Surface3, thickness = 1.dp)
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
             // Bluetooth Permission Banner if needed (Android 12+)
@@ -150,30 +149,30 @@ fun DevicesSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(SonvraShape.sm)
                         .background(Surface3)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Grant permission to discover paired Bluetooth devices",
                         color = TextPrimary,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Accent)
+                            .clip(SonvraShape.pill)
+                            .background(com.music.spotui.ui.theme.AccentBrush)
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                             }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Text(
                             text = "Grant",
                             color = com.music.spotui.ui.theme.OnAccent,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -187,8 +186,7 @@ fun DevicesSheet(
                 Text(
                     text = "CURRENT DEVICE",
                     color = TextTertiary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 1.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -197,8 +195,9 @@ fun DevicesSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Accent.copy(alpha = 0.15f))
+                        .clip(SonvraShape.md)
+                        .background(com.music.spotui.ui.theme.Surface4)
+                        .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
@@ -212,7 +211,7 @@ fun DevicesSheet(
                         Text(
                             text = activeDevice.name,
                             color = Accent,
-                            fontSize = 15.sp,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -220,8 +219,7 @@ fun DevicesSheet(
                         Text(
                             text = "Listening on this device",
                             color = Accent.copy(alpha = 0.8f),
-                            fontSize = 12.sp
-                        )
+                            style = MaterialTheme.typography.bodySmall)
                     }
                     Icon(
                         imageVector = Icons.Default.Check,
@@ -238,8 +236,7 @@ fun DevicesSheet(
             Text(
                 text = "SELECT A DEVICE",
                 color = TextTertiary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 1.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -264,7 +261,7 @@ fun DevicesSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Surface3, thickness = 1.dp)
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
             // Open System Audio Switcher / Bluetooth Settings Action Row
@@ -272,7 +269,7 @@ fun DevicesSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(SonvraShape.sm)
                     .clickable {
                         AudioDeviceHelper.openSystemAudioSwitcher(context)
                         onDismiss()
@@ -298,14 +295,11 @@ fun DevicesSheet(
                     Text(
                         text = "System Audio Switcher",
                         color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                        style = MaterialTheme.typography.titleSmall)
                     Text(
                         text = "Connect or pair Bluetooth devices in Android Settings",
                         color = TextTertiary,
-                        fontSize = 11.sp
-                    )
+                        style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -326,7 +320,8 @@ private fun DeviceItemRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .heightIn(min = 52.dp)
+            .clip(SonvraShape.sm)
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
@@ -364,7 +359,7 @@ private fun DeviceItemRow(
             Text(
                 text = item.name,
                 color = textColor,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (item.isActive) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -377,8 +372,7 @@ private fun DeviceItemRow(
             Text(
                 text = subText,
                 color = if (item.isActive) Accent.copy(alpha = 0.8f) else TextTertiary,
-                fontSize = 11.sp
-            )
+                style = MaterialTheme.typography.bodySmall)
         }
 
         if (item.isActive) {

@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import android.content.Context
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -151,17 +152,15 @@ fun SavedInSheet(
                     .fillMaxWidth()
                     .padding(20.dp, 4.dp, 20.dp, 12.dp),
             ) {
-                Text("Saved in", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Saved in", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                 Text(
                     "New playlist",
                     color = Accent,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable(
-                        enabled = !isCreatingPlaylist,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { creating = true },
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .clip(SonvraShape.pill)
+                        .clickable(enabled = !isCreatingPlaylist) { creating = true }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
                 )
             }
 
@@ -186,30 +185,35 @@ fun SavedInSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp, 0.dp, 20.dp, 8.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(SonvraShape.md),
                 )
-                Row(modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp),
+                ) {
+                    // Confirm: accent pill (dimmed while the playlist is being created).
                     Text(
                         if (isCreatingPlaylist) "Creating..." else "Create",
-                        color = if (isCreatingPlaylist) TextTertiary else Accent,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable(
-                            enabled = !isCreatingPlaylist,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { createNow() },
+                        color = if (isCreatingPlaylist) TextTertiary else com.music.spotui.ui.theme.OnAccent,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier
+                            .clip(SonvraShape.pill)
+                            .then(
+                                if (isCreatingPlaylist) Modifier.background(Surface3)
+                                else Modifier.background(com.music.spotui.ui.theme.AccentBrush)
+                            )
+                            .clickable(enabled = !isCreatingPlaylist) { createNow() }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
                     )
-                    Spacer(Modifier.width(24.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         "Cancel",
-                        color = TextTertiary,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable(
-                            enabled = !isCreatingPlaylist,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { creating = false; newName = "" },
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier
+                            .clip(SonvraShape.pill)
+                            .clickable(enabled = !isCreatingPlaylist) { creating = false; newName = "" }
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
                     )
                 }
             }
@@ -227,9 +231,9 @@ fun SavedInSheet(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp))
+                                    .clip(SonvraShape.sm)
                                     .background(
-                                        Brush.linearGradient(listOf(AccentDeep, AccentSoft))
+                                        com.music.spotui.ui.theme.AccentBrush
                                     ),
                             ) {
                                 Icon(Icons.Default.Favorite, contentDescription = null, tint = com.music.spotui.ui.theme.OnAccent, modifier = Modifier.size(20.dp))
@@ -258,7 +262,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
+                                    .clip(SonvraShape.sm),
                                 model = pl.coverUri,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
@@ -301,7 +305,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
+                                    .clip(SonvraShape.sm),
                                 model = pl.images.firstOrNull()?.url,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
@@ -335,10 +339,8 @@ private fun SavedInRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onToggle() }
+            .heightIn(min = 64.dp)
+            .clickable { onToggle() }
             .padding(20.dp, 8.dp),
     ) {
         cover()
@@ -347,7 +349,7 @@ private fun SavedInRow(
                 .weight(1f)
                 .padding(start = 14.dp, end = 8.dp),
         ) {
-            Text(name, color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(name, color = TextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isLocal) {
                     Icon(
@@ -360,7 +362,7 @@ private fun SavedInRow(
                     )
                 }
                 if (subtitle.isNotBlank()) {
-                    Text(subtitle, color = TextTertiary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

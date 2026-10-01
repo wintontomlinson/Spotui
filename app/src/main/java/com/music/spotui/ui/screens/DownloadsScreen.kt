@@ -1,6 +1,9 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.Download
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import android.annotation.SuppressLint
@@ -24,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -169,37 +171,44 @@ fun DownloadsScreen(navController: NavController) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(Canvas.toArgb()))
+            .background(Canvas)
     ) {
+        val scrollState = androidx.compose.foundation.rememberScrollState()
+        // The top bar turns to strong glass once the hero has scrolled away.
+        val barCollapsed by remember { androidx.compose.runtime.derivedStateOf { scrollState.value > 600 } }
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier.padding(16.dp, 0.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                        Icon(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { navController.navigateUp() },
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "",
-                            tint = TextPrimary
-                        )
-                    },
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = { navController.navigateUp() },
+                        filled = true,
+                    )
+                },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
+                        containerColor = if (barCollapsed) com.music.spotui.ui.theme.GlassFillStrong else Color.Transparent,
+                        scrolledContainerColor = com.music.spotui.ui.theme.GlassFillStrong,
                         titleContentColor = TextPrimary,
                     ),
-                    title = { Text(text = "") }
+                    title = {
+                    if (barCollapsed) Text(
+                        text = "Downloads",
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
                 )
             }
         ) {
-            val scrollState = androidx.compose.foundation.rememberScrollState()
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(Canvas.toArgb()))
+                        .background(Canvas)
                         .verticalScroll(scrollState)
                 ) {
                 Column(
@@ -209,8 +218,8 @@ fun DownloadsScreen(navController: NavController) {
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    accent.copy(alpha = 0.5f),
-                                    Color(Canvas.toArgb())
+                                    com.music.spotui.ui.theme.Midnight,
+                                    Canvas
                                 ),
                                 startY = -100f,
                             ),
@@ -222,7 +231,10 @@ fun DownloadsScreen(navController: NavController) {
                         Box(
                             modifier = Modifier
                                 .size(200.dp)
-                                .background(accent.copy(alpha = 0.25f)),
+                                .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                                .clip(SonvraShape.lg)
+                                .background(Surface3)
+                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SonvraShape.lg),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
@@ -238,15 +250,13 @@ fun DownloadsScreen(navController: NavController) {
                         modifier = Modifier.padding(20.dp, 5.dp, 0.dp, 0.dp),
                         text = "Downloaded",
                         color = TextPrimary,
-                        fontSize = 28.sp,
-                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
                     Text(
                         modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                         text = "${songs.size} songs • available offline",
                         color = TextTertiary,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -271,7 +281,7 @@ fun DownloadsScreen(navController: NavController) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50))
+                                .clip(SonvraShape.pill)
                                 .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -279,9 +289,7 @@ fun DownloadsScreen(navController: NavController) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
                                 color = TextPrimary,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                                style = MaterialTheme.typography.labelLarge)
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
@@ -299,10 +307,9 @@ fun DownloadsScreen(navController: NavController) {
                         Text(
                             text = "Clear all",
                             color = com.music.spotui.ui.theme.Danger,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.labelLarge,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50))
+                                .clip(SonvraShape.pill)
                                 .background(Surface2)
                                 .clickable {
                                     showClearConfirmDialog = true
@@ -323,7 +330,7 @@ fun DownloadsScreen(navController: NavController) {
                         GlideImage(
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(RoundedCornerShape(4.dp)),
+                                .clip(SonvraShape.xs),
                             model = song.coverUri,
                             failure = placeholder(R.drawable.placeholder),
                             contentScale = ContentScale.Crop,
@@ -342,7 +349,7 @@ fun DownloadsScreen(navController: NavController) {
                                 Text(
                                     text = song.title,
                                     color = TextPrimary,
-                                    fontSize = 14.sp,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1
                                 )
@@ -353,7 +360,7 @@ fun DownloadsScreen(navController: NavController) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(4.dp)
-                                    .clip(RoundedCornerShape(2.dp)),
+                                    .clip(SonvraShape.xs),
                                 color = accent,
                                 trackColor = Surface3,
                             )
@@ -361,7 +368,7 @@ fun DownloadsScreen(navController: NavController) {
                         Text(
                             text = "$pct%",
                             color = TextTertiary,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(start = 12.dp),
                         )
@@ -386,7 +393,7 @@ fun DownloadsScreen(navController: NavController) {
                     repeat(displayedSongs.size) { index ->
                         val song = displayedSongs[index]
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(Accent.toArgb()) else TextPrimary
+                            Accent else TextPrimary
 
                         SwipeToPlayNextWrapper(
                             onPlayNext = {
@@ -422,7 +429,7 @@ fun DownloadsScreen(navController: NavController) {
                                 GlideImage(
                                     modifier = Modifier
                                         .size(48.dp)
-                                        .clip(RoundedCornerShape(4.dp)),
+                                        .clip(SonvraShape.xs),
                                     model = song.coverUri,
                                     failure = placeholder(R.drawable.placeholder),
                                     contentScale = ContentScale.Crop,
@@ -441,7 +448,7 @@ fun DownloadsScreen(navController: NavController) {
                                         Text(
                                             text = song.title,
                                             color = currentColor,
-                                            fontSize = 14.sp,
+                                            style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium,
                                             maxLines = 1
                                         )
@@ -449,7 +456,7 @@ fun DownloadsScreen(navController: NavController) {
                                     Text(
                                         text = song.singer,
                                         color = TextTertiary,
-                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         maxLines = 1
                                     )
@@ -483,7 +490,7 @@ fun DownloadsScreen(navController: NavController) {
                             Text(
                                 text = "Sort by",
                                 color = TextPrimary,
-                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                             )
@@ -516,21 +523,21 @@ fun DownloadsScreen(navController: NavController) {
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = null,
-                                        tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
+                                        tint = if (isSelected) Accent else TextPrimary,
                                         modifier = Modifier.size(22.dp)
                                     )
                                     Spacer(modifier = Modifier.width(18.dp))
                                     Text(
                                         text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == DownloadSortOption.DATE),
-                                        color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
-                                        fontSize = 15.sp,
+                                        color = if (isSelected) Accent else TextPrimary,
+                                        style = MaterialTheme.typography.bodyLarge,
                                         modifier = Modifier.weight(1f)
                                     )
                                     if (isSelected) {
                                         Icon(
                                             imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                             contentDescription = null,
-                                            tint = Color(Accent.toArgb()),
+                                            tint = Accent,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -543,10 +550,13 @@ fun DownloadsScreen(navController: NavController) {
                 if (showClearConfirmDialog) {
                     AlertDialog(
                         onDismissRequest = { showClearConfirmDialog = false },
-                        title = { Text(text = "Clear all downloads?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+                        title = { Text(text = "Clear all downloads?", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
                         text = { Text(text = "Are you sure you want to remove all downloaded songs? This action cannot be undone.", color = TextSecondary) },
                         confirmButton = {
-                            TextButton(onClick = {
+                            com.music.spotui.ui.components.SonvraDialogConfirm(
+                                text = "Clear",
+                                danger = true,
+                                onClick = {
                                 val n =
                                     com.music.spotui.data.preferences.clearAllDownloads(context)
                                 songs = getDownloadedSongs(context)
@@ -555,14 +565,14 @@ fun DownloadsScreen(navController: NavController) {
                                     context, "Removed $n download${if (n == 1) "" else "s"}",
                                     android.widget.Toast.LENGTH_SHORT,
                                 ).show()
-                            }) {
-                                Text("Clear", color = com.music.spotui.ui.theme.Danger)
-                            }
+                            },
+                            )
                         },
                         dismissButton = {
-                            TextButton(onClick = { showClearConfirmDialog = false }) {
-                                Text("Cancel", color = TextPrimary)
-                            }
+                            com.music.spotui.ui.components.SonvraDialogDismiss(
+                                text = "Cancel",
+                                onClick = { showClearConfirmDialog = false },
+                            )
                         },
                         containerColor = Surface2,
                         titleContentColor = TextPrimary,

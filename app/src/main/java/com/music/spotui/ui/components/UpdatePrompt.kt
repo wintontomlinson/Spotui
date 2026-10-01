@@ -1,6 +1,7 @@
 package com.music.spotui.ui.components
 
 import android.content.Intent
+import com.music.spotui.ui.theme.SonvraShape
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,7 +40,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.bumptech.glide.integration.compose.GlideImage
@@ -81,7 +81,7 @@ fun UpdatePrompt() {
         containerColor = Surface2,
         titleContentColor = TextPrimary,
         title = {
-            Text("Update available, ${info.version}")
+            Text("Update available, ${info.version}", style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
         },
         text = {
             Column(
@@ -100,27 +100,23 @@ fun UpdatePrompt() {
             }
         },
         confirmButton = {
-            TextButton(onClick = {
+            SonvraDialogConfirm(text = "Update", onClick = {
                 runCatching {
                     context.startActivity(
                         Intent(Intent.ACTION_VIEW, Uri.parse(info.downloadUrl))
                     )
                 }
                 update = null
-            }) {
-                Text("Update", color = Accent)
-            }
+            })
         },
         dismissButton = {
             TextButton(onClick = {
                 UpdateChecker.skipRelease(context, info)
                 update = null
             }) {
-                Text("Don't show again", color = TextSecondary)
+                Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
             }
-            TextButton(onClick = { update = null }) {
-                Text("Dismiss", color = TextPrimary)
-            }
+            SonvraDialogDismiss(text = "Dismiss", onClick = { update = null })
         },
     )
 }
@@ -171,7 +167,7 @@ private fun RenderImagesRow(images: List<ImageItem>, onImageClick: (String) -> U
                 modifier = Modifier
                     .weight(weight)
                     .aspectRatio(aspectRatio)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(SonvraShape.sm)
                     .clickable { onImageClick(image.url) }
             ) {
                 GlideImage(

@@ -479,7 +479,7 @@ fun PlayerScreen(navController: NavController) {
 
 
     var dominentColor by remember {
-        mutableStateOf(Color(Canvas.toArgb()))
+        mutableStateOf(com.music.spotui.ui.theme.Canvas)
     }
     // The artwork tone eases between tracks instead of snapping.
     val artTone by androidx.compose.animation.animateColorAsState(

@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -117,26 +118,27 @@ fun LocalFilesScreen(navController: NavController) {
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize().background(Color(Canvas.toArgb())),
+        modifier = Modifier.fillMaxSize().background(Canvas),
     ) {
+        val scrollState = rememberScrollState()
+        // The top bar turns to strong glass once the header has scrolled away.
+        val barCollapsed by remember { androidx.compose.runtime.derivedStateOf { scrollState.value > 400 } }
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier.padding(16.dp, 0.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                        Icon(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { navController.navigateUp() },
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "",
-                            tint = TextPrimary,
-                        )
-                    },
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = { navController.navigateUp() },
+                        filled = true,
+                    )
+                },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
+                        containerColor = if (barCollapsed) com.music.spotui.ui.theme.GlassFillStrong else Color.Transparent,
+                        scrolledContainerColor = com.music.spotui.ui.theme.GlassFillStrong,
                         titleContentColor = TextPrimary,
                     ),
                     title = { Text("Local files", color = TextPrimary, fontWeight = FontWeight.Bold) },
@@ -146,23 +148,22 @@ fun LocalFilesScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(Canvas.toArgb()))
+                    .background(Canvas)
                     .consumeWindowInsets(innerPadding)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding())
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(scrollState),
             ) {
                 Text(
                     text = "On this device",
                     color = TextPrimary,
-                    fontSize = 28.sp,
+                    style = MaterialTheme.typography.headlineLarge,
                     fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
-                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(20.dp, 8.dp, 20.dp, 2.dp),
                 )
                 Text(
                     text = if (songs.isEmpty()) "Import FLAC, MP3, WAV and more" else "${songs.size} songs",
                     color = TextTertiary,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(20.dp, 0.dp, 20.dp, 12.dp),
                 )
 
@@ -182,7 +183,7 @@ fun LocalFilesScreen(navController: NavController) {
                     Text(
                         "Importing…",
                         color = accent,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(20.dp, 2.dp),
                     )
                 }
@@ -199,7 +200,7 @@ fun LocalFilesScreen(navController: NavController) {
                 } else {
                     songs.forEachIndexed { index, song ->
                         val currentColor = if (song.id == playerViewModel.currentSongId.value)
-                            Color(Accent.toArgb()) else TextPrimary
+                            Accent else TextPrimary
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -224,7 +225,7 @@ fun LocalFilesScreen(navController: NavController) {
                                 ),
                         ) {
                             GlideImage(
-                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+                                modifier = Modifier.size(48.dp).clip(SonvraShape.xs),
                                 model = song.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
                                 loading = placeholder(R.drawable.placeholder),
@@ -232,15 +233,15 @@ fun LocalFilesScreen(navController: NavController) {
                                 contentDescription = "",
                             )
                             Column(modifier = Modifier.padding(start = 12.dp).width(280.dp)) {
-                                Text(song.title, color = currentColor, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-                                Text(song.singer, color = TextTertiary, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                                Text(song.title, color = currentColor, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
+                                Text(song.singer, color = TextTertiary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, maxLines = 1)
                             }
                         }
                     }
                     Text(
                         text = "Long-press a song to remove it from your library.",
                         color = TextTertiary,
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(20.dp, 12.dp),
                     )
                 }
@@ -262,11 +263,11 @@ private fun ImportButton(
     Text(
         text = label,
         color = if (container == Surface3) TextPrimary else Color.Black,
-        fontSize = 14.sp,
+        style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(SonvraShape.pill)
             .background(if (enabled) container else Surface3)
             .clickable(enabled = enabled) { onClick() }
             .padding(vertical = 12.dp),

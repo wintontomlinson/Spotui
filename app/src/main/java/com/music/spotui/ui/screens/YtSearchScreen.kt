@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -26,7 +28,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -87,6 +88,8 @@ import com.music.spotui.ui.components.shimmer
 import androidx.compose.material.icons.rounded.SearchOff
 import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.Hairline
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
 
 private val Surface = Surface2
 private val SurfaceHigh = Surface3
@@ -107,30 +110,30 @@ private data class BrowseCategory(
 )
 
 private val BROWSE_CATEGORIES = listOf(
-    // Each category carries a jewel tone from the Sonvra palette (it tints the tile's scrim)
+    // Each category carries a deep, cool-leaning tone (it tints the tile's scrim)
     // plus a name-matched `imageQuery`, so
     // the full-bleed tile artwork clearly reflects the label. `query` is what
     // actually runs on tap.
     // imageQuery points at recognisable, current hit albums/artists so each tile
     // shows relatable, latest cover art (resolved to a square album cover) rather
     // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFFC8963E), imageQuery = "trending"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF9E2B3F), imageQuery = "charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF6B4BB8), imageQuery = "new"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF2F4F9E), imageQuery = "madeforyou"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFFB83A6B), imageQuery = "bollywood"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFC9752A), imageQuery = "punjabi"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2E7D5B), imageQuery = "hiphop"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFFA83A8C), imageQuery = "pop"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2C7A8C), imageQuery = "lofi"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFFC4513A), imageQuery = "workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFFA3304F), imageQuery = "romance"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF7A4FB0), imageQuery = "party"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFFB8862E), imageQuery = "devotional"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF7A5A7E), imageQuery = "retro"),
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF2D4FD6), imageQuery = "trending"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFFA3364A), imageQuery = "charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF1E5A9E), imageQuery = "new"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF3A47A8), imageQuery = "madeforyou"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF8E3B55), imageQuery = "bollywood"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFFB4532F), imageQuery = "punjabi"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2C6E4F), imageQuery = "hiphop"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF24519A), imageQuery = "pop"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF1F6F78), imageQuery = "lofi"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF9C3F3A), imageQuery = "workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF33518A), imageQuery = "romance"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF4B5160), imageQuery = "party"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF9A5B2E), imageQuery = "devotional"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF3E4C66), imageQuery = "retro"),
     BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF4A6380), imageQuery = "sad"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F7A6E), imageQuery = "english"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF6B6680), imageQuery = "instrumental"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F5E5A), imageQuery = "english"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF4F6B36), imageQuery = "instrumental"),
 )
 
 /**
@@ -195,6 +198,13 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
             .navBarScroll()
             .statusBarsPadding(),
     ) {
+        // Explore masthead in Sora.
+        Text(
+            text = "Explore",
+            style = MaterialTheme.typography.headlineLarge,
+            color = TextPrimary,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp),
+        )
         SearchField(
             query = query,
             focusRequester = searchFocus,
@@ -222,6 +232,15 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
                 currentCount > 0 -> LazyColumn(
                     contentPadding = PaddingValues(top = 2.dp, bottom = 180.dp),
                 ) {
+                    item(key = "resultsHeader") {
+                        Text(
+                            text = "TOP ${tab.label.uppercase()}",
+                            color = TextFaint,
+                            style = MaterialTheme.typography.labelSmall,
+                            letterSpacing = 1.4.sp,
+                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 4.dp),
+                        )
+                    }
                     when (tab) {
                         SearchTab.SONGS -> itemsIndexed(results) { index, song ->
                             ResultRow(song = song, onClick = { playResult(song, index) })
@@ -276,11 +295,11 @@ fun YtSearchScreen(navController: NavController, initialQuery: String = "") {
     }
 }
 
-/** Songs / Artists / Albums / Playlists selector, styled as amber pills. */
+/** Songs / Artists / Albums / Playlists selector, styled as azure-selected pills. */
 @Composable
 private fun ResultTabs(selected: SearchTab, onSelect: (SearchTab) -> Unit) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(bottom = 6.dp),
     ) {
@@ -301,14 +320,14 @@ private fun ArtistResultRow(artist: ArtistResult, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
                 // Artists read as people, so their image is a circle.
-                .clip(RoundedCornerShape(50)),
+                .clip(CircleShape),
             model = artist.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -319,12 +338,12 @@ private fun ArtistResultRow(artist: ArtistResult, onClick: () -> Unit) {
             Text(
                 text = artist.name,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
             Spacer(Modifier.height(3.dp))
-            Text(text = "Artist", color = TextDim, fontSize = 12.sp)
+            Text(text = "Artist", color = TextDim, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -336,13 +355,13 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(10.dp)),
+                .clip(SonvraShape.sm),
             model = album.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -353,7 +372,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
             Text(
                 text = album.title,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
@@ -365,7 +384,7 @@ private fun AlbumResultRow(album: AlbumResult, onClick: () -> Unit) {
                     album.year?.toString(),
                 ).joinToString(" • "),
                 color = TextDim,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
@@ -379,13 +398,13 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(10.dp)),
+                .clip(SonvraShape.sm),
             model = playlist.thumbnail,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -396,7 +415,7 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
             Text(
                 text = playlist.title,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
@@ -408,14 +427,14 @@ private fun PlaylistResultRow(playlist: PlaylistResult, onClick: () -> Unit) {
                     playlist.songCount.takeIf { it.isNotBlank() },
                 ).joinToString(" • "),
                 color = TextDim,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
     }
 }
 
-/** The rounded pill search field with a leading icon and inline clear action. */
+/** The 52dp Surface3 search field: accent edge and icon while focused, inline clear action. */
 @Composable
 private fun SearchField(
     query: String,
@@ -424,41 +443,44 @@ private fun SearchField(
     onSubmit: () -> Unit,
     onClear: () -> Unit,
 ) {
+    // Visual only: drives the accent edge and icon.
+    var focused by remember { androidx.compose.runtime.mutableStateOf(false) }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .clip(RoundedCornerShape(26.dp))
-            .background(Surface)
-            .border(1.dp, Hairline, RoundedCornerShape(26.dp))
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .clip(SonvraShape.md)
+            .background(SurfaceHigh)
+            .border(1.dp, if (focused) Accent else Hairline, SonvraShape.md)
             .height(52.dp)
-            .padding(start = 16.dp, end = 6.dp),
+            .padding(start = 14.dp, end = 4.dp),
     ) {
         Icon(
             Icons.Default.Search,
             contentDescription = null,
-            tint = Accent,
+            tint = if (focused) Accent else TextDim,
             modifier = Modifier.size(22.dp),
         )
         BasicTextField(
             value = query,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(color = TextPrimary, fontSize = 16.sp),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = TextPrimary),
             cursorBrush = SolidColor(Accent),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { onSubmit() }),
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 12.dp)
+                .onFocusChanged { focused = it.isFocused }
                 .focusRequester(focusRequester),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
                     Text(
                         "Search songs, artists, albums",
                         color = TextFaint,
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                 }
                 inner()
@@ -470,10 +492,10 @@ private fun SearchField(
                 contentDescription = "Clear search",
                 tint = TextDim,
                 modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(50))
+                    .size(44.dp)
+                    .clip(CircleShape)
                     .clickable(onClick = onClear)
-                    .padding(9.dp),
+                    .padding(11.dp),
             )
         }
     }
@@ -481,9 +503,9 @@ private fun SearchField(
 
 
 /**
- * Explore card: a rounded tile whose FULL background is professional artwork
- * matched to the category, with a colour-tinted diagonal scrim, an accent play chip
- * top-right, and the label sitting on top of the image bottom-left.
+ * Explore card: an md-radius tile whose FULL background is artwork matched to the
+ * category, under a scrim that keeps the category tone at the top and settles into the
+ * canvas at the bottom, with an accent play chip top-right and the label bottom-left.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
@@ -510,9 +532,9 @@ private fun BrowseTile(
     Box(
         modifier = modifier
             .height(height)
-            .clip(RoundedCornerShape(22.dp))
+            .clip(SonvraShape.md)
             .background(category.color)
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(22.dp))
+            .border(1.dp, Hairline, SonvraShape.md)
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
         // Full-bleed artwork: the image related to the category name fills the
@@ -527,40 +549,17 @@ private fun BrowseTile(
                 failure = placeholder(R.drawable.placeholder),
             )
         }
-        // Diagonal scrim that keeps the tile's own colour identity at the top and
-        // deepens to near-black at the bottom so the label is always readable.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            category.color.copy(alpha = 0.50f),
-                            com.music.spotui.ui.theme.Canvas.copy(alpha = 0.35f),
-                            com.music.spotui.ui.theme.Canvas.copy(alpha = 0.92f),
-                        ),
-                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                        end = androidx.compose.ui.geometry.Offset.Infinite,
-                    ),
-                ),
-        )
-        // Accent glow rising from the bottom edge: the Sonvra accent signature on every tile.
+        // Category tone at the top, Canvas at the bottom so the label always reads.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        0.55f to Color.Transparent,
-                        1f to com.music.spotui.ui.theme.AccentDeep.copy(alpha = 0.38f),
+                        0f to category.color.copy(alpha = 0.55f),
+                        0.45f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.25f),
+                        1f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.9f),
                     ),
                 ),
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .fillMaxWidth()
-                .height(3.dp)
-                .background(com.music.spotui.ui.theme.AccentBrush),
         )
         // A small accent play chip in the top-right — a premium Explore flourish.
         Box(
@@ -568,9 +567,9 @@ private fun BrowseTile(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(10.dp)
-                .size(26.dp)
+                .size(28.dp)
                 .clip(CircleShape)
-                .background(Accent.copy(alpha = 0.92f)),
+                .background(com.music.spotui.ui.theme.AccentBrush),
         ) {
             Icon(
                 Icons.Default.PlayArrow,
@@ -583,8 +582,7 @@ private fun BrowseTile(
         Text(
             text = category.label,
             color = TextPrimary,
-            fontSize = if (height > 168.dp) 24.sp else 19.sp,
-            fontWeight = FontWeight.ExtraBold,
+            style = if (height > 168.dp) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
             maxLines = 2,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier
@@ -611,22 +609,21 @@ private fun DiscoverPane(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 2.dp),
+                        .padding(start = 20.dp, end = 8.dp, top = 10.dp, bottom = 2.dp),
                 ) {
                     Text(
                         text = "Recent searches",
                         color = TextPrimary,
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
                         text = "Clear all",
                         color = Accent,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(50))
+                            .clip(SonvraShape.pill)
                             .clickable(onClick = onClearRecent)
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     )
@@ -638,7 +635,7 @@ private fun DiscoverPane(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onPick(entry) }
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(start = 20.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                 ) {
                     Icon(
                         Icons.Default.History,
@@ -649,7 +646,7 @@ private fun DiscoverPane(
                     Text(
                         text = entry,
                         color = TextPrimary,
-                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
                         modifier = Modifier
                             .weight(1f)
@@ -660,21 +657,21 @@ private fun DiscoverPane(
                         contentDescription = "Remove",
                         tint = TextFaint,
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(50))
+                            .size(48.dp)
+                            .clip(CircleShape)
                             .clickable { onRemoveRecent(entry) }
-                            .padding(7.dp),
+                            .padding(14.dp),
                     )
                 }
             }
         }
 
         item {
-            // Explore masthead in the display serif.
-            Column(modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 14.dp)) {
+            // Browse heading (the Explore masthead sits above the search field).
+            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 14.dp)) {
                 Text(
-                    text = "Explore",
-                    style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
+                    text = "Browse all",
+                    style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
                     color = TextPrimary,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -689,8 +686,8 @@ private fun DiscoverPane(
             // A uniform two-column grid of image-forward category cards; every tap
             // runs the seeded search behind that category.
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // The first category leads as a full-width hero tile.
                 BROWSE_CATEGORIES.firstOrNull()?.let { hero ->
@@ -702,7 +699,7 @@ private fun DiscoverPane(
                     )
                 }
                 BROWSE_CATEGORIES.drop(1).chunked(2).forEach { pair ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         pair.forEach { cat ->
                             BrowseTile(category = cat, onClick = { onPick(cat.query) },
                                 modifier = Modifier.weight(1f))
@@ -723,13 +720,13 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlideImage(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(10.dp)),
+                .clip(SonvraShape.sm),
             model = song.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -745,7 +742,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
             Text(
                 text = song.title,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
             )
@@ -755,7 +752,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
             Text(
                 text = song.singer.ifBlank { "Song" },
                 color = TextDim,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
@@ -764,7 +761,7 @@ private fun ResultRow(song: SongsModel, onClick: () -> Unit) {
             Text(
                 text = duration,
                 color = TextFaint,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
             )
         }
@@ -779,12 +776,12 @@ private fun ResultSkeleton(circular: Boolean = false) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Match the shape of the rows being waited for, so the list does not
                 // visibly change form when the results land.
-                Box(Modifier.size(52.dp).shimmer(RoundedCornerShape(if (circular) 50.dp else 10.dp)))
+                Box(Modifier.size(52.dp).shimmer(if (circular) CircleShape else SonvraShape.sm))
                 Column(
                     modifier = Modifier
                         .weight(1f)

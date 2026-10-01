@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,7 +29,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -67,6 +69,7 @@ import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Surface3
 import com.music.spotui.ui.components.shimmer
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.CloudOff
 import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.theme.OnAccent
 import com.music.spotui.ui.theme.Hairline
@@ -179,6 +182,14 @@ fun FreeHomeScreen(navController: NavController) {
             when {
                 trendingLoading && trending.isEmpty() -> TrendingSkeleton()
                 trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
+                !trendingLoading -> com.music.spotui.ui.components.SonvraEmptyState(
+                    icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
+                    title = "Couldn't load Home",
+                    message = "Check your connection and try again.",
+                    actionLabel = "Retry",
+                    onAction = { vm.pullRefresh() },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
 
@@ -186,13 +197,14 @@ fun FreeHomeScreen(navController: NavController) {
             item(key = "artists") {
                 SectionHeader(title = "Your top artists")
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    items(topArtists, key = { it.first }) { (name, image) ->
+                    itemsIndexed(topArtists, key = { _, it -> it.first }) { index, (name, image) ->
                         ArtistCircle(
                             name = name,
                             image = image,
+                            highlighted = index == 0,
                             onClick = { navController.navigate(com.music.spotui.ui.navigation.artistRoute(name, "")) },
                         )
                     }
@@ -215,7 +227,7 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 10.dp),
+            .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             com.music.spotui.ui.components.SonvraWordmark(markHeight = 24.dp, textSize = 24.sp)
@@ -228,16 +240,16 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
                 iconSize = 20.dp,
             )
         }
-        Spacer(Modifier.height(22.dp))
+        Spacer(Modifier.height(18.dp))
         Text(
             text = greeting(),
-            style = androidx.compose.material3.MaterialTheme.typography.displaySmall,
-            color = TextPrimary,
+            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+            color = TextSecondary,
         )
         Spacer(Modifier.height(4.dp))
         Text(
             text = greetingSubtitle(),
-            color = TextDim,
+            color = com.music.spotui.ui.theme.TextTertiary,
             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
         )
     }
@@ -252,14 +264,14 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
 private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int) -> Unit) {
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = 20.dp)
+            .clip(SonvraShape.lg)
             // A soft top down gradient inside the card plus a hairline edge gives the
             // quick picks block real depth instead of a flat panel.
             .background(
                 Brush.verticalGradient(colors = listOf(SurfaceHigh, Surface)),
             )
-            .border(1.dp, Hairline, RoundedCornerShape(18.dp))
+            .border(1.dp, Hairline, SonvraShape.lg)
             .padding(vertical = 4.dp),
     ) {
         tracks.forEachIndexed { index, song ->
@@ -287,7 +299,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 GlideImage(
                     modifier = Modifier
                         .size(50.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(SonvraShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -302,8 +314,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                     Text(
                         text = song.title,
                         color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleSmall,
                         maxLines = 1,
                     )
                     if (song.singer.isNotBlank()) {
@@ -311,7 +322,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                         Text(
                             text = song.singer,
                             color = TextDim,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                         )
                     }
@@ -354,7 +365,7 @@ private val MOODS = listOf(
 @Composable
 private fun MoodChips(onPick: (String) -> Unit) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(MOODS, key = { it.first }) { (label, query) ->
@@ -368,77 +379,92 @@ private fun MoodChips(onPick: (String) -> Unit) {
 }
 
 /**
- * "Mix for you" hero: a 2×2 artwork collage of the first four tracks, the title and
- * a primary Play mix pill, on an accent-edged card.
+ * "Mix for you" hero: a full-width 184dp card. The 2x2 artwork collage fills the
+ * trailing side, a Midnight-to-transparent scrim carries the title, and an accent
+ * "Play mix" pill starts it.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
         modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp, top = 18.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 18.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                Brush.linearGradient(
-                    listOf(com.music.spotui.ui.theme.Midnight, Surface, SurfaceHigh),
-                ),
+            .height(184.dp)
+            .shadow(
+                elevation = 14.dp,
+                shape = SonvraShape.lg,
+                clip = false,
+                ambientColor = com.music.spotui.ui.theme.Shadow,
+                spotColor = com.music.spotui.ui.theme.Shadow,
             )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, RoundedCornerShape(24.dp))
-            .padding(14.dp),
+            .clip(SonvraShape.lg)
+            .background(com.music.spotui.ui.theme.Midnight)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.lg),
     ) {
-        Box(
+        val covers = mix.map { it.coverUri }.filter { it.isNotBlank() }.distinct().take(4)
+        Column(
             modifier = Modifier
-                .size(116.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(SurfaceHigh),
+                .align(Alignment.CenterEnd)
+                .size(184.dp),
         ) {
-            val covers = mix.map { it.coverUri }.filter { it.isNotBlank() }.distinct().take(4)
-            Column {
-                for (r in 0 until 2) {
-                    Row {
-                        for (c in 0 until 2) {
-                            GlideImage(
-                                modifier = Modifier.size(58.dp),
-                                model = covers.getOrNull(r * 2 + c) ?: covers.firstOrNull(),
-                                contentScale = ContentScale.Crop,
-                                failure = placeholder(R.drawable.placeholder),
-                                loading = placeholder(R.drawable.placeholder),
-                                contentDescription = null,
-                            )
-                        }
+            for (r in 0 until 2) {
+                Row(Modifier.weight(1f)) {
+                    for (c in 0 until 2) {
+                        GlideImage(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize(),
+                            model = covers.getOrNull(r * 2 + c) ?: covers.firstOrNull(),
+                            contentScale = ContentScale.Crop,
+                            failure = placeholder(R.drawable.placeholder),
+                            loading = placeholder(R.drawable.placeholder),
+                            contentDescription = null,
+                        )
                     }
                 }
             }
         }
-        Column(
+        // Midnight -> transparent scrim so the copy reads over the collage.
+        Box(
             modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp),
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to com.music.spotui.ui.theme.Midnight,
+                        0.48f to com.music.spotui.ui.theme.Midnight.copy(alpha = 0.92f),
+                        1f to Color.Transparent,
+                    )
+                ),
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.62f)
+                .padding(start = 18.dp, end = 8.dp),
         ) {
             Text(
                 text = "DAILY",
                 color = Accent,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 1.6.sp,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = "Mix for you",
-                style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                 color = TextPrimary,
                 maxLines = 1,
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(4.dp))
             Text(
                 text = "Made from what you love · ${mix.size} songs",
-                color = TextDim,
-                fontSize = 12.sp,
+                color = TextSecondary,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 2,
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(14.dp))
             com.music.spotui.ui.components.SonvraPillButton(
                 text = "Play mix",
                 icon = Icons.Default.PlayArrow,
@@ -453,11 +479,11 @@ private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
 @Composable
 private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 20.dp),
     ) {
         tracks.chunked(2).forEachIndexed { rowIdx, pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEachIndexed { colIdx, song ->
                     val index = rowIdx * 2 + colIdx
                     Row(
@@ -465,10 +491,10 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
                         modifier = Modifier
                             .weight(1f)
                             .height(56.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Surface)
-                            .border(1.dp, Hairline, RoundedCornerShape(12.dp))
-                                            .clickable(onClickLabel = "Play ${song.title}") { onPlay(index) },
+                            .clip(SonvraShape.sm)
+                            .background(com.music.spotui.ui.theme.Surface1)
+                            .border(1.dp, Hairline, SonvraShape.sm)
+                            .clickable(onClickLabel = "Play ${song.title}") { onPlay(index) },
                     ) {
                         GlideImage(
                             modifier = Modifier.size(56.dp),
@@ -481,8 +507,7 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
                         Text(
                             text = song.title,
                             color = TextPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.labelLarge,
                             maxLines = 2,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(horizontal = 10.dp),
@@ -498,7 +523,7 @@ private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
 /** Circular artist portrait with the name under it. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun ArtistCircle(name: String, image: String, onClick: () -> Unit) {
+private fun ArtistCircle(name: String, image: String, onClick: () -> Unit, highlighted: Boolean = false) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -509,8 +534,12 @@ private fun ArtistCircle(name: String, image: String, onClick: () -> Unit) {
             modifier = Modifier
                 .size(84.dp)
                 .clip(CircleShape)
-                .background(com.music.spotui.ui.theme.AccentBrush)
-                .padding(2.dp)
+                // The top artist gets an accent ring; the rest a quiet hairline.
+                .then(
+                    if (highlighted) Modifier.background(com.music.spotui.ui.theme.AccentBrush)
+                    else Modifier.background(Hairline)
+                )
+                .padding(if (highlighted) 2.5.dp else 1.dp)
                 .clip(CircleShape)
                 .background(Surface),
         ) {
@@ -526,9 +555,8 @@ private fun ArtistCircle(name: String, image: String, onClick: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Text(
             text = name,
-            color = TextPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            color = if (highlighted) TextPrimary else TextSecondary,
+            style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
@@ -548,8 +576,8 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
     }
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         itemsIndexed(row.tracks) { index, song ->
             TrackCard(song = song, onClick = { onPlay(row.tracks, index) })
@@ -563,7 +591,7 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
 private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .width(156.dp)
+            .width(150.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -572,15 +600,15 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(156.dp)
+                .size(150.dp)
                 .shadow(
                     elevation = 12.dp,
-                    shape = RoundedCornerShape(16.dp),
+                    shape = SonvraShape.md,
                     clip = false,
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
                 )
-                .clip(RoundedCornerShape(16.dp))
+                .clip(SonvraShape.md)
                 .background(Surface),
         ) {
             GlideImage(
@@ -614,7 +642,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 Icon(
                     Icons.Default.PlayArrow,
                     contentDescription = null,
-                    // Dark glyph on the light amber badge for strong contrast.
+                    // Dark glyph on the azure badge for strong contrast.
                     tint = OnAccent,
                     modifier = Modifier.size(20.dp),
                 )
@@ -624,8 +652,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
         Text(
             text = song.title,
             color = TextPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleSmall,
             maxLines = 2,
             lineHeight = 17.sp,
         )
@@ -634,7 +661,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
             Text(
                 text = song.singer,
                 color = TextDim,
-                fontSize = 11.sp,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
@@ -646,8 +673,8 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
 private fun TrendingSkeleton() {
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = 20.dp)
+            .clip(SonvraShape.lg)
             .background(Surface)
             .padding(vertical = 4.dp),
     ) {
@@ -658,7 +685,7 @@ private fun TrendingSkeleton() {
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             ) {
-                Box(Modifier.size(50.dp).shimmer(RoundedCornerShape(10.dp)))
+                Box(Modifier.size(50.dp).shimmer(SonvraShape.sm))
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -677,12 +704,12 @@ private fun TrendingSkeleton() {
 @Composable
 private fun CardSkeletonRow() {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier.padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(horizontal = 20.dp),
     ) {
         repeat(3) {
-            Column(modifier = Modifier.width(156.dp)) {
-                Box(Modifier.size(156.dp).shimmer(RoundedCornerShape(16.dp)))
+            Column(modifier = Modifier.width(150.dp)) {
+                Box(Modifier.size(150.dp).shimmer(SonvraShape.md))
                 Spacer(Modifier.height(9.dp))
                 Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
                 Spacer(Modifier.height(7.dp))

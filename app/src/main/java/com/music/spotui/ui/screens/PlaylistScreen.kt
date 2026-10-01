@@ -1,6 +1,8 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -30,7 +32,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -185,7 +186,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
             containerColor = Surface2,
-            title = { Text("Rename Playlist", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text("Rename Playlist", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
             text = {
                 TextField(
                     value = newPlaylistNameInput,
@@ -203,17 +204,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(SonvraShape.sm)
                 )
             },
             confirmButton = {
-                Text(
-                    "Save",
-                    color = Accent,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable {
+                com.music.spotui.ui.components.SonvraDialogConfirm(
+                    text = "Save",
+                    onClick = {
                             val name = newPlaylistNameInput.trim()
                             if (name.isNotBlank()) {
                                 com.music.spotui.data.preferences.LocalPlaylistPref.renamePlaylist(context, playlistId, name)
@@ -222,18 +219,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 playlistViewModel.reloadPlaylist(playlistId)
                             }
                             showRenameDialog = false
-                        }
-                        .padding(8.dp)
+                        },
                 )
             },
             dismissButton = {
-                Text(
-                    "Cancel",
-                    color = TextTertiary,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable { showRenameDialog = false }
-                        .padding(8.dp)
+                com.music.spotui.ui.components.SonvraDialogDismiss(
+                    text = "Cancel",
+                    onClick = { showRenameDialog = false },
                 )
             }
         )
@@ -243,33 +235,25 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             containerColor = Surface2,
-            title = { Text("Delete Playlist", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { Text("Delete Playlist", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
             text = { Text("Are you sure you want to delete this playlist?", color = TextSecondary) },
             confirmButton = {
-                Text(
-                    "Delete",
-                    color = com.music.spotui.ui.theme.Danger,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable {
+                com.music.spotui.ui.components.SonvraDialogConfirm(
+                    text = "Delete",
+                    danger = true,
+                    onClick = {
                             com.music.spotui.data.preferences.LocalPlaylistPref.deletePlaylist(context, playlistId)
                             com.music.spotui.data.api.Api.HomeCache.library = null
                             com.music.spotui.data.api.Api.HomeCache.invalidatePlaylist(playlistId)
                             showDeleteDialog = false
                             navController.navigateUp()
-                        }
-                        .padding(8.dp)
+                        },
                 )
             },
             dismissButton = {
-                Text(
-                    "Cancel",
-                    color = TextTertiary,
-                    fontSize = 15.sp,
-                    modifier = Modifier
-                        .clickable { showDeleteDialog = false }
-                        .padding(8.dp)
+                com.music.spotui.ui.components.SonvraDialogDismiss(
+                    text = "Cancel",
+                    onClick = { showDeleteDialog = false },
                 )
             }
         )
@@ -306,7 +290,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(Canvas.toArgb()))
+            .background(Canvas)
     ) {
         if (songsResp is Response.Loading && playlistResp is Response.Loading) {
             Loader()
@@ -322,7 +306,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             }
         }
 
-        var dominentColor by remember { mutableStateOf(Color(Canvas.toArgb())) }
+        var dominentColor by remember { mutableStateOf(com.music.spotui.ui.theme.Canvas) }
         // Once per cover, not on every recomposition.
         LaunchedEffect(playlist.coverUri) {
             if (playlist.coverUri.isNotBlank()) {
@@ -332,36 +316,43 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
             }
         }
 
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        // The top bar turns to strong glass once the hero has scrolled away.
+        val barCollapsed by remember { androidx.compose.runtime.derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 600 } }
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    modifier = Modifier.padding(16.dp, 0.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp),
                     navigationIcon = {
-                        Icon(
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { navController.navigateUp() },
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "",
-                            tint = TextPrimary
-                        )
-                    },
+                    com.music.spotui.ui.components.SonvraIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = { navController.navigateUp() },
+                        filled = true,
+                    )
+                },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
+                        containerColor = if (barCollapsed) com.music.spotui.ui.theme.GlassFillStrong else Color.Transparent,
+                        scrolledContainerColor = com.music.spotui.ui.theme.GlassFillStrong,
                         titleContentColor = TextPrimary,
                     ),
-                    title = { Text(text = "") }
+                    title = {
+                    if (barCollapsed) Text(
+                        text = playlistName,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
                 )
             }
         ) {
-            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(Canvas.toArgb()))
+                        .background(Canvas)
                 ) {
                 item {
                     Column(
@@ -371,7 +362,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             .padding(bottom = 8.dp)
                             .background(
                                 brush = Brush.verticalGradient(
-                                    colors = listOf(dominentColor, Color(Canvas.toArgb())),
+                                    colors = listOf(com.music.spotui.ui.theme.artworkTone(dominentColor), Canvas),
                                     startY = -100f,
                                 ),
                             ),
@@ -381,7 +372,11 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
 
                         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             GlideImage(
-                                modifier = Modifier.size(230.dp),
+                                modifier = Modifier
+                            .size(200.dp)
+                            .shadow(18.dp, SonvraShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SonvraShape.lg),
+                        contentScale = ContentScale.Crop,
                                 model = playlist.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
                                 contentDescription = "",
@@ -405,10 +400,8 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Text(
                                 text = playlist.name.ifBlank { playlistName },
                                 color = TextPrimary,
-                                fontSize = 28.sp,
-                                fontFamily = com.music.spotui.ui.theme.SonvraDisplay,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontFamily = com.music.spotui.ui.theme.SonvraDisplay)
                             if (isLocalPlaylist) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
@@ -424,7 +417,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 0.dp),
                                 text = playlist.time,
                                 color = TextTertiary,
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -444,7 +437,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Text(
                                     text = "Local Playlist",
                                     color = TextPrimary,
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium
                                 )
                             } else if (playlist.artists.isNotBlank()) {
@@ -452,13 +445,13 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                     Text(
                                         text = "Playlist • ",
                                         color = TextPrimary,
-                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         text = playlist.artists,
                                         color = TextPrimary,
-                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodySmall,
                                         fontWeight = FontWeight.Medium,
                                         modifier = Modifier.clickable(
                                             interactionSource = remember { MutableInteractionSource() },
@@ -504,31 +497,27 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                             painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                                             tint = TextPrimary,
                                             modifier = Modifier
-                                                .size(24.dp)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = null,
-                                                ) {
+                                                .size(48.dp)
+                                                .clip(CircleShape)
+                                                .clickable {
                                                     playlistViewModel.addAllToQueue(filteredSongs)
                                                     android.widget.Toast.makeText(
                                                         context,
                                                         "${filteredSongs.size} track(s) added to queue",
                                                         android.widget.Toast.LENGTH_SHORT,
                                                     ).show()
-                                                },
+                                                }
+                                                .padding(12.dp),
                                             contentDescription = "Add to queue",
                                         )
-                                        Spacer(modifier = Modifier.width(18.dp))
                                         Icon(
                                             imageVector = if (playlistDownloaded)
                                                 Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
-                                            tint = if (playlistDownloaded) Color(Accent.toArgb()) else TextPrimary,
+                                            tint = if (playlistDownloaded) Accent else TextPrimary,
                                             modifier = Modifier
-                                                .size(24.dp)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = null,
-                                                ) {
+                                                .size(48.dp)
+                                                .clip(CircleShape)
+                                                .clickable {
                                                     com.music.spotui.data.preferences.OfflineCollectionsPref.saveCollection(
                                                         context = context,
                                                         id = playlistId,
@@ -546,20 +535,18 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                                         snackbarMessage = "Playlist added to offline library"
                                                         snackbarVisible = true
                                                     }
-                                                },
+                                                }
+                                                .padding(12.dp),
                                             contentDescription = "Download playlist",
                                         )
-                                        Spacer(modifier = Modifier.width(18.dp))
                                         // Shuffle-play: start the playlist in random order.
                                         Icon(
                                             painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
                                             tint = TextPrimary,
                                             modifier = Modifier
-                                                .size(24.dp)
-                                                .clickable(
-                                                    interactionSource = remember { MutableInteractionSource() },
-                                                    indication = null,
-                                                ) {
+                                                .size(48.dp)
+                                                .clip(CircleShape)
+                                                .clickable {
                                                     playlistViewModel.startShuffled(songs)?.let { first ->
                                                         playlistViewModel.updateSongState(
                                                             first.coverUri,
@@ -572,21 +559,20 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                                         )
                                                         SongPlayer.playSong(first.url, context, "song/${first.id}")
                                                     }
-                                                },
+                                                }
+                                                .padding(12.dp),
                                             contentDescription = "Shuffle play",
                                         )
                                         if (playlistId.startsWith("local_pl_")) {
-                                            Spacer(modifier = Modifier.width(18.dp))
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
                                                 contentDescription = "Delete Playlist",
                                                 tint = TextPrimary,
                                                 modifier = Modifier
-                                                    .size(24.dp)
-                                                    .clickable(
-                                                        interactionSource = remember { MutableInteractionSource() },
-                                                        indication = null,
-                                                    ) { showDeleteDialog = true }
+                                                    .size(48.dp)
+                                                    .clip(CircleShape)
+                                                    .clickable { showDeleteDialog = true }
+                                                    .padding(12.dp)
                                             )
                                         }
                                     }
@@ -660,7 +646,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
+                                    .clip(SonvraShape.pill)
                                     .background(Surface3)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -668,9 +654,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Text(
                                     text = currentSort.getDescriptiveLabel(isDescending),
                                     color = TextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                    style = MaterialTheme.typography.labelLarge)
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Sort Options",
@@ -686,7 +670,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
 
                 itemsIndexed(filteredSongs, key = { _, song -> song.id }) { index, song ->
                     val currentColor = if (song.id == playlistViewModel.currentSongId.value)
-                        Color(Accent.toArgb()) else TextPrimary
+                        Accent else TextPrimary
 
                     SwipeToPlayNextWrapper(
                         onPlayNext = {
@@ -727,7 +711,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
+                                    .clip(SonvraShape.xs),
                                 model = song.coverUri,
                                 failure = placeholder(R.drawable.placeholder),
                                 contentScale = ContentScale.Crop,
@@ -742,7 +726,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                     Text(
                                         text = song.title,
                                         color = currentColor,
-                                        fontSize = 14.sp,
+                                        style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Medium,
                                         maxLines = 1
                                     )
@@ -750,7 +734,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                                 Text(
                                     text = song.singer,
                                     color = TextTertiary,
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Medium,
                                     maxLines = 1
                                 )
@@ -783,7 +767,7 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                     Text(
                         text = "Sort by",
                         color = TextPrimary,
-                        fontSize = 15.sp,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
@@ -818,21 +802,21 @@ fun PlaylistScreen(navController: NavController, playlistId: String, playlistNam
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
+                                tint = if (isSelected) Accent else TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                              Text(
                                  text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == PlaylistSortOption.DATE),
-                                 color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
-                                 fontSize = 15.sp,
+                                 color = if (isSelected) Accent else TextPrimary,
+                                 style = MaterialTheme.typography.bodyLarge,
                                  modifier = Modifier.weight(1f)
                              )
                             if (isSelected) {
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(Accent.toArgb()),
+                                    tint = Accent,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }

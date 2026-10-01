@@ -1,6 +1,9 @@
 package com.music.spotui.ui.screens
 
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,7 +25,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -178,7 +180,7 @@ fun HistoryScreen(navController: NavController) {
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(Canvas.toArgb()))
+                    .background(com.music.spotui.ui.theme.Canvas)
                     .statusBarsPadding()
             ) {
                 item {
@@ -190,26 +192,20 @@ fun HistoryScreen(navController: NavController) {
                             .padding(16.dp, 16.dp, 16.dp, 8.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "",
-                                tint = TextPrimary,
-                                modifier = Modifier
-                                    .size(26.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) { navController.navigateUp() },
+                            com.music.spotui.ui.components.SonvraIconButton(
+                                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                onClick = { navController.navigateUp() },
+                                filled = true,
                             )
-                            Spacer(Modifier.width(16.dp))
-                            Text("Listening history", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Listening history", color = TextPrimary, style = MaterialTheme.typography.headlineSmall)
                         }
                         if (history.isNotEmpty()) {
                             Text(
                                 "Clear all",
                                 color = MutedText,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.labelLarge,
                                 modifier = Modifier.clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -235,7 +231,7 @@ fun HistoryScreen(navController: NavController) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(SonvraShape.md)
                                 .background(
                                     Brush.linearGradient(
                                         colors = listOf(
@@ -244,18 +240,19 @@ fun HistoryScreen(navController: NavController) {
                                         )
                                     )
                                 )
+                                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SonvraShape.md)
                                 .padding(16.dp),
                         ) {
                             Column {
-                                Text("YOUR LISTENING HABITS", color = Accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("YOUR LISTENING HABITS", color = Accent, style = MaterialTheme.typography.labelSmall)
                                 Spacer(Modifier.height(12.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceAround,
                                 ) {
                                     StatPill("Total plays", "${history.size}", Accent)
-                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", AccentSoft)
-                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", AccentSoft)
+                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", TextPrimary)
+                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", TextPrimary)
                                 }
                             }
                         }
@@ -267,8 +264,7 @@ fun HistoryScreen(navController: NavController) {
                             Text(
                                 "Top artists",
                                 color = TextPrimary,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                             )
                         }
@@ -297,8 +293,7 @@ fun HistoryScreen(navController: NavController) {
                             Text(
                                 "Top tracks",
                                 color = TextPrimary,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                             )
                         }
@@ -333,8 +328,7 @@ fun HistoryScreen(navController: NavController) {
                         Text(
                             "History",
                             color = TextPrimary,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                         )
                     }
@@ -360,7 +354,7 @@ fun HistoryScreen(navController: NavController) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
+                                    .clip(SonvraShape.pill)
                                     .background(Surface3)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -368,9 +362,7 @@ fun HistoryScreen(navController: NavController) {
                                 Text(
                                     text = currentSort.getDescriptiveLabel(isDescending),
                                     color = TextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                    style = MaterialTheme.typography.labelLarge)
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Sort Options",
@@ -385,19 +377,12 @@ fun HistoryScreen(navController: NavController) {
 
                     if (filteredHistory.isEmpty() && searchQuery.isNotBlank()) {
                         item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 40.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "No matches found for \"$searchQuery\"",
-                                    color = TextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            com.music.spotui.ui.components.SonvraEmptyState(
+                                icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
+                                title = "No matches",
+                                message = "Nothing here matches \"$searchQuery\".",
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     } else {
                         items(filteredHistory.size) { i ->
@@ -447,7 +432,7 @@ fun HistoryScreen(navController: NavController) {
                         Text(
                             text = "Sort by",
                             color = TextPrimary,
-                            fontSize = 15.sp,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                         )
@@ -480,21 +465,21 @@ fun HistoryScreen(navController: NavController) {
                                 Icon(
                                     imageVector = icon,
                                     contentDescription = null,
-                                    tint = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
+                                    tint = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(18.dp))
                                 Text(
                                     text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == HistorySortOption.DATE),
-                                    color = if (isSelected) Color(Accent.toArgb()) else TextPrimary,
-                                    fontSize = 15.sp,
+                                    color = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
                                     Icon(
                                         imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                         contentDescription = null,
-                                        tint = Color(Accent.toArgb()),
+                                        tint = com.music.spotui.ui.theme.Accent,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -508,21 +493,24 @@ fun HistoryScreen(navController: NavController) {
             if (showClearDialog) {
                 AlertDialog(
                     onDismissRequest = { showClearDialog = false },
-                    title = { Text("Clear listening history?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+                    title = { Text("Clear listening history?", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
                     text = { Text("This will remove all ${history.size} plays. This action cannot be undone.", color = MutedText) },
                     confirmButton = {
-                        TextButton(onClick = {
+                        com.music.spotui.ui.components.SonvraDialogConfirm(
+                            text = "Clear",
+                            danger = true,
+                            onClick = {
                             clearListeningHistory(context)
                             history = emptyList()
                             showClearDialog = false
-                        }) {
-                            Text("Clear", color = com.music.spotui.ui.theme.Danger)
-                        }
+                        },
+                        )
                     },
                     dismissButton = {
-                        TextButton(onClick = { showClearDialog = false }) {
-                            Text("Cancel", color = TextPrimary)
-                        }
+                        com.music.spotui.ui.components.SonvraDialogDismiss(
+                            text = "Cancel",
+                            onClick = { showClearDialog = false },
+                        )
                     },
                     containerColor = Surface2,
                     titleContentColor = TextPrimary,
@@ -536,8 +524,8 @@ fun HistoryScreen(navController: NavController) {
 @Composable
 private fun StatPill(label: String, value: String, accent: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = MutedText, fontSize = 11.sp)
+        Text(value, color = accent, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(label, color = MutedText, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -556,7 +544,7 @@ private fun TopArtistRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(SonvraShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -567,7 +555,7 @@ private fun TopArtistRow(
         Text(
             text = "$rank",
             color = MutedText,
-            fontSize = 15.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.width(22.dp),
         )
@@ -589,7 +577,7 @@ private fun TopArtistRow(
             Text(
                 name,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -600,7 +588,7 @@ private fun TopArtistRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
+                    .clip(SonvraShape.xs),
                 color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
@@ -609,7 +597,7 @@ private fun TopArtistRow(
             Text(
                 "$plays plays",
                 color = MutedText,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -631,7 +619,7 @@ private fun TopTrackRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(SonvraShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -642,14 +630,14 @@ private fun TopTrackRow(
         Text(
             text = "$rank",
             color = MutedText,
-            fontSize = 15.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.width(22.dp),
         )
         GlideImage(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(SonvraShape.xs),
             model = imageUrl.ifBlank { null },
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -664,7 +652,7 @@ private fun TopTrackRow(
             Text(
                 title,
                 color = TextPrimary,
-                fontSize = 15.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -673,7 +661,7 @@ private fun TopTrackRow(
                 Text(
                     artist,
                     color = MutedText,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -684,7 +672,7 @@ private fun TopTrackRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
+                    .clip(SonvraShape.xs),
                 color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
@@ -693,7 +681,7 @@ private fun TopTrackRow(
             Text(
                 "$plays plays",
                 color = MutedText,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -712,7 +700,7 @@ private fun HistoryRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp, 6.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(SonvraShape.sm)
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -723,7 +711,7 @@ private fun HistoryRow(
         GlideImage(
             modifier = Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(SonvraShape.xs),
             model = entry.image,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -735,10 +723,10 @@ private fun HistoryRow(
                 .weight(1f)
                 .padding(start = 10.dp, end = 8.dp),
         ) {
-            Text(entry.title, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(entry.title, color = TextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 "${entry.singer} • ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(entry.ts))}",
-                color = TextTertiary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = TextTertiary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
         Icon(
@@ -746,11 +734,10 @@ private fun HistoryRow(
             contentDescription = "Remove",
             tint = MutedText,
             modifier = Modifier
-                .size(18.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onRemove() },
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable { onRemove() }
+                .padding(15.dp),
         )
     }
 }

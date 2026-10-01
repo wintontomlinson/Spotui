@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SonvraShape
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -160,7 +161,7 @@ fun FastScrollbarForLazyList(
                 if (showBadge && isDragging) {
                     val currentTrackIndex = (state.firstVisibleItemIndex + 1).coerceAtMost(totalItems)
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = SonvraShape.lg,
                         color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
@@ -176,7 +177,7 @@ fun FastScrollbarForLazyList(
                         Text(
                             text = "$currentTrackIndex / $totalItems",
                             color = TextPrimary,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false,
@@ -194,7 +195,7 @@ fun FastScrollbarForLazyList(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(SonvraShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }
@@ -299,7 +300,7 @@ fun FastScrollbarForScrollState(
                 if (showBadge && isDragging) {
                     val percent = (scrollProgress * 100).roundToInt()
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
+                        shape = SonvraShape.lg,
                         color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
@@ -315,7 +316,7 @@ fun FastScrollbarForScrollState(
                         Text(
                             text = "$percent%",
                             color = TextPrimary,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false,
@@ -333,7 +334,7 @@ fun FastScrollbarForScrollState(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(SonvraShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }
