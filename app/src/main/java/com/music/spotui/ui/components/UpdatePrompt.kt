@@ -20,7 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -64,9 +66,13 @@ import com.music.spotui.ui.theme.TextPrimary
 import com.music.spotui.ui.theme.TextSecondary
 import com.music.spotui.ui.theme.Surface3
 
+/** Download/install lifecycle for the in-app updater. */
+private enum class UpdatePhase { IDLE, DOWNLOADING, READY, ERROR }
+
 @Composable
 fun UpdatePrompt() {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var update by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
 
     LaunchedEffect(Unit) {
@@ -75,8 +81,67 @@ fun UpdatePrompt() {
 
     val info = update ?: return
 
+    var phase by remember { mutableStateOf(UpdatePhase.IDLE) }
+    var progress by remember { mutableStateOf(0f) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var downloadedApk by remember { mutableStateOf<java.io.File?>(null) }
+    var downloadJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    // Unknown-sources gate: when the user returns from the settings screen and the permission
+    // is now granted, the pending install is launched automatically.
+    val installPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) {
+        downloadedApk?.let { apk ->
+            if (UpdateChecker.canInstall(context)) {
+                UpdateChecker.installApk(context, apk)
+                update = null
+            }
+        }
+    }
+
+    // Downloads the apk in-app, then either installs it (permission ready) or routes to the
+    // unknown-sources screen first. NEVER a browser redirect for the APK.
+    val startUpdate: () -> Unit = start@{
+        // Defensive: if the release only exposed an html page (no .apk asset), fall back to the
+        // system installer flow isn't possible — but we still never hard-redirect to a browser;
+        // the dialog simply reports it so the user can grab it from the release page they chose.
+        if (!UpdateChecker.isApkUrl(info.downloadUrl)) {
+            errorMessage = "No installable APK was attached to this release."
+            phase = UpdatePhase.ERROR
+            return@start
+        }
+        phase = UpdatePhase.DOWNLOADING
+        progress = 0f
+        errorMessage = null
+        downloadJob = scope.launch {
+            val result = UpdateChecker.downloadApk(context, info.downloadUrl) { p -> progress = p }
+            when (result) {
+                is UpdateChecker.DownloadResult.Success -> {
+                    downloadedApk = result.apk
+                    phase = UpdatePhase.READY
+                    if (UpdateChecker.canInstall(context)) {
+                        UpdateChecker.installApk(context, result.apk)
+                        update = null
+                    } else {
+                        // Ask the OS to let SOLO install, then resume in the launcher callback.
+                        runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
+                    }
+                }
+                is UpdateChecker.DownloadResult.Failure -> {
+                    if (result.reason != "Cancelled") {
+                        errorMessage = result.reason
+                        phase = UpdatePhase.ERROR
+                    } else {
+                        phase = UpdatePhase.IDLE
+                    }
+                }
+            }
+        }
+    }
+
     AlertDialog(
-        onDismissRequest = { update = null },
+        onDismissRequest = { if (phase != UpdatePhase.DOWNLOADING) update = null },
         properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = Surface2,
         titleContentColor = TextPrimary,
@@ -97,26 +162,73 @@ fun UpdatePrompt() {
                         color = TextSecondary,
                     )
                 }
+                if (phase == UpdatePhase.DOWNLOADING) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        if (progress >= 0f) "Downloading… ${(progress * 100).toInt()}%" else "Downloading…",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (progress >= 0f) {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(SoloShape.pill),
+                            color = Accent,
+                            trackColor = Surface3,
+                        )
+                    } else {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(SoloShape.pill),
+                            color = Accent,
+                            trackColor = Surface3,
+                        )
+                    }
+                }
+                if (phase == UpdatePhase.READY) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "Downloaded. Follow the system prompt to install.",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                }
+                errorMessage?.let {
+                    Spacer(Modifier.height(14.dp))
+                    Text(it, color = com.music.spotui.ui.theme.Danger, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                }
             }
         },
         confirmButton = {
-            SoloDialogConfirm(text = "Update", onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(info.downloadUrl))
-                    )
-                }
-                update = null
-            })
+            when (phase) {
+                UpdatePhase.DOWNLOADING -> SoloDialogConfirm(text = "Cancel", onClick = {
+                    downloadJob?.cancel()
+                    phase = UpdatePhase.IDLE
+                })
+                UpdatePhase.READY -> SoloDialogConfirm(text = "Install", onClick = {
+                    downloadedApk?.let { apk ->
+                        if (UpdateChecker.canInstall(context)) {
+                            UpdateChecker.installApk(context, apk)
+                            update = null
+                        } else {
+                            runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
+                        }
+                    }
+                })
+                UpdatePhase.ERROR -> SoloDialogConfirm(text = "Retry", onClick = startUpdate)
+                else -> SoloDialogConfirm(text = "Update", onClick = startUpdate)
+            }
         },
         dismissButton = {
-            TextButton(onClick = {
-                UpdateChecker.skipRelease(context, info)
-                update = null
-            }) {
-                Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+            if (phase != UpdatePhase.DOWNLOADING) {
+                TextButton(onClick = {
+                    UpdateChecker.skipRelease(context, info)
+                    update = null
+                }) {
+                    Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                }
+                SoloDialogDismiss(text = "Dismiss", onClick = { update = null })
             }
-            SoloDialogDismiss(text = "Dismiss", onClick = { update = null })
         },
     )
 }
