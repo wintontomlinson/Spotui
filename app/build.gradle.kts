@@ -53,7 +53,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 code shrinking + resource shrinking. The required keep rules
+            // (reflection / @JavascriptInterface bridges / kotlinx.serialization
+            // models / Media3 / Glide / Hilt / Compose / vendored stream libs)
+            // live in proguard-rules.pro so playback and the WebView bridges
+            // survive shrinking.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
