@@ -17,11 +17,13 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 - 🎚️ **Equalizer, speed and pitch, volume normalization**, crossfade with DJ-style mixing, downloads and offline caching.
 - 📝 **Lyrics**: synced lyrics with a live preview on the player, a full-screen view and on-device translation.
 - 📀 **Spotify (optional)**: sign in to bring your playlists, liked songs, followed artists, history and recommendations.
-- ✨ **"Aurora Noir" design**: a warm obsidian canvas with one electric lime-citron "Volt" accent and a layered surface ramp, set in Space Grotesk and Plus Jakarta Sans, with an artwork-tinted player and a docked glass tab bar.
+- 🔊 **Premium audio**: a tasteful "Premium" equalizer preset and retuned loudness normalization keep levels even and full, alongside gapless and crossfade mixing.
+- 🎛️ **Redesigned player**: large artwork with artwork-driven dynamic colour, a custom violet→cyan seek bar with a gold scrubber, animated controls with haptics, a "Next up" peek and quick lyrics access.
+- ✨ **"Lumen Indigo" design**: a deep indigo canvas with a two-tone "Lumen" accent — a vivid violet that refracts into a cyan-teal highlight — and a reserved premium gold, set in Space Grotesk and Plus Jakarta Sans, with an artwork-tinted player, craftier Explore mesh tiles and guarded frosted-glass chrome.
 
-The icon is the **Spotlight O**: an original mark built as a Volt-gradient notched ring — the "O" of SOLO — with a single bright dot at its centre, like a lone voice caught under a spotlight. It reads clearly from the launcher down to the small notification icon.
+The icon is the **Lumen Prism**: an original mark built from scratch — an upright beam of light that descends from a gold tip, strikes a refraction node and fans into a short violet→cyan spectrum, for "one voice, one light, a spectrum". It reads clearly from the launcher down to the small notification icon.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 6.0.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 7.0.0.
 
 ## Install
 
