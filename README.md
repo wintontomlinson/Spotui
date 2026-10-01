@@ -1,6 +1,6 @@
-<p align="center"><img src="assets/icon.png" width="128" alt="Solo app icon"></p>
+<p align="center"><img src="assets/icon.png" width="128" alt="Sonvra app icon"></p>
 
-# Solo
+# Sonvra
 
 A premium music player for Android, built with Jetpack Compose. Search and play any song for free, with no account required.
 
@@ -14,47 +14,36 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 - 🎚️ **Equalizer, speed and pitch, volume normalization**, crossfade with DJ-style mixing, downloads and offline caching.
 - 📝 **Lyrics**: synced lyrics with a live preview on the player, a full-screen view and on-device translation.
 - 📀 **Spotify (optional)**: sign in to bring your playlists, liked songs, followed artists, history and recommendations.
-- ✨ **"Obsidian Aurora" design**: an artwork-tinted player, a floating glass tab bar and smooth motion throughout.
+- ✨ **"Midnight Azure" design**: a graphite-midnight canvas with one vivid azure accent, Sora and Inter type, an artwork-tinted player and a docked glass tab bar.
 
-The icon is **Solo Facet**: an original four-facet gem lit from the top right, with a single dot for "solo".
+The icon is the **Sonic V**: two bold rounded strokes in an azure gradient that meet in a soft V, with a bright "source" dot rising from its mouth, like sound leaving a resonance chamber. It sits on a deep midnight plate.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 3.1.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 4.0.0.
 
 ## Install
 
 Download the latest APK from [Releases](https://github.com/wintontomlinson/Spotui/releases) and sideload it (Android 8.0 or later). Allow "install from unknown sources" when asked.
 
-Solo keeps the package name of earlier Spotui builds, so it installs over them and keeps your library, likes, downloads, settings and Spotify login.
+Sonvra keeps the package name of earlier Solo and Spotui builds, so it installs over them and keeps your library, likes, downloads, settings and Spotify login.
 
 If Android refuses to install the APK, uninstall any copy that came from a different source, download the APK again in full, and allow the install when Play Protect asks.
 
-## Build from source
-
-Requirements: JDK 17 and the Android SDK (compileSdk 37).
-
-```bash
-./gradlew :app:assembleDebug     # debug build: app/build/outputs/apk/debug/Solo_v<version>.apk
-./gradlew :app:assembleRelease   # release build
-```
-
-Releases are published by the **Build & Release APK** GitHub Actions workflow (run it manually or push a `v*` tag).
-
 ## Credits
 
-Solo builds on these open-source projects:
+Sonvra builds on these open-source projects:
 
 - [Neptune](https://github.com/navneet851/spotify-clone-jetpack-compose): the original Jetpack Compose music player this app started from.
 - [Metrolist](https://github.com/MetrolistGroup/Metrolist): the YouTube Music streaming internals (InnerTube client, stream cipher and PoToken handling).
 - [SpotiFLAC](https://github.com/spotbye/SpotiFLAC): lossless (FLAC) track resolving.
 - [SimpMusic](https://github.com/maxrave-dev/SimpMusic): crossfade and DJ-style audio filter processing.
-- [Fraunces](https://github.com/undercasetype/Fraunces) and [Manrope](https://github.com/googlefonts/manrope): typefaces under the SIL Open Font License 1.1 (see [`licenses/fonts`](licenses/fonts)).
+- [Sora](https://github.com/sora-xor/sora-font) and [Inter](https://github.com/rsms/inter): typefaces under the SIL Open Font License 1.1 (see [`licenses/fonts`](licenses/fonts)).
 
 Maintained by **SATYAN SHARMA**.
 
 ## License
 
-Solo is free software released under the [GNU General Public License v3.0](LICENSE).
+Sonvra is free software released under the [GNU General Public License v3.0](LICENSE).
 
 ## Disclaimer
 
-This project is for educational purposes only. Spotify is a trademark of Spotify AB and YouTube is a trademark of Google LLC. Solo is not affiliated with, or endorsed by, either company.
+This project is for educational purposes only. Spotify is a trademark of Spotify AB and YouTube is a trademark of Google LLC. Sonvra is not affiliated with, or endorsed by, either company.
