@@ -1,9 +1,32 @@
-# Solo (formerly Spotui): Fork Features & Differences
+# Sonvra (formerly Solo / Spotui): Fork Features & Differences
 
 This document outlines the custom features, improvements, and differences introduced in this fork
 compared to the main Spotui repository.
 
 ---
+
+## 4.0.0 — Sonvra
+
+* **New name: Sonvra.** The app is now **Sonvra** everywhere: launcher label, splash, notification,
+  Settings, the APK file name and the release page.
+* **New logo, "Sonic V".** An original mark of two rounded capsule arms forming a V with a single
+  source dot above it, in an azure gradient on a midnight plate. It is used on the launcher, round
+  and themed icons, the notification icon, the splash screen and every raster.
+* **Midnight Azure design.** A graphite-midnight canvas with one vivid azure accent and a layered
+  surface ramp, set in Sora (headings) and Inter (everything else). Shapes, spacing and motion
+  follow one shared system.
+* **Every screen redesigned.** A docked navigation bar with a sliding accent indicator, a new mini
+  player, and a new full player with a larger play button, a slimmer seek bar and accent dots for
+  shuffle and repeat. Lyrics, queue, Home (with a new Mix for you hero), Explore (new masthead,
+  search field and genre colours), Library, every album, playlist, artist and collection page,
+  Settings, the equalizer, sheets, dialogs, and the loading, empty and error states are all
+  restyled. Icon buttons now have full-size touch targets.
+* The old purple-and-gold theme, its fonts and its assets have been removed.
+* **Same app underneath.** Playback is just as instant and high quality, and the recommendation
+  algorithm, Mix for you, speed and pitch, equalizer, normalization, lyrics, downloads and every
+  other feature work as before.
+* **Installs over earlier builds.** The package name and signing key are unchanged, so Sonvra
+  updates a Solo install from this fork's releases and keeps your library and settings.
 
 ## 3.1.0 — Solo
 
