@@ -111,30 +111,31 @@ private data class BrowseCategory(
 )
 
 private val BROWSE_CATEGORIES = listOf(
-    // Each category carries a deep, warm-leaning tone (it tints the tile's scrim)
-    // that sits on the Aurora Noir obsidian canvas, plus a name-matched `imageQuery`,
-    // so the full-bleed tile artwork clearly reflects the label. `query` is what
-    // actually runs on tap.
+    // Each category carries a deep tint (it colours the tile's scrim) drawn from the
+    // Lumen Indigo prism family — violet, indigo, cyan-teal and a few warm gold/plum
+    // accents — so every tile sits cohesively on the indigo canvas while staying
+    // distinct from its neighbours. Each has a name-matched `imageQuery`, so the
+    // full-bleed tile artwork clearly reflects the label; `query` is what runs on tap.
     // imageQuery points at recognisable, current hit albums/artists so each tile
     // shows relatable, latest cover art (resolved to a square album cover) rather
     // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF4A5A1E), imageQuery = "trending"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF7A3A2A), imageQuery = "charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF2F5A3A), imageQuery = "new"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF5A4A1E), imageQuery = "madeforyou"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF7A3348), imageQuery = "bollywood"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF8A4A24), imageQuery = "punjabi"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF3D5A2A), imageQuery = "hiphop"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF6E4A2E), imageQuery = "pop"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2E5A52), imageQuery = "lofi"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF8A3A30), imageQuery = "workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF6E3350), imageQuery = "romance"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF5A5024), imageQuery = "party"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF8A5A2A), imageQuery = "devotional"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF4A4432), imageQuery = "retro"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF3A4A44), imageQuery = "sad"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2F5648), imageQuery = "english"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF55602E), imageQuery = "instrumental"),
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF5A3FA8), imageQuery = "trending"),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF3F3F8A), imageQuery = "charts"),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF245A6E), imageQuery = "new"),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF4A3F8A), imageQuery = "madeforyou"),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF6E2E6A), imageQuery = "bollywood"),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF7A4A2E), imageQuery = "punjabi"),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF3A3F6E), imageQuery = "hiphop"),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF6A2F7A), imageQuery = "pop"),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF245A58), imageQuery = "lofi"),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF5A2E6E), imageQuery = "workout"),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF7A3360), imageQuery = "romance"),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF5A3FB0), imageQuery = "party"),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF7A5A2E), imageQuery = "devotional"),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF42427A), imageQuery = "retro"),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF2E4A6E), imageQuery = "sad"),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2A5A6A), imageQuery = "english"),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF3F5A5A), imageQuery = "instrumental"),
 )
 
 /**
