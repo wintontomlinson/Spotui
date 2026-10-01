@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.music.spotui.ui.screens.FreeHomeScreen
 import com.music.spotui.ui.screens.YtSearchScreen
@@ -48,9 +49,13 @@ fun MyNavHost(
     val playerViewModel : PlayerViewModel = hiltViewModel()
 
     val context = LocalContext.current
-    // The app always opens on Home, which is the login free YouTube powered screen.
+    // First launch (or an upgrade where the additive flag is absent) opens the one-time
+    // onboarding; every launch after that opens on Home, the login-free YouTube screen.
     // Explore is a tab the user chooses, not the landing screen.
-    val startDestination = Routes.Home.route
+    val startDestination = remember {
+        if (com.music.spotui.data.preferences.hasOnboarded(context)) Routes.Home.route
+        else Routes.Onboarding.route
+    }
 
     // Restore the last session: put the track back into the mini player (paused)
     // and arm the player to resume from the saved position on the first play tap.
@@ -150,6 +155,22 @@ fun MyNavHost(
 
         composable(Routes.Equalizer.route) {
             com.music.spotui.ui.screens.EqualizerScreen(navHostController)
+        }
+
+        composable(Routes.Onboarding.route) {
+            com.music.spotui.ui.screens.OnboardingScreen(
+                onFinish = {
+                    // Replace onboarding with Home so Back never returns to the intro.
+                    navHostController.navigate(Routes.Home.route) {
+                        popUpTo(Routes.Onboarding.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(Routes.Stats.route) {
+            com.music.spotui.ui.screens.ListeningStatsScreen(navHostController)
         }
 
 

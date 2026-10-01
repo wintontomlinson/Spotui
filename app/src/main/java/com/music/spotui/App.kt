@@ -38,11 +38,12 @@ fun App() {
     LaunchedEffect(currentRoute, playerState) {
         if (currentRoute != Routes.Player.route) {
             bottomBarState.value = when (currentRoute) {
-                Routes.Queue.route -> false
+                // Onboarding is a full-screen first-run flow; no tab bar or mini player.
+                Routes.Queue.route, Routes.Onboarding.route -> false
                 else -> true
             }
             bottomBarPlayerState.value = when (currentRoute) {
-                Routes.Queue.route -> false
+                Routes.Queue.route, Routes.Onboarding.route -> false
                 else -> playerState.isNotEmpty()
             }
         }

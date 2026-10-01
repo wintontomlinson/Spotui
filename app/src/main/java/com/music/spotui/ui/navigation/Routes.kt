@@ -21,6 +21,10 @@ sealed class Routes(
     object History : Routes("History", "history")
     object LocalFiles : Routes("LocalFiles", "localfiles")
     object Equalizer : Routes("Equalizer", "equalizer")
+    // First-run onboarding (FEAT-003); shown once, gated by the hasOnboarded pref.
+    object Onboarding : Routes("Onboarding", "onboarding")
+    // Read-only listening stats derived from TasteProfile (FEAT-003).
+    object Stats : Routes("Stats", "stats")
 }
 
 /** Builds a playlist route carrying the Spotify playlist id (and a display name). */

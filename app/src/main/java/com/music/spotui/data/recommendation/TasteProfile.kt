@@ -227,6 +227,72 @@ object TasteProfile {
         return synchronized(lock) { map.values.toList() }
     }
 
+    /**
+     * READ-ONLY aggregate for the Listening-stats screen (FEAT-003), derived from the existing
+     * taste data with no new persistence and no change to [recordOutcome] or the JSON schema.
+     * Everything here is computed from the same per-track counters the model already stores.
+     */
+    data class ListeningSummary(
+        /** Distinct tracks the model has seen. */
+        val trackCount: Int,
+        /** Distinct artists seen. */
+        val artistCount: Int,
+        /** Total plays + completes across every track (a listen count, skips excluded). */
+        val totalListens: Int,
+        /** Total skips recorded. */
+        val totalSkips: Int,
+        /** Rough minutes listened: completes count ~3.5 min, plays ~2 min (no duration is stored). */
+        val estimatedMinutes: Int,
+        /** Current day streak of consecutive days (ending today) with at least one listen. */
+        val dayStreak: Int,
+        /** Top artists by affinity, strongest first, display spelling. */
+        val topArtists: List<String>,
+        /** Top tracks (title to artist) by that track's own affinity, strongest first. */
+        val topTracks: List<Pair<String, String>>,
+        /** The strongest mood/genre cluster right now, or null. */
+        val strongestCluster: String?,
+    )
+
+    /** Builds a read-only [ListeningSummary] from the current snapshot. */
+    fun listeningSummary(ctx: Context, topLimit: Int = 5): ListeningSummary {
+        val tracks = snapshot(ctx)
+        val listens = tracks.sumOf { it.plays + it.completes }
+        val skips = tracks.sumOf { it.skips }
+        val minutes = tracks.sumOf { (it.completes * 3.5 + it.plays * 2.0) }.toInt()
+        val artists = tracks.mapNotNull { artistKey(it.artist).takeIf { k -> k.isNotBlank() } }.distinct().size
+        val topTracks = tracks
+            .filter { it.title.isNotBlank() }
+            .sortedByDescending { trackAffinity(it) }
+            .filter { trackAffinity(it) > 0f }
+            .take(topLimit)
+            .map { it.title to it.artist.substringBefore(",").removeSuffix(" - Topic").trim() }
+        return ListeningSummary(
+            trackCount = tracks.size,
+            artistCount = artists,
+            totalListens = listens,
+            totalSkips = skips,
+            estimatedMinutes = minutes,
+            dayStreak = dayStreak(tracks),
+            topArtists = topArtists(ctx, topLimit),
+            topTracks = topTracks,
+            strongestCluster = strongestCluster(ctx),
+        )
+    }
+
+    /** Consecutive days (ending today) that have at least one recorded listen, from each track's [Stats.lastTs]. */
+    private fun dayStreak(tracks: List<Stats>): Int {
+        if (tracks.isEmpty()) return 0
+        val days = tracks.map { (it.lastTs / DAY_MS.toLong()) }.filter { it > 0 }.toHashSet()
+        if (days.isEmpty()) return 0
+        var day = System.currentTimeMillis() / DAY_MS.toLong()
+        var streak = 0
+        while (days.contains(day)) {
+            streak++
+            day--
+        }
+        return streak
+    }
+
     fun trackStats(ctx: Context, key: String): Stats? {
         val map = load(ctx)
         return synchronized(lock) { map[key] }
