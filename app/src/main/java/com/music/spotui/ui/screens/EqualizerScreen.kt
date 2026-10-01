@@ -135,6 +135,38 @@ fun EqualizerScreen(navController: NavController) {
             return@Column
         }
 
+        // Hero: the live band-response curve drawn from the current levels, on an Elevated plate
+        // with an accent edge. Dims when the EQ is off so the state reads at a glance.
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 20.dp, vertical = 6.dp)
+                .fillMaxWidth()
+                .height(150.dp)
+                .clip(SoloShape.lg)
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        listOf(com.music.spotui.ui.theme.Elevated, Surface2),
+                    ),
+                )
+                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
+                .padding(16.dp),
+        ) {
+            ResponseCurve(
+                levels = levels,
+                min = range.first,
+                max = range.second,
+                active = enabled,
+                modifier = Modifier.fillMaxSize(),
+            )
+            Text(
+                if (enabled) preset else "Off",
+                color = if (enabled) Accent else TextTertiary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.TopStart),
+            )
+        }
+
         Text(
             "PRESETS",
             color = Accent,
@@ -212,6 +244,75 @@ fun EqualizerScreen(navController: NavController) {
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(horizontal = 20.dp),
         )
+    }
+}
+
+/**
+ * The band-response curve: a smooth accent line through each band's level with a soft fill under
+ * it and a faint 0 dB midline. Purely a visual readout of the same [levels] the sliders drive;
+ * no audio path is touched. Dims to a flat grey line when the EQ is off.
+ */
+@Composable
+private fun ResponseCurve(
+    levels: List<Int>,
+    min: Int,
+    max: Int,
+    active: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val lineColor = if (active) Accent else TextTertiary
+    Canvas(modifier = modifier) {
+        val span = (max - min).coerceAtLeast(1)
+        val w = size.width
+        val h = size.height
+        fun yOf(v: Int) = h * (1f - (v - min).toFloat() / span)
+        // 0 dB reference line.
+        val zeroY = yOf(0.coerceIn(min, max))
+        drawLine(
+            color = com.music.spotui.ui.theme.Surface4,
+            start = Offset(0f, zeroY),
+            end = Offset(w, zeroY),
+            strokeWidth = 1.dp.toPx(),
+        )
+        if (levels.isEmpty()) return@Canvas
+        val n = levels.size
+        fun xOf(i: Int) = if (n == 1) w / 2f else w * i / (n - 1).toFloat()
+
+        // A Catmull-Rom-ish smooth path through the band points.
+        val path = androidx.compose.ui.graphics.Path()
+        val pts = levels.indices.map { Offset(xOf(it), yOf(levels[it])) }
+        path.moveTo(pts.first().x, pts.first().y)
+        for (i in 0 until pts.size - 1) {
+            val p0 = pts[i]
+            val p1 = pts[i + 1]
+            val midX = (p0.x + p1.x) / 2f
+            path.cubicTo(midX, p0.y, midX, p1.y, p1.x, p1.y)
+        }
+
+        // Soft fill under the curve down to the baseline.
+        if (active) {
+            val fill = androidx.compose.ui.graphics.Path().apply {
+                addPath(path)
+                lineTo(pts.last().x, h)
+                lineTo(pts.first().x, h)
+                close()
+            }
+            drawPath(
+                path = fill,
+                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                    listOf(Accent.copy(alpha = 0.28f), Accent.copy(alpha = 0.02f)),
+                ),
+            )
+        }
+        drawPath(
+            path = path,
+            color = lineColor,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.5.dp.toPx()),
+        )
+        // Band nodes.
+        pts.forEach { p ->
+            drawCircle(color = lineColor, radius = 3.dp.toPx(), center = p)
+        }
     }
 }
 
