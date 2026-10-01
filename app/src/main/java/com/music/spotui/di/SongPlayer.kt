@@ -2085,15 +2085,18 @@ object SongPlayer {
      *    threshold is met almost immediately.
      *  - RESUME (1.5 s) after a rebuffer: a little more than the start threshold so
      *    a flaky link doesn't flap between playing and buffering.
-     *  - DEEP BUFFER: min 40 s, max 5 min. Five minutes holds a typical song
-     *    completely, so once it is loaded it never rebuffers.
+     *  - DEEP BUFFER: min 50 s, max 5 min. The min is raised modestly from 40 s to
+     *    50 s so the player keeps a deeper runway loaded ahead of playback and rides
+     *    through longer network dips without rebuffering; the 5 min max still holds a
+     *    typical song completely so once loaded it never rebuffers, and the fast
+     *    500 ms start threshold is untouched so first-frame latency does not regress.
      *  - KEEP A BACK-BUFFER (30 s) so scrubbing backwards doesn't re-download.
      *  - Prioritise time-over-size so a big audio buffer isn't cut short.
      */
     private fun buildLoadControl(): androidx.media3.exoplayer.LoadControl =
         androidx.media3.exoplayer.DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs = */ 40_000,
+                /* minBufferMs = */ 50_000,
                 /* maxBufferMs = */ 300_000,
                 /* bufferForPlaybackMs = */ 500,
                 /* bufferForPlaybackAfterRebufferMs = */ 1_500,

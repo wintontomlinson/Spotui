@@ -6,10 +6,13 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 
 ## Features
 
-- ⚡ **Instant playback**: the next songs are resolved and pre-buffered ahead of time, so tracks start right away.
+- 🖼️ **Image-forward home**: a featured artwork carousel leads Home, with larger covers across richer shelves and bold mood/genre/chart tiles on Explore, so the whole app leans on real artwork and premium art accents.
+- ✨ **Premium motion**: tasteful screen transitions, animated play/pause and like, list enter animations, shimmer on load, and a live now-playing equalizer glyph on the mini player — all tuned to feel smooth, not flashy.
+- ⚡ **Smoother, instant playback**: upcoming songs are resolved and pre-buffered with a deeper lookahead and a tuned buffer, so tracks start right away and keep playing through weak connections without stutter.
 - 🎧 **High-quality audio by default**: the best Opus/AAC stream, and FLAC for your local and downloaded files.
-- 🧠 **Smarter recommendations**: an on-device taste engine (plays, skips, likes, recency, artist affinity) that reads your listening context — time of day and session — and balances familiar favourites with fresh discovery, with mood clustering, stronger diversity and no recent repeats.
-- 🌅 **Mix for you**: a fresh daily mix, plus "Jump back in", your top artists and new personalised shelves.
+- 🧠 **Personalised trending and recommendations**: an on-device taste engine (plays, skips, likes, recency, artist affinity) reads your listening context — time of day and session — so even the trending feed is reordered to your taste while still surfacing genuinely fresh discovery, with mood clustering, stronger diversity and no recent repeats.
+- 🌅 **Mix for you**: a fresh daily mix, plus "Jump back in", a "Because you liked …" shelf, your top artists and new personalised shelves.
+- 🔗 **Share with artwork**: share a song as a cover-art card, with a text link fallback.
 - 🎵 **Free search and play**: find any song and play it, with no login.
 - 🎚️ **Equalizer, speed and pitch, volume normalization**, crossfade with DJ-style mixing, downloads and offline caching.
 - 📝 **Lyrics**: synced lyrics with a live preview on the player, a full-screen view and on-device translation.
@@ -18,7 +21,7 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 
 The icon is the **Spotlight O**: an original mark built as a Volt-gradient notched ring — the "O" of SOLO — with a single bright dot at its centre, like a lone voice caught under a spotlight. It reads clearly from the launcher down to the small notification icon.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 5.0.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 6.0.0.
 
 ## Install
 

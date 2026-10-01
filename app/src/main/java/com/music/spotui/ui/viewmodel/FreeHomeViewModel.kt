@@ -347,15 +347,44 @@ class FreeHomeViewModel @Inject constructor(
         }
     }
 
-    /** Loads the trending block that leads Home. */
+    /**
+     * Loads the trending block that leads Home.
+     *
+     * BEFORE: this rendered the raw YouTube.search("trending songs this week") global
+     * order verbatim, so every user saw the same list regardless of taste.
+     *
+     * AFTER: it pulls a larger candidate pool and routes it through
+     * [com.music.spotui.data.recommendation.TasteRanker.rank] (seed=null, recent=local
+     * listening history), so the order now reflects the user's genre/mood/artist
+     * affinity and time-of-day while TasteRanker's built-in dynamic exploration still
+     * surfaces genuinely fresh/novel content. It works login-free (local history) and
+     * with login, is on-device and lightweight, and never changes recordOutcome or the
+     * TasteProfile JSON (read-only use). If ranking yields nothing (e.g. empty profile
+     * plus everything excluded), it falls back to the raw trending order so the block is
+     * never blanked.
+     */
     private fun fetchTrending() {
         _trendingLoading.value = true
         lastTrendingTs = System.currentTimeMillis()
         viewModelScope.launch {
-            val songs = searchSongs(trendingQuery, limit = 8)
+            // Pull a wider pool than the 8 slots shown so TasteRanker has room to
+            // personalise the order and still spend an exploration slot on fresh content.
+            val candidates = searchSongs(trendingQuery, limit = 25)
+            if (candidates.isNotEmpty()) {
+                val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
+                val ranked = withContext(Dispatchers.Default) {
+                    runCatching {
+                        com.music.spotui.data.recommendation.TasteRanker.rank(
+                            context, candidates, seed = null, recent = history, limit = 8,
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                // Fall back to the raw trending order when ranking excludes everything,
+                // so the block always has content.
+                _trending.value = ranked.ifEmpty { candidates.take(8) }
+            }
             // Only replace the shown list when the pull actually returned something, so a
             // failed refresh never blanks out trending that was already on screen.
-            if (songs.isNotEmpty()) _trending.value = songs
             _trendingLoading.value = false
         }
     }
