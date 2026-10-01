@@ -46,27 +46,20 @@ class FreeHomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     // Evergreen fallback sections, also shown when there is no history yet. Trending
-    // is not in here because it leads the screen as its own block. The list is
-    // rotated by a time bucket on each rebuild so Home surfaces different shelves
-    // over the day instead of always showing the same order.
+    // is deliberately NOT in here: Home already leads with its own dedicated "Trending
+    // now" block, so a second "Trending now" shelf here would read as a duplicated
+    // heading. The list is shown in this fixed, deterministic order so the shelves
+    // below "Your top artists" always appear with the same stable, sensible headings
+    // instead of reshuffling through the day.
     private val curated = listOf(
         "New releases" to "new songs this week",
         "Today's biggest hits" to "top hits this week",
-        "Trending now" to "trending music now",
         "Bollywood hits" to "latest bollywood songs",
         "Chill and Lo-Fi" to "lofi chill beats",
         "Workout energy" to "workout gym music",
         "Party anthems" to "party dance hits",
         "Throwback classics" to "throwback hits playlist",
     )
-
-    /** Rotate the curated list by a slowly-changing offset so the order varies. */
-    private fun rotatedCurated(): List<Pair<String, String>> {
-        if (curated.isEmpty()) return curated
-        val bucket = (System.currentTimeMillis() / TRENDING_REFRESH_MS).toInt()
-        val off = ((bucket % curated.size) + curated.size) % curated.size
-        return curated.drop(off) + curated.take(off)
-    }
 
     /** A search-friendly mood term for a [TasteProfile] cluster tag, or null. */
     private fun clusterQueryTerm(cluster: String?): String? = when (cluster) {
@@ -456,10 +449,11 @@ class FreeHomeViewModel @Inject constructor(
             }
         }
 
-        // Curated rows always follow (and are the whole list on first launch),
-        // rotated so the trending mix on Home changes through the day. Cap the
-        // personalized rows so Home stays focused even with a rich profile.
-        return personalized.take(MAX_PERSONALIZED_ROWS) + rotatedCurated()
+        // Curated rows always follow (and are the whole list on first launch), in a
+        // fixed deterministic order so the shelves below "Your top artists" keep stable,
+        // sensible headings instead of reshuffling through the day. Cap the personalized
+        // rows so Home stays focused even with a rich profile.
+        return personalized.take(MAX_PERSONALIZED_ROWS) + curated
     }
 
     /**
