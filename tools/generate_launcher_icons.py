@@ -4,17 +4,23 @@
 The launcher itself uses the adaptive icon (minSdk is 26). The bitmaps written here are
 the legacy mipmaps, the Play Store listing icon, the README icon and the artwork
 placeholder, all drawn from the same geometry as drawable/ic_launcher_foreground.xml
-(the "Pure Tone" tuning-fork mark in the 108-unit adaptive grid) and
-drawable/ic_launcher_background.xml (the royal-plum plate).
+(the "Solo Facet" mark in the 108-unit adaptive grid) and
+drawable/ic_launcher_background.xml (the obsidian radial plate).
+
+Solo Facet: a rhombus split into four facets that meet at an off-centre apex, so the
+gem reads as lit from the top right, plus one small "solo" dot. Each facet is inset
+toward its own incentre so neighbouring facets are separated by an even 1.4-unit gap.
 
 Requires Pillow. Run from the repository root:
-    python3 tools/generate_launcher_icons.py
+    python3 tools/generate_launcher_icons.py            # write every raster
+    python3 tools/generate_launcher_icons.py --preview DIR   # light/dark previews only
 """
 
 from __future__ import annotations
 
 import math
 import os
+import sys
 
 from PIL import Image, ImageChops, ImageDraw
 
@@ -26,28 +32,43 @@ PLACEHOLDER = os.path.join(RES, "drawable", "placeholder.webp")
 UNITS = 108.0  # adaptive icon grid
 SUPERSAMPLE = 4
 
-# Plate: vertical plum-to-ink ramp plus a soft amethyst glow behind the mark.
-PLATE_STOPS = [(0.0, (0x2B, 0x1A, 0x4D)), (0.55, (0x1A, 0x10, 0x30)), (1.0, (0x0C, 0x09, 0x12))]
-GLOW_CENTRE = (54.0, 34.0)
-GLOW_RADIUS = 46.0
-GLOW_COLOUR = (0x7A, 0x5C, 0xB2)
-GLOW_STOPS = [(0.0, 0.30), (0.55, 0.10), (1.0, 0.0)]
-
-# Gold: diagonal ramp across the mark, same stops as the vector gradient.
-GOLD_STOPS = [(0.0, (0xFB, 0xEF, 0xD0)), (0.45, (0xE6, 0xC2, 0x7A)), (1.0, (0xB8, 0x89, 0x3A))]
-GOLD_FROM = (40.0, 27.0)
-GOLD_TO = (68.0, 81.0)
-SHADOW = (0x05, 0x03, 0x0A)
+# Plate: radial obsidian glow, off-centre toward the top left.
+PLATE_CENTRE = (38.0, 30.0)
+PLATE_RADIUS = 96.0
+PLATE_STOPS = [(0.0, (0x2A, 0x1F, 0x4E)), (0.55, (0x14, 0x10, 0x22)), (1.0, (0x08, 0x07, 0x0C))]
 
 # Mark geometry (108-unit grid), identical to the vector drawables.
-TINE_HALF = 3.8          # half width of each tine
-TINE_X = (46.0, 62.0)    # tine centre lines
-TINE_TOP = 30.8          # centre of the rounded tine tips
-BEND_Y = 53.0            # centre of the U bend
-BEND_OUTER = 11.8
-BEND_INNER = 4.2
-STEM = (51.2, 60.0, 56.8, 72.0)
-BALL = (54.0, 75.2, 5.8)
+N, E, S, W = (54.0, 29.0), (79.0, 54.0), (54.0, 79.0), (29.0, 54.0)
+APEX = (57.0, 51.0)
+GAP = 1.4
+FACETS = [  # (triangle, colour)
+    ((N, E, APEX), (0xFF, 0xE3, 0xC2)),
+    ((E, S, APEX), (0xFF, 0xAE, 0x70)),
+    ((S, W, APEX), (0xE2, 0x56, 0x6E)),
+    ((W, N, APEX), (0xFF, 0xC8, 0x96)),
+]
+DOT = (73.0, 35.0, 3.4)
+DOT_COLOUR = (0xFF, 0xE3, 0xC2)
+SHADOW = (0x05, 0x03, 0x0A)
+SHADOW_ALPHA = 0x4D / 255
+SHADOW_DY = 1.4
+
+
+def inset_triangle(tri, d):
+    """Offsets every edge of [tri] inward by [d] (scales about the incentre)."""
+    (ax, ay), (bx, by), (cx, cy) = tri
+    a = math.dist((bx, by), (cx, cy))
+    b = math.dist((ax, ay), (cx, cy))
+    c = math.dist((ax, ay), (bx, by))
+    p = a + b + c
+    ix, iy = (a * ax + b * bx + c * cx) / p, (a * ay + b * by + c * cy) / p
+    area = abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) / 2
+    r = area / (p / 2)
+    k = (r - d) / r
+    return [(ix + (x - ix) * k, iy + (y - iy) * k) for x, y in tri]
+
+
+INSET_FACETS = [(inset_triangle(tri, GAP / 2), colour) for tri, colour in FACETS]
 
 
 def _lerp(a, b, t):
@@ -59,9 +80,7 @@ def _ramp(stops, t):
     for (o0, c0), (o1, c1) in zip(stops, stops[1:]):
         if o0 <= t <= o1:
             local = (t - o0) / (o1 - o0) if o1 > o0 else 0.0
-            if isinstance(c0, tuple):
-                return _lerp(c0, c1, local)
-            return c0 + (c1 - c0) * local
+            return _lerp(c0, c1, local)
     return stops[-1][1]
 
 
@@ -79,72 +98,38 @@ def _field(size, fn, mode="RGB"):
 
 
 def plate(size):
-    base = _field(size, lambda x, y: _ramp(PLATE_STOPS, y / UNITS))
-    gx, gy = GLOW_CENTRE
-    glow = _field(
-        size,
-        lambda x, y: round(255 * _ramp(GLOW_STOPS, math.hypot(x - gx, y - gy) / GLOW_RADIUS)),
-        mode="L",
-    )
-    return Image.composite(Image.new("RGB", (size, size), GLOW_COLOUR), base, glow)
+    gx, gy = PLATE_CENTRE
+    return _field(size, lambda x, y: _ramp(PLATE_STOPS, math.hypot(x - gx, y - gy) / PLATE_RADIUS))
 
 
-def gold(size):
-    ax, ay = GOLD_FROM
-    bx, by = GOLD_TO
-    dx, dy = bx - ax, by - ay
-    span = dx * dx + dy * dy
-    return _field(size, lambda x, y: _ramp(GOLD_STOPS, ((x - ax) * dx + (y - ay) * dy) / span))
+def _pt(x, y, k, scale, dy):
+    return (54 + (x - 54) * scale) * k, (54 + (y - 54) * scale + dy) * k
 
 
-def mark(size, scale=1.0, dy=0.0):
-    """Alpha mask of the mark. [scale] grows it around the centre, [dy] shifts it down."""
+def draw_mark(canvas, scale=1.0, dy=0.0, colour=None, alpha=255):
+    """Draws the facets and the dot onto an RGBA [canvas]. [colour] forces one fill."""
+    size = canvas.size[0]
     k = size / UNITS
-
-    def p(x, y):
-        return (54 + (x - 54) * scale) * k, (54 + (y - 54) * scale + dy) * k
-
-    m = Image.new("L", (size, size), 0)
-    d = ImageDraw.Draw(m)
-    r = TINE_HALF * scale * k
-    for tx in TINE_X:
-        x0, y0 = p(tx, TINE_TOP)
-        _, y1 = p(tx, BEND_Y)
-        d.rectangle((x0 - r, y0, x0 + r, y1), fill=255)
-        d.ellipse((x0 - r, y0 - r, x0 + r, y0 + r), fill=255)
-    cx, cy = p(54, BEND_Y)
-    ro, ri = BEND_OUTER * scale * k, BEND_INNER * scale * k
-    ring = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(ring).ellipse((cx - ro, cy - ro, cx + ro, cy + ro), fill=255)
-    hole = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(hole).ellipse((cx - ri, cy - ri, cx + ri, cy + ri), fill=255)
-    lower = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(lower).rectangle((0, cy, size, size), fill=255)
-    m = ImageChops.lighter(m, ImageChops.multiply(ImageChops.subtract(ring, hole), lower))
-    sx0, sy0 = p(STEM[0], STEM[1])
-    sx1, sy1 = p(STEM[2], STEM[3])
-    ImageDraw.Draw(m).rectangle((sx0, sy0, sx1, sy1), fill=255)
-    bx, by = p(BALL[0], BALL[1])
-    br = BALL[2] * scale * k
-    ImageDraw.Draw(m).ellipse((bx - br, by - br, bx + br, by + br), fill=255)
-    return m
+    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    for tri, fill in INSET_FACETS:
+        d.polygon([_pt(x, y, k, scale, dy) for x, y in tri], fill=(colour or fill) + (alpha,))
+    cx, cy = _pt(DOT[0], DOT[1], k, scale, dy)
+    r = DOT[2] * scale * k
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(colour or DOT_COLOUR) + (alpha,))
+    return Image.alpha_composite(canvas, layer)
 
 
 def artwork(size, scale=1.0, with_plate=True):
-    """Full 108-unit canvas: plate (optional), soft shadow and the gold mark."""
+    """Full 108-unit canvas: plate (optional), soft shadow and the facet mark."""
     work = size * SUPERSAMPLE
     if with_plate:
         canvas = plate(work).convert("RGBA")
     else:
         canvas = Image.new("RGBA", (work, work), (0, 0, 0, 0))
-    shadow = mark(work, scale, dy=1.4 * scale).point(lambda v: round(v * 0.30))
-    shadow_layer = Image.new("RGBA", (work, work), SHADOW + (0,))
-    shadow_layer.putalpha(shadow)
-    canvas = Image.alpha_composite(canvas, shadow_layer)
-    gold_layer = gold(work).convert("RGBA")
-    gold_layer.putalpha(mark(work, scale))
-    canvas = Image.alpha_composite(canvas, gold_layer)
-    return canvas
+    canvas = draw_mark(canvas, scale, dy=SHADOW_DY * scale, colour=SHADOW, alpha=round(255 * SHADOW_ALPHA))
+    canvas = draw_mark(canvas, scale)
+    return canvas.resize((size, size), Image.LANCZOS)
 
 
 def crop_units(img, units):
@@ -175,15 +160,53 @@ def launcher_bitmap(size, shape):
 
 
 def placeholder(size):
-    """Artwork placeholder: a quiet velvet tile with a faint gold mark."""
+    """Artwork placeholder: a quiet obsidian tile with a faint facet mark."""
     work = size * SUPERSAMPLE
-    base = _field(work, lambda x, y: _lerp((0x24, 0x1C, 0x35), (0x14, 0x10, 0x20), (x + y) / (2 * UNITS)))
-    glyph = mark(work, 0.9).point(lambda v: round(v * 0.22))
-    base = Image.composite(gold(work), base, glyph)
-    return base.resize((size, size), Image.LANCZOS)
+    base = _field(work, lambda x, y: _lerp((0x21, 0x1D, 0x2E), (0x11, 0x0F, 0x18), (x + y) / (2 * UNITS)))
+    base = draw_mark(base.convert("RGBA"), 0.9, alpha=46)
+    return base.convert("RGB").resize((size, size), Image.LANCZOS)
+
+
+def notification(size):
+    """White-only small icon preview (24-unit artboard)."""
+    work = size * SUPERSAMPLE
+    img = Image.new("RGBA", (work, work), (0, 0, 0, 0))
+    k = work / 24.0
+    d = ImageDraw.Draw(img)
+    n, e, s, w, a = (12, 2.5), (21.5, 12), (12, 21.5), (2.5, 12), (12.6, 11.4)
+    for tri in ((n, e, a), (e, s, a), (s, w, a), (w, n, a)):
+        d.polygon([(x * k, y * k) for x, y in inset_triangle(tri, 0.5)], fill=(255, 255, 255, 255))
+    r = 1.5 * k
+    d.ellipse((19.6 * k - r, 4.4 * k - r, 19.6 * k + r, 4.4 * k + r), fill=(255, 255, 255, 255))
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def preview(folder):
+    """Renders 48 px and 512 px versions on white and black for visual inspection."""
+    os.makedirs(folder, exist_ok=True)
+    for px in (48, 512):
+        icon = launcher_bitmap(px, "squircle")
+        round_icon = launcher_bitmap(px, "circle")
+        fg = artwork(px, with_plate=False)
+        notif = notification(max(24, px // 2))
+        for name, bg in (("light", (255, 255, 255, 255)), ("dark", (0, 0, 0, 255))):
+            pad = px // 6
+            sheet = Image.new("RGBA", (px * 3 + notif.size[0] + pad * 5, px + pad * 2), bg)
+            sheet.alpha_composite(icon, (pad, pad))
+            sheet.alpha_composite(round_icon, (px + pad * 2, pad))
+            sheet.alpha_composite(fg, (px * 2 + pad * 3, pad))
+            tint = Image.new("RGBA", notif.size, (40, 40, 40, 255) if name == "light" else (255, 255, 255, 255))
+            tint.putalpha(notif.getchannel("A"))
+            sheet.alpha_composite(tint, (px * 3 + pad * 4, pad + (px - notif.size[1]) // 2))
+            out = os.path.join(folder, f"preview_{px}_{name}.png")
+            sheet.convert("RGB").save(out, "PNG")
+            print("wrote", out)
 
 
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == "--preview":
+        preview(sys.argv[2])
+        return
     densities = {
         "mdpi": (48, 108),
         "hdpi": (72, 162),
@@ -200,9 +223,9 @@ def main():
         launcher_bitmap(icon_size, "circle").save(
             os.path.join(folder, "ic_launcher_round.webp"), "WEBP", lossless=True
         )
-        artwork(foreground_size, with_plate=False).resize(
-            (foreground_size, foreground_size), Image.LANCZOS
-        ).save(os.path.join(folder, "ic_launcher_foreground.webp"), "WEBP", lossless=True)
+        artwork(foreground_size, with_plate=False).save(
+            os.path.join(folder, "ic_launcher_foreground.webp"), "WEBP", lossless=True
+        )
         print("wrote", folder)
 
     # Play Store: full-bleed square (the store applies its own mask), canvas scaled 1.2x.

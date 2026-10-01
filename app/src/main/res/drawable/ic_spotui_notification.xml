@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Status-bar / media-notification small icon: the Solo mark as a white-only silhouette
-  (Android draws small icons from alpha alone). Geometry is the launcher mark mapped with
-  x' = 12 + (x - 54) * 20/54 and y' = 12 + (y - 54) * 20/54: bbox x 7.63-16.37, y 2.0-22.0.
+  Status-bar / media-notification small icon: the Solo Facet mark, white only (Android
+  draws small icons from alpha alone). Rhombus N(12,2.5) E(21.5,12) S(12,21.5) W(2.5,12),
+  apex (12.6,11.4), 1.0-unit facet gaps, solo dot at (19.6,4.4) r 1.5.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M7.630,11.630 L7.630,3.407 A1.407,1.407 0,0 1 10.444,3.407 L10.444,11.630 A1.556,1.556 0,0 0 13.556,11.630 L13.556,3.407 A1.407,1.407 0,0 1 16.370,3.407 L16.370,11.630 A4.370,4.370 0,0 1 7.630,11.630 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M10.963,14.222 L13.037,14.222 L13.037,18.667 L10.963,18.667 Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M12,17.704 A2.148,2.148 0,1 1 12,22.000 A2.148,2.148 0,1 1 12,17.704 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12.59,3.80 L20.20,11.41 L13.07,10.93 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M20.37,12.42 L12.58,20.22 L13.07,11.93 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M11.57,20.36 L3.64,12.43 L12.07,11.93 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M3.78,11.42 L11.58,3.63 L12.07,10.93 Z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M19.60,2.90 A1.50,1.50 0,1 1 19.60,5.90 A1.50,1.50 0,1 1 19.60,2.90 Z" />
 </vector>

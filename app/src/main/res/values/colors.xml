@@ -2,5 +2,5 @@
 <resources>
     <!-- Splash plate: the royal-plum midpoint of the launcher background, so the launch
          flash matches the icon the user tapped. -->
-    <color name="splash_background">#FF1A1030</color>
+    <color name="splash_background">#FF141022</color>
 </resources>
