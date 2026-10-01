@@ -292,6 +292,8 @@ private fun RenderMarkdown(markdown: String) {
         }
 
         when {
+            // Generated "Full Changelog" footers only point at repository compare pages.
+            trimmed.startsWith("**Full Changelog**") -> Unit
             trimmed.isEmpty() -> {
                 Spacer(modifier = Modifier.height(6.dp))
             }
@@ -448,7 +450,13 @@ private fun MarkdownInline(
                     append(seg.content)
                     pop()
                 }
-                "link" -> {
+                // Repository links (commits, compares, PRs) render as plain text: the app
+                // doesn't send people to source pages from its release notes.
+                "link" -> if (seg.url.orEmpty().contains("github.com", ignoreCase = true)) {
+                    pushStyle(SpanStyle(color = bodyColor))
+                    append(seg.content)
+                    pop()
+                } else {
                     pushStringAnnotation(tag = "URL", annotation = seg.url ?: "")
                     pushStyle(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline))
                     append(seg.content)

@@ -75,7 +75,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation.NavController
 import com.music.spotui.data.BatteryOptimizationHelper
 import com.music.spotui.data.preferences.CROSSFADE_MAX_MS
@@ -668,7 +667,6 @@ fun SettingsScreen(navController: NavController) {
  */
 @Composable
 private fun AboutSoloCard() {
-    val uriHandler = LocalUriHandler.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -706,12 +704,6 @@ private fun AboutSoloCard() {
             fontSize = 12.sp,
             lineHeight = 17.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-        Spacer(Modifier.height(16.dp))
-        com.music.spotui.ui.components.SoloPillButton(
-            text = "Source code",
-            onClick = { runCatching { uriHandler.openUri("https://github.com/wintontomlinson/Spotui") } },
-            primary = false,
         )
     }
 }
