@@ -6,20 +6,25 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 
 ## Features
 
-- 🎵 **Free search and play**: find any song and play it instantly, with no login.
-- 🏠 **Home and Explore**: shelves based on what you play, plus image-led mood and genre tiles.
+- ⚡ **Instant playback**: the next songs are resolved and pre-buffered ahead of time, so tracks start right away.
+- 🎧 **High-quality audio by default**: the best Opus/AAC stream, and FLAC for your local and downloaded files.
+- 🧠 **Smart recommendations**: an on-device taste profile (plays, skips, likes, recency) drives autoplay radio and Home, with artist variety and no recent repeats.
+- 🌅 **Mix for you**: a fresh daily mix, plus "Jump back in" and your top artists.
+- 🎵 **Free search and play**: find any song and play it, with no login.
+- 🎚️ **Equalizer, speed and pitch, volume normalization**, crossfade with DJ-style mixing, downloads and offline caching.
 - 📝 **Lyrics**: synced lyrics with a live preview on the player, a full-screen view and on-device translation.
-- 🎧 **High-quality audio**: direct, ad-free streaming, including lossless FLAC through community providers.
-- 🎚️ **Crossfade and DJ-style mixing**, **downloads** and **offline caching**.
-- ♾️ **Autoplay radio**: when the queue ends, related songs keep playing.
 - 📀 **Spotify (optional)**: sign in to bring your playlists, liked songs, followed artists, history and recommendations.
-- ✨ **"Midnight Velvet & Gold" design**: a floating glass tab bar, an artwork-tinted player and smooth motion throughout.
+- ✨ **"Obsidian Aurora" design**: an artwork-tinted player, a floating glass tab bar and smooth motion throughout.
+
+The icon is **Solo Facet**: an original four-facet gem lit from the top right, with a single dot for "solo".
 
 ## Install
 
 Download the latest APK from [Releases](https://github.com/wintontomlinson/Spotui/releases) and sideload it (Android 8.0 or later). Allow "install from unknown sources" when asked.
 
 Solo keeps the package name of earlier Spotui builds, so it installs over them and keeps your library, likes, downloads, settings and Spotify login.
+
+If Android refuses to install the APK, uninstall any copy that came from a different source, download the APK again in full, and allow the install when Play Protect asks.
 
 ## Build from source
 

@@ -5,6 +5,34 @@ compared to the main Spotui repository.
 
 ---
 
+## 3.1.0 — Solo
+
+* **Instant, high-quality playback.** High quality (best Opus/AAC) is the default on Wi-Fi and mobile
+  data, and a saved choice still wins. YouTube candidates are raced with staggered head starts
+  instead of being tried one by one. The next track is resolved and its first 1.5 MB pre-buffered,
+  and the one after is resolved too. Resolved URLs are cached with their real expiry, and the
+  player starts after 500 ms of audio while buffering up to five minutes ahead. The play button
+  responds the moment it is tapped.
+* **Fix:** pre-buffered audio for Spotify tracks was stored under a key playback never read, so the
+  preload was wasted. It now uses the same key as playback.
+* **Smart recommendations.** An on-device taste profile learns from completes, skips (under 30 s
+  counts against a track), likes and recency. Autoplay radio, Spotify recommendations and Home are
+  re-ranked with it, with artist variety (never the same artist twice in a row) and no recent
+  repeats. This works with or without a Spotify login.
+* **Mix for you.** A daily 25-song mix on Home, plus "Jump back in" and "Your top artists".
+* **Playback speed and pitch**, an **equalizer** with seven presets and per-band control, and
+  **volume normalization** that evens out loud and quiet tracks.
+* **Obsidian Aurora redesign.** An obsidian canvas with an apricot-to-rose accent. The player is
+  tinted by the artwork colour, with a new seek bar and animated controls. Home and Explore are
+  richer, the glass tab bar has a sliding highlight, loading screens use skeletons, and the icon
+  set is consistent.
+* **New logo, "Solo Facet".** An original four-facet gem with a single dot, used on the launcher,
+  round and themed icons, the notification icon, the splash screen and every raster.
+* The in-app source code link has been removed. Update checks now come from this fork's releases.
+* **Install tip (Android 16):** if the APK won't install, uninstall any Solo/Spotui build from a
+  different source, let the download finish completely, and allow the install when Play Protect
+  asks.
+
 ## 3.0.0 — Solo
 
 * **New name and original logo.** The app is now **Solo**. Its mark, a gold tuning fork ("one pure
