@@ -236,18 +236,6 @@ fun SonvraShimmerRow(modifier: Modifier = Modifier, artSize: Dp = 52.dp) {
     }
 }
 
-/** Skeleton for a square artwork card with a caption. */
-@Composable
-fun SonvraShimmerCard(modifier: Modifier = Modifier, size: Dp = 156.dp) {
-    Column(modifier = modifier.width(size)) {
-        Box(Modifier.size(size).shimmer(SonvraShape.md))
-        Spacer(Modifier.height(9.dp))
-        Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
-        Spacer(Modifier.height(7.dp))
-        Box(Modifier.fillMaxWidth(0.55f).height(10.dp).shimmer())
-    }
-}
-
 /** A column of [count] row skeletons, the standard loading state for track lists. */
 @Composable
 fun SonvraShimmerList(count: Int = 8, modifier: Modifier = Modifier) {
