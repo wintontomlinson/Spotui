@@ -5,6 +5,31 @@ compared to the main Spotui repository.
 
 ---
 
+## 9.0.0 - SOLO
+
+* **Home section headings.** Every Home shelf now carries a clear, premium section header bound to
+  its real data: Featured, Browse moods, Made for you, Jump back in, Trending now, Your top artists,
+  "Because you liked ...", and the personalised genre/mood/time rows. No shelf renders headerless.
+* **Navbar visibility fix (top priority).** The bottom navigation bar is painted with a solid
+  opaque fill plus a soft top shadow and the 1dp hairline edge on every SDK level instead of the
+  translucent RenderEffect glass, which had no opaque backdrop to frost over the edge-to-edge window
+  and washed the bar out against the graphite canvas. The nav, its icons, the accent indicator and
+  the mini player are now reliably visible above content and clear of the system gesture bar.
+* **Removed the em-dash from user-facing text.** Replaced the em-dash with a hyphen, comma or
+  reworded copy in onboarding, share text and the audio-quality labels. Code comments are untouched.
+* **Premium About.** Redesigned the About section with a centered logo + SOLO wordmark + version
+  pill + tagline, over neatly grouped rows for license (GPL-3.0), credits (Neptune, Metrolist,
+  SpotiFLAC, SimpMusic and open fonts), maintainer (SATYAN SHARMA) and the disclaimer. No source
+  links.
+* **Personalised Home.** Every Home shelf, including the generic and curated rows, is now ranked
+  through the on-device TasteRanker from the TasteProfile (with a raw-order fallback so a shelf is
+  never blanked). Works login-free from local history and with login. The recordOutcome signature
+  and TasteProfile JSON schema are unchanged.
+* **Professional update dialog.** The in-app update prompt now shows a logo + accent header with the
+  new version, a labelled "What's new", a primary Update action with an in-app download progress bar
+  and a secondary Later. The v8 in-app download to FileProvider to system-installer flow is kept
+  (no browser redirect).
+
 ## 8.0.0 — SOLO
 
 * **Phase A: codebase cleanup & clarity.** The first phase of the v8 release focuses on a clean,

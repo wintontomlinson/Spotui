@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
@@ -146,7 +148,33 @@ fun UpdatePrompt() {
         containerColor = Surface2,
         titleContentColor = TextPrimary,
         title = {
-            Text("Update available, ${info.version}", style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
+            // Premium header: the SOLO mark on an accent-tinted well beside the new version,
+            // so the prompt reads as the app's own update rather than a generic system dialog.
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Box(
+                    contentAlignment = androidx.compose.ui.Alignment.Center,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(SoloShape.md)
+                        .background(Accent.copy(alpha = 0.14f)),
+                ) {
+                    com.music.spotui.ui.components.SoloMark(height = 26.dp)
+                }
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(
+                        "Update available",
+                        color = Accent,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        "SOLO ${info.version}",
+                        color = TextPrimary,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                    )
+                }
+            }
         },
         text = {
             Column(
@@ -154,6 +182,12 @@ fun UpdatePrompt() {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
+                Text(
+                    "What's new",
+                    color = TextPrimary,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                )
+                Spacer(Modifier.height(8.dp))
                 if (info.releaseBody.isNotBlank()) {
                     RenderMarkdown(info.releaseBody)
                 } else {
@@ -165,7 +199,7 @@ fun UpdatePrompt() {
                 if (phase == UpdatePhase.DOWNLOADING) {
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        if (progress >= 0f) "Downloading… ${(progress * 100).toInt()}%" else "Downloading…",
+                        if (progress >= 0f) "Downloading ${(progress * 100).toInt()}%" else "Downloading",
                         color = TextSecondary,
                         style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
                     )
@@ -227,7 +261,7 @@ fun UpdatePrompt() {
                 }) {
                     Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
                 }
-                SoloDialogDismiss(text = "Dismiss", onClick = { update = null })
+                SoloDialogDismiss(text = "Later", onClick = { update = null })
             }
         },
     )

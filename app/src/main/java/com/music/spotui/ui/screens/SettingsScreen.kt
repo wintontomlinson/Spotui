@@ -9,6 +9,10 @@ package com.music.spotui.ui.screens
  */
 
 import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.MaterialTheme
 import com.music.spotui.ui.theme.SoloShape
@@ -846,58 +850,111 @@ private fun AccentPickerDialog(
 }
 
 /**
- * About card (compact): the SOLO Aperture S mark, name + version on one tight block, a
- * one-line tagline, and a single compact line that still carries the maintainer, the GPL-3.0
- * notice, the four project credits + fonts and the disclaimer. No source-code links.
+ * About section (premium): a clean centered header (the SOLO Aperture S mark + "SOLO" wordmark +
+ * version row + one-line tagline) over a grouped card of neatly spaced info rows: the GPL-3.0
+ * license, the project credits + open fonts, the maintainer, and the disclaimer. Consistent icons
+ * and spacing within the Graphite & Azure system, tasteful accent use, no em-dash, no source-code
+ * links.
  */
 @Composable
 private fun AboutCard() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(SoloShape.lg)
-            .background(
-                androidx.compose.ui.graphics.Brush.verticalGradient(
-                    listOf(com.music.spotui.ui.theme.Elevated, Surface2)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Centered brand header: logo + wordmark, version, tagline.
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(SoloShape.lg)
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        listOf(com.music.spotui.ui.theme.Elevated, Surface2)
+                    )
                 )
-            )
-            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-    ) {
-        com.music.spotui.ui.components.SoloMark(height = 36.dp)
-        Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
+                .padding(horizontal = 20.dp, vertical = 22.dp),
+        ) {
+            com.music.spotui.ui.components.SoloWordmark(markHeight = 34.dp, textSize = 32.sp)
+            Spacer(Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .clip(SoloShape.pill)
+                    .background(Surface3)
+                    .padding(horizontal = 12.dp, vertical = 5.dp),
+            ) {
                 Text(
-                    "SOLO",
-                    color = TextPrimary,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "v${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
+                    "Version ${com.music.spotui.BuildConfig.VERSION_NAME} (${com.music.spotui.BuildConfig.VERSION_CODE})",
                     color = TextSecondary,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
-            Spacer(Modifier.height(1.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
                 "One voice. Pure sound.",
                 color = Accent,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Medium,
             )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "By SATYAN SHARMA · GPL-3.0 · built on Neptune, Metrolist, SpotiFLAC, SimpMusic + open fonts · not affiliated with Spotify or YouTube.",
-                color = TextTertiary,
-                style = MaterialTheme.typography.labelSmall,
-                lineHeight = 14.sp,
-            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        // Grouped info rows: license, credits, maintainer, disclaimer.
+        AboutInfoRow(
+            icon = Icons.Rounded.Shield,
+            title = "License",
+            value = "GPL-3.0. Free and open-source software.",
+        )
+        AboutInfoRow(
+            icon = Icons.Rounded.Favorite,
+            title = "Credits",
+            value = "Built on Neptune, Metrolist, SpotiFLAC and SimpMusic, with open fonts.",
+        )
+        AboutInfoRow(
+            icon = Icons.Rounded.Person,
+            title = "Maintained by",
+            value = "SATYAN SHARMA",
+        )
+        AboutInfoRow(
+            icon = Icons.Rounded.Info,
+            title = "Disclaimer",
+            value = "Not affiliated with Spotify or YouTube.",
+        )
+    }
+}
+
+/** One static About row: an accent-tinted icon well, a title and a wrapping value line. */
+@Composable
+private fun AboutInfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SoloShape.md)
+            .background(SettingsCard)
+            .border(1.dp, SettingsHairline, SoloShape.md)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(38.dp)
+                .clip(SoloShape.sm)
+                .background(Surface3),
+        ) {
+            Icon(icon, contentDescription = null, tint = SettingsAccent, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, color = TextPrimary, style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(2.dp))
+            Text(value, color = SettingsTextDim, style = MaterialTheme.typography.bodySmall, lineHeight = 16.sp)
         }
     }
+    Spacer(Modifier.height(8.dp))
 }
 
 // Shared surfaces so every settings group reads as one consistent card system.
