@@ -27,7 +27,7 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 
 The icon is the **Aperture S**: an original mark built from scratch. A single continuous stroke sweeps through two tangent arcs to form an upright S whose counters read as the open blades of a focused lens aperture, with a cool-steel focal dot at its centre. It carries the azure accent and reads clearly from the launcher down to the small notification icon.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 11.0.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 12.0.0.
 
 ## Install
 
