@@ -5,6 +5,23 @@ compared to the main Spotui repository.
 
 ---
 
+## 12.0.0 - SOLO
+
+* **Explore art now uses your own music covers.** Each Explore tile resolves a real album or
+  playlist cover from the app's own YouTube music source (the same pipeline that already loads
+  covers everywhere else), loaded through the same image path. Wherever covers appear elsewhere in
+  the app, Explore tiles now show them too.
+* **No stock-photo CDN dependency.** The curated Unsplash photo set was removed as the image
+  source. Earlier builds depended on reaching that remote CDN, which could be slow or blocked in
+  some regions or networks, and when a photo failed to load the tile looked unchanged. Explore no
+  longer depends on any third-party image service.
+* **Premium offline fallback.** When a cover is still loading or cannot be reached, the tile shows
+  a richer, per-category gradient mesh (varied hue and angle seeded from the label, a true
+  multi-stop base, two soft glows and a diagonal sheen) so every tile looks crafted and premium
+  even fully offline, and never renders a blank or grey box.
+* Note: the Android install-time scan prompt (Play Protect) is shown by the operating system for
+  any app installed outside the Play Store and cannot be disabled by the app itself.
+
 ## 11.0.0 - SOLO
 
 * **Home layering fixed.** Every Home shelf now lays out its section header above its content with
