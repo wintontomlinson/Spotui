@@ -5,7 +5,7 @@ package com.music.spotui.ui.components
  *
  * [SoloArtwork] wraps Glide image loading with shimmer, placeholder and error states plus an
  * optional hero scrim, so every cover across the app renders consistently. `Modifier.soloMeshBackground`
- * paints a deterministic, seeded gradient mesh for decorative tiles (pure drawing — no bitmap or
+ * paints a deterministic, seeded gradient mesh for decorative tiles (pure drawing, no bitmap or
  * network), used by the Explore category tiles.
  */
 
@@ -64,22 +64,37 @@ private fun seedHash(seed: String): Int {
     return h
 }
 
+/** Picks the ramp stop at [index], wrapping, so hash-derived indices always land on a colour. */
+private fun ramp(index: Int): Color {
+    val r = MeshRamp
+    return r[index.mod(r.size)]
+}
+
 /**
- * Paints a deterministic decorative "mesh": two offset azure-steel radial glows blended
- * over a seed-tinted diagonal gradient that settles into the graphite canvas, finished with a
- * faint diagonal sheen so each tile reads as its own crafted surface while staying on the
- * Graphite & Azure palette. [seed] (usually the tile's label) picks the stops and anchors, so the
- * art is stable across recompositions and process restarts.
+ * Paints a deterministic decorative "mesh": a seed-angled, genuinely multi-stop diagonal wash
+ * (seed tint -> mid accent -> graphite canvas) overlaid with two offset azure-steel radial glows
+ * and finished with a faint diagonal sheen, so each tile reads as its own crafted premium surface
+ * while staying on the Graphite & Azure palette. [seed] (usually the tile's label) picks the
+ * stops, the wash angle and the glow anchors, so adjacent tiles look clearly distinct and the art
+ * is stable across recompositions and process restarts.
  *
- * Pure drawing — no bitmap decode and no network — so decorative art adds no dependency.
+ * Guaranteed to look premium fully OFFLINE: pure drawing, three-stop base (never a flat two-tone
+ * box), varied hue and angle per label. No bitmap decode and no network, so it adds no dependency.
  */
 fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modifier = composed {
     val hash = remember(seed) { seedHash(seed) }
-    // Derive two distinct accent stops and both glow anchors deterministically from the hash.
-    val accent = MeshRamp[(hash ushr 3).mod(MeshRamp.size)]
-    val accent2 = MeshRamp[(hash ushr 15).mod(MeshRamp.size)]
+    // Pick three visibly different ramp stops using well-separated hash bit windows and an
+    // odd stride, so neighbouring labels rarely collide on the same accent pairing.
+    val step = ((hash ushr 7) and 0x3) + 1 // 1..4 stride through the ramp
+    val baseIdx = (hash ushr 9).mod(MeshRamp.size)
+    val accent = ramp(baseIdx + step)       // primary glow
+    val accent2 = ramp(baseIdx + step * 2)  // secondary glow, a different stop
     // artworkTone keeps the base dark enough that light labels stay legible on top.
-    val base = artworkTone(MeshRamp[(hash ushr 9).mod(MeshRamp.size)])
+    val base = artworkTone(ramp(baseIdx))
+    // A mid accent for the base wash so it is a true 3+ stop gradient, not a flat two-color box.
+    val mid = ramp(baseIdx + step).copy(alpha = 0.55f)
+    // Seed the base wash ANGLE from the hash so the diagonal is not always top-left -> bottom-right.
+    val angleBucket = (hash ushr 5) and 0x3 // 0..3 -> four distinct diagonal directions
     val anchorX = 0.18f + ((hash ushr 2) and 0xFF) / 255f * 0.64f
     val anchorY = 0.12f + ((hash ushr 11) and 0xFF) / 255f * 0.5f
     // Second glow sits opposite-ish the first for depth, nudged by its own hash bits.
@@ -91,27 +106,39 @@ fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modi
     this
         .clip(shape)
         .drawBehind {
-            // Base diagonal wash: a seed-tinted corner settling into the graphite canvas.
+            val w = size.width
+            val h = size.height
+            // Base wash start/end chosen from the seeded angle bucket so the direction varies.
+            val (washStart, washEnd) = when (angleBucket) {
+                0 -> Offset(0f, 0f) to Offset(w, h)       // TL -> BR
+                1 -> Offset(w, 0f) to Offset(0f, h)       // TR -> BL
+                2 -> Offset(0f, h * 0.2f) to Offset(w, h) // left-ish down
+                else -> Offset(w * 0.5f, 0f) to Offset(w * 0.5f, h) // top -> bottom
+            }
+            // Base diagonal wash: a true multi-stop gradient (seed tint -> mid accent -> canvas),
+            // so even with no cover loaded the tile has depth rather than a flat two-color fill.
             drawRect(
                 Brush.linearGradient(
-                    colors = listOf(base, Canvas),
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, size.height),
+                    0f to base,
+                    0.55f to mid,
+                    1f to Canvas,
+                    start = washStart,
+                    end = washEnd,
                 ),
             )
             // Primary azure glow anchored at the seeded point, fading out before the edges.
             drawRect(
                 Brush.radialGradient(
                     colors = listOf(accent.copy(alpha = 0.52f), accent.copy(alpha = 0.13f), Color.Transparent),
-                    center = Offset(size.width * anchorX, size.height * anchorY),
+                    center = Offset(w * anchorX, h * anchorY),
                     radius = size.maxDimension * 0.78f,
                 ),
             )
             // Secondary, cooler/warmer glow offset for depth and variety.
             drawRect(
                 Brush.radialGradient(
-                    colors = listOf(accent2.copy(alpha = 0.30f), Color.Transparent),
-                    center = Offset(size.width * anchor2X, size.height * anchor2Y),
+                    colors = listOf(accent2.copy(alpha = 0.32f), Color.Transparent),
+                    center = Offset(w * anchor2X, h * anchor2Y),
                     radius = size.maxDimension * 0.6f,
                 ),
             )
@@ -119,8 +146,8 @@ fun Modifier.soloMeshBackground(seed: String, shape: Shape = SoloShape.md): Modi
             drawRect(
                 Brush.linearGradient(
                     colors = listOf(Color.White.copy(alpha = 0.05f), Color.Transparent, Color.Black.copy(alpha = 0.12f)),
-                    start = if (sheenDown) Offset(0f, 0f) else Offset(size.width, 0f),
-                    end = if (sheenDown) Offset(size.width, size.height) else Offset(0f, size.height),
+                    start = if (sheenDown) Offset(0f, 0f) else Offset(w, 0f),
+                    end = if (sheenDown) Offset(w, h) else Offset(0f, h),
                 ),
             )
         }

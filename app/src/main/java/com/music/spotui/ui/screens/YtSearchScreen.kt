@@ -49,6 +49,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,43 +109,38 @@ private val TextFaint = TextTertiary
 
 /**
  * Colourful browse tiles shown on the empty search screen.
- *  • [query]      — the search actually run when the tile is tapped.
- *  • [imageQuery] — what the tile's background artwork is resolved from; kept
- *    close to the visible label so the picture clearly matches the name.
+ *  - [query] is the music search run both when the tile is tapped AND to resolve the tile's
+ *    own cover art, so the picture always reflects what the tile plays.
  */
 private data class BrowseCategory(
     val label: String,
     val query: String,
     val color: Color,
-    val imageQuery: String = query,
 )
 
 private val BROWSE_CATEGORIES = listOf(
     // Each category carries a deep tint (it colours the tile's scrim) drawn from the
-    // Graphite & Azure family — refined azure, deep cobalt, cool steel and graphite
-    // slate — so every tile sits cohesively on the graphite canvas while staying
-    // distinct from its neighbours. Each has a name-matched `imageQuery`, so the
-    // full-bleed tile artwork clearly reflects the label; `query` is what runs on tap.
-    // imageQuery points at recognisable, current hit albums/artists so each tile
-    // shows relatable, latest cover art (resolved to a square album cover) rather
-    // than a random generic result.
-    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1E4FA8), imageQuery = "trending"),
-    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF2A3F6E), imageQuery = "charts"),
-    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF245A6E), imageQuery = "new"),
-    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF2E4C8A), imageQuery = "madeforyou"),
-    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF34496A), imageQuery = "bollywood"),
-    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF3F5566), imageQuery = "punjabi"),
-    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2A3550), imageQuery = "hiphop"),
-    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF295F8A), imageQuery = "pop"),
-    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2A5560), imageQuery = "lofi"),
-    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF1F4A7A), imageQuery = "workout"),
-    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF3A5276), imageQuery = "romance"),
-    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF1D4ED8).copy(alpha = 0.9f), imageQuery = "party"),
-    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF415266), imageQuery = "devotional"),
-    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF32425E), imageQuery = "retro"),
-    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF2E4664), imageQuery = "sad"),
-    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2A5A6E), imageQuery = "english"),
-    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF3A4F5A), imageQuery = "instrumental"),
+    // Graphite and Azure family (refined azure, deep cobalt, cool steel and graphite slate)
+    // so every tile sits cohesively on the graphite canvas while staying distinct from its
+    // neighbours. `query` is both what runs on tap and what resolves the tile's cover art, so
+    // each tile shows a relatable, current album or playlist cover rather than a generic result.
+    BrowseCategory("Trending", "trending songs 2026 official video", Color(0xFF1E4FA8)),
+    BrowseCategory("Top Charts", "global top 50 hits 2026", Color(0xFF2A3F6E)),
+    BrowseCategory("New Releases", "new music friday 2026", Color(0xFF245A6E)),
+    BrowseCategory("Made For You", "feel good hits mix", Color(0xFF2E4C8A)),
+    BrowseCategory("Bollywood", "latest bollywood songs 2026", Color(0xFF34496A)),
+    BrowseCategory("Punjabi", "new punjabi songs 2026", Color(0xFF3F5566)),
+    BrowseCategory("Hip-Hop", "best rap hip hop 2026", Color(0xFF2A3550)),
+    BrowseCategory("Pop", "top pop songs 2026", Color(0xFF295F8A)),
+    BrowseCategory("Chill & Lo-Fi", "lofi beats to relax study", Color(0xFF2A5560)),
+    BrowseCategory("Workout", "gym workout motivation music", Color(0xFF1F4A7A)),
+    BrowseCategory("Romance", "romantic love songs 2026", Color(0xFF3A5276)),
+    BrowseCategory("Party", "party club dance anthems 2026", Color(0xFF1D4ED8).copy(alpha = 0.9f)),
+    BrowseCategory("Devotional", "bhajan devotional songs", Color(0xFF415266)),
+    BrowseCategory("90s & Retro", "90s superhit old songs", Color(0xFF32425E)),
+    BrowseCategory("Sad", "sad emotional songs 2026", Color(0xFF2E4664)),
+    BrowseCategory("English", "top english pop songs 2026", Color(0xFF2A5A6E)),
+    BrowseCategory("Instrumental", "instrumental focus music", Color(0xFF3A4F5A)),
 )
 
 /**
@@ -525,27 +522,32 @@ private fun BrowseTile(
     modifier: Modifier = Modifier,
     height: androidx.compose.ui.unit.Dp = 168.dp,
 ) {
-    // Curated, always-available photo for this category (Unsplash CDN). When present it draws
-    // as the full-bleed tile artwork; the mesh underneath shows while it loads and whenever the
-    // url is blank, so a tile is never an empty box.
-    val img = remember(category.imageQuery) {
-        com.music.spotui.data.api.BrowseTileImages.cachedFor(category.imageQuery)
+    // The tile's own music cover, resolved from the app's YouTube source. Seeded synchronously
+    // from the cache (instant when scrolled back into view), then refreshed off the main thread
+    // by coverFor below. While it is blank (loading, offline, blocked or no match) the premium
+    // mesh underneath shows through, so a tile is never an empty box.
+    var cover by remember(category.query) {
+        mutableStateOf(com.music.spotui.data.api.BrowseTileImages.cachedFor(category.query))
+    }
+    LaunchedEffect(category.query) {
+        val resolved = com.music.spotui.data.api.BrowseTileImages.coverFor(category.query)
+        if (resolved.isNotBlank()) cover = resolved
     }
     Box(
         modifier = modifier
             .height(height)
-            // A deterministic Graphite & Azure mesh painted from the label: it shows while the
-            // curated photo loads and stays as a premium, legible fallback if the url is blank
-            // or the image fails to decode — so the tile always paints something.
+            // A deterministic Graphite and Azure mesh painted from the label: it shows while the
+            // cover loads and stays as a premium, legible fallback if the url is blank or the
+            // image fails to decode, so the tile always paints something.
             .soloMeshBackground(category.label, SoloShape.md)
             .border(1.dp, Hairline, SoloShape.md)
             .clickable(onClickLabel = "Explore ${category.label}", onClick = onClick),
     ) {
-        // Real curated artwork over the mesh. Only drawn when a url exists, so a blank url
-        // leaves the mesh visible rather than an empty Glide box.
-        if (img.isNotBlank()) {
+        // Real music cover over the mesh. Only drawn when a url exists, so a blank/failed cover
+        // leaves the premium mesh visible rather than an empty Glide box.
+        if (cover.isNotBlank()) {
             SoloArtwork(
-                model = img,
+                model = cover,
                 modifier = Modifier.matchParentSize(),
                 shape = SoloShape.md,
                 meshFallback = true,
@@ -565,7 +567,7 @@ private fun BrowseTile(
                     ),
                 ),
         )
-        // A small accent play chip in the top-right — a premium Explore flourish.
+        // A small accent play chip in the top-right, a premium Explore flourish.
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
