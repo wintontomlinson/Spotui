@@ -142,6 +142,11 @@ val SoloHeroScrim: Brush = Brush.verticalGradient(
  * fallbacks (mirrors the GlideImage pattern in AppComponents.kt). Pass [scrim] = true to lay
  * [SoloHeroScrim] under overlaid text for contrast.
  *
+ * Set [meshFallback] = true for tiles that already paint a [Modifier.soloMeshBackground] base
+ * (the Explore category tiles): while the photo loads a shimmer sweeps over the mesh, and on a
+ * decode failure the artwork stays fully transparent so the premium mesh shows through, instead
+ * of the opaque flat [R.drawable.placeholder] covering it with a gray box.
+ *
  * The caller supplies [modifier] with the size; [shape] clips the whole tile.
  */
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -151,6 +156,7 @@ fun SoloArtwork(
     modifier: Modifier = Modifier,
     shape: Shape = SoloShape.md,
     scrim: Boolean = false,
+    meshFallback: Boolean = false,
     contentScale: ContentScale = ContentScale.Crop,
     contentDescription: String? = null,
 ) {
@@ -159,8 +165,15 @@ fun SoloArtwork(
             modifier = Modifier.fillMaxSize(),
             model = model,
             contentScale = contentScale,
-            failure = placeholder(R.drawable.placeholder),
-            loading = placeholder(R.drawable.placeholder),
+            // On tiles with a mesh base, draw a shimmer sweep (over the mesh) while loading and
+            // leave the surface transparent on a decode failure so the premium mesh shows through;
+            // everywhere else keep the app's flat fallback drawable.
+            failure = if (meshFallback) placeholder { } else placeholder(R.drawable.placeholder),
+            loading = if (meshFallback) {
+                placeholder { Box(modifier = Modifier.fillMaxSize().shimmer(shape)) }
+            } else {
+                placeholder(R.drawable.placeholder)
+            },
             contentDescription = contentDescription,
         )
         if (scrim) {

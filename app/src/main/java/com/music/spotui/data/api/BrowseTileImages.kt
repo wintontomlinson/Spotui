@@ -20,9 +20,9 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object BrowseTileImages {
 
-    // Unsplash "images" CDN — direct, permanent photo ids cropped square at 640px.
-    // These are hand-picked, professional, on-theme music/mood photos.
-    private const val SZ = "&w=640&h=640&fit=crop&crop=entropy&q=80"
+    // Unsplash "images" CDN — direct, permanent photo ids cropped square at 800px for
+    // crisp tiles. These are hand-picked, professional, on-theme music/mood photos.
+    private const val SZ = "&w=800&h=800&fit=crop&crop=entropy&q=80"
     private fun u(id: String) = "https://images.unsplash.com/photo-$id?auto=format$SZ"
 
     private val CURATED: Map<String, String> = mapOf(
@@ -34,7 +34,7 @@ object BrowseTileImages {
         "madeforyou"  to u("1459749411175-04bf5292ceea"),  // headphones in sun — made for you
         "bollywood"   to u("1516450360452-9312f5e86fc7"),  // warm colourful concert — bollywood
         "punjabi"     to u("1493676304819-0d7a8d026dcf"),  // dhol / vibrant stage — punjabi
-        "hiphop"      to u("1546528377-9049abecd05f"),     // moody hip-hop studio mic
+        "hiphop"      to u("1485579149621-3123dd979885"),  // studio mic — hip-hop
         "pop"         to u("1516280440614-37939bbacd81"),  // pink pop concert
         "lofi"        to u("1483000805330-4eaf0a0d82da"),  // cosy study desk — lo-fi
         "workout"     to u("1571019613454-1cb2f99b2d8b"),  // gym weights — workout

@@ -267,6 +267,13 @@ private fun NavTab(
         animationSpec = tween(SoloMotion.NAV_MS),
         label = "navTint",
     )
+    // The active glyph lifts just slightly so the selected tab reads crisply next to
+    // the quieter unselected icons, matched to the sliding accent indicator.
+    val iconScale by animateFloatAsState(
+        targetValue = if (selected) 1.08f else 1f,
+        animationSpec = tween(SoloMotion.NAV_MS),
+        label = "navIconScale",
+    )
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -280,7 +287,9 @@ private fun NavTab(
             imageVector = navIcon(item, selected),
             contentDescription = item.label,
             tint = tint,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier
+                .size(24.dp)
+                .graphicsLayer { scaleX = iconScale; scaleY = iconScale },
         )
         if (labelAlpha > 0.05f) {
             Text(
@@ -289,7 +298,7 @@ private fun NavTab(
                 style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
                 modifier = Modifier
-                    .padding(top = 2.dp)
+                    .padding(top = 3.dp)
                     .graphicsLayer { alpha = labelAlpha },
             )
         }

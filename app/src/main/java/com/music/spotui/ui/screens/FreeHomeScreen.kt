@@ -171,29 +171,39 @@ fun FreeHomeScreen(navController: NavController) {
         val featured = (trending.ifEmpty { mix }).take(6)
         if (featured.isNotEmpty()) {
             item(key = "featured") {
-                SectionHeader(title = "Featured", subtitle = "Handpicked for today")
-                FeaturedCarousel(tracks = featured, onPlay = { i -> play(featured, i) })
+                // LazyItemScope has no implicit vertical layout, so the header and its
+                // content must share a Column or they stack at the same origin and overlap.
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Featured", subtitle = "Handpicked for today")
+                    FeaturedCarousel(tracks = featured, onPlay = { i -> play(featured, i) })
+                }
             }
         }
 
         item {
-            SectionHeader(title = "Browse moods", subtitle = "Pick a vibe to explore")
-            MoodChips(onPick = openSearch)
-            Spacer(Modifier.height(4.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(title = "Browse moods", subtitle = "Pick a vibe to explore")
+                MoodChips(onPick = openSearch)
+                Spacer(Modifier.height(4.dp))
+            }
         }
 
         // Daily "Mix for you" hero, only once there is listening history to build it from.
         if (mix.isNotEmpty()) {
             item(key = "mix") {
-                SectionHeader(title = "Made for you", subtitle = "Your daily mix, tuned to your taste")
-                MixForYouCard(mix = mix, onPlay = { play(mix, 0) })
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Made for you", subtitle = "Your daily mix, tuned to your taste")
+                    MixForYouCard(mix = mix, onPlay = { play(mix, 0) })
+                }
             }
         }
 
         if (recentlyPlayed.isNotEmpty()) {
             item(key = "jump") {
-                SectionHeader(title = "Jump back in", subtitle = "Pick up where you left off")
-                JumpBackInGrid(tracks = recentlyPlayed.take(6), onPlay = { i -> play(recentlyPlayed, i) })
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Jump back in", subtitle = "Pick up where you left off")
+                    JumpBackInGrid(tracks = recentlyPlayed.take(6), onPlay = { i -> play(recentlyPlayed, i) })
+                }
             }
         }
 
@@ -208,36 +218,40 @@ fun FreeHomeScreen(navController: NavController) {
 
         // Trending leads the screen, so the newest songs are the first thing seen.
         item {
-            SectionHeader(title = "Trending now", subtitle = "Hot tracks ranked for you")
-            when {
-                trendingLoading && trending.isEmpty() -> TrendingSkeleton()
-                trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
-                !trendingLoading -> com.music.spotui.ui.components.SoloEmptyState(
-                    icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
-                    title = "Couldn't load Home",
-                    message = "Check your connection and try again.",
-                    actionLabel = "Retry",
-                    onAction = { vm.pullRefresh() },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(title = "Trending now", subtitle = "Hot tracks ranked for you")
+                when {
+                    trendingLoading && trending.isEmpty() -> TrendingSkeleton()
+                    trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
+                    !trendingLoading -> com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
+                        title = "Couldn't load Home",
+                        message = "Check your connection and try again.",
+                        actionLabel = "Retry",
+                        onAction = { vm.pullRefresh() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
 
         if (topArtists.isNotEmpty()) {
             item(key = "artists") {
-                SectionHeader(title = "Your top artists", subtitle = "The voices you play the most")
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    itemsIndexed(topArtists, key = { _, it -> it.first }) { index, (name, image) ->
-                        ArtistCircle(
-                            name = name,
-                            image = image,
-                            highlighted = index == 0,
-                            onClick = { navController.navigate(com.music.spotui.ui.navigation.artistRoute(name, "")) },
-                            modifier = Modifier.animateItem(),
-                        )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Your top artists", subtitle = "The voices you play the most")
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        itemsIndexed(topArtists, key = { _, it -> it.first }) { index, (name, image) ->
+                            ArtistCircle(
+                                name = name,
+                                image = image,
+                                highlighted = index == 0,
+                                onClick = { navController.navigate(com.music.spotui.ui.navigation.artistRoute(name, "")) },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
                 }
             }

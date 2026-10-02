@@ -548,6 +548,7 @@ private fun BrowseTile(
                 model = img,
                 modifier = Modifier.matchParentSize(),
                 shape = SoloShape.md,
+                meshFallback = true,
                 contentScale = ContentScale.Crop,
                 contentDescription = category.label,
             )
