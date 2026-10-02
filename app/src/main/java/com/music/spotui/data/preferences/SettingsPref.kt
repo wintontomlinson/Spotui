@@ -114,6 +114,26 @@ fun isCrossfadeDjMode(c: Context): Boolean = prefs(c).getBoolean(KEY_CROSSFADE_D
 fun setCrossfadeDjMode(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_CROSSFADE_DJ, v).apply()
 
 
+/**
+ * Which tab the app opens on after onboarding. Additive preference: when it has never
+ * been set the getter returns [StartScreen.HOME], so existing installs keep opening on
+ * Home exactly as before. The first run always shows Onboarding regardless of this value.
+ */
+enum class StartScreen(val label: String) {
+    HOME("Home"),
+    EXPLORE("Explore"),
+}
+
+private const val KEY_START_SCREEN = "start_screen"
+
+fun getStartScreen(c: Context): StartScreen =
+    runCatching { StartScreen.valueOf(prefs(c).getString(KEY_START_SCREEN, StartScreen.HOME.name)!!) }
+        .getOrDefault(StartScreen.HOME)
+
+fun setStartScreen(c: Context, s: StartScreen) =
+    prefs(c).edit().putString(KEY_START_SCREEN, s.name).apply()
+
+
 /** Installs that stored the old upstream repo are migrated to this fork's releases. */
 // ── Playback speed / pitch, equalizer, loudness normalization ──
 private const val KEY_SPEED = "playback_speed"

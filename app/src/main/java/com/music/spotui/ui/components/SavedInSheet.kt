@@ -139,6 +139,7 @@ fun SavedInSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        sheetMaxWidth = 560.dp,
         containerColor = Surface2,
         shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
         dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
@@ -150,7 +151,7 @@ fun SavedInSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp, 4.dp, 20.dp, 12.dp),
+                    .padding(20.dp, 2.dp, 20.dp, 8.dp),
             ) {
                 Text("Saved in", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                 Text(

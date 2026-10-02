@@ -94,6 +94,7 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        sheetMaxWidth = 560.dp,
         containerColor = com.music.spotui.ui.theme.Surface2,
         contentColor = TextPrimary,
         shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
@@ -104,7 +105,7 @@ fun DevicesSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp, vertical = 4.dp)
         ) {
             // Header: Spotify-styled title + close icon
             Row(
@@ -112,7 +113,7 @@ fun DevicesSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -140,7 +141,7 @@ fun DevicesSheet(
             }
 
             HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Bluetooth Permission Banner if needed (Android 12+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasBtPermission) {
@@ -229,7 +230,7 @@ fun DevicesSheet(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Available Devices Section Title
@@ -260,9 +261,9 @@ fun DevicesSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Open System Audio Switcher / Bluetooth Settings Action Row
             Row(
@@ -303,7 +304,7 @@ fun DevicesSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -320,7 +321,7 @@ private fun DeviceItemRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 48.dp)
             .clip(SoloShape.sm)
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp)

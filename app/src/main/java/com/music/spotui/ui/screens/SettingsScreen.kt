@@ -51,13 +51,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.style.TextOverflow
-import com.music.spotui.data.preferences.AudioProviderOrderItem
-import com.music.spotui.data.preferences.getAudioProviderOrder
-import com.music.spotui.data.preferences.setAudioProviderOrder
-import com.music.spotui.data.preferences.isAudioProviderEnabled
-import com.music.spotui.data.preferences.setAudioProviderEnabled
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -139,6 +132,8 @@ fun SettingsScreen(navController: NavController) {
     var cellQ by remember { mutableStateOf(getCellularQuality(context)) }
     var dlQ by remember { mutableStateOf(getDownloadQuality(context)) }
     var crossfadeMs by remember { mutableStateOf(getCrossfadeMs(context).toFloat()) }
+    var djBlend by remember { mutableStateOf(com.music.spotui.data.preferences.isCrossfadeDjMode(context)) }
+    var startScreen by remember { mutableStateOf(com.music.spotui.data.preferences.getStartScreen(context)) }
     var videoFallback by remember { mutableStateOf(isVideoFallbackEnabled(context)) }
     var autoPlay by remember { mutableStateOf(isAutoPlayEnabled(context)) }
     var normalize by remember { mutableStateOf(com.music.spotui.data.preferences.isNormalizeVolume(context)) }
@@ -275,6 +270,25 @@ fun SettingsScreen(navController: NavController) {
                     )
                 },
                 onClick = { navController.navigate(com.music.spotui.ui.navigation.Routes.Stats.route) },
+            )
+            SettingsClickRow(
+                title = "Start screen",
+                subtitle = "Open the app on ${startScreen.label}",
+                trailing = {
+                    Text(
+                        text = startScreen.label,
+                        color = SettingsAccent,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                },
+                onClick = {
+                    // Only two choices, so a tap flips between them and persists at once.
+                    val next = if (startScreen == com.music.spotui.data.preferences.StartScreen.HOME)
+                        com.music.spotui.data.preferences.StartScreen.EXPLORE
+                    else com.music.spotui.data.preferences.StartScreen.HOME
+                    startScreen = next
+                    com.music.spotui.data.preferences.setStartScreen(context, next)
+                },
             )
 
             Spacer(Modifier.height(8.dp))
@@ -458,6 +472,57 @@ fun SettingsScreen(navController: NavController) {
                     inactiveTrackColor = Surface4,
                 ),
             )
+            Spacer(Modifier.height(8.dp))
+            SettingsSwitchRow(
+                title = "DJ-style blend",
+                subtitle = "During a crossfade, fade the bass out of the ending track and into the next for a smoother mix",
+                checked = djBlend,
+            ) {
+                djBlend = it
+                com.music.spotui.data.preferences.setCrossfadeDjMode(context, it)
+            }
+
+            Spacer(Modifier.height(12.dp))
+            SectionTitle("Updates")
+            SettingsClickRow(
+                title = "Check for updates now",
+                subtitle = "Look for a newer version of SOLO",
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = SettingsAccent,
+                        modifier = Modifier.size(20.dp),
+                    )
+                },
+                trailing = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = SettingsTextDim,
+                        modifier = Modifier.size(22.dp),
+                    )
+                },
+                onClick = {
+                    scope.launch {
+                        val info = com.music.spotui.data.update.UpdateChecker.check(context)
+                        if (info == null) {
+                            android.widget.Toast.makeText(
+                                context,
+                                "You're on the latest version",
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Update available: SOLO ${info.version}",
+                                android.widget.Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    }
+                },
+            )
+
             Spacer(Modifier.height(12.dp))
             SectionTitle("Playback diagnostics")
             Text(

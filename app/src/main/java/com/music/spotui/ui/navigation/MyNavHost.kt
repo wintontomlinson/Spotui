@@ -53,8 +53,13 @@ fun MyNavHost(
     // onboarding; every launch after that opens on Home, the login-free YouTube screen.
     // Explore is a tab the user chooses, not the landing screen.
     val startDestination = remember {
-        if (com.music.spotui.data.preferences.hasOnboarded(context)) Routes.Home.route
-        else Routes.Onboarding.route
+        if (com.music.spotui.data.preferences.hasOnboarded(context)) {
+            // Honour the user's chosen start screen (Home or Explore). Default stays Home.
+            when (com.music.spotui.data.preferences.getStartScreen(context)) {
+                com.music.spotui.data.preferences.StartScreen.EXPLORE -> Routes.YtSearch.route
+                else -> Routes.Home.route
+            }
+        } else Routes.Onboarding.route
     }
 
     // Restore the last session: put the track back into the mini player (paused)

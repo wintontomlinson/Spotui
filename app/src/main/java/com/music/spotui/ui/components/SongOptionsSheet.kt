@@ -119,6 +119,7 @@ fun SongOptionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        sheetMaxWidth = 560.dp,
         containerColor = Surface2,
         shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
         dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
@@ -129,7 +130,7 @@ fun SongOptionsSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp, 4.dp, 20.dp, 12.dp)
+                    .padding(20.dp, 2.dp, 20.dp, 8.dp)
             ) {
                 GlideImage(
                     modifier = Modifier
@@ -297,9 +298,9 @@ private fun SongMenuRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .heightIn(min = 48.dp)
             .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
-            .padding(20.dp, 12.dp)
+            .padding(20.dp, 10.dp)
     ) {
         Icon(
             imageVector = icon,

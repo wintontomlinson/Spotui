@@ -77,6 +77,7 @@ import com.music.spotui.data.preferences.isLibrarySortDescending
 import com.music.spotui.data.preferences.setLibrarySortOption
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -173,6 +174,7 @@ private fun LibraryRowMenu(
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
+            sheetMaxWidth = 560.dp,
             containerColor = Surface2,
             shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
             dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
@@ -191,18 +193,18 @@ private fun LibraryRowMenu(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp),
+                    modifier = Modifier.padding(20.dp, 2.dp, 20.dp, 8.dp),
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 52.dp)
+                        .heightIn(min = 48.dp)
                         .clickable {
                             showSheet = false
                             confirmDelete = true
                         }
-                        .padding(20.dp, 14.dp),
+                        .padding(20.dp, 10.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
@@ -733,6 +735,7 @@ fun LibraryScreen(navController: NavController) {
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
+                sheetMaxWidth = 560.dp,
                 containerColor = Surface2,
                 shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
                 dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
@@ -747,7 +750,7 @@ fun LibraryScreen(navController: NavController) {
                         text = "Sort by",
                         color = TextPrimary,
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp)
+                        modifier = Modifier.padding(20.dp, 2.dp, 20.dp, 8.dp)
                     )
                     HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -772,8 +775,8 @@ fun LibraryScreen(navController: NavController) {
                                     setLibrarySortOption(context, currentSort, isDescending)
                                     showSortSheet = false
                                 }
-                                .heightIn(min = 52.dp)
-                                .padding(20.dp, 14.dp),
+                                .heightIn(min = 48.dp)
+                                .padding(20.dp, 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -1168,13 +1171,19 @@ private fun LibraryQuickAccess(navController: NavController) {
     // opens an empty screen is a dead end; a live count sets the expectation up front and
     // makes the tiles worth glancing at.
     val tileContext = LocalContext.current
-    val counts = remember {
-        listOf(
-            runCatching { com.music.spotui.data.preferences.getLikedSongs(tileContext).size }.getOrDefault(0),
-            runCatching { com.music.spotui.data.preferences.getListeningHistory(tileContext).size }.getOrDefault(0),
-            runCatching { com.music.spotui.data.preferences.getDownloadedSongs(tileContext).size }.getOrDefault(0),
-            runCatching { com.music.spotui.data.preferences.getLocalTracks(tileContext).size }.getOrDefault(0),
-        )
+    // The quick access counts read from prefs/disk, so they are loaded off the composition
+    // thread. They default to 0 and the captions update once the IO work returns, keeping the
+    // first frame cheap and the main thread free.
+    var counts by remember { mutableStateOf(listOf(0, 0, 0, 0)) }
+    LaunchedEffect(Unit) {
+        counts = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            listOf(
+                runCatching { com.music.spotui.data.preferences.getLikedSongs(tileContext).size }.getOrDefault(0),
+                runCatching { com.music.spotui.data.preferences.getListeningHistory(tileContext).size }.getOrDefault(0),
+                runCatching { com.music.spotui.data.preferences.getDownloadedSongs(tileContext).size }.getOrDefault(0),
+                runCatching { com.music.spotui.data.preferences.getLocalTracks(tileContext).size }.getOrDefault(0),
+            )
+        }
     }
 
     /** "12 songs", or a nudge when there is nothing there yet. */

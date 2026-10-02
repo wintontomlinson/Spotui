@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import com.music.spotui.data.update.UpdateChecker
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -144,7 +143,10 @@ fun UpdatePrompt() {
 
     AlertDialog(
         onDismissRequest = { if (phase != UpdatePhase.DOWNLOADING) update = null },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        // Platform default width keeps the prompt a compact product dialog rather than a
+        // full-bleed sheet; the markdown block scrolls inside it.
+        modifier = Modifier.width(360.dp),
+        shape = SoloShape.xl,
         containerColor = Surface2,
         titleContentColor = TextPrimary,
         title = {
@@ -154,13 +156,13 @@ fun UpdatePrompt() {
                 Box(
                     contentAlignment = androidx.compose.ui.Alignment.Center,
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(40.dp)
                         .clip(SoloShape.md)
                         .background(Accent.copy(alpha = 0.14f)),
                 ) {
-                    com.music.spotui.ui.components.SoloMark(height = 26.dp)
+                    com.music.spotui.ui.components.SoloMark(height = 24.dp)
                 }
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
                         "Update available",
@@ -235,7 +237,7 @@ fun UpdatePrompt() {
                 // install screen don't surprise anyone: both are a normal step for apps
                 // installed outside the Play Store, not a sign anything is wrong. No alarming
                 // wording, and no em-dash.
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
