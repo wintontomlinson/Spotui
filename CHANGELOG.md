@@ -19,6 +19,18 @@ compared to the main Spotui repository.
   a richer, per-category gradient mesh (varied hue and angle seeded from the label, a true
   multi-stop base, two soft glows and a diagonal sheen) so every tile looks crafted and premium
   even fully offline, and never renders a blank or grey box.
+* **Richer Explore tiles.** The tile scrim is lighter through the middle and only deepens near the
+  label, so a real cover reads vivid and premium while the category name and play chip stay fully
+  legible.
+* **Update red dot.** When a newer release is available, a small red dot now appears on the Home
+  settings button and the Settings "Updates" row, so you can see at a glance there is something to
+  install. It clears once you install or dismiss the update.
+* **Premium update dialog.** The in-app update prompt now leads with the SOLO mark on an accent
+  plate and bolder titles, and opening "Check for updates" from Settings now opens this same
+  dialog instead of only showing a toast.
+* **Steadier Home and navbar.** Home shelves use a single consistent gap between a header and its
+  content so the page feels more settled, and the bottom navbar now highlights the active tab with
+  a soft accent pill behind the icon plus a faint accent top edge for a more premium, distinct look.
 * Note: the Android install-time scan prompt (Play Protect) is shown by the operating system for
   any app installed outside the Play Store and cannot be disabled by the app itself.
 

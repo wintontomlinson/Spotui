@@ -280,10 +280,13 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             com.music.spotui.ui.components.SoloWordmark(markHeight = 24.dp, textSize = 24.sp)
             Spacer(Modifier.weight(1f))
-            com.music.spotui.ui.components.SoloIconButton(
+            // A red dot sits on the settings button whenever an update is waiting, so the user is
+            // nudged toward Settings > Updates without an intrusive banner.
+            com.music.spotui.ui.components.SoloIconButtonBadged(
                 icon = androidx.compose.material.icons.Icons.Rounded.Settings,
-                contentDescription = "Settings",
+                contentDescription = if (com.music.spotui.data.update.UpdateState.hasUpdate) "Settings, update available" else "Settings",
                 onClick = onOpenSettings,
+                showBadge = com.music.spotui.data.update.UpdateState.hasUpdate,
                 filled = true,
                 iconSize = 20.dp,
             )
@@ -312,7 +315,7 @@ private fun HomeHeader(onOpenSettings: () -> Unit) {
 @Composable
 private fun FeaturedCarousel(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
     val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { tracks.size })
-    Column(modifier = Modifier.padding(top = 6.dp)) {
+    Column(modifier = Modifier.padding(top = 4.dp)) {
         androidx.compose.foundation.pager.HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = 20.dp),
@@ -558,7 +561,7 @@ private fun MoodChips(onPick: (String) -> Unit) {
 private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
     Box(
         modifier = Modifier
-            .padding(start = 20.dp, end = 20.dp, top = 18.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp)
             .fillMaxWidth()
             .height(184.dp)
             .shadow(

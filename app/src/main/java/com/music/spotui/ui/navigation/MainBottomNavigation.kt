@@ -161,8 +161,16 @@ fun MainBottomNavigation(navController: NavHostController, bottomBarState: Mutab
                             )
                             .background(GlassFillStrong)
                             .drawBehind {
+                                // A crisp top edge that fades a faint accent tint in from the
+                                // centre, so the docked bar reads as a premium, defined surface.
                                 drawLine(
-                                    color = Hairline,
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Hairline,
+                                            Accent.copy(alpha = 0.35f),
+                                            Hairline,
+                                        ),
+                                    ),
                                     start = Offset(0f, 0f),
                                     end = Offset(size.width, 0f),
                                     strokeWidth = 1.dp.toPx(),
@@ -274,6 +282,13 @@ private fun NavTab(
         animationSpec = tween(SoloMotion.NAV_MS),
         label = "navIconScale",
     )
+    // A soft accent-tinted capsule fades in behind the selected icon so the active tab reads as
+    // a distinct, premium pill rather than just a tinted glyph.
+    val pillAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(SoloMotion.NAV_MS),
+        label = "navPillAlpha",
+    )
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -283,14 +298,24 @@ private fun NavTab(
             .soloClickable(onClick = onClick)
             .semantics { this.selected = selected; role = Role.Tab },
     ) {
-        Icon(
-            imageVector = navIcon(item, selected),
-            contentDescription = item.label,
-            tint = tint,
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(24.dp)
-                .graphicsLayer { scaleX = iconScale; scaleY = iconScale },
-        )
+                .width(52.dp)
+                .height(30.dp)
+                .graphicsLayer { alpha = pillAlpha }
+                .clip(SoloShape.pill)
+                .background(Accent.copy(alpha = 0.14f)),
+        ) {
+            Icon(
+                imageVector = navIcon(item, selected),
+                contentDescription = item.label,
+                tint = tint,
+                modifier = Modifier
+                    .size(24.dp)
+                    .graphicsLayer { scaleX = iconScale; scaleY = iconScale },
+            )
+        }
         if (labelAlpha > 0.05f) {
             Text(
                 text = item.label,

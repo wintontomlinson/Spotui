@@ -555,15 +555,17 @@ private fun BrowseTile(
                 contentDescription = category.label,
             )
         }
-        // A soft category-tone + Canvas scrim over the art/mesh so the label always reads.
+        // A light top tint plus a bottom scrim that only deepens near the label, so a real cover
+        // reads rich and premium through the middle while the label stays legible at the base.
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to category.color.copy(alpha = 0.35f),
-                        0.45f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.18f),
-                        1f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.82f),
+                        0f to category.color.copy(alpha = 0.22f),
+                        0.5f to Color.Transparent,
+                        0.78f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.42f),
+                        1f to com.music.spotui.ui.theme.Canvas.copy(alpha = 0.8f),
                     ),
                 ),
         )
