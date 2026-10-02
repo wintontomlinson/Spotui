@@ -1,5 +1,9 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,7 +25,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -80,16 +83,21 @@ import com.music.spotui.data.preferences.setHistorySortOption
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.navigation.artistRoute
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import java.text.DateFormat
 import java.util.Date
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
 
-private val CardBg = Color(0xFF18181C)
-private val BarTrack = Color(0xFF2A2A2A)
-private val SpotifyGreen = Color(0xFFE8C24A)
-private val MutedText = Color(0xFFB3B3B3)
+private val CardBg = Surface2
+private val BarTrack = Surface3
+private val MutedText = TextSecondary
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -172,7 +180,7 @@ fun HistoryScreen(navController: NavController) {
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(AppBackground.toArgb()))
+                    .background(com.music.spotui.ui.theme.Canvas)
                     .statusBarsPadding()
             ) {
                 item {
@@ -184,26 +192,20 @@ fun HistoryScreen(navController: NavController) {
                             .padding(16.dp, 16.dp, 16.dp, 8.dp),
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(26.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) { navController.navigateUp() },
+                            com.music.spotui.ui.components.SoloIconButton(
+                                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                onClick = { navController.navigateUp() },
+                                filled = true,
                             )
-                            Spacer(Modifier.width(16.dp))
-                            Text("Listening history", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Listening history", color = TextPrimary, style = MaterialTheme.typography.headlineSmall)
                         }
                         if (history.isNotEmpty()) {
                             Text(
                                 "Clear all",
                                 color = MutedText,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                style = MaterialTheme.typography.labelLarge,
                                 modifier = Modifier.clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -215,11 +217,11 @@ fun HistoryScreen(navController: NavController) {
 
                 if (history.isEmpty()) {
                     item {
-                        Text(
-                            "Nothing here yet, play something!",
-                            color = Color.Gray,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(16.dp, 32.dp),
+                        com.music.spotui.ui.components.SoloEmptyState(
+                            icon = androidx.compose.material.icons.Icons.Rounded.History,
+                            title = "No listening history yet",
+                            message = "Songs you play show up here, with your top artists and stats.",
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 } else {
@@ -229,27 +231,28 @@ fun HistoryScreen(navController: NavController) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(SoloShape.md)
                                 .background(
                                     Brush.linearGradient(
                                         colors = listOf(
-                                            Color(0xFF2E1C5A),
-                                            Color(0xFF181824),
+                                            com.music.spotui.ui.theme.Elevated,
+                                            Surface2,
                                         )
                                     )
                                 )
+                                .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md)
                                 .padding(16.dp),
                         ) {
                             Column {
-                                Text("YOUR LISTENING HABITS", color = Color(0xFFB09BE8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("YOUR LISTENING HABITS", color = Accent, style = MaterialTheme.typography.labelSmall)
                                 Spacer(Modifier.height(12.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceAround,
                                 ) {
-                                    StatPill("Total plays", "${history.size}", SpotifyGreen)
-                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", Color(0xFF4CB0E8))
-                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", Color(0xFFE89BDB))
+                                    StatPill("Total plays", "${history.size}", Accent)
+                                    StatPill("Unique songs", "${history.distinctBy { it.songId }.size}", TextPrimary)
+                                    StatPill("Artists", "${history.distinctBy { it.singer.substringBefore(",") }.size}", TextPrimary)
                                 }
                             }
                         }
@@ -260,9 +263,8 @@ fun HistoryScreen(navController: NavController) {
                         item {
                             Text(
                                 "Top artists",
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                             )
                         }
@@ -290,9 +292,8 @@ fun HistoryScreen(navController: NavController) {
                         item {
                             Text(
                                 "Top tracks",
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                             )
                         }
@@ -326,9 +327,8 @@ fun HistoryScreen(navController: NavController) {
                     item {
                         Text(
                             "History",
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.padding(16.dp, 16.dp, 16.dp, 4.dp),
                         )
                     }
@@ -354,21 +354,19 @@ fun HistoryScreen(navController: NavController) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
-                                    .background(Color(0xFF2A2A30))
+                                    .clip(SoloShape.pill)
+                                    .background(Surface3)
                                     .clickable { showSortSheet = true }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = currentSort.getDescriptiveLabel(isDescending),
-                                    color = Color.White,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                    color = TextPrimary,
+                                    style = MaterialTheme.typography.labelLarge)
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = "Sort Options",
-                                    tint = Color.White,
+                                    tint = TextPrimary,
                                     modifier = Modifier
                                         .size(16.dp)
                                         .padding(start = 4.dp)
@@ -379,19 +377,12 @@ fun HistoryScreen(navController: NavController) {
 
                     if (filteredHistory.isEmpty() && searchQuery.isNotBlank()) {
                         item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 40.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "No matches found for \"$searchQuery\"",
-                                    color = Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            com.music.spotui.ui.components.SoloEmptyState(
+                                icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
+                                title = "No matches",
+                                message = "Nothing here matches \"$searchQuery\".",
+                                modifier = Modifier.fillMaxWidth(),
+                            )
                         }
                     } else {
                         items(filteredHistory.size) { i ->
@@ -428,7 +419,10 @@ fun HistoryScreen(navController: NavController) {
             if (showSortSheet) {
                 ModalBottomSheet(
                     onDismissRequest = { showSortSheet = false },
-                    containerColor = Color(0xFF1A1A1A)
+                    containerColor = Surface2,
+                    shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                    dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                    scrimColor = com.music.spotui.ui.theme.Scrim,
                 ) {
                     Column(
                         modifier = Modifier
@@ -437,12 +431,12 @@ fun HistoryScreen(navController: NavController) {
                     ) {
                         Text(
                             text = "Sort by",
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                         )
-                        HorizontalDivider(color = Color(0xFF2A2A2A))
+                        HorizontalDivider(color = Surface3)
                         Spacer(modifier = Modifier.height(4.dp))
                         HistorySortOption.entries.forEach { option ->
                             val isSelected = option == currentSort
@@ -471,21 +465,21 @@ fun HistoryScreen(navController: NavController) {
                                 Icon(
                                     imageVector = icon,
                                     contentDescription = null,
-                                    tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                    tint = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
                                     modifier = Modifier.size(22.dp)
                                 )
                                 Spacer(modifier = Modifier.width(18.dp))
                                 Text(
                                     text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == HistorySortOption.DATE),
-                                    color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
-                                    fontSize = 15.sp,
+                                    color = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (isSelected) {
                                     Icon(
                                         imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                         contentDescription = null,
-                                        tint = Color(AppPalette.toArgb()),
+                                        tint = com.music.spotui.ui.theme.Accent,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -499,24 +493,27 @@ fun HistoryScreen(navController: NavController) {
             if (showClearDialog) {
                 AlertDialog(
                     onDismissRequest = { showClearDialog = false },
-                    title = { Text("Clear listening history?", color = Color.White, fontWeight = FontWeight.Bold) },
+                    title = { Text("Clear listening history?", color = TextPrimary, style = MaterialTheme.typography.titleLarge) },
                     text = { Text("This will remove all ${history.size} plays. This action cannot be undone.", color = MutedText) },
                     confirmButton = {
-                        TextButton(onClick = {
+                        com.music.spotui.ui.components.SoloDialogConfirm(
+                            text = "Clear",
+                            danger = true,
+                            onClick = {
                             clearListeningHistory(context)
                             history = emptyList()
                             showClearDialog = false
-                        }) {
-                            Text("Clear", color = Color(0xFFE57373))
-                        }
+                        },
+                        )
                     },
                     dismissButton = {
-                        TextButton(onClick = { showClearDialog = false }) {
-                            Text("Cancel", color = Color.White)
-                        }
+                        com.music.spotui.ui.components.SoloDialogDismiss(
+                            text = "Cancel",
+                            onClick = { showClearDialog = false },
+                        )
                     },
-                    containerColor = Color(0xFF1A1A1A),
-                    titleContentColor = Color.White,
+                    containerColor = Surface2,
+                    titleContentColor = TextPrimary,
                     textContentColor = MutedText,
                 )
             }
@@ -527,8 +524,8 @@ fun HistoryScreen(navController: NavController) {
 @Composable
 private fun StatPill(label: String, value: String, accent: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = MutedText, fontSize = 11.sp)
+        Text(value, color = accent, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(label, color = MutedText, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -547,7 +544,7 @@ private fun TopArtistRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(SoloShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -558,7 +555,7 @@ private fun TopArtistRow(
         Text(
             text = "$rank",
             color = MutedText,
-            fontSize = 15.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.width(22.dp),
         )
@@ -579,8 +576,8 @@ private fun TopArtistRow(
         ) {
             Text(
                 name,
-                color = Color.White,
-                fontSize = 15.sp,
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -591,8 +588,8 @@ private fun TopArtistRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = AppPalette,
+                    .clip(SoloShape.xs),
+                color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
             )
@@ -600,7 +597,7 @@ private fun TopArtistRow(
             Text(
                 "$plays plays",
                 color = MutedText,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -622,7 +619,7 @@ private fun TopTrackRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(SoloShape.sm)
             .background(CardBg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -633,14 +630,14 @@ private fun TopTrackRow(
         Text(
             text = "$rank",
             color = MutedText,
-            fontSize = 15.sp,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.width(22.dp),
         )
         GlideImage(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(SoloShape.xs),
             model = imageUrl.ifBlank { null },
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -654,8 +651,8 @@ private fun TopTrackRow(
         ) {
             Text(
                 title,
-                color = Color.White,
-                fontSize = 15.sp,
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -664,7 +661,7 @@ private fun TopTrackRow(
                 Text(
                     artist,
                     color = MutedText,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -675,8 +672,8 @@ private fun TopTrackRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = AppPalette,
+                    .clip(SoloShape.xs),
+                color = Accent,
                 trackColor = BarTrack,
                 strokeCap = StrokeCap.Round,
             )
@@ -684,7 +681,7 @@ private fun TopTrackRow(
             Text(
                 "$plays plays",
                 color = MutedText,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
@@ -703,7 +700,7 @@ private fun HistoryRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp, 6.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(SoloShape.sm)
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -714,7 +711,7 @@ private fun HistoryRow(
         GlideImage(
             modifier = Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(SoloShape.xs),
             model = entry.image,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -726,10 +723,10 @@ private fun HistoryRow(
                 .weight(1f)
                 .padding(start = 10.dp, end = 8.dp),
         ) {
-            Text(entry.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(entry.title, color = TextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 "${entry.singer} • ${DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(entry.ts))}",
-                color = Color.Gray, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = TextTertiary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }
         Icon(
@@ -737,11 +734,10 @@ private fun HistoryRow(
             contentDescription = "Remove",
             tint = MutedText,
             modifier = Modifier
-                .size(18.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onRemove() },
+                .size(48.dp)
+                .clip(CircleShape)
+                .clickable { onRemove() }
+                .padding(15.dp),
         )
     }
 }

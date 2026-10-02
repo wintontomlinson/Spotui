@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths the app's FileProvider can hand out content:// URIs for. The share-with-artwork
+     card is rendered into a "shared" subfolder of the app cache; the in-app updater downloads
+     the release .apk into a "downloads" subfolder and hands that content:// uri to the system
+     package installer. Only those two cache subfolders are exposed. -->
+<paths>
+    <cache-path name="shared" path="shared/" />
+    <cache-path name="downloads" path="downloads/" />
+</paths>

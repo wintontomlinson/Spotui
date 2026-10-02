@@ -1,6 +1,16 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Home tab (`FreeHomeScreen`).
+ *
+ * The app's landing screen: a full-bleed featured carousel over personalised shelves
+ * ("Because you liked", trending, recents). Reads its state from the home ViewModel and renders
+ * covers through the shared `SoloArtwork` wrapper; rows navigate into the detail screens.
+ */
+
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -15,6 +25,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,7 +37,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -60,14 +70,21 @@ import com.music.spotui.ui.navigation.navBarScroll
 import com.music.spotui.ui.viewmodel.FreeHomeViewModel
 import com.music.spotui.ui.viewmodel.HomeRow
 import com.music.spotui.ui.viewmodel.PlayerViewModel
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.components.shimmer
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.CloudOff
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.OnAccent
+import com.music.spotui.ui.theme.Hairline
 
-// Accent comes from the single source of truth in the theme package.
-private val Accent = com.music.spotui.ui.theme.Accent
-private val OnAccent = com.music.spotui.ui.theme.OnAccent
-private val Surface = Color(0xFF082C34)
-private val SurfaceHigh = Color(0xFF0C3A44)
-private val Hairline = Color(0x14FFFFFF)
-private val TextDim = Color(0xFFB3B3B3)
+private val Surface = Surface2
+private val SurfaceHigh = Surface3
+private val TextDim = TextSecondary
 
 /**
  * Login free Home. No Spotify session needed. Content is a set of curated and
@@ -85,6 +102,9 @@ fun FreeHomeScreen(navController: NavController) {
     val trending by vm.trending
     val trendingLoading by vm.trendingLoading
     val isRefreshing by vm.isRefreshing
+    val mix by vm.mix
+    val topArtists by vm.topArtists
+    val becauseYouLiked by vm.becauseYouLiked
 
     LaunchedEffect(Unit) { vm.maybeRefresh() }
 
@@ -126,13 +146,13 @@ fun FreeHomeScreen(navController: NavController) {
             .fillMaxSize()
             .background(com.music.spotui.ui.theme.AppBackgroundBrush),
         indicator = {
-            // Themed refresh effect: a gold spinner on a deep-cyan pill so the
-            // reload gesture matches the app's cyan+gold look.
+            // Themed refresh effect: an accent spinner on a surface pill so the
+            // reload gesture matches the app's Aurora Noir look.
             androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator(
                 state = pullState,
                 isRefreshing = isRefreshing,
                 modifier = Modifier.align(Alignment.TopCenter),
-                containerColor = com.music.spotui.ui.theme.SurfaceElevated,
+                containerColor = com.music.spotui.ui.theme.Surface2,
                 color = Accent,
             )
         },
@@ -144,38 +164,104 @@ fun FreeHomeScreen(navController: NavController) {
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = 190.dp),
     ) {
-        item { HomeHeader() }
+        item { HomeHeader(onOpenSettings = { navController.navigate(Routes.Settings.route) }) }
 
-        item {
-            MoodChips(onPick = openSearch)
-            Spacer(Modifier.height(4.dp))
+        // Image-forward featured carousel: large artwork cards drawn from the trending/mix
+        // state. It leads the screen so the first thing seen is full-bleed cover art.
+        val featured = (trending.ifEmpty { mix }).take(6)
+        if (featured.isNotEmpty()) {
+            item(key = "featured") {
+                // LazyItemScope has no implicit vertical layout, so the header and its
+                // content must share a Column or they stack at the same origin and overlap.
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Featured", subtitle = "Handpicked for today")
+                    FeaturedCarousel(tracks = featured, onPlay = { i -> play(featured, i) })
+                }
+            }
         }
 
-        // Trending leads the screen, so the newest songs are the first thing seen.
         item {
-            SectionHeader(title = "Trending now")
-            when {
-                trendingLoading && trending.isEmpty() -> TrendingSkeleton()
-                trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(title = "Browse moods", subtitle = "Pick a vibe to explore")
+                MoodChips(onPick = openSearch)
+                Spacer(Modifier.height(4.dp))
+            }
+        }
+
+        // Daily "Mix for you" hero, only once there is listening history to build it from.
+        if (mix.isNotEmpty()) {
+            item(key = "mix") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Made for you", subtitle = "Your daily mix, tuned to your taste")
+                    MixForYouCard(mix = mix, onPlay = { play(mix, 0) })
+                }
             }
         }
 
         if (recentlyPlayed.isNotEmpty()) {
-            item {
-                SectionHeader(title = "Recently played")
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    itemsIndexed(recentlyPlayed) { index, song ->
-                        RecentTile(song = song, onClick = { play(recentlyPlayed, index) })
+            item(key = "jump") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Jump back in", subtitle = "Pick up where you left off")
+                    JumpBackInGrid(tracks = recentlyPlayed.take(6), onPlay = { i -> play(recentlyPlayed, i) })
+                }
+            }
+        }
+
+        // "Because you liked X": a taste-ranked shelf seeded from a top liked track.
+        becauseYouLiked?.let { row ->
+            item(key = "becauseYouLiked") {
+                Box(Modifier.animateItem()) {
+                    HomeRowSection(row = row, onPlay = play)
+                }
+            }
+        }
+
+        // Trending leads the screen, so the newest songs are the first thing seen.
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SectionHeader(title = "Trending now", subtitle = "Hot tracks ranked for you")
+                when {
+                    trendingLoading && trending.isEmpty() -> TrendingSkeleton()
+                    trending.isNotEmpty() -> QuickPicks(tracks = trending, onPlay = play)
+                    !trendingLoading -> com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.CloudOff,
+                        title = "Couldn't load Home",
+                        message = "Check your connection and try again.",
+                        actionLabel = "Retry",
+                        onAction = { vm.pullRefresh() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+
+        if (topArtists.isNotEmpty()) {
+            item(key = "artists") {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SectionHeader(title = "Your top artists", subtitle = "The voices you play the most")
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        itemsIndexed(topArtists, key = { _, it -> it.first }) { index, (name, image) ->
+                            ArtistCircle(
+                                name = name,
+                                image = image,
+                                highlighted = index == 0,
+                                onClick = { navController.navigate(com.music.spotui.ui.navigation.artistRoute(name, "")) },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
                 }
             }
         }
 
         items(rows, key = { it.title }) { row ->
-            HomeRowSection(row = row, onPlay = play)
+            // Fade + slide each shelf into place as rows load in and reorder.
+            Box(Modifier.animateItem()) {
+                HomeRowSection(row = row, onPlay = play)
+            }
         }
 
         item { Spacer(Modifier.height(20.dp)) }
@@ -183,48 +269,162 @@ fun FreeHomeScreen(navController: NavController) {
     } // PullToRefreshBox
 }
 
-/** Premium greeting masthead: an amber accent bar, a gradient greeting, and a subtitle. */
+/** Masthead: the Solo wordmark with a settings shortcut, then a time-aware greeting. */
 @Composable
-private fun HomeHeader() {
+private fun HomeHeader(onOpenSettings: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 16.dp),
+            .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 14.dp),
     ) {
-        // A small amber accent bar above the greeting, a premium masthead touch that ties
-        // the header to the app's colour.
-        Box(
-            modifier = Modifier
-                .width(34.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Accent, com.music.spotui.ui.theme.AccentDark)
-                    )
-                ),
-        )
-        Spacer(Modifier.height(14.dp))
-        // The greeting is drawn in a warm amber gradient with the heavier title cut, so it
-        // reads as a premium masthead rather than plain white body text.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.music.spotui.ui.components.SoloWordmark(markHeight = 24.dp, textSize = 24.sp)
+            Spacer(Modifier.weight(1f))
+            // A red dot sits on the settings button whenever an update is waiting, so the user is
+            // nudged toward Settings > Updates without an intrusive banner.
+            com.music.spotui.ui.components.SoloIconButtonBadged(
+                icon = androidx.compose.material.icons.Icons.Rounded.Settings,
+                contentDescription = if (com.music.spotui.data.update.UpdateState.hasUpdate) "Settings, update available" else "Settings",
+                onClick = onOpenSettings,
+                showBadge = com.music.spotui.data.update.UpdateState.hasUpdate,
+                filled = true,
+                iconSize = 20.dp,
+            )
+        }
+        Spacer(Modifier.height(18.dp))
         Text(
             text = greeting(),
-            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-            fontWeight = FontWeight.Bold,
-            fontSize = 30.sp,
-            letterSpacing = (-0.5).sp,
-            style = androidx.compose.ui.text.TextStyle(
-                brush = Brush.horizontalGradient(
-                    listOf(Color(0xFFFFE0A3), Accent)
-                ),
-            ),
+            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+            color = TextSecondary,
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
             text = greetingSubtitle(),
-            color = TextDim,
-            fontSize = 13.sp,
+            color = com.music.spotui.ui.theme.TextTertiary,
+            style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
         )
+    }
+}
+
+/**
+ * Featured carousel: a full-bleed HorizontalPager of large artwork cards built from the
+ * trending/mix state, each with a hero scrim and title overlay, plus an animated page
+ * indicator underneath. Tapping a card plays that track.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun FeaturedCarousel(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
+    val pagerState = androidx.compose.foundation.pager.rememberPagerState(pageCount = { tracks.size })
+    Column(modifier = Modifier.padding(top = 4.dp)) {
+        androidx.compose.foundation.pager.HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            pageSpacing = 12.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) { page ->
+            val song = tracks[page]
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = SoloShape.lg,
+                        clip = false,
+                        ambientColor = com.music.spotui.ui.theme.Shadow,
+                        spotColor = com.music.spotui.ui.theme.Shadow,
+                    )
+                    .clip(SoloShape.lg)
+                    .background(Surface)
+                    .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) { onPlay(page) },
+            ) {
+                // Full-bleed cover art with a hero scrim so the overlaid copy reads.
+                com.music.spotui.ui.components.SoloArtwork(
+                    model = song.coverUri,
+                    modifier = Modifier.fillMaxSize(),
+                    shape = SoloShape.lg,
+                    scrim = true,
+                    contentDescription = song.title,
+                )
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                ) {
+                    Text(
+                        text = "FEATURED",
+                        color = Accent,
+                        style = MaterialTheme.typography.labelSmall,
+                        letterSpacing = 1.6.sp,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        lineHeight = 26.sp,
+                    )
+                    if (song.singer.isNotBlank()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = song.singer,
+                            color = TextSecondary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(18.dp)
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(com.music.spotui.ui.theme.AccentBrush),
+                ) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = OnAccent,
+                        modifier = Modifier.size(26.dp),
+                    )
+                }
+            }
+        }
+        // Animated page indicator: the active dot stretches into an accent pill.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(top = 12.dp)
+                .fillMaxWidth(),
+        ) {
+            Spacer(Modifier.weight(1f))
+            repeat(tracks.size) { index ->
+                val selected = pagerState.currentPage == index
+                val width by androidx.compose.animation.core.animateDpAsState(
+                    targetValue = if (selected) 22.dp else 7.dp,
+                    animationSpec = com.music.spotui.ui.theme.SoloMotion.standard(),
+                    label = "indicatorWidth",
+                )
+                Box(
+                    modifier = Modifier
+                        .height(7.dp)
+                        .width(width)
+                        .clip(SoloShape.pill)
+                        .background(if (selected) Accent else Hairline),
+                )
+            }
+            Spacer(Modifier.weight(1f))
+        }
     }
 }
 
@@ -237,14 +437,14 @@ private fun HomeHeader() {
 private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int) -> Unit) {
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .padding(horizontal = 20.dp)
+            .clip(SoloShape.lg)
             // A soft top down gradient inside the card plus a hairline edge gives the
             // quick picks block real depth instead of a flat panel.
             .background(
                 Brush.verticalGradient(colors = listOf(SurfaceHigh, Surface)),
             )
-            .border(1.dp, Hairline, RoundedCornerShape(18.dp))
+            .border(1.dp, Hairline, SoloShape.lg)
             .padding(vertical = 4.dp),
     ) {
         tracks.forEachIndexed { index, song ->
@@ -262,9 +462,9 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 Text(
                     text = "${index + 1}",
                     color = if (index < 3) Accent else TextDim,
-                    fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-                    fontSize = if (index < 3) 18.sp else 15.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+                    fontSize = if (index < 3) 20.sp else 16.sp,
+                    fontWeight = FontWeight.SemiBold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.width(24.dp),
                 )
@@ -272,7 +472,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 GlideImage(
                     modifier = Modifier
                         .size(50.dp)
-                        .clip(RoundedCornerShape(9.dp)),
+                        .clip(SoloShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -286,9 +486,8 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                 ) {
                     Text(
                         text = song.title,
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleSmall,
                         maxLines = 1,
                     )
                     if (song.singer.isNotBlank()) {
@@ -296,7 +495,7 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
                         Text(
                             text = song.singer,
                             color = TextDim,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             maxLines = 1,
                         )
                     }
@@ -321,28 +520,8 @@ private fun QuickPicks(tracks: List<SongsModel>, onPlay: (List<SongsModel>, Int)
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 16.dp, top = 22.dp, bottom = 13.dp),
-    ) {
-        // A short gold tick before each section title ties the shelves to the
-        // app's accent and gives Home a consistent, premium rhythm.
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(18.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Accent),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = title,
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
+private fun SectionHeader(title: String, subtitle: String? = null) {
+    com.music.spotui.ui.components.SoloSectionHeader(title = title, subtitle = subtitle)
 }
 
 private val MOODS = listOf(
@@ -359,74 +538,201 @@ private val MOODS = listOf(
 @Composable
 private fun MoodChips(onPick: (String) -> Unit) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(MOODS, key = { it.first }) { (label, query) ->
-            Text(
-                text = label,
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(SurfaceHigh)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onPick(query) }
-                    .padding(horizontal = 16.dp, vertical = 9.dp),
+            com.music.spotui.ui.components.SoloChip(
+                label = label,
+                selected = false,
+                onClick = { onPick(query) },
             )
         }
     }
 }
 
-/** Compact tile used by the Recently played row. */
+/**
+ * "Mix for you" hero: a full-width 184dp card. The 2x2 artwork collage fills the
+ * trailing side, a Elevated-to-transparent scrim carries the title, and an accent
+ * "Play mix" pill starts it.
+ */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun RecentTile(song: SongsModel, onClick: () -> Unit) {
-    // Width scales with the screen instead of a fixed 232dp, so on small phones the tile
-    // does not overflow and on tablets it does not look cramped. Bounded so it stays a
-    // tidy card rather than stretching edge to edge.
-    val screenWidth = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp.dp
-    val tileWidth = (screenWidth * 0.62f).coerceIn(200.dp, 280.dp)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+private fun MixForYouCard(mix: List<SongsModel>, onPlay: () -> Unit) {
+    Box(
         modifier = Modifier
-            .width(tileWidth)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Surface)
-            .clickable(onClick = onClick)
-            .padding(end = 12.dp),
-    ) {
-        GlideImage(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)),
-            model = song.coverUri,
-            contentScale = ContentScale.Crop,
-            failure = placeholder(R.drawable.placeholder),
-            loading = placeholder(R.drawable.placeholder),
-            contentDescription = null,
-        )
-        Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(
-                text = song.title,
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp)
+            .fillMaxWidth()
+            .height(184.dp)
+            .shadow(
+                elevation = 14.dp,
+                shape = SoloShape.lg,
+                clip = false,
+                ambientColor = com.music.spotui.ui.theme.Shadow,
+                spotColor = com.music.spotui.ui.theme.Shadow,
             )
-            if (song.singer.isNotBlank()) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = song.singer,
-                    color = TextDim,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                )
+            .clip(SoloShape.lg)
+            .background(com.music.spotui.ui.theme.Elevated)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.lg),
+    ) {
+        val covers = mix.map { it.coverUri }.filter { it.isNotBlank() }.distinct().take(4)
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .size(184.dp),
+        ) {
+            for (r in 0 until 2) {
+                Row(Modifier.weight(1f)) {
+                    for (c in 0 until 2) {
+                        GlideImage(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxSize(),
+                            model = covers.getOrNull(r * 2 + c) ?: covers.firstOrNull(),
+                            contentScale = ContentScale.Crop,
+                            failure = placeholder(R.drawable.placeholder),
+                            loading = placeholder(R.drawable.placeholder),
+                            contentDescription = null,
+                        )
+                    }
+                }
             }
         }
+        // Elevated -> transparent scrim so the copy reads over the collage.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to com.music.spotui.ui.theme.Elevated,
+                        0.48f to com.music.spotui.ui.theme.Elevated.copy(alpha = 0.92f),
+                        1f to Color.Transparent,
+                    )
+                ),
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(0.62f)
+                .padding(start = 18.dp, end = 8.dp),
+        ) {
+            Text(
+                text = "DAILY",
+                color = Accent,
+                style = MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.6.sp,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Mix for you",
+                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                color = TextPrimary,
+                maxLines = 1,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Made from what you love · ${mix.size} songs",
+                color = TextSecondary,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+            )
+            Spacer(Modifier.height(14.dp))
+            com.music.spotui.ui.components.SoloPillButton(
+                text = "Play mix",
+                icon = Icons.Default.PlayArrow,
+                onClick = onPlay,
+            )
+        }
+    }
+}
+
+/** "Jump back in": the last distinct tracks as a compact two-column grid. */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun JumpBackInGrid(tracks: List<SongsModel>, onPlay: (Int) -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = 20.dp),
+    ) {
+        tracks.chunked(2).forEachIndexed { rowIdx, pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEachIndexed { colIdx, song ->
+                    val index = rowIdx * 2 + colIdx
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(SoloShape.sm)
+                            .background(com.music.spotui.ui.theme.Surface1)
+                            .border(1.dp, Hairline, SoloShape.sm)
+                            .clickable(onClickLabel = "Play ${song.title}") { onPlay(index) },
+                    ) {
+                        GlideImage(
+                            modifier = Modifier.size(56.dp),
+                            model = song.coverUri,
+                            contentScale = ContentScale.Crop,
+                            failure = placeholder(R.drawable.placeholder),
+                            loading = placeholder(R.drawable.placeholder),
+                            contentDescription = null,
+                        )
+                        Text(
+                            text = song.title,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 2,
+                            lineHeight = 16.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                        )
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/** Circular artist portrait with the name under it. */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun ArtistCircle(name: String, image: String, onClick: () -> Unit, highlighted: Boolean = false, modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .width(92.dp)
+            .clickable(onClickLabel = "Open $name", onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(84.dp)
+                .clip(CircleShape)
+                // The top artist gets an accent ring; the rest a quiet hairline.
+                .then(
+                    if (highlighted) Modifier.background(com.music.spotui.ui.theme.AccentBrush)
+                    else Modifier.background(Hairline)
+                )
+                .padding(if (highlighted) 2.5.dp else 1.dp)
+                .clip(CircleShape)
+                .background(Surface),
+        ) {
+            GlideImage(
+                modifier = Modifier.fillMaxSize(),
+                model = image.ifBlank { null },
+                contentScale = ContentScale.Crop,
+                failure = placeholder(R.drawable.placeholder),
+                loading = placeholder(R.drawable.placeholder),
+                contentDescription = null,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = name,
+            color = if (highlighted) TextPrimary else TextSecondary,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
     }
 }
 
@@ -443,11 +749,11 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
     }
 
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        itemsIndexed(row.tracks) { index, song ->
-            TrackCard(song = song, onClick = { onPlay(row.tracks, index) })
+        itemsIndexed(row.tracks, key = { _, song -> song.id }) { index, song ->
+            TrackCard(song = song, onClick = { onPlay(row.tracks, index) }, modifier = Modifier.animateItem())
         }
     }
 }
@@ -455,10 +761,10 @@ private fun HomeRowSection(row: HomeRow, onPlay: (List<SongsModel>, Int) -> Unit
 /** Premium artwork card with a gradient scrim and a play badge. */
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
+private fun TrackCard(song: SongsModel, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
-            .width(152.dp)
+        modifier = modifier
+            .width(164.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -467,35 +773,25 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(152.dp)
+                .size(164.dp)
                 .shadow(
-                    elevation = 10.dp,
-                    shape = RoundedCornerShape(12.dp),
+                    elevation = 12.dp,
+                    shape = SoloShape.md,
                     clip = false,
                     ambientColor = Color.Black,
                     spotColor = Color.Black,
                 )
-                .clip(RoundedCornerShape(12.dp))
+                .clip(SoloShape.md)
                 .background(Surface),
         ) {
-            GlideImage(
-                modifier = Modifier.fillMaxSize(),
+            // Larger cover art rendered through the shared SoloArtwork wrapper so it keeps
+            // the shimmer/placeholder/error fallbacks and a bottom scrim for the play badge.
+            com.music.spotui.ui.components.SoloArtwork(
                 model = song.coverUri,
-                contentScale = ContentScale.Crop,
-                failure = placeholder(R.drawable.placeholder),
-                loading = placeholder(R.drawable.placeholder),
-                contentDescription = null,
-            )
-            // Soft scrim so the play badge stays legible on bright artwork.
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.45f)),
-                            startY = 150f,
-                        )
-                    ),
+                modifier = Modifier.fillMaxSize(),
+                shape = SoloShape.md,
+                scrim = true,
+                contentDescription = song.title,
             )
             Box(
                 contentAlignment = Alignment.Center,
@@ -509,7 +805,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
                 Icon(
                     Icons.Default.PlayArrow,
                     contentDescription = null,
-                    // Dark glyph on the light amber badge for strong contrast.
+                    // Dark glyph on the Volt badge for strong contrast.
                     tint = OnAccent,
                     modifier = Modifier.size(20.dp),
                 )
@@ -518,9 +814,8 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
         Spacer(Modifier.height(9.dp))
         Text(
             text = song.title,
-            color = Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            color = TextPrimary,
+            style = MaterialTheme.typography.titleSmall,
             maxLines = 2,
             lineHeight = 17.sp,
         )
@@ -529,7 +824,7 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
             Text(
                 text = song.singer,
                 color = TextDim,
-                fontSize = 11.sp,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
         }
@@ -539,21 +834,12 @@ private fun TrackCard(song: SongsModel, onClick: () -> Unit) {
 /** Placeholder rows for the trending block while it loads. */
 @Composable
 private fun TrendingSkeleton() {
-    val transition = rememberInfiniteTransition(label = "trendingSkeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "trendingSkeletonAlpha",
-    )
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(Surface),
+            .padding(horizontal = 20.dp)
+            .clip(SoloShape.lg)
+            .background(Surface)
+            .padding(vertical = 4.dp),
     ) {
         repeat(4) {
             Row(
@@ -562,79 +848,35 @@ private fun TrendingSkeleton() {
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 9.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(SurfaceHigh.copy(alpha = alpha)),
-                )
+                Box(Modifier.size(50.dp).shimmer(SoloShape.sm))
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 12.dp),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.6f)
-                            .height(12.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(SurfaceHigh.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.6f).height(12.dp).shimmer())
                     Spacer(Modifier.height(7.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.35f)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(SurfaceHigh.copy(alpha = alpha)),
-                    )
+                    Box(Modifier.fillMaxWidth(0.35f).height(10.dp).shimmer())
                 }
             }
         }
     }
 }
 
-/** Pulsing placeholders shown while a section is still loading. */
+/** Placeholder cards shown while a section is still loading. */
 @Composable
 private fun CardSkeletonRow() {
-    val transition = rememberInfiniteTransition(label = "cardSkeleton")
-    val alpha by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(750),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "cardSkeletonAlpha",
-    )
     Row(
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier.padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(horizontal = 20.dp),
     ) {
         repeat(3) {
-            Column(modifier = Modifier.width(152.dp)) {
-                Box(
-                    modifier = Modifier
-                        .size(152.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+            Column(modifier = Modifier.width(164.dp)) {
+                Box(Modifier.size(164.dp).shimmer(SoloShape.md))
                 Spacer(Modifier.height(9.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+                Box(Modifier.fillMaxWidth(0.85f).height(12.dp).shimmer())
                 Spacer(Modifier.height(7.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.55f)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Surface.copy(alpha = alpha)),
-                )
+                Box(Modifier.fillMaxWidth(0.55f).height(10.dp).shimmer())
             }
         }
     }

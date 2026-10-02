@@ -14,10 +14,9 @@ android {
         applicationId = "com.music.spotui"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2026081910
-        versionName = "2.0.0"
+        versionCode = 2026101010
+        versionName = "12.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -29,12 +28,8 @@ android {
         resourceConfigurations += listOf("en", "hi")
     }
 
-    // Build one APK per CPU architecture instead of a single universal APK carrying all
-    // four. Each device only needs its own, so the download drops by roughly the combined
-    // size of the other three architectures' native libraries. A universal APK is still
-    // produced as a fallback for sideloading onto an unknown device.
-    // ABI splits disabled: ship a single, install-anywhere universal APK per
-    // release instead of separate per-architecture variants.
+    // ABI splits disabled: ship a single, install-anywhere universal APK per release
+    // instead of separate per-architecture variants.
     splits {
         abi {
             isEnable = false
@@ -58,7 +53,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 code shrinking + resource shrinking. The required keep rules
+            // (reflection / @JavascriptInterface bridges / kotlinx.serialization
+            // models / Media3 / Glide / Hilt / Compose / vendored stream libs)
+            // live in proguard-rules.pro so playback and the WebView bridges
+            // survive shrinking.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -101,7 +102,7 @@ androidComponents {
                 ?.filters?.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }
                 ?.identifier
             val suffix = if (abi != null) "_$abi" else ""
-            output.outputFileName.set("Spotui_v${android.defaultConfig.versionName}$suffix.apk")
+            output.outputFileName.set("SOLO_v${android.defaultConfig.versionName}$suffix.apk")
         }
     }
 }
@@ -122,25 +123,17 @@ kotlin {
 dependencies {
 
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.compose.runtime.livedata)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     // Spotify metadata + YouTube streaming, ported from Meld (replaces Firebase data layer)
     implementation(project(":spotify"))
     implementation(project(":innertube"))
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.androidx.navigation.compose)
 

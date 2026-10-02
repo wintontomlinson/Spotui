@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "mkdir -p public && printf '%s' '<!doctype html><meta charset=\"utf-8\"><title>Spotui</title><body style=\"font-family:system-ui;background:#130824;color:#fff;display:grid;place-items:center;height:100vh;margin:0;text-align:center\"><div><h1 style=\"color:#D4AF37\">Spotui</h1><p>Spotui is an Android app. There is no web deployment.</p><p><a style=\"color:#D4AF37\" href=\"https://github.com/wintontomlinson/Spotui\">View the project on GitHub</a></p></div>' > public/index.html",
+  "buildCommand": "mkdir -p public && printf '%s' '<!doctype html><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>SOLO</title><body style=\"font-family:system-ui,sans-serif;background:#0A0A0C;color:#F4F5F2;display:grid;place-items:center;height:100vh;margin:0;text-align:center\"><div><h1 style=\"color:#D8FF3E;font-weight:700;font-size:56px;letter-spacing:-1px;margin:0\">SOLO</h1><p style=\"color:#ADB0A8\">SOLO is an Android music app. There is no web version.</p><p><a style=\"color:#D8FF3E\" href=\"https://github.com/wintontomlinson/Spotui/releases\">Get SOLO on GitHub</a></p></div>' > public/index.html",
   "outputDirectory": "public",
   "framework": null,
   "installCommand": "echo \"no install needed\""

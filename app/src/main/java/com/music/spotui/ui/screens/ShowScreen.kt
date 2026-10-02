@@ -1,5 +1,11 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -73,10 +78,14 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.SongOptionsSheet
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.viewmodel.ShowViewModel
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -124,21 +133,16 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(com.music.spotui.ui.theme.Canvas)
                 .statusBarsPadding(),
         ) {
             item {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    tint = Color.White,
+                com.music.spotui.ui.components.SoloIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .size(26.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { navController.navigateUp() },
+                    onClick = { navController.navigateUp() },
+                    filled = true,
+                    modifier = Modifier.padding(start = 12.dp, top = 8.dp),
                 )
             }
             item {
@@ -150,39 +154,41 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         model = show?.coverUri ?: episodes.firstOrNull()?.coverUri,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.placeholder),
-                        modifier = Modifier.size(180.dp).clip(RoundedCornerShape(8.dp)),
+                        modifier = Modifier
+                            .size(200.dp)
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow)
+                            .clip(SoloShape.lg),
                         contentDescription = null,
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = show?.name ?: showName,
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     show?.publisher?.takeIf { it.isNotBlank() }?.let {
-                        Text(it, color = Color(0xFFB3B3B3), fontSize = 13.sp)
+                        Text(it, color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
                     }
                     if (episodes.isNotEmpty()) {
                         Spacer(Modifier.height(12.dp))
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_queue_add),
-                            tint = Color.White,
+                            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
+                            tint = TextPrimary,
                             modifier = Modifier
-                                .size(24.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null,
-                                ) {
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .clickable {
                                     playerViewModel.addAllToQueue(episodes)
                                     android.widget.Toast.makeText(
                                         context,
                                         "${episodes.size} episode(s) added to queue",
                                         android.widget.Toast.LENGTH_SHORT,
                                     ).show()
-                                },
+                                }
+                                .padding(12.dp),
                             contentDescription = "Add all to queue",
                         )
                     }
@@ -215,21 +221,19 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(Color(0xFF2A2A30))
+                                .clip(SoloShape.pill)
+                                .background(Surface3)
                                 .clickable { showSortSheet = true }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = currentSort.getDescriptiveLabel(isDescending),
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.labelLarge)
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Sort Options",
-                                tint = Color.White,
+                                tint = TextPrimary,
                                 modifier = Modifier
                                     .size(16.dp)
                                     .padding(start = 4.dp)
@@ -241,19 +245,12 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
 
             if (filteredEpisodes.isEmpty() && searchQuery.isNotBlank()) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "No matches found for \"$searchQuery\"",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
+                        title = "No matches",
+                        message = "Nothing here matches \"$searchQuery\".",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             } else {
                 items(filteredEpisodes.size) { i ->
@@ -272,7 +269,7 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(AppBackground)
+                                .background(Canvas)
                                 .combinedClickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -289,19 +286,18 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                                 model = ep.coverUri,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
-                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+                                modifier = Modifier.size(48.dp).clip(SoloShape.xs),
                                 contentDescription = null,
                             )
                             Column(modifier = Modifier.padding(start = 12.dp)) {
                                 Text(
                                     ep.title,
-                                    color = if (ep.id == vm.currentSongId.value) Color(0xFFE8C24A) else Color.White,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (ep.id == vm.currentSongId.value) Accent else TextPrimary,
+                                    style = MaterialTheme.typography.titleSmall,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(ep.singer, color = Color(0xFFB3B3B3), fontSize = 12.sp, maxLines = 1)
+                                Text(ep.singer, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
                             }
                         }
                     }
@@ -313,7 +309,10 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Surface2,
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(
                     modifier = Modifier
@@ -322,12 +321,12 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    HorizontalDivider(color = Color(0xFF2A2A2A))
+                    HorizontalDivider(color = Surface3)
                     Spacer(modifier = Modifier.height(4.dp))
                     ShowSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -356,21 +355,21 @@ fun ShowScreen(navController: NavController, showId: String, showName: String = 
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option == ShowSortOption.DATE),
-                                color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
-                                fontSize = 15.sp,
+                                color = if (isSelected) com.music.spotui.ui.theme.Accent else TextPrimary,
+                                style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSelected) {
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(AppPalette.toArgb()),
+                                    tint = com.music.spotui.ui.theme.Accent,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }

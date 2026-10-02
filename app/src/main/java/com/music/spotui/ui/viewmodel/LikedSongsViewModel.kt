@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Exposes the user's liked songs for the Liked Songs screen. */
 @HiltViewModel
 class LikedSongsViewModel @Inject constructor(
     private val repository: AppRepository,

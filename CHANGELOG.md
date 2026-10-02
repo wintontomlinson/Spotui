@@ -1,9 +1,293 @@
-# Spotui: Fork Features & Differences
+# SOLO (formerly Sonvra / Solo / Spotui): Fork Features & Differences
 
 This document outlines the custom features, improvements, and differences introduced in this fork
 compared to the main Spotui repository.
 
 ---
+
+## 12.0.0 - SOLO
+
+* **Explore art now uses your own music covers.** Each Explore tile resolves a real album or
+  playlist cover from the app's own YouTube music source (the same pipeline that already loads
+  covers everywhere else), loaded through the same image path. Wherever covers appear elsewhere in
+  the app, Explore tiles now show them too.
+* **No stock-photo CDN dependency.** The curated Unsplash photo set was removed as the image
+  source. Earlier builds depended on reaching that remote CDN, which could be slow or blocked in
+  some regions or networks, and when a photo failed to load the tile looked unchanged. Explore no
+  longer depends on any third-party image service.
+* **Premium offline fallback.** When a cover is still loading or cannot be reached, the tile shows
+  a richer, per-category gradient mesh (varied hue and angle seeded from the label, a true
+  multi-stop base, two soft glows and a diagonal sheen) so every tile looks crafted and premium
+  even fully offline, and never renders a blank or grey box.
+* **Richer Explore tiles.** The tile scrim is lighter through the middle and only deepens near the
+  label, so a real cover reads vivid and premium while the category name and play chip stay fully
+  legible.
+* **Update red dot.** When a newer release is available, a small red dot now appears on the Home
+  settings button and the Settings "Updates" row, so you can see at a glance there is something to
+  install. It clears once you install or dismiss the update.
+* **Premium update dialog.** The in-app update prompt now leads with the SOLO mark on an accent
+  plate and bolder titles, and opening "Check for updates" from Settings now opens this same
+  dialog instead of only showing a toast.
+* **Steadier Home and navbar.** Home shelves use a single consistent gap between a header and its
+  content so the page feels more settled, and the bottom navbar now highlights the active tab with
+  a soft accent pill behind the icon plus a faint accent top edge for a more premium, distinct look.
+* Note: the Android install-time scan prompt (Play Protect) is shown by the operating system for
+  any app installed outside the Play Store and cannot be disabled by the app itself.
+
+## 11.0.0 - SOLO
+
+* **Home layering fixed.** Every Home shelf now lays out its section header above its content with
+  clean spacing. Headers no longer sit on top of the carousels, chips, grids or artist rows, so
+  Featured, Browse moods, Made for you, Jump back in, Trending now and Your top artists each read
+  as a clear, headed shelf.
+* **Refined bottom navigation.** The navbar keeps its solid, opaque fill, hairline top edge and
+  soft top shadow, with crisper selected and unselected tints, a smooth selected-tab lift and the
+  mini player docked neatly above it.
+* **Compact, premium popups.** The song options, devices and saved-in sheets and the update dialog
+  now use tighter, consistent metrics and a constrained width, so they read as polished product
+  surfaces instead of oversized panels.
+* **Library rebuild.** Quick-access counts load off the main thread for a smoother open, the
+  quick-access tiles and list rows are tidier, and every destination (Liked, Recently played,
+  Downloads, Local files, playlists, albums and artists) resolves to a real screen.
+* **Settings rebuild with real options.** Grouped into Appearance, Playback, Updates, Storage and
+  About, with new wired controls: a Start screen preference, a DJ-style blend switch and a Check
+  for updates now action. Dead audio-provider code was removed.
+* **Preference-based autoplay queue.** Autoplay and radio top-ups route through a single taste
+  ranker that weighs genre, mood and artist affinity, likes, recency and anti-repeat diversity,
+  while manual Play next and Add to queue stay in the exact order you chose. The recordOutcome
+  signature and the TasteProfile schema are unchanged.
+* **Better Explore images.** Explore tiles render crisper curated photos and fall back to the
+  premium gradient mesh while loading or if an image is unavailable, so a tile is never a blank box.
+* **Premium copy pass.** User-facing text across Home, Explore, Library, Settings, About,
+  onboarding, the update dialog and toasts was tightened for a consistent, premium voice, with no
+  em-dash in any displayed string.
+
+## 10.0.0 - SOLO
+
+* **Explore now shows real artwork.** The mood, genre and chart tiles on Explore previously drew
+  only a code gradient and never used the curated photo set, so they looked image-less. Each tile
+  now renders its curated, on-theme photo over a deterministic Graphite and Azure gradient, and the
+  gradient stays as a premium, legible fallback while a photo loads or if its URL is blank, so a
+  tile is never an empty box.
+* **Stable, headed Home shelves.** The shelves below "Your top artists" no longer reshuffle through
+  the day and no longer show a duplicate "Trending now" heading. The curated tail renders in a
+  fixed, sensible order, personalised shelves stay ranked by the on-device TasteRanker, and every
+  shelf carries a clear section header bound to its real title. The recordOutcome signature and the
+  TasteProfile schema are unchanged.
+* **Premium update dialog with a reassurance note.** The update dialog now adds a short, calm note
+  explaining that Android may run a Play Protect safety check and show its own install screen when
+  installing outside the Play Store, and that this is a normal security step. The primary action
+  reads "Update now", with the Aperture logo and accent header, a formatted "What's new", an in-app
+  download progress bar, and a secondary Later. The in-app download to FileProvider to
+  system-installer flow is kept, with no browser redirect, and no em-dash in the new copy.
+
+## 9.0.0 - SOLO
+
+* **Home section headings.** Every Home shelf now carries a clear, premium section header bound to
+  its real data: Featured, Browse moods, Made for you, Jump back in, Trending now, Your top artists,
+  "Because you liked ...", and the personalised genre/mood/time rows. No shelf renders headerless.
+* **Navbar visibility fix (top priority).** The bottom navigation bar is painted with a solid
+  opaque fill plus a soft top shadow and the 1dp hairline edge on every SDK level instead of the
+  translucent RenderEffect glass, which had no opaque backdrop to frost over the edge-to-edge window
+  and washed the bar out against the graphite canvas. The nav, its icons, the accent indicator and
+  the mini player are now reliably visible above content and clear of the system gesture bar.
+* **Removed the em-dash from user-facing text.** Replaced the em-dash with a hyphen, comma or
+  reworded copy in onboarding, share text and the audio-quality labels. Code comments are untouched.
+* **Premium About.** Redesigned the About section with a centered logo + SOLO wordmark + version
+  pill + tagline, over neatly grouped rows for license (GPL-3.0), credits (Neptune, Metrolist,
+  SpotiFLAC, SimpMusic and open fonts), maintainer (SATYAN SHARMA) and the disclaimer. No source
+  links.
+* **Personalised Home.** Every Home shelf, including the generic and curated rows, is now ranked
+  through the on-device TasteRanker from the TasteProfile (with a raw-order fallback so a shelf is
+  never blanked). Works login-free from local history and with login. The recordOutcome signature
+  and TasteProfile JSON schema are unchanged.
+* **Professional update dialog.** The in-app update prompt now shows a logo + accent header with the
+  new version, a labelled "What's new", a primary Update action with an in-app download progress bar
+  and a secondary Later. The v8 in-app download to FileProvider to system-installer flow is kept
+  (no browser redirect).
+
+## 8.0.0 — SOLO
+
+* **Phase A: codebase cleanup & clarity.** The first phase of the v8 release focuses on a clean,
+  readable tree ahead of the new design system and features. Removed dead/unused code, files,
+  resources and dependencies — each removal backed by a usage search — stripped dead commented-out
+  blocks and purely-debug logging, and fixed the misspelled Library screen filename to
+  `LibraryScreen.kt`. Added concise KDoc/section comments to the main screens, ViewModels and the
+  theme/design-system files. No behaviour change: the package `com.music.spotui`, all internal
+  identifiers, prefs/DB names, the SpotuiBridge and the audio/stream paths are untouched.
+* **Phase B: new design system — Graphite & Azure.** Retired the Lumen Indigo palette for a
+  near-black graphite canvas with a layered steel-slate surface ramp and ONE restrained
+  refined-azure accent (`#3B82F6`), high-contrast off-white text and a sparse cool-steel hero
+  highlight. The swap lives in the central `Color.kt` tokens (every val name kept, so all ~28
+  consumers recolour at once) and the handful of hardcoded-hex spots — the share card, the splash
+  background and the Explore category tints — plus a refined type / shape / elevation / motion
+  scale for a quieter, more professional feel. Azure (~217°) stays clear of every named
+  competitor's brand hue.
+* **New logo, "Aperture S".** An original mark built from scratch: one continuous stroke sweeps
+  through two tangent arcs to form an upright S whose counters read as the open blades of a focused
+  lens aperture, with a cool-steel focal dot at its centre. It carries the azure gradient and
+  replaces the retired Lumen Prism beam across the launcher, round, themed and notification icons,
+  the splash, the in-app wordmark and every raster — crisp at 48dp and white-only at 24px, and
+  resembling no competitor.
+* **A-to-Z re-skin.** Every screen and component — Home, Explore, Library, the Album / Artist /
+  Playlist / Liked / Downloads / History / Local-files / Show detail pages, the Player, Lyrics,
+  Queue and Equalizer, Settings (every row and the compact About card), the mini player, top bars,
+  sheets, dialogs, navigation chrome and the loading / empty / error states — moves onto Graphite &
+  Azure, so nothing retains the old look. UI layer only; audio, data and stream paths untouched.
+* **Phase C: new features + polish.** Added a one-time first-run onboarding (brand intro, free-play
+  explainer and an accent picker), shown once on first launch. Added an **accent picker** in
+  Settings → Appearance (Azure / Teal / Indigo / Steel) that recolours the app's highlights live
+  while leaving the graphite canvas untouched. Added a read-only **Listening** recap (Settings →
+  Your listening) built on-device from the existing taste model — top artists and tracks, total
+  listens, estimated minutes and a day streak, with an empty state. Redesigned the **Equalizer**
+  with a live band-response curve and premium preset chips/sliders (same engine and presets). Search
+  keeps its result-type filters and recent-search history. **In-app updates** now download the
+  release APK inside the app with a progress bar and launch the system installer directly
+  (requesting install permission when needed) — no browser hand-off.
+
+## 7.0.0 — SOLO
+
+* **New look: Lumen Indigo.** The warm-obsidian + Volt-lime palette is retired for a deep indigo
+  canvas with a two-tone "Lumen" accent — a vivid violet that refracts into a cyan-teal highlight,
+  with a reserved premium gold. All ~28 token consumers, the Material scheme, the share card, the
+  splash and the Explore tiles move onto it, so every screen reads as one intentional, high-end
+  palette that stays clear of every competitor's brand hue.
+* **New logo, "Lumen Prism".** An original mark built from scratch: an upright beam of light
+  descends from a gold tip, strikes a refraction node and fans into a short violet → cyan spectrum —
+  "one voice, one light, a spectrum". It replaces the Spotlight-O ring on the launcher, round,
+  themed and notification icons, the splash, the in-app wordmark and every raster, and reads cleanly
+  at 48dp and white-only at 24px.
+* **Craftier Explore art.** The code-generated mesh tiles now layer two offset prism-coloured glows
+  and a faint diagonal sheen over a seeded wash, so each category reads as its own crafted surface —
+  still pure drawing, no bitmap or network.
+* **Tasteful effects & motion.** Added a guarded frosted-glass helper (API 31+ RenderEffect blur
+  with a tint fallback below) on the bottom nav, plus press-scale and a light haptic tick on the
+  primary call-to-action.
+* **Tighter About.** The About card is now a compact single-row block: the mark, name + version, a
+  one-line tagline and one line that still carries the maintainer, GPL-3.0, the four project credits
+  + fonts and the disclaimer.
+
+## 6.0.0 — SOLO
+
+* **Image-forward premium redesign.** Home now opens on a full-bleed featured carousel — large
+  artwork cards with a hero scrim and animated page indicator — above richer, larger-artwork
+  shelves. Every cover across Home, Explore, Library and the Album / Playlist / Artist detail
+  pages renders through a shared `SoloArtwork` wrapper with shimmer, placeholder and error
+  fallbacks and a contrast scrim so titles always read.
+* **Code-generated decorative art.** A new `SoloArt` design primitive paints deterministic
+  Volt-family gradient "mesh" backgrounds for the Explore mood / genre / chart tiles, so the
+  browse grid is bold and colourful without pulling in any new image or network dependency.
+* **Motion polish.** The featured carousel, tiles and shelves move on the shared Solo motion
+  tokens for a smoother, more premium feel.
+* **Personalised trending & smoother playback.** Trending and recommendations lean on your taste
+  profile, and playback prefetch/cache tuning keeps songs playing without buffering.
+
+## 5.0.0 — SOLO
+
+* **New name: SOLO.** The app is now **SOLO** everywhere: launcher label, splash, notification,
+  Settings, the APK file name and the release page.
+* **New logo, "Spotlight O".** An original mark — a Volt-gradient notched ring (the O of SOLO) with
+  a single centred dot, a lone voice under a spotlight. It is used on the launcher, round and themed
+  icons, the notification icon, the splash screen and every raster.
+* **Aurora Noir design.** A warm obsidian canvas with one electric lime-citron "Volt" accent and a
+  layered surface ramp, set in Space Grotesk (headings) and Plus Jakarta Sans (everything else).
+  Shapes, spacing and motion follow one shared system.
+* **Every screen re-skinned.** Navigation, mini and full player, lyrics, queue, Home, Explore,
+  Library, every detail page, Settings, the equalizer, sheets, dialogs and the loading, empty and
+  error states are all restyled on the new palette and type.
+* **Smarter, context-aware recommendations.** The on-device taste engine now weighs the time of day
+  (morning vs late-night) and a lightweight mood/genre read of what you play (chill, hype, acoustic,
+  live and more), balances replaying favourites against fresh discovery based on how much it has
+  learned, and keeps the same artist and mood from repeating back to back. "Mix for you" now matches
+  the moment, and Home gains new personalised shelves — a time-of-day picks row, a mood row and a
+  "Fresh for you" discovery row. It all runs on-device, works with or without a Spotify login, and
+  playback is untouched.
+* The old Midnight Azure theme, its fonts and the "Sonic V" assets have been removed.
+* **Installs over earlier builds.** The package name and signing key are unchanged, so SOLO updates
+  an earlier install from this fork's releases and keeps your library and settings.
+
+---
+
+## 4.0.0 — Sonvra
+
+* **New name: Sonvra.** The app is now **Sonvra** everywhere: launcher label, splash, notification,
+  Settings, the APK file name and the release page.
+* **New logo, "Sonic V".** An original mark of two rounded capsule arms forming a V with a single
+  source dot above it, in an azure gradient on a midnight plate. It is used on the launcher, round
+  and themed icons, the notification icon, the splash screen and every raster.
+* **Midnight Azure design.** A graphite-midnight canvas with one vivid azure accent and a layered
+  surface ramp, set in Sora (headings) and Inter (everything else). Shapes, spacing and motion
+  follow one shared system.
+* **Every screen redesigned.** A docked navigation bar with a sliding accent indicator, a new mini
+  player, and a new full player with a larger play button, a slimmer seek bar and accent dots for
+  shuffle and repeat. Lyrics, queue, Home (with a new Mix for you hero), Explore (new masthead,
+  search field and genre colours), Library, every album, playlist, artist and collection page,
+  Settings, the equalizer, sheets, dialogs, and the loading, empty and error states are all
+  restyled. Icon buttons now have full-size touch targets.
+* The old purple-and-gold theme, its fonts and its assets have been removed.
+* **Same app underneath.** Playback is just as instant and high quality, and the recommendation
+  algorithm, Mix for you, speed and pitch, equalizer, normalization, lyrics, downloads and every
+  other feature work as before.
+* **Installs over earlier builds.** The package name and signing key are unchanged, so Sonvra
+  updates a Solo install from this fork's releases and keeps your library and settings.
+
+## 3.1.0 — Solo
+
+* **Instant, high-quality playback.** High quality (best Opus/AAC) is the default on Wi-Fi and mobile
+  data, and a saved choice still wins. YouTube candidates are raced with staggered head starts
+  instead of being tried one by one. The next track is resolved and its first 1.5 MB pre-buffered,
+  and the one after is resolved too. Resolved URLs are cached with their real expiry, and the
+  player starts after 500 ms of audio while buffering up to five minutes ahead. The play button
+  responds the moment it is tapped.
+* **Fix:** pre-buffered audio for Spotify tracks was stored under a key playback never read, so the
+  preload was wasted. It now uses the same key as playback.
+* **Smart recommendations.** An on-device taste profile learns from completes, skips (under 30 s
+  counts against a track), likes and recency. Autoplay radio, Spotify recommendations and Home are
+  re-ranked with it, with artist variety (never the same artist twice in a row) and no recent
+  repeats. This works with or without a Spotify login.
+* **Mix for you.** A daily 25-song mix on Home, plus "Jump back in" and "Your top artists".
+* **Playback speed and pitch**, an **equalizer** with seven presets and per-band control, and
+  **volume normalization** (on by default) that evens out loud and quiet tracks. It starts from
+  the same +7 dB boost as 3.0, so the average volume doesn't drop, and each track's loudness is
+  remembered so a song always plays at the same level.
+* **Obsidian Aurora redesign.** An obsidian canvas with an apricot-to-rose accent. The player is
+  tinted by the artwork colour, with a new seek bar and animated controls. Home and Explore are
+  richer, the glass tab bar has a sliding highlight, loading screens use skeletons, and the icon
+  set is consistent.
+* **New logo, "Solo Facet".** An original four-facet gem with a single dot, used on the launcher,
+  round and themed icons, the notification icon, the splash screen and every raster.
+* The in-app source code link has been removed. Update checks now come from this fork's releases.
+* **Install tip (Android 16):** if the APK won't install, uninstall any Solo/Spotui build from a
+  different source, let the download finish completely, and allow the install when Play Protect
+  asks.
+
+## 3.0.0 — Solo
+
+* **New name and original logo.** The app is now **Solo**. Its mark, a gold tuning fork ("one pure
+  note"), is used on the adaptive, round and themed (Android 13) launcher icons, the splash
+  screen, the notification icon (a white-only 24dp vector), the in-app wordmark and the README.
+* **Design system "Midnight Velvet & Gold".** Plum-black canvas, a velvet surface ramp, one warm-gold
+  accent and ivory text; Fraunces for display type and Manrope for the UI (both SIL OFL, licences
+  in `licenses/fonts`). Shared tokens for colour, type, shapes, spacing and motion.
+* **Redesigned UI.** Floating glass tab bar that compresses on scroll, refined mini player and full
+  player (gold play disc, 48dp targets, press feedback, play/pause crossfade), gold play buttons on
+  album/playlist/liked pages, consistent sheets (24dp corners, drag handle) and dialogs, and proper
+  empty and error states (Downloads, History, Local files, Library with Retry).
+* **Bug fixes**
+  * The mini player opened the full player and paused playback when a track reached its end,
+    which could break autoplay and crossfade. Track changes are now left to the playback service.
+  * Artwork colour extraction ran on every mini-player recomposition; it now runs once per cover.
+  * Launch auto-backup and "Export to Music" could crash the app if the backup folder permission
+    was revoked or the saved data was corrupt; both are now guarded.
+  * A race on the cached library could crash Library while it was being refreshed.
+  * Downloads and Local files re-read and re-scanned their lists on the main thread; this now runs
+    in the background.
+  * Spotify's proprietary fonts were bundled in the APK; they are replaced by open-licensed fonts.
+  * `installSplashScreen()` was never called, so Android 8–11 showed no splash icon.
+* **Cleanup.** Removed unused files, composables, preference helpers, drawables, colours, fonts,
+  commented-out code, example tests, a live-network provider test and unused Gradle dependencies.
+* **Version 3.0.0** (versionCode 2026093010). The package name is unchanged, so it installs over
+  earlier builds and keeps your library, likes, downloads, settings and Spotify login.
 
 ## 👑 Royal Edition (on v2.0.0)
 

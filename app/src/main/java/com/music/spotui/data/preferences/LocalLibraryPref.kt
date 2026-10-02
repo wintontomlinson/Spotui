@@ -75,9 +75,6 @@ fun removeLocalTrack(context: Context, uri: String) {
     save(context, getLocalTracks(context).filterNot { it.uri == uri })
 }
 
-fun clearLocalTracks(context: Context) {
-    prefs(context).edit().remove(KEY).apply()
-}
 
 private fun save(context: Context, tracks: List<LocalTrack>) {
     val arr = JSONArray()

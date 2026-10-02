@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
+/** Loads an artist's top tracks, albums and related content for the artist detail screen. */
 class ArtistViewModel @Inject constructor(private val repository: AppRepository, private val currentSongState: CurrentSongState) : ViewModel() {
 
     val currentSongPlayingState: State<Boolean> get() = currentSongState.playingState

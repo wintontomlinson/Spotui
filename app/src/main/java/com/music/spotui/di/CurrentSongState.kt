@@ -302,13 +302,22 @@ class CurrentSongState @Inject constructor() {
                 com.music.spotui.data.preferences.saveLastPlayback(
                     com.music.spotui.MyApplication.instance, track)
             }
-            // Prefetch the next track in the queue to make transitions seamless.
+            // Look three tracks ahead: the immediate next one is resolved AND its intro
+            // pre-buffered, the two after are only resolved (URL). Deepening the lookahead
+            // from 1..2 to 1..3 means even a triple-skip finds a ready stream URL and starts
+            // without a fresh resolve. preBuffer stays limited to the immediate next track so
+            // the extra lookahead costs only cheap URL resolves, and the 2-permit prefetchGate
+            // in SongPlayer still ensures this lookahead never starves the tapped track.
             val q = _queue.value
             if (q.isNotEmpty()) {
                 val curIndex = _songIndex.value
-                val nextIdx = if (curIndex + 1 < q.size) curIndex + 1 else if (repeat.value == RepeatMode.ALL) 0 else -1
-                if (nextIdx in q.indices) {
-                    SongPlayer.prefetch(q[nextIdx].url, com.music.spotui.MyApplication.instance)
+                val wrap = repeat.value == RepeatMode.ALL
+                for (ahead in 1..3) {
+                    val raw = curIndex + ahead
+                    val idx = if (raw < q.size) raw else if (wrap) raw % q.size else -1
+                    if (idx in q.indices && idx != curIndex) {
+                        SongPlayer.prefetch(q[idx].url, com.music.spotui.MyApplication.instance, preBuffer = ahead == 1)
+                    }
                 }
             }
         }

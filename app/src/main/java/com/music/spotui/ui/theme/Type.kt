@@ -1,5 +1,12 @@
 package com.music.spotui.ui.theme
 
+/**
+ * SOLO typography scale.
+ *
+ * Defines the font families (Space Grotesk for display/headings, Plus Jakarta Sans for body) and
+ * the Material 3 [Typography] text styles used across the app.
+ */
+
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -9,43 +16,44 @@ import androidx.compose.ui.unit.sp
 import com.music.spotui.R
 
 /**
- * The genuine Spotify fonts, extracted from the official app.
- * SpotifyMixUI, body / UI text. SpotifyMixUITitle, headings (heavier display cut).
- * Medium/SemiBold don't exist as cuts, so they map to the nearest available weight.
+ * Display face: Space Grotesk (SIL OFL 1.1), a distinctive geometric grotesk used for display,
+ * headline and titleLarge styles, the wordmark and the player title. Static Medium, SemiBold
+ * and Bold instances cut from the variable font; see licenses/fonts.
  */
-val SpotifyMix = FontFamily(
-    Font(R.font.spotify_mix_ui_regular, weight = FontWeight.Normal),
-    Font(R.font.spotify_mix_ui_regular, weight = FontWeight.Medium),
-    Font(R.font.spotify_mix_ui_bold, weight = FontWeight.SemiBold),
-    Font(R.font.spotify_mix_ui_bold, weight = FontWeight.Bold),
+val SoloDisplay = FontFamily(
+    Font(R.font.space_grotesk_medium, weight = FontWeight.Medium),
+    Font(R.font.space_grotesk_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.space_grotesk_bold, weight = FontWeight.Bold),
 )
 
-val SpotifyMixTitle = FontFamily(
-    Font(R.font.spotify_mix_ui_title_bold, weight = FontWeight.Bold),
-    Font(R.font.spotify_mix_ui_title_extrabold, weight = FontWeight.Black),
+/**
+ * UI face: Plus Jakarta Sans (SIL OFL 1.1), a warm humanist sans used for everything else.
+ * Static Regular, Medium, SemiBold and Bold instances cut from the variable font.
+ */
+val SoloSans = FontFamily(
+    Font(R.font.jakarta_regular, weight = FontWeight.Normal),
+    Font(R.font.jakarta_medium, weight = FontWeight.Medium),
+    Font(R.font.jakarta_semibold, weight = FontWeight.SemiBold),
+    Font(R.font.jakarta_bold, weight = FontWeight.Bold),
 )
 
-// Kept as an alias so existing references (Theme.kt etc.) don't break.
-val Montserrat = SpotifyMix
+private val display = TextStyle(fontFamily = SoloDisplay, fontWeight = FontWeight.SemiBold)
+private val sans = TextStyle(fontFamily = SoloSans)
 
-private val base = TextStyle(fontFamily = SpotifyMix)
-private val title = TextStyle(fontFamily = SpotifyMixTitle, fontWeight = FontWeight.Bold)
-
-// Tighter tracking on the big display/title cuts, which is what makes large headings
-// look intentional and premium rather than loose. Body text keeps a hair of negative
-// tracking for density without hurting legibility.
 val Typography = Typography(
-    displayLarge = title.copy(letterSpacing = (-0.5).sp),
-    displayMedium = title.copy(letterSpacing = (-0.5).sp),
-    displaySmall = title.copy(letterSpacing = (-0.4).sp),
-    headlineLarge = title.copy(letterSpacing = (-0.4).sp),
-    headlineMedium = title.copy(letterSpacing = (-0.3).sp),
-    headlineSmall = title.copy(letterSpacing = (-0.3).sp),
-    titleLarge = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.3).sp),
-    titleMedium = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.2).sp),
-    titleSmall = base.copy(fontWeight = FontWeight.Bold, letterSpacing = (-0.2).sp),
-    bodyLarge = base.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = (-0.2).sp),
-    bodyMedium = base.copy(letterSpacing = (-0.1).sp),
-    bodySmall = base,
-    labelLarge = base, labelMedium = base, labelSmall = base,
+    displayLarge = display.copy(fontSize = 44.sp, lineHeight = 50.sp, letterSpacing = (-0.8).sp),
+    displayMedium = display.copy(fontSize = 36.sp, lineHeight = 42.sp, letterSpacing = (-0.6).sp),
+    displaySmall = display.copy(fontSize = 30.sp, lineHeight = 36.sp, letterSpacing = (-0.5).sp),
+    headlineLarge = display.copy(fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.4).sp),
+    headlineMedium = display.copy(fontSize = 24.sp, lineHeight = 30.sp, letterSpacing = (-0.3).sp),
+    headlineSmall = display.copy(fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.3).sp),
+    titleLarge = display.copy(fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 26.sp, letterSpacing = (-0.2).sp),
+    titleMedium = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp),
+    titleSmall = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp),
+    bodyLarge = sans.copy(fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
+    bodyMedium = sans.copy(fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 20.sp),
+    bodySmall = sans.copy(fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp),
+    labelLarge = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
+    labelMedium = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.2.sp),
+    labelSmall = sans.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp, lineHeight = 14.sp, letterSpacing = 0.6.sp),
 )

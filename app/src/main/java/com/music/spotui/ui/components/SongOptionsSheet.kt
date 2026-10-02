@@ -1,5 +1,8 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -13,7 +16,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
@@ -62,7 +64,13 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextDisabled
 
 /**
  * Long-press context menu for a single track. Mirrors Spotify's "3-dot" sheet:
@@ -111,30 +119,34 @@ fun SongOptionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
+        sheetMaxWidth = 560.dp,
+        containerColor = Surface2,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 4.dp, 16.dp, 12.dp)
+                    .padding(20.dp, 2.dp, 20.dp, 8.dp)
             ) {
                 GlideImage(
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(RoundedCornerShape(4.dp)),
+                        .clip(SoloShape.sm),
                     model = song.coverUri,
                     contentScale = ContentScale.Crop,
                     contentDescription = ""
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(song.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(song.singer, color = Color.Gray, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.title, color = TextPrimary, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(song.singer, color = TextSecondary, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            HorizontalDivider(color = Color(0xFF2A2A2A))
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
 
             SongMenuRow(Icons.Default.PlayArrow, "Play next") {
                 playerViewModel.playNext(song)
@@ -154,7 +166,7 @@ fun SongOptionsSheet(
                 SongMenuRow(
                     icon = Icons.Default.Delete,
                     label = "Remove from this playlist",
-                    iconTint = Color.White
+                    iconTint = TextPrimary
                 ) {
                     com.music.spotui.data.preferences.LocalPlaylistPref.removeSongFromPlaylist(context, currentPlaylistId, song.id, song.spotifyTrackId)
                     com.music.spotui.data.api.Api.HomeCache.library = null
@@ -165,7 +177,7 @@ fun SongOptionsSheet(
             SongMenuRow(
                 icon = if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 label = if (liked) "Remove from Liked Songs" else "Add to Liked Songs",
-                iconTint = if (liked) Color(AppPalette.toArgb()) else Color.White,
+                iconTint = if (liked) com.music.spotui.ui.theme.Accent else TextPrimary,
             ) {
                 if (liked) removeLikedSongId(context, song.id.toString())
                 // Save the whole track so Liked Songs can show it without any account.
@@ -175,13 +187,13 @@ fun SongOptionsSheet(
                 com.music.spotui.data.api.SpotifySync.setTrackSaved(context, song.spotifyTrackId, liked)
             }
             SongMenuRow(
-                icon = if (downloaded) Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
+                icon = if (downloaded) Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
                 label = when {
                     downloaded -> "Remove download"
                     downloadingNow -> if (downloadPct in 1..99) "Downloading… $downloadPct%" else "Downloading…"
                     else -> "Download"
                 },
-                iconTint = if (downloaded) Color(AppPalette.toArgb()) else Color.White,
+                iconTint = if (downloaded) com.music.spotui.ui.theme.Accent else TextPrimary,
                 enabled = !downloadingNow,
             ) {
                 if (downloaded) {
@@ -197,7 +209,7 @@ fun SongOptionsSheet(
             }
             if (downloaded) {
                 SongMenuRow(
-                    icon = ImageVector.vectorResource(R.drawable.ic_download),
+                    icon = androidx.compose.material.icons.Icons.Rounded.Download,
                     label = "Export to Music",
                 ) {
                     onDismiss()
@@ -205,7 +217,8 @@ fun SongOptionsSheet(
                     // sheet closing (a rememberCoroutineScope would be cancelled).
                     val app = context.applicationContext
                     kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                        val ok = com.music.spotui.data.preferences.exportDownload(app, song)
+                        val ok = runCatching { com.music.spotui.data.preferences.exportDownload(app, song) }
+                            .getOrDefault(false)
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                             android.widget.Toast.makeText(
                                 app,
@@ -237,16 +250,34 @@ fun SongOptionsSheet(
                 onDismiss()
             }
             SongMenuRow(Icons.Default.Share, "Share") {
-                // Share the real Spotify track link when we know the id.
-                val shareText = song.spotifyTrackId.takeIf { it.isNotBlank() }
-                    ?.let { "https://open.spotify.com/track/$it" }
-                    ?: "Listening to ${song.title} by ${song.singer}"
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, shareText)
-                }
-                context.startActivity(Intent.createChooser(send, "Share"))
                 onDismiss()
+                // Try the artwork share card first (cover + title/artist + SOLO wordmark on
+                // a Volt gradient), rendered off the main thread because the cover is pulled
+                // synchronously from Glide. Fall back to the existing text link when the
+                // artwork can't be fetched. Detached scope + app context so it survives the
+                // sheet closing.
+                val app = context.applicationContext
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                    val shared = runCatching {
+                        com.music.spotui.util.ShareCard.shareSongArtworkCard(app, song)
+                    }.getOrDefault(false)
+                    if (!shared) {
+                        // Share the real Spotify track link when we know the id.
+                        val shareText = song.spotifyTrackId.takeIf { it.isNotBlank() }
+                            ?.let { "https://open.spotify.com/track/$it" }
+                            ?: "Listening to ${song.title} by ${song.singer}"
+                        val send = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        app.startActivity(
+                            Intent.createChooser(send, "Share").apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.padding(8.dp))
         }
@@ -257,7 +288,7 @@ fun SongOptionsSheet(
 private fun SongMenuRow(
     icon: ImageVector,
     label: String,
-    iconTint: Color = Color.White,
+    iconTint: Color = TextPrimary,
     enabled: Boolean = true,
     trailingArrow: Boolean = false,
     onClick: () -> Unit,
@@ -267,20 +298,21 @@ private fun SongMenuRow(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
-            .padding(16.dp, 14.dp)
+            .padding(20.dp, 10.dp)
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = label,
-            tint = if (enabled) iconTint else Color.Gray.copy(alpha = 0.4f),
+            contentDescription = null,
+            tint = if (enabled) iconTint else TextDisabled,
             modifier = Modifier.size(22.dp)
         )
         Spacer(modifier = Modifier.width(18.dp))
         Text(
             text = label,
-            color = if (enabled) Color.White else Color.Gray.copy(alpha = 0.4f),
-            fontSize = 15.sp,
+            color = if (enabled) TextPrimary else TextDisabled,
+            style = MaterialTheme.typography.bodyLarge,
             maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
@@ -289,7 +321,7 @@ private fun SongMenuRow(
             Icon(
                 imageVector = Icons.Default.KeyboardArrowRight,
                 contentDescription = null,
-                tint = Color.Gray,
+                tint = TextTertiary,
                 modifier = Modifier.size(20.dp)
             )
         }

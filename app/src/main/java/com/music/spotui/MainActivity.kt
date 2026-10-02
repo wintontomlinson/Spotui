@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.util.UnstableApi
@@ -20,7 +21,8 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.notification.PlaybackService
-import com.music.spotui.ui.theme.SpotuiTheme
+import com.music.spotui.ui.theme.SoloTheme
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -35,9 +37,15 @@ class MainActivity : ComponentActivity() {
     @OptIn(UnstableApi::class)
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?){
-
+        // Must run before super.onCreate: swaps the splash theme for the app theme once the
+        // first frame is ready, and draws the compat splash icon on Android 8 to 11.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+
+        // Apply the saved accent choice (FEAT-003) to the live theme before the first frame, so
+        // the picked accent is in place on launch. Defaults to Azure when nothing is stored.
+        com.music.spotui.data.preferences.applySavedAccent(this)
 
         // Ask for notification permission (Android 13+) so the media notification shows.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -64,9 +72,8 @@ class MainActivity : ComponentActivity() {
         controller.isAppearanceLightNavigationBars = false
         setContent {
 
-            SpotuiTheme {
-                // A surface container using the 'background' color from the theme
-                    App()
+            SoloTheme {
+                App()
 
                 // New-release check (GitHub): prompts Upgrade / Dismiss / Don't show again.
                 com.music.spotui.ui.components.UpdatePrompt()
@@ -78,9 +85,12 @@ class MainActivity : ComponentActivity() {
         // orphaned WebView gets a 0×0 viewport and Spotify won't render/navigate).
         com.music.spotui.di.SpotifyWebPlayer.attach(this)
 
-        // Perform background auto-backup if a backup directory is configured.
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-            com.music.spotui.util.BackupHelper.performAutoBackup(applicationContext)
+        // Perform background auto-backup if a backup directory is configured. Scoped to
+        // the activity and guarded: a revoked folder permission (SecurityException) or a
+        // corrupt pref must not crash the app on launch.
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching { com.music.spotui.util.BackupHelper.performAutoBackup(applicationContext) }
+                .onFailure { android.util.Log.w("Backup", "Auto-backup failed", it) }
         }
 
         // Handle initial deep link intent if launched via Spotify link

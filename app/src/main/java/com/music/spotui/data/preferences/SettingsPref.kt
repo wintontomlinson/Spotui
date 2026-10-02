@@ -18,8 +18,8 @@ enum class StreamQuality(
     val audioQuality: AudioQuality,
 ) {
     LOW("Low", "Data saver, smallest size", AudioQuality.LOW),
-    NORMAL("Normal", "Balanced for the network", AudioQuality.AUTO),
-    HIGH("High", "Best available quality", AudioQuality.HIGH),
+    NORMAL("Normal", "Balanced for your network", AudioQuality.AUTO),
+    HIGH("High", "Best available: Opus/AAC, FLAC via providers when available", AudioQuality.HIGH),
 }
 
 private const val PREF = "settings_prefs"
@@ -31,11 +31,9 @@ private const val KEY_CROSSFADE_MS = "crossfade_duration_ms"
 private const val KEY_CROSSFADE_DJ = "crossfade_dj_mode"
 private const val KEY_WEB_PLAYBACK = "web_playback_enabled"
 private const val KEY_VIDEO_FALLBACK = "video_fallback_enabled"
-private const val KEY_LIBRARY_GRID = "library_grid_view"
 private const val KEY_AUTO_PLAY = "auto_play_startup"
-private const val KEY_IGNORE_BATTERY_OPT = "ignore_battery_optimization"
 private const val KEY_UPDATE_REPO_URL = "update_repo_url"
-const val DEFAULT_UPDATE_REPO_URL = "https://github.com/H4zh4n/Spotui"
+const val DEFAULT_UPDATE_REPO_URL = "https://github.com/wintontomlinson/Spotui"
 
 /** Off (0s) … 12s. 0 disables crossfade. */
 const val CROSSFADE_MIN_MS = 0
@@ -50,17 +48,16 @@ private fun readQ(c: Context, key: String, def: StreamQuality): StreamQuality =
 private fun writeQ(c: Context, key: String, q: StreamQuality) =
     prefs(c).edit().putString(key, q.name).apply()
 
-// Default is Normal (the automatic selector). This is safe now that AUTO no longer
-// picks the lowest bitrate on a metered network: findFormat's AUTO branch takes the
-// best stream under a 160 kbps ceiling on cellular and the full best on wifi, so
-// Normal means good quality that adapts to the connection rather than poor mobile audio.
-fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.NORMAL)
+// Default is High on every network: findFormat's HIGH branch takes the best bitrate
+// and prefers Opus, so a fresh install gets the best audio YouTube serves. A choice
+// the user saved in Settings still wins (readQ only falls back when nothing is stored).
+fun getWifiQuality(c: Context): StreamQuality = readQ(c, KEY_WIFI_Q, StreamQuality.HIGH)
 fun setWifiQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_WIFI_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.NORMAL)
+fun getCellularQuality(c: Context): StreamQuality = readQ(c, KEY_CELL_Q, StreamQuality.HIGH)
 fun setCellularQuality(c: Context, q: StreamQuality) {
     writeQ(c, KEY_CELL_Q, q)
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
@@ -72,23 +69,13 @@ fun setDownloadQuality(c: Context, q: StreamQuality) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-
-/** Library layout: false = rows (default), true = Spotify-style 3-column grid. */
-fun isLibraryGridView(c: Context): Boolean = prefs(c).getBoolean(KEY_LIBRARY_GRID, false)
-fun setLibraryGridView(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_LIBRARY_GRID, v).apply()
-
 fun isPreloadEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_PRELOAD, true)
-fun setPreloadEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_PRELOAD, v).apply()
 
 /**
  * YouTube account cookie (captured from an in-app WebView login). Passed to the
  * InnerTube client so age-restricted / login-required videos resolve. Empty when
  * not signed in, the app then uses anonymous YouTube access.
  */
-private const val KEY_YT_COOKIE = "youtube_cookie"
-fun getYoutubeCookie(c: Context): String = prefs(c).getString(KEY_YT_COOKIE, "").orEmpty()
-fun setYoutubeCookie(c: Context, v: String) = prefs(c).edit().putString(KEY_YT_COOKIE, v).apply()
-fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPISID")
 
 /**
  * Play audio through Spotify's own web player in a hidden WebView (real Spotify
@@ -97,7 +84,6 @@ fun isYoutubeLoggedIn(c: Context): Boolean = getYoutubeCookie(c).contains("SAPIS
  * download/crossfade support.
  */
 fun isWebPlaybackEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_WEB_PLAYBACK, false)
-fun setWebPlaybackEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_WEB_PLAYBACK, v).apply()
 
 fun isAutoPlayEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_AUTO_PLAY, false)
 fun setAutoPlayEnabled(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_AUTO_PLAY, v).apply()
@@ -122,17 +108,68 @@ fun getCrossfadeMs(c: Context): Int = prefs(c).getInt(KEY_CROSSFADE_MS, 0)
 fun setCrossfadeMs(c: Context, ms: Int) =
     prefs(c).edit().putInt(KEY_CROSSFADE_MS, ms.coerceIn(CROSSFADE_MIN_MS, CROSSFADE_MAX_MS)).apply()
 
-fun isCrossfadeEnabled(c: Context): Boolean = getCrossfadeMs(c) > 0
 
 /** DJ-style mixing: low-pass the outgoing track and high-pass the incoming one during the blend. */
 fun isCrossfadeDjMode(c: Context): Boolean = prefs(c).getBoolean(KEY_CROSSFADE_DJ, false)
 fun setCrossfadeDjMode(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_CROSSFADE_DJ, v).apply()
 
-fun isIgnoreBatteryOptimization(c: Context): Boolean = prefs(c).getBoolean(KEY_IGNORE_BATTERY_OPT, false)
-fun setIgnoreBatteryOptimization(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_IGNORE_BATTERY_OPT, v).apply()
 
-fun getUpdateRepoUrl(c: Context): String =
-    prefs(c).getString(KEY_UPDATE_REPO_URL, DEFAULT_UPDATE_REPO_URL).orEmpty().ifBlank { DEFAULT_UPDATE_REPO_URL }
+/**
+ * Which tab the app opens on after onboarding. Additive preference: when it has never
+ * been set the getter returns [StartScreen.HOME], so existing installs keep opening on
+ * Home exactly as before. The first run always shows Onboarding regardless of this value.
+ */
+enum class StartScreen(val label: String) {
+    HOME("Home"),
+    EXPLORE("Explore"),
+}
+
+private const val KEY_START_SCREEN = "start_screen"
+
+fun getStartScreen(c: Context): StartScreen =
+    runCatching { StartScreen.valueOf(prefs(c).getString(KEY_START_SCREEN, StartScreen.HOME.name)!!) }
+        .getOrDefault(StartScreen.HOME)
+
+fun setStartScreen(c: Context, s: StartScreen) =
+    prefs(c).edit().putString(KEY_START_SCREEN, s.name).apply()
+
+
+/** Installs that stored the old upstream repo are migrated to this fork's releases. */
+// ── Playback speed / pitch, equalizer, loudness normalization ──
+private const val KEY_SPEED = "playback_speed"
+private const val KEY_PITCH = "playback_pitch"
+private const val KEY_EQ_ENABLED = "eq_enabled"
+private const val KEY_EQ_PRESET = "eq_preset"
+private const val KEY_EQ_BANDS = "eq_bands"
+private const val KEY_NORMALIZE = "normalize_volume"
+
+fun getPlaybackSpeed(c: Context): Float = prefs(c).getFloat(KEY_SPEED, 1f).coerceIn(0.5f, 2f)
+fun getPlaybackPitch(c: Context): Float = prefs(c).getFloat(KEY_PITCH, 1f).coerceIn(0.5f, 1.5f)
+fun setPlaybackSpeedPitch(c: Context, speed: Float, pitch: Float) =
+    prefs(c).edit().putFloat(KEY_SPEED, speed.coerceIn(0.5f, 2f)).putFloat(KEY_PITCH, pitch.coerceIn(0.5f, 1.5f)).apply()
+
+fun isEqEnabled(c: Context): Boolean = prefs(c).getBoolean(KEY_EQ_ENABLED, false)
+fun setEqEnabledPref(c: Context, v: Boolean) = prefs(c).edit().putBoolean(KEY_EQ_ENABLED, v).apply()
+// Default preset is Premium so the first curve a user hears after enabling EQ is the
+// tasteful hi-fi one. EQ stays disabled by default (isEqEnabled), so behaviour is
+// unchanged until the user turns it on.
+fun getEqPreset(c: Context): String = prefs(c).getString(KEY_EQ_PRESET, "Premium") ?: "Premium"
+/** Per-device-band levels in millibels, empty when never customised. */
+fun getEqBands(c: Context): List<Int> =
+    prefs(c).getString(KEY_EQ_BANDS, "").orEmpty().split(',').mapNotNull { it.trim().toIntOrNull() }
+fun setEqState(c: Context, preset: String, bands: List<Int>) =
+    prefs(c).edit().putString(KEY_EQ_PRESET, preset).putString(KEY_EQ_BANDS, bands.joinToString(",")).apply()
+
+fun isNormalizeVolume(c: Context): Boolean = prefs(c).getBoolean(KEY_NORMALIZE, true)
+fun setNormalizeVolume(c: Context, v: Boolean) {
+    prefs(c).edit().putBoolean(KEY_NORMALIZE, v).apply()
+    com.music.spotui.di.SongPlayer.refreshLoudness()
+}
+
+fun getUpdateRepoUrl(c: Context): String {
+    val stored = prefs(c).getString(KEY_UPDATE_REPO_URL, null).orEmpty()
+    return if (stored.isBlank() || stored.contains("H4zh4n/Spotui")) DEFAULT_UPDATE_REPO_URL else stored
+}
 
 fun setUpdateRepoUrl(c: Context, url: String) =
     prefs(c).edit().putString(KEY_UPDATE_REPO_URL, url).apply()
@@ -220,7 +257,4 @@ fun setAudioProviderEnabled(c: Context, providerId: String, enabled: Boolean) {
     com.music.spotui.di.SongPlayer.onQualitySettingChanged(c)
 }
 
-fun getEnabledAudioProviderOrder(c: Context): List<AudioProviderOrderItem> {
-    return getAudioProviderOrder(c).filter { isAudioProviderEnabled(c, it.id) }
-}
 

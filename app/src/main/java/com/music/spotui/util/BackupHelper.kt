@@ -19,14 +19,12 @@ import com.music.spotui.data.preferences.getUpdateRepoUrl
 import com.music.spotui.data.preferences.getWifiQuality
 import com.music.spotui.data.preferences.isAutoPlayEnabled
 import com.music.spotui.data.preferences.isCrossfadeDjMode
-import com.music.spotui.data.preferences.isLibraryGridView
 import com.music.spotui.data.preferences.isVideoFallbackEnabled
 import com.music.spotui.data.preferences.setAutoPlayEnabled
 import com.music.spotui.data.preferences.setCellularQuality
 import com.music.spotui.data.preferences.setCrossfadeDjMode
 import com.music.spotui.data.preferences.setCrossfadeMs
 import com.music.spotui.data.preferences.setDownloadQuality
-import com.music.spotui.data.preferences.setLibraryGridView
 import com.music.spotui.data.preferences.setUpdateRepoUrl
 import com.music.spotui.data.preferences.setVideoFallbackEnabled
 import com.music.spotui.data.preferences.setWifiQuality
@@ -93,7 +91,6 @@ object BackupHelper {
                     put("crossfadeDjMode", isCrossfadeDjMode(context))
                     put("videoFallback", isVideoFallbackEnabled(context))
                     put("autoPlay", isAutoPlayEnabled(context))
-                    put("libraryGridView", isLibraryGridView(context))
                     put("updateRepoUrl", getUpdateRepoUrl(context))
                 }
                 put("settings", settingsObj)
@@ -104,7 +101,8 @@ object BackupHelper {
     }
 
     /**
-     * Validates if [jsonString] is a genuine Spotui backup file.
+     * Validates if [jsonString] is a genuine SOLO backup file (the format keeps its
+     * original "spotui" identifiers so older backups still restore).
      * Returns the root [JSONObject] if valid, or null if invalid.
      */
     fun validateBackupJson(jsonString: String): JSONObject? {
@@ -251,7 +249,6 @@ object BackupHelper {
                 if (s.has("crossfadeDjMode")) setCrossfadeDjMode(context, s.getBoolean("crossfadeDjMode"))
                 if (s.has("videoFallback")) setVideoFallbackEnabled(context, s.getBoolean("videoFallback"))
                 if (s.has("autoPlay")) setAutoPlayEnabled(context, s.getBoolean("autoPlay"))
-                if (s.has("libraryGridView")) setLibraryGridView(context, s.getBoolean("libraryGridView"))
                 if (s.has("updateRepoUrl")) setUpdateRepoUrl(context, s.getString("updateRepoUrl"))
             }
 

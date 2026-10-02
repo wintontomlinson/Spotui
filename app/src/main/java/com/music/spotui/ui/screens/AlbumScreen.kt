@@ -1,5 +1,16 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.shadow
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
@@ -22,7 +33,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -93,12 +103,16 @@ import com.music.spotui.ui.components.Loader
 import com.music.spotui.ui.components.SavedInSheet
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.artistRoute
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.AlbumViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
 import kotlinx.coroutines.delay
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
 
 
 @Composable
@@ -125,24 +139,21 @@ fun AlbumScreen(
 
 
 
-    Log.d("check", albumName.toString())
 
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(Canvas)
     ) {
         val albumsResponse = (albums as? Response.Success)?.data.orEmpty()
         val songsResponse = (songs as? Response.Success)?.data.orEmpty()
 
         when {
             albums is Response.Loading && songs is Response.Loading -> {
-                Log.d("homeMain", "loading..-albums")
                 Loader()
             }
 
             else -> {
-                Log.d("homeMain", "albums ready")
                 if (albumName == "Liked Songs"){
                     LikedSongsScreen(albumsResponse, songsResponse, navController, context)
                 }
@@ -208,10 +219,16 @@ fun SumUpAlbumScreen(
     }
 
     var dominentColor by remember {
-        mutableStateOf(Color(AppBackground.toArgb()))
+        mutableStateOf(com.music.spotui.ui.theme.Canvas)
     }
-    Palette().extractSecondColorFromCoverUrl(context = context, album[0].coverUri){ color ->
-        dominentColor = color
+    // Once per cover, not on every recomposition.
+    val albumCover = album[0].coverUri
+    LaunchedEffect(albumCover) {
+        if (albumCover.isNotBlank()) {
+            Palette().extractSecondColorFromCoverUrl(context = context, albumCover) { color ->
+                dominentColor = color
+            }
+        }
     }
 
     var isAlbumLiked by remember { mutableStateOf( isAlbumLiked(context, album[0].id.toString())) }
@@ -275,39 +292,42 @@ fun SumUpAlbumScreen(
 
 
 
-    Log.d("color", dominentColor.toString())
+    val scrollState = androidx.compose.foundation.rememberScrollState()
+    // The top bar turns to strong glass once the hero has scrolled away.
+    val barCollapsed by remember { androidx.compose.runtime.derivedStateOf { scrollState.value > 600 } }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                modifier = Modifier.padding(16.dp, 0.dp),
+                modifier = Modifier.padding(horizontal = 4.dp),
                 navigationIcon = {
-                    Icon(
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            navController.navigateUp()
-                        },
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "",
-                        tint = Color.White)
+                    com.music.spotui.ui.components.SoloIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        onClick = { navController.navigateUp() },
+                        filled = true,
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color.White,
+                    containerColor = if (barCollapsed) com.music.spotui.ui.theme.GlassFillStrong else Color.Transparent,
+                        scrolledContainerColor = com.music.spotui.ui.theme.GlassFillStrong,
+                    titleContentColor = TextPrimary,
                 ),
                 title = {
-                    Text(text = "")
+                    if (barCollapsed) Text(
+                        text = albumName,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
                 }
             )
         }
     ){
 
-        val scrollState = androidx.compose.foundation.rememberScrollState()
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(Canvas)
                 .verticalScroll(scrollState)
             ) {
 
@@ -317,7 +337,7 @@ fun SumUpAlbumScreen(
                     .height(460.dp)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(dominentColor, Color(AppBackground.toArgb())),
+                            colors = listOf(com.music.spotui.ui.theme.artworkTone(dominentColor), Canvas),
                             startY = -100f,
 
                             ),
@@ -325,7 +345,6 @@ fun SumUpAlbumScreen(
                         )
                 ,
                 verticalArrangement = Arrangement.Center,
-               // horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.padding(25.dp))
 
@@ -333,22 +352,25 @@ fun SumUpAlbumScreen(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    GlideImage(
-                        modifier = Modifier.size(230.dp),
+                    // Large album cover routed through SoloArtwork so it keeps the
+                    // shimmer/placeholder/error fallbacks; the Palette-tinted header
+                    // gradient behind it is left intact.
+                    com.music.spotui.ui.components.SoloArtwork(
                         model = album[0].coverUri,
-                        failure = placeholder(R.drawable.placeholder),
-                        //loading = placeholder(R.drawable.album),
-                        //contentScale = ContentScale.Crop,
-                        contentDescription = "",
+                        modifier = Modifier
+                            .size(220.dp)
+                            .shadow(18.dp, SoloShape.lg, ambientColor = com.music.spotui.ui.theme.Shadow, spotColor = com.music.spotui.ui.theme.Shadow),
+                        shape = SoloShape.lg,
+                        contentDescription = albumName,
                     )
                 }
                 Spacer(modifier = Modifier.padding(5.dp))
                 Text(modifier = Modifier
                     .padding(20.dp, 5.dp, 0.dp, 0.dp),
                     text = albumName,
-                    color = Color.White,
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.Bold)
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay)
                 if (albumArtists.isNotBlank()) {
                     Text(
                         modifier = Modifier
@@ -364,16 +386,16 @@ fun SumUpAlbumScreen(
                                 }
                             },
                         text = albumArtists,
-                        color = Color.White,
-                        fontSize = 12.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium
                     )
                 }
                 Text(modifier = Modifier
                     .padding(20.dp, 0.dp, 0.dp, 0.dp),
                     text = "Album : ${album[0].time}",
-                    color = Color.Gray,
-                    fontSize = 11.sp,
+                    color = TextTertiary,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -391,7 +413,7 @@ fun SumUpAlbumScreen(
                     else{
                         // Let the action icons take their natural width, a fixed
                         // 75dp squeezed the add + download buttons together.
-                        Row(horizontalArrangement = Arrangement.spacedBy(18.dp),
+                        Row(horizontalArrangement = Arrangement.spacedBy(0.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
 
@@ -400,21 +422,18 @@ fun SumUpAlbumScreen(
                                     .height(60.dp)
                                     .width(32.dp)
                                     .padding(0.dp, 5.dp)
-                                    .clip(RoundedCornerShape(5.dp))
+                                    .clip(SoloShape.xs)
                                 ,
                                 model = album[0].coverUri,
                                 failure = placeholder(R.drawable.placeholder),
-                                //loading = placeholder(R.drawable.album),
                                 contentScale = ContentScale.Crop,
                                 contentDescription = "",
                             )
                             Icon(
                                 modifier = Modifier
-                                    .size(23.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
                                         if (isAlbumLiked) {
                                             removeLikedAlbumId(context, album[0].id.toString())
                                             snackbarMessage = "Removed from Library"
@@ -425,19 +444,20 @@ fun SumUpAlbumScreen(
                                         isAlbumLiked = isAlbumLiked(context, album[0].id.toString())
                                         snackbarVisible = true
 
-                                    },
+                                    }
+                                    .padding(12.5.dp),
                                 painter = if (isAlbumLiked){
-                                    painterResource(id = R.drawable.added)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                 }
                                 else{
-                                    painterResource(id = R.drawable.ic_add)
+                                    androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline)
                                 }
                                 ,
                                 tint = if (isAlbumLiked){
-                                    Color(AppPalette.toArgb())
+                                    Accent
                                 }
                                 else{
-                                    Color.White
+                                    TextPrimary
                                 },
                                 contentDescription = ""
                             )
@@ -447,14 +467,12 @@ fun SumUpAlbumScreen(
                             }
                             Icon(
                                 imageVector = if (albumDownloaded)
-                                    Icons.Default.CheckCircle else ImageVector.vectorResource(R.drawable.ic_download),
-                                tint = if (albumDownloaded) Color(AppPalette.toArgb()) else Color.White,
+                                    Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
+                                tint = if (albumDownloaded) Accent else TextPrimary,
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
                                         if (albumSongs.isNotEmpty()) {
                                             val currentAlbum = album.firstOrNull()
                                             com.music.spotui.data.preferences.OfflineCollectionsPref.saveCollection(
@@ -475,41 +493,37 @@ fun SumUpAlbumScreen(
                                                 snackbarVisible = true
                                             }
                                         }
-                                    },
+                                    }
+                                    .padding(12.dp),
                                 contentDescription = "Download album",
                             )
-                            Spacer(modifier = Modifier.width(16.dp))
                             if (albumSongs.isNotEmpty()) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_queue_add),
-                                    tint = Color.White,
+                                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
+                                    tint = TextPrimary,
                                     modifier = Modifier
-                                        .size(24.dp)
-                                        .clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null,
-                                        ) {
+                                        .size(48.dp)
+                                        .clip(CircleShape)
+                                        .clickable {
                                             playerViewModel.addAllToQueue(albumSongs)
                                             android.widget.Toast.makeText(
                                                 context,
                                                 "${albumSongs.size} track(s) added to queue",
                                                 android.widget.Toast.LENGTH_SHORT,
                                             ).show()
-                                        },
+                                        }
+                                        .padding(12.dp),
                                     contentDescription = "Add to queue",
                                 )
-                                Spacer(modifier = Modifier.width(16.dp))
                             }
                             // Shuffle-play: start the album in random order.
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_player_shuffle),
-                                tint = Color.White,
+                                painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
+                                tint = TextPrimary,
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null,
-                                    ) {
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .clickable {
                                         albumViewModel.startShuffled(albumSongs)?.let { first ->
                                             albumViewModel.updateSongState(
                                                 first.coverUri,
@@ -522,7 +536,8 @@ fun SumUpAlbumScreen(
                                             )
                                             SongPlayer.playSong(first.url, context, "song/${first.id}")
                                         }
-                                    },
+                                    }
+                                    .padding(12.dp),
                                 contentDescription = "Shuffle play",
                             )
                         }
@@ -536,9 +551,10 @@ fun SumUpAlbumScreen(
                             androidx.compose.foundation.layout.Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(RoundedCornerShape(100.dp))
-                                    .background(Color.White)
+                                    .size(56.dp)
+                                    .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.AccentDeep, spotColor = com.music.spotui.ui.theme.AccentDeep)
+                                    .clip(CircleShape)
+                                    .background(com.music.spotui.ui.theme.AccentBrush)
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
@@ -564,10 +580,8 @@ fun SumUpAlbumScreen(
                                 Icon(
                                     modifier = Modifier
                                         .size(25.dp),
-                                    tint = Color.Black,
-                                    painter = painterResource(
-                                        id = if (currentInList && playing) R.drawable.ic_playing else R.drawable.play_svgrepo_com,
-                                    ),
+                                    tint = com.music.spotui.ui.theme.OnAccent,
+                                    painter = if (currentInList && playing) painterResource(id = R.drawable.ic_playing) else androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
                                     contentDescription = if (currentInList && playing) "Pause" else "Play")
                             }
                         }
@@ -580,7 +594,6 @@ fun SumUpAlbumScreen(
 
             }
 
-//            Spacer(modifier = Modifier.padding(25.dp))
 
             if (albumSongs.isNotEmpty()) {
                 // Search Bar
@@ -601,21 +614,19 @@ fun SumUpAlbumScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(Color(0xFF2A2A30))
+                            .clip(SoloShape.pill)
+                            .background(Surface3)
                             .clickable { showSortSheet = true }
                             .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
                             text = currentSort.getDescriptiveLabel(isDescending),
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.labelLarge)
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = "Sort Options",
-                            tint = Color.White,
+                            tint = TextPrimary,
                             modifier = Modifier
                                 .size(16.dp)
                                 .padding(start = 4.dp)
@@ -624,19 +635,12 @@ fun SumUpAlbumScreen(
                 }
 
                 if (filteredSongs.isEmpty() && searchQuery.isNotBlank()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 40.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "No matches found for \"$searchQuery\"",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    com.music.spotui.ui.components.SoloEmptyState(
+                        icon = androidx.compose.material.icons.Icons.Rounded.SearchOff,
+                        title = "No matches",
+                        message = "Nothing here matches \"$searchQuery\".",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 } else {
                     repeat(filteredSongs.size) { songIdx ->
                         val targetSong = filteredSongs[songIdx]
@@ -659,7 +663,7 @@ fun SumUpAlbumScreen(
                         }
                         val songId = targetSong.id
 
-                        val currentPlayingIndicatorColor = if (songId == albumViewModel.currentSongId.value) Color(AppPalette.toArgb()) else Color.White
+                        val currentPlayingIndicatorColor = if (songId == albumViewModel.currentSongId.value) Accent else TextPrimary
 
                         SwipeToPlayNextWrapper(
                             onPlayNext = {
@@ -676,7 +680,7 @@ fun SumUpAlbumScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(AppBackground)
+                                    .background(Canvas)
                                     .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
@@ -711,7 +715,7 @@ fun SumUpAlbumScreen(
                                             Text(
                                                 text = targetSong.title,
                                                 color = currentPlayingIndicatorColor,
-                                                fontSize = 14.sp,
+                                                style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium,
                                                 maxLines = 1,
                                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -719,8 +723,8 @@ fun SumUpAlbumScreen(
                                         }
                                         Text(
                                             text = targetSong.singer,
-                                            color = Color.Gray,
-                                            fontSize = 12.sp,
+                                            color = TextTertiary,
+                                            style = MaterialTheme.typography.bodySmall,
                                             fontWeight = FontWeight.Medium,
                                             maxLines = 1,
                                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
@@ -730,7 +734,8 @@ fun SumUpAlbumScreen(
 
                                 Icon(
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(48.dp)
+                                        .clip(CircleShape)
                                         .combinedClickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
@@ -744,16 +749,17 @@ fun SumUpAlbumScreen(
                                                 albumViewModel.updateLikeState(!albumViewModel.likeState.value)
                                             },
                                             onLongClick = { showSavedIn = true },
-                                        ),
+                                        )
+                                        .padding(14.dp),
                                     painter = if (isLiked) {
-                                        painterResource(id = R.drawable.added)
+                                        androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle)
                                     } else {
-                                        painterResource(id = R.drawable.ic_add)
+                                        androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline)
                                     },
                                     tint = if (isLiked) {
-                                        Color.White
+                                        TextPrimary
                                     } else {
-                                        Color.Gray
+                                        TextTertiary
                                     },
                                     contentDescription = ""
                                 )
@@ -774,7 +780,10 @@ fun SumUpAlbumScreen(
         if (showSortSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showSortSheet = false },
-                containerColor = Color(0xFF1A1A1A)
+                containerColor = Surface2,
+                shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+                dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+                scrimColor = com.music.spotui.ui.theme.Scrim,
             ) {
                 Column(
                     modifier = Modifier
@@ -783,12 +792,12 @@ fun SumUpAlbumScreen(
                 ) {
                     Text(
                         text = "Sort by",
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 12.dp)
                     )
-                    androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                    androidx.compose.material3.HorizontalDivider(color = Surface3)
                     Spacer(modifier = Modifier.height(4.dp))
                     AlbumSortOption.entries.forEach { option ->
                         val isSelected = option == currentSort
@@ -818,21 +827,21 @@ fun SumUpAlbumScreen(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
+                                tint = if (isSelected) Accent else TextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(18.dp))
                             Text(
                                 text = if (isSelected) option.getDescriptiveLabel(isDescending) else option.getDescriptiveLabel(option != AlbumSortOption.DEFAULT),
-                                color = if (isSelected) Color(AppPalette.toArgb()) else Color.White,
-                                fontSize = 15.sp,
+                                color = if (isSelected) Accent else TextPrimary,
+                                style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
                             if (isSelected) {
                                 Icon(
                                     imageVector = if (isDescending) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
-                                    tint = Color(AppPalette.toArgb()),
+                                    tint = Accent,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }

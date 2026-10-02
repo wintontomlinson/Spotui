@@ -3,13 +3,16 @@ package com.music.spotui.ui.navigation
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.music.spotui.ui.theme.SoloMotion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.music.spotui.ui.screens.FreeHomeScreen
 import com.music.spotui.ui.screens.YtSearchScreen
@@ -44,18 +47,20 @@ fun MyNavHost(
 ) {
 
     val playerViewModel : PlayerViewModel = hiltViewModel()
-    val playerState by playerViewModel.currentSongTitle
-
-    Log.d("player", playerState.toString())
-
-//    val context = LocalContext.current
-//    var player : ExoPlayer? = null
-//    player = ExoPlayer.Builder(context).build()
 
     val context = LocalContext.current
-    // The app always opens on Home, which is the login free YouTube powered screen.
+    // First launch (or an upgrade where the additive flag is absent) opens the one-time
+    // onboarding; every launch after that opens on Home, the login-free YouTube screen.
     // Explore is a tab the user chooses, not the landing screen.
-    val startDestination = Routes.Home.route
+    val startDestination = remember {
+        if (com.music.spotui.data.preferences.hasOnboarded(context)) {
+            // Honour the user's chosen start screen (Home or Explore). Default stays Home.
+            when (com.music.spotui.data.preferences.getStartScreen(context)) {
+                com.music.spotui.data.preferences.StartScreen.EXPLORE -> Routes.YtSearch.route
+                else -> Routes.Home.route
+            }
+        } else Routes.Onboarding.route
+    }
 
     // Restore the last session: put the track back into the mini player (paused)
     // and arm the player to resume from the saved position on the first play tap.
@@ -83,11 +88,24 @@ fun MyNavHost(
     NavHost(
         navController = navHostController,
         startDestination = startDestination,
-        // Quick fade between screens instead of the default slide/scale animations.
-        enterTransition = { fadeIn(animationSpec = tween(150)) },
-        exitTransition = { fadeOut(animationSpec = tween(150)) },
-        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
-        popExitTransition = { fadeOut(animationSpec = tween(150)) },
+        // Shared premium screen motion: a fade paired with a subtle scale so screens
+        // settle in rather than hard-cut, driven by the SoloMotion tokens (ui/theme/Motion.kt).
+        enterTransition = {
+            fadeIn(animationSpec = SoloMotion.fade()) +
+                scaleIn(initialScale = 0.98f, animationSpec = SoloMotion.standard())
+        },
+        exitTransition = {
+            fadeOut(animationSpec = SoloMotion.fade()) +
+                scaleOut(targetScale = 1.02f, animationSpec = SoloMotion.standard())
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = SoloMotion.fade()) +
+                scaleIn(initialScale = 1.02f, animationSpec = SoloMotion.standard())
+        },
+        popExitTransition = {
+            fadeOut(animationSpec = SoloMotion.fade()) +
+                scaleOut(targetScale = 0.98f, animationSpec = SoloMotion.standard())
+        },
     ){
         composable(Routes.Home.route){
             // Home is the login-free, YouTube-powered screen, the old Spotify
@@ -138,6 +156,26 @@ fun MyNavHost(
 
         composable(Routes.LocalFiles.route) {
             LocalFilesScreen(navHostController)
+        }
+
+        composable(Routes.Equalizer.route) {
+            com.music.spotui.ui.screens.EqualizerScreen(navHostController)
+        }
+
+        composable(Routes.Onboarding.route) {
+            com.music.spotui.ui.screens.OnboardingScreen(
+                onFinish = {
+                    // Replace onboarding with Home so Back never returns to the intro.
+                    navHostController.navigate(Routes.Home.route) {
+                        popUpTo(Routes.Onboarding.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(Routes.Stats.route) {
+            com.music.spotui.ui.screens.ListeningStatsScreen(navHostController)
         }
 
 

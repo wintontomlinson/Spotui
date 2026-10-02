@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import android.content.Context
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -67,8 +68,14 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-private val SpotifyGreen = Color(0xFFE8C24A)
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.AccentDeep
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
 
 /**
  * Spotify-style "Saved in" sheet: Liked Songs plus local playlists and Spotify user playlists.
@@ -132,7 +139,11 @@ fun SavedInSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
+        sheetMaxWidth = 560.dp,
+        containerColor = Surface2,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(modifier = Modifier.navigationBarsPadding()) {
             Row(
@@ -140,19 +151,17 @@ fun SavedInSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(20.dp, 4.dp, 20.dp, 12.dp),
+                    .padding(20.dp, 2.dp, 20.dp, 8.dp),
             ) {
-                Text("Saved in", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text("Saved in", color = TextPrimary, style = MaterialTheme.typography.titleLarge)
                 Text(
                     "New playlist",
-                    color = SpotifyGreen,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.clickable(
-                        enabled = !isCreatingPlaylist,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { creating = true },
+                    color = Accent,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .clip(SoloShape.pill)
+                        .clickable(enabled = !isCreatingPlaylist) { creating = true }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
                 )
             }
 
@@ -162,45 +171,50 @@ fun SavedInSheet(
                     value = newName,
                     onValueChange = { newName = it },
                     singleLine = true,
-                    placeholder = { Text("Playlist name", color = Color.Gray) },
+                    placeholder = { Text("Playlist name", color = TextTertiary) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { createNow() }),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF2A2A2A),
-                        unfocusedContainerColor = Color(0xFF2A2A2A),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = SpotifyGreen,
+                        focusedContainerColor = Surface3,
+                        unfocusedContainerColor = Surface3,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        cursorColor = Accent,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp, 0.dp, 20.dp, 8.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(SoloShape.md),
                 )
-                Row(modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(20.dp, 4.dp, 20.dp, 12.dp),
+                ) {
+                    // Confirm: accent pill (dimmed while the playlist is being created).
                     Text(
                         if (isCreatingPlaylist) "Creating..." else "Create",
-                        color = if (isCreatingPlaylist) Color.Gray else SpotifyGreen,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable(
-                            enabled = !isCreatingPlaylist,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { createNow() },
+                        color = if (isCreatingPlaylist) TextTertiary else com.music.spotui.ui.theme.OnAccent,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier
+                            .clip(SoloShape.pill)
+                            .then(
+                                if (isCreatingPlaylist) Modifier.background(Surface3)
+                                else Modifier.background(com.music.spotui.ui.theme.AccentBrush)
+                            )
+                            .clickable(enabled = !isCreatingPlaylist) { createNow() }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
                     )
-                    Spacer(Modifier.width(24.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         "Cancel",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.clickable(
-                            enabled = !isCreatingPlaylist,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { creating = false; newName = "" },
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier
+                            .clip(SoloShape.pill)
+                            .clickable(enabled = !isCreatingPlaylist) { creating = false; newName = "" }
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
                     )
                 }
             }
@@ -218,12 +232,12 @@ fun SavedInSheet(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp))
+                                    .clip(SoloShape.sm)
                                     .background(
-                                        Brush.linearGradient(listOf(Color(0xFF4A39EA), Color(0xFF868AE1)))
+                                        com.music.spotui.ui.theme.AccentBrush
                                     ),
                             ) {
-                                Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Favorite, contentDescription = null, tint = com.music.spotui.ui.theme.OnAccent, modifier = Modifier.size(20.dp))
                             }
                         },
                     ) {
@@ -249,7 +263,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
+                                    .clip(SoloShape.sm),
                                 model = pl.coverUri,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
@@ -292,7 +306,7 @@ fun SavedInSheet(
                             GlideImage(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .clip(RoundedCornerShape(4.dp)),
+                                    .clip(SoloShape.sm),
                                 model = pl.images.firstOrNull()?.url,
                                 contentScale = ContentScale.Crop,
                                 failure = placeholder(R.drawable.placeholder),
@@ -326,10 +340,8 @@ private fun SavedInRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) { onToggle() }
+            .heightIn(min = 64.dp)
+            .clickable { onToggle() }
             .padding(20.dp, 8.dp),
     ) {
         cover()
@@ -338,27 +350,27 @@ private fun SavedInRow(
                 .weight(1f)
                 .padding(start = 14.dp, end = 8.dp),
         ) {
-            Text(name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(name, color = TextPrimary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isLocal) {
                     Icon(
                         imageVector = Icons.Default.PhoneAndroid,
                         contentDescription = "Local Storage",
-                        tint = SpotifyGreen,
+                        tint = Accent,
                         modifier = Modifier
                             .size(14.dp)
                             .padding(end = 3.dp)
                     )
                 }
                 if (subtitle.isNotBlank()) {
-                    Text(subtitle, color = Color.Gray, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(subtitle, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         if (saved) {
-            Icon(Icons.Default.CheckCircle, contentDescription = "Saved", tint = SpotifyGreen, modifier = Modifier.size(26.dp))
+            Icon(Icons.Default.CheckCircle, contentDescription = "Saved", tint = Accent, modifier = Modifier.size(26.dp))
         } else {
-            Icon(Icons.Default.Add, contentDescription = "Add", tint = Color(0xFFB3B3B3), modifier = Modifier.size(26.dp))
+            Icon(Icons.Default.Add, contentDescription = "Add", tint = TextSecondary, modifier = Modifier.size(26.dp))
         }
     }
 }

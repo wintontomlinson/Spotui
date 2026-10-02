@@ -1,11 +1,14 @@
 package com.music.spotui.ui.components
 
 import android.content.Intent
+import com.music.spotui.ui.theme.SoloShape
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
@@ -19,7 +22,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -32,14 +37,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import com.music.spotui.data.update.UpdateChecker
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import com.bumptech.glide.integration.compose.GlideImage
@@ -58,25 +61,142 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Surface3
+
+/** Download/install lifecycle for the in-app updater. */
+private enum class UpdatePhase { IDLE, DOWNLOADING, READY, ERROR }
 
 @Composable
 fun UpdatePrompt() {
     val context = LocalContext.current
-    var update by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
+    val scope = rememberCoroutineScope()
 
+    // One silent check on launch publishes into the shared UpdateState, which also lights the
+    // red dot on Home and in Settings. The dialog then renders whatever UpdateState holds, so a
+    // manual "Check for updates" from Settings opens this same premium prompt too.
     LaunchedEffect(Unit) {
-        update = UpdateChecker.check(context)
+        UpdateChecker.check(context)
     }
 
-    val info = update ?: return
+    val info = com.music.spotui.data.update.UpdateState.available
+    // Local dismissal: "Later" hides the dialog without clearing the shared badge, so the red dot
+    // stays until the user installs or taps "Don't show again". A Settings > Updates tap bumps
+    // UpdateState.showRequest, which clears the local dismissal so the dialog re-opens on demand.
+    var dismissed by remember { mutableStateOf(false) }
+    val showRequest = com.music.spotui.data.update.UpdateState.showRequest
+    LaunchedEffect(showRequest) { if (showRequest > 0) dismissed = false }
+    LaunchedEffect(info?.fingerprint) { dismissed = false }
+    if (info == null || dismissed) return
+    fun dismissDialog() { dismissed = true }
+
+    var phase by remember { mutableStateOf(UpdatePhase.IDLE) }
+    var progress by remember { mutableStateOf(0f) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var downloadedApk by remember { mutableStateOf<java.io.File?>(null) }
+    var downloadJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    // Unknown-sources gate: when the user returns from the settings screen and the permission
+    // is now granted, the pending install is launched automatically.
+    val installPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) {
+        downloadedApk?.let { apk ->
+            if (UpdateChecker.canInstall(context)) {
+                UpdateChecker.installApk(context, apk)
+                com.music.spotui.data.update.UpdateState.clear()
+            }
+        }
+    }
+
+    // Downloads the apk in-app, then either installs it (permission ready) or routes to the
+    // unknown-sources screen first. NEVER a browser redirect for the APK.
+    val startUpdate: () -> Unit = start@{
+        // Defensive: if the release only exposed an html page (no .apk asset), fall back to the
+        // system installer flow isn't possible — but we still never hard-redirect to a browser;
+        // the dialog simply reports it so the user can grab it from the release page they chose.
+        if (!UpdateChecker.isApkUrl(info.downloadUrl)) {
+            errorMessage = "No installable APK was attached to this release."
+            phase = UpdatePhase.ERROR
+            return@start
+        }
+        phase = UpdatePhase.DOWNLOADING
+        progress = 0f
+        errorMessage = null
+        downloadJob = scope.launch {
+            val result = UpdateChecker.downloadApk(context, info.downloadUrl) { p -> progress = p }
+            when (result) {
+                is UpdateChecker.DownloadResult.Success -> {
+                    downloadedApk = result.apk
+                    phase = UpdatePhase.READY
+                    if (UpdateChecker.canInstall(context)) {
+                        UpdateChecker.installApk(context, result.apk)
+                        com.music.spotui.data.update.UpdateState.clear()
+                    } else {
+                        // Ask the OS to let SOLO install, then resume in the launcher callback.
+                        runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
+                    }
+                }
+                is UpdateChecker.DownloadResult.Failure -> {
+                    if (result.reason != "Cancelled") {
+                        errorMessage = result.reason
+                        phase = UpdatePhase.ERROR
+                    } else {
+                        phase = UpdatePhase.IDLE
+                    }
+                }
+            }
+        }
+    }
 
     AlertDialog(
-        onDismissRequest = { update = null },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = Color(0xFF1A1A1A),
-        titleContentColor = Color.White,
+        onDismissRequest = { if (phase != UpdatePhase.DOWNLOADING) dismissDialog() },
+        // Platform default width keeps the prompt a compact product dialog rather than a
+        // full-bleed sheet; the markdown block scrolls inside it.
+        modifier = Modifier.width(360.dp),
+        shape = SoloShape.xl,
+        containerColor = Surface2,
+        titleContentColor = TextPrimary,
         title = {
-            Text("Update available, ${info.version}")
+            // Premium header: the SOLO mark on an accent-tinted well beside the new version,
+            // so the prompt reads as the app's own update rather than a generic system dialog.
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                // The SOLO mark on an accent gradient plate with a soft accent glow, so the
+                // prompt reads as a crafted, premium product surface, not a generic dialog.
+                Box(
+                    contentAlignment = androidx.compose.ui.Alignment.Center,
+                    modifier = Modifier
+                        .size(46.dp)
+                        .clip(SoloShape.md)
+                        .background(com.music.spotui.ui.theme.AccentBrush)
+                        .background(
+                            androidx.compose.ui.graphics.Brush.radialGradient(
+                                colors = listOf(Color.White.copy(alpha = 0.18f), Color.Transparent),
+                            ),
+                        ),
+                ) {
+                    com.music.spotui.ui.components.SoloMark(height = 26.dp)
+                }
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Text(
+                        "UPDATE AVAILABLE",
+                        color = Accent,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        "SOLO ${info.version}",
+                        color = TextPrimary,
+                        style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
         },
         text = {
             Column(
@@ -84,37 +204,104 @@ fun UpdatePrompt() {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
+                Text(
+                    "What's new",
+                    color = TextPrimary,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                )
+                Spacer(Modifier.height(8.dp))
                 if (info.releaseBody.isNotBlank()) {
                     RenderMarkdown(info.releaseBody)
                 } else {
                     Text(
                         "A new version of SOLO is available.",
-                        color = Color(0xFFB3B3B3),
+                        color = TextSecondary,
+                    )
+                }
+                if (phase == UpdatePhase.DOWNLOADING) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        if (progress >= 0f) "Downloading ${(progress * 100).toInt()}%" else "Downloading",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (progress >= 0f) {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(SoloShape.pill),
+                            color = Accent,
+                            trackColor = Surface3,
+                        )
+                    } else {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(SoloShape.pill),
+                            color = Accent,
+                            trackColor = Surface3,
+                        )
+                    }
+                }
+                if (phase == UpdatePhase.READY) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "Downloaded. Follow the system prompt to install.",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                }
+                errorMessage?.let {
+                    Spacer(Modifier.height(14.dp))
+                    Text(it, color = com.music.spotui.ui.theme.Danger, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                }
+                // A short, calm note so the Android Play Protect safety scan and the system
+                // install screen don't surprise anyone: both are a normal step for apps
+                // installed outside the Play Store, not a sign anything is wrong. No alarming
+                // wording, and no em-dash.
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(SoloShape.sm)
+                        .background(Surface3)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                ) {
+                    Text(
+                        "Installing from outside the Play Store, Android may run a quick Play Protect safety check and show its own install screen. This is a normal security step, so just follow the prompt to finish.",
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(info.downloadUrl))
-                    )
-                }
-                update = null
-            }) {
-                Text("Update", color = Color(0xFFE8C24A))
+            when (phase) {
+                UpdatePhase.DOWNLOADING -> SoloDialogConfirm(text = "Cancel", onClick = {
+                    downloadJob?.cancel()
+                    phase = UpdatePhase.IDLE
+                })
+                UpdatePhase.READY -> SoloDialogConfirm(text = "Install", onClick = {
+                    downloadedApk?.let { apk ->
+                        if (UpdateChecker.canInstall(context)) {
+                            UpdateChecker.installApk(context, apk)
+                            com.music.spotui.data.update.UpdateState.clear()
+                        } else {
+                            runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
+                        }
+                    }
+                })
+                UpdatePhase.ERROR -> SoloDialogConfirm(text = "Retry", onClick = startUpdate)
+                else -> SoloDialogConfirm(text = "Update now", onClick = startUpdate)
             }
         },
         dismissButton = {
-            TextButton(onClick = {
-                UpdateChecker.skipRelease(context, info)
-                update = null
-            }) {
-                Text("Don't show again", color = Color(0xFFB3B3B3))
-            }
-            TextButton(onClick = { update = null }) {
-                Text("Dismiss", color = Color.White)
+            if (phase != UpdatePhase.DOWNLOADING) {
+                TextButton(onClick = {
+                    UpdateChecker.skipRelease(context, info)
+                    dismissDialog()
+                }) {
+                    Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                }
+                SoloDialogDismiss(text = "Later", onClick = { dismissDialog() })
             }
         },
     )
@@ -166,7 +353,7 @@ private fun RenderImagesRow(images: List<ImageItem>, onImageClick: (String) -> U
                 modifier = Modifier
                     .weight(weight)
                     .aspectRatio(aspectRatio)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(SoloShape.sm)
                     .clickable { onImageClick(image.url) }
             ) {
                 GlideImage(
@@ -235,7 +422,7 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = Color.White
+                    tint = TextPrimary
                 )
             }
         }
@@ -245,9 +432,9 @@ private fun ZoomableImageDialog(url: String, onDismiss: () -> Unit) {
 @Composable
 private fun RenderMarkdown(markdown: String) {
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-    val linkColor = Color(0xFFE8C24A)
-    val headingColor = Color.White
-    val bodyColor = Color(0xFFB3B3B3)
+    val linkColor = Accent
+    val headingColor = TextPrimary
+    val bodyColor = TextSecondary
 
     var enlargedImageUrl by remember { mutableStateOf<String?>(null) }
 
@@ -287,6 +474,8 @@ private fun RenderMarkdown(markdown: String) {
         }
 
         when {
+            // Generated "Full Changelog" footers only point at repository compare pages.
+            trimmed.startsWith("**Full Changelog**") -> Unit
             trimmed.isEmpty() -> {
                 Spacer(modifier = Modifier.height(6.dp))
             }
@@ -299,7 +488,7 @@ private fun RenderMarkdown(markdown: String) {
             trimmed == "---" || trimmed == "***" || trimmed == "___"
                 || (trimmed.length >= 3 && trimmed.all { it == '_' || it == '-' || it == '*' }) -> {
                 HorizontalDivider(
-                    color = Color(0xFF2A2A2A),
+                    color = Surface3,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
             }
@@ -436,14 +625,20 @@ private fun MarkdownInline(
                 }
                 "code" -> {
                     pushStyle(SpanStyle(
-                        color = Color(0xFFE0E0E0),
+                        color = TextSecondary,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp,
                     ))
                     append(seg.content)
                     pop()
                 }
-                "link" -> {
+                // Repository links (commits, compares, PRs) render as plain text: the app
+                // doesn't send people to source pages from its release notes.
+                "link" -> if (seg.url.orEmpty().contains("github.com", ignoreCase = true)) {
+                    pushStyle(SpanStyle(color = bodyColor))
+                    append(seg.content)
+                    pop()
+                } else {
                     pushStringAnnotation(tag = "URL", annotation = seg.url ?: "")
                     pushStyle(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline))
                     append(seg.content)

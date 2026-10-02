@@ -1,5 +1,14 @@
 package com.music.spotui.ui.screens
 
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.shadow
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Shuffle
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -23,7 +32,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -71,13 +79,14 @@ import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.navigation.albumRoute
 import com.music.spotui.ui.navigation.artistRoute
 import com.music.spotui.ui.navigation.playlistRoute
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.ArtistViewModel
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import com.music.spotui.ui.components.SwipeToPlayNextWrapper
-
-private val SpotifyGreen = Color(0xFFE8C24A)
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
 
 private fun grouped(n: Long): String =
     "%,d".format(n)
@@ -92,7 +101,7 @@ fun ArtistScreen(navController: NavController, artistName: String, artistId: Str
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(com.music.spotui.ui.theme.Canvas)
     ) {
         when (val state = overview) {
             is Response.Loading -> Loader()
@@ -165,55 +174,49 @@ private fun ArtistOverviewContent(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(com.music.spotui.ui.theme.Canvas)
         ) {
         // ── Header: big artist image with scrim + name ──
         item {
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
+                .height(380.dp)
             ) {
-                GlideImage(
-                    modifier = Modifier.fillMaxSize(),
+                com.music.spotui.ui.components.SoloArtwork(
                     model = overview.headerImage.ifBlank { overview.avatarImage },
-                    contentScale = ContentScale.Crop,
-                    failure = placeholder(R.drawable.placeholder),
-                    loading = placeholder(R.drawable.placeholder),
-                    contentDescription = "",
+                    modifier = Modifier.fillMaxSize(),
+                    shape = androidx.compose.ui.graphics.RectangleShape,
+                    contentDescription = overview.name,
                 )
                 Box(modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.35f),
+                                com.music.spotui.ui.theme.Canvas.copy(alpha = 0.45f),
                                 Color.Transparent,
-                                Color(AppBackground.toArgb()),
+                                com.music.spotui.ui.theme.Canvas,
                             ),
                         )
                     )
                 )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .padding(16.dp, 40.dp)
-                        .size(26.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { navController.navigateUp() },
+                com.music.spotui.ui.components.SoloIconButton(
+                    icon = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    onClick = { navController.navigateUp() },
+                    filled = true,
+                    modifier = Modifier.padding(start = 12.dp, top = 36.dp),
                 )
                 Text(
                     text = displayName,
-                    color = Color.White,
-                    fontSize = 42.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.displaySmall,
+                    lineHeight = 46.sp,
+                    fontFamily = com.music.spotui.ui.theme.SoloDisplay,
                     maxLines = 2,
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .padding(16.dp, 0.dp, 16.dp, 12.dp),
+                        .padding(20.dp, 0.dp, 20.dp, 12.dp),
                 )
             }
         }
@@ -223,26 +226,26 @@ private fun ArtistOverviewContent(
             if (overview.verified) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 4.dp),
+                    modifier = Modifier.padding(20.dp, 0.dp, 20.dp, 4.dp),
                 ) {
                     Box(modifier = Modifier
                         .size(18.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF4A90E2)),
+                        .background(Accent),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("✓", color = com.music.spotui.ui.theme.OnAccent, style = MaterialTheme.typography.labelSmall)
                     }
                     Spacer(Modifier.width(6.dp))
-                    Text("Verified Artist", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    Text("Verified Artist", color = TextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 }
             }
             overview.monthlyListeners?.let {
                 Text(
                     text = "${grouped(it)} monthly listeners",
-                    color = Color.Gray,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(16.dp, 2.dp, 16.dp, 0.dp),
+                    color = TextTertiary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(20.dp, 2.dp, 20.dp, 0.dp),
                 )
             }
         }
@@ -254,16 +257,14 @@ private fun ArtistOverviewContent(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp, 16.dp),
+                    .padding(20.dp, 16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {
+                        .heightIn(min = 36.dp)
+                        .clip(SoloShape.pill)
+                        .border(1.dp, if (following) Accent else TextTertiary, SoloShape.pill)
+                        .clickable {
                             following = !following
                             // Persist locally and mirror the follow to the real
                             // Spotify account.
@@ -271,51 +272,48 @@ private fun ArtistOverviewContent(
                             else com.music.spotui.data.preferences.removeFollowedArtist(context, overview.id)
                             com.music.spotui.data.api.SpotifySync.setArtistFollowed(context, overview.id, following)
                         }
-                        .padding(16.dp, 7.dp),
+                        .padding(18.dp, 8.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = if (following) "Following" else "Follow",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            color = if (following) Accent else TextPrimary,
+                            style = MaterialTheme.typography.labelLarge,
                         )
                     }
                     Spacer(Modifier.width(16.dp))
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_dots),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.MoreVert),
                         contentDescription = "",
-                        tint = Color.Gray,
+                        tint = TextTertiary,
                         modifier = Modifier.size(22.dp),
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_player_shuffle),
-                        contentDescription = "",
-                        tint = Color.White,
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Shuffle),
+                        contentDescription = "Shuffle play",
+                        tint = TextPrimary,
                         modifier = Modifier
-                            .size(26.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { if (tracks.isNotEmpty()) playTrackAt(tracks.indices.random()) },
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .clickable { if (tracks.isNotEmpty()) playTrackAt(tracks.indices.random()) }
+                            .padding(11.dp),
                     )
-                    Spacer(Modifier.width(20.dp))
+                    Spacer(Modifier.width(12.dp))
                     Box(modifier = Modifier
                         .size(56.dp)
+                        .shadow(12.dp, CircleShape, ambientColor = com.music.spotui.ui.theme.AccentDeep, spotColor = com.music.spotui.ui.theme.AccentDeep)
                         .clip(CircleShape)
-                        .background(SpotifyGreen)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { playTrackAt(0) },
+                        .background(com.music.spotui.ui.theme.AccentBrush)
+                        .clickable { playTrackAt(0) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.play_svgrepo_com),
-                            contentDescription = "",
-                            tint = Color.Black,
+                            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.PlayArrow),
+                            contentDescription = "Play",
+                            tint = com.music.spotui.ui.theme.OnAccent,
                             modifier = Modifier.size(26.dp),
                         )
                     }
@@ -331,9 +329,8 @@ private fun ArtistOverviewContent(
             item {
                 Text(
                     text = "Songs",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 4.dp),
                 )
             }
@@ -393,8 +390,8 @@ private fun ArtistOverviewContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.05f))
+                        .clip(SoloShape.sm)
+                        .background(TextPrimary.copy(alpha = 0.05f))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -406,7 +403,7 @@ private fun ArtistOverviewContent(
                     GlideImage(
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(RoundedCornerShape(8.dp)),
+                            .clip(SoloShape.sm),
                         model = playlist.coverUri,
                         contentScale = ContentScale.Crop,
                         failure = placeholder(R.drawable.placeholder),
@@ -417,16 +414,16 @@ private fun ArtistOverviewContent(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = playlist.name,
-                            color = Color.White,
-                            fontSize = 17.sp,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 2,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
                             text = playlist.subtitle,
-                            color = Color.Gray,
-                            fontSize = 13.sp,
+                            color = TextTertiary,
+                            style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                         )
                     }
@@ -441,8 +438,8 @@ private fun ArtistOverviewContent(
                 Box(modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp, 4.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.White.copy(alpha = 0.06f))
+                    .clip(SoloShape.sm)
+                    .background(TextPrimary.copy(alpha = 0.06f))
                 ) {
                     Column {
                         if (overview.avatarImage.isNotBlank()) {
@@ -459,16 +456,16 @@ private fun ArtistOverviewContent(
                         overview.monthlyListeners?.let {
                             Text(
                                 text = "${grouped(it)} monthly listeners",
-                                color = Color.White,
-                                fontSize = 15.sp,
+                                color = TextPrimary,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(14.dp, 12.dp, 14.dp, 4.dp),
                             )
                         }
                         Text(
                             text = overview.biography.orEmpty(),
-                            color = Color.Gray,
-                            fontSize = 13.sp,
+                            color = TextTertiary,
+                            style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(14.dp, 4.dp, 14.dp, 16.dp),
                         )
                     }
@@ -542,7 +539,7 @@ private fun PopularTrackRow(
     LaunchedEffect(likeState) { isLiked = isSongLiked(context, song.id.toString()) }
     val playerViewModel: PlayerViewModel = hiltViewModel()
     val titleColor =
-        if (song.id == artistViewModel.currentSongId.value) Color(AppPalette.toArgb()) else Color.White
+        if (song.id == artistViewModel.currentSongId.value) com.music.spotui.ui.theme.Accent else TextPrimary
 
     SwipeToPlayNextWrapper(
         onPlayNext = {
@@ -558,7 +555,7 @@ private fun PopularTrackRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(AppBackground)
+                .background(Canvas)
                 .combinedClickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -569,15 +566,15 @@ private fun PopularTrackRow(
         ) {
             Text(
                 text = "${index + 1}",
-                color = Color.Gray,
-                fontSize = 15.sp,
+                color = TextTertiary,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.width(24.dp),
             )
             GlideImage(
                 modifier = Modifier
                     .padding(8.dp, 0.dp, 12.dp, 0.dp)
                     .size(48.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .clip(SoloShape.xs),
                 model = song.coverUri,
                 contentScale = ContentScale.Crop,
                 failure = placeholder(R.drawable.placeholder),
@@ -590,18 +587,19 @@ private fun PopularTrackRow(
                         com.music.spotui.ui.components.ExplicitBadge()
                         Spacer(Modifier.width(4.dp))
                     }
-                    Text(text = song.title, color = titleColor, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                    Text(text = song.title, color = titleColor, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, maxLines = 1)
                 }
                 item.playcount?.let {
-                    Text(text = grouped(it), color = Color.Gray, fontSize = 12.sp, maxLines = 1)
-                } ?: Text(text = song.singer, color = Color.Gray, fontSize = 12.sp, maxLines = 1)
+                    Text(text = grouped(it), color = TextTertiary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                } ?: Text(text = song.singer, color = TextTertiary, style = MaterialTheme.typography.bodySmall, maxLines = 1)
             }
             Icon(
-                painter = if (isLiked) painterResource(id = R.drawable.added) else painterResource(id = R.drawable.ic_add),
+                painter = if (isLiked) androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.CheckCircle) else androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.AddCircleOutline),
                 contentDescription = "",
-                tint = if (isLiked) Color.White else Color.Gray,
+                tint = if (isLiked) TextPrimary else TextTertiary,
                 modifier = Modifier
-                    .size(20.dp)
+                    .size(48.dp)
+                    .clip(CircleShape)
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -612,7 +610,8 @@ private fun PopularTrackRow(
                             artistViewModel.updateLikeState(!artistViewModel.likeState.value)
                         },
                         onLongClick = { showSavedIn = true },
-                    ),
+                    )
+                    .padding(14.dp),
             )
         }
     }
@@ -622,10 +621,10 @@ private fun PopularTrackRow(
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        color = Color.White,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(16.dp, 20.dp, 16.dp, 8.dp),
+        color = TextPrimary,
+        style = MaterialTheme.typography.headlineSmall,
+        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
+        modifier = Modifier.padding(16.dp, 22.dp, 16.dp, 10.dp),
     )
 }
 
@@ -644,7 +643,7 @@ private fun ReleaseCard(album: AlbumsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(132.dp)
-                .clip(RoundedCornerShape(6.dp)),
+                .clip(SoloShape.xs),
             model = album.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -652,11 +651,11 @@ private fun ReleaseCard(album: AlbumsModel, onClick: () -> Unit) {
             contentDescription = "",
         )
         Spacer(Modifier.height(6.dp))
-        Text(text = album.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+        Text(text = album.name, color = TextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
         Text(
             text = album.time.ifBlank { album.artists }.let { if (album.time.isNotBlank()) "${album.time} • Album" else it },
-            color = Color.Gray,
-            fontSize = 11.sp,
+            color = TextTertiary,
+            style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
         )
     }
@@ -678,7 +677,7 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
         GlideImage(
             modifier = Modifier
                 .size(88.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(SoloShape.xs),
             model = album.coverUri,
             contentScale = ContentScale.Crop,
             failure = placeholder(R.drawable.placeholder),
@@ -687,13 +686,13 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
         )
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = album.name, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(text = album.name, color = TextPrimary, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
             val kind = album.type.replaceFirstChar { it.uppercase() }.ifBlank { "" }
             val year = releaseYear(album)
             Text(
                 text = listOf(year, kind).filter { it.isNotBlank() }.joinToString(" • "),
-                color = Color.Gray,
-                fontSize = 13.sp,
+                color = TextTertiary,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 modifier = Modifier.padding(top = 2.dp),
             )
@@ -705,15 +704,15 @@ private fun ReleaseRow(album: AlbumsModel, onClick: () -> Unit) {
 private fun ShowAllButton(label: String = "Show all", onClick: () -> Unit) {
     Box(modifier = Modifier
         .padding(16.dp, 10.dp, 16.dp, 4.dp)
-        .clip(RoundedCornerShape(20.dp))
-        .border(1.dp, Color.Gray, RoundedCornerShape(20.dp))
+        .clip(SoloShape.lg)
+        .border(1.dp, TextTertiary, SoloShape.lg)
         .clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
         ) { onClick() }
         .padding(20.dp, 8.dp),
     ) {
-        Text(text = label, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = label, color = TextPrimary, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -731,7 +730,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(AppBackground.toArgb()))
+            .background(com.music.spotui.ui.theme.Canvas)
     ) {
         val data = (overview as? Response.Success)?.data
         val releases = data?.popularReleases ?: emptyList()
@@ -751,7 +750,7 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(AppBackground.toArgb()))
+                .background(com.music.spotui.ui.theme.Canvas)
         ) {
             item {
                 Row(
@@ -763,20 +762,18 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "",
-                        tint = Color.White,
+                        tint = TextPrimary,
                         modifier = Modifier
-                            .size(26.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) { navController.navigateUp() },
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .clickable { navController.navigateUp() }
+                            .padding(11.dp),
                     )
                     Spacer(Modifier.width(16.dp))
                     Text(
                         text = "Releases",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleLarge,
                     )
                 }
             }
@@ -834,9 +831,9 @@ fun ArtistReleasesScreen(navController: NavController, artistName: String) {
 private fun ReleaseSectionHeader(title: String) {
     Text(
         text = title,
-        color = Color.White,
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+        style = MaterialTheme.typography.headlineSmall,
+        fontFamily = com.music.spotui.ui.theme.SoloDisplay,
         modifier = Modifier.padding(16.dp, 18.dp, 16.dp, 8.dp),
     )
 }
@@ -845,8 +842,8 @@ private fun ReleaseSectionHeader(title: String) {
 private fun ReleaseFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (selected) Color.White else Color(0xFF2A2A2A))
+            .clip(SoloShape.lg)
+            .background(if (selected) TextPrimary else Surface3)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -855,9 +852,8 @@ private fun ReleaseFilterChip(label: String, selected: Boolean, onClick: () -> U
     ) {
         Text(
             text = label,
-            color = if (selected) Color.Black else Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            color = if (selected) com.music.spotui.ui.theme.OnAccent else TextPrimary,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }
@@ -886,7 +882,7 @@ private fun RelatedArtistCard(artist: ArtistsModel, onClick: () -> Unit) {
             contentDescription = "",
         )
         Spacer(Modifier.height(6.dp))
-        Text(text = artist.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-        Text(text = "Artist", color = Color.Gray, fontSize = 11.sp)
+        Text(text = artist.name, color = TextPrimary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, maxLines = 1)
+        Text(text = "Artist", color = TextTertiary, style = MaterialTheme.typography.bodySmall)
     }
 }

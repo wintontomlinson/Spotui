@@ -31,6 +31,7 @@ import javax.inject.Inject
  * Spotify backed tracks. The audio engine already resolves YouTube streams
  * without any login.
  */
+/** Backs the Explore/Search tab: runs search queries and exposes the result lists to the UI. */
 @HiltViewModel
 class YtSearchViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -75,6 +76,8 @@ class YtSearchViewModel @Inject constructor(
     private val loadedTabs = mutableSetOf<SearchTab>()
 
     private var searchJob: Job? = null
+    // Top-hit prefetch of the latest result set; cancelled when the query changes.
+    private var searchPrefetchJobs: List<Job> = emptyList()
 
     fun onQueryChange(text: String) {
         _query.value = text
@@ -127,6 +130,7 @@ class YtSearchViewModel @Inject constructor(
         }
         val activeTab = _tab.value
         searchJob?.cancel()
+        searchPrefetchJobs.forEach { it.cancel() }
         searchJob = viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
@@ -146,6 +150,11 @@ class YtSearchViewModel @Inject constructor(
                     val songs = items.filterIsInstance<SongItem>().distinctBy { it.id }
                     _results.value = songs.map { it.toSongsModel() }
                     found = songs.size
+                    // The top hit is the likeliest tap: have its URL ready before it.
+                    // Drop any still-queued prefetch from an earlier keystroke first, so
+                    // stale queries never hold permits ahead of the queue lookahead.
+                    searchPrefetchJobs.forEach { it.cancel() }
+                    searchPrefetchJobs = com.music.spotui.di.SongPlayer.prefetchList(_results.value.map { it.url }, context, 1)
                 }
                 SearchTab.ARTISTS -> {
                     val list = items.filterIsInstance<ArtistItem>()
@@ -223,6 +232,7 @@ class YtSearchViewModel @Inject constructor(
 
     fun clear() {
         searchJob?.cancel()
+        searchPrefetchJobs.forEach { it.cancel() }
         _query.value = ""
         lastQuery = ""
         clearResults()

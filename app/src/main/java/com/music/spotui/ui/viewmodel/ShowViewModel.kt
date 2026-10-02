@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Loads a show/podcast's episodes and metadata for the show detail screen. */
 @HiltViewModel
 class ShowViewModel @Inject constructor(
     private val repository: AppRepository,

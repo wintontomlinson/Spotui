@@ -27,6 +27,10 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import javax.inject.Inject
 
+/**
+ * Backs the lyrics screen: fetches (synced) lyrics for the current track and drives the optional
+ * on-device ML Kit translation flow.
+ */
 @HiltViewModel
 class LyricsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,

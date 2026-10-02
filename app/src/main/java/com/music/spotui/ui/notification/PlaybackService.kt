@@ -130,6 +130,7 @@ class PlaybackService : MediaLibraryService() {
         override fun onPlaybackStateChanged(playbackState: Int) {
             currentSongState.updateBufferingState(playbackState == Player.STATE_BUFFERING)
             if (playbackState == Player.STATE_READY && (SongPlayer.exoPlayer?.playWhenReady == true)) {
+                SongPlayer.logTimeToReady()
                 SongPlayer.releaseWakeLock()
                 // A different track is playing, so allow it its own recovery attempt.
                 val playing = currentSongState.songUrl.value
@@ -155,6 +156,7 @@ class PlaybackService : MediaLibraryService() {
                             "catalogue says ${known / 1000}s, crossfading=${SongPlayer.isCrossfadeActive()}",
                     )
                 }
+                if (!SongPlayer.isCrossfadeActive()) SongPlayer.onTrackEnded()
                 if (SongPlayer.isCrossfadeActive()) {
                     // Ignore the old player's STATE_ENDED event during an active crossfade.
                     // The crossfade routine itself handles the transition and promotes the new player.
@@ -506,7 +508,7 @@ class PlaybackService : MediaLibraryService() {
                 }
                 currentSongState.updateRepeatState(mode)
                 // Always ensure the underlying ExoPlayer repeatMode stays REPEAT_MODE_OFF.
-                // Spotui manages single-track / all-track looping at the queue & PlaybackService level.
+                // Solo manages single-track / all-track looping at the queue & PlaybackService level.
                 // If ExoPlayer itself is set to REPEAT_MODE_ONE or REPEAT_MODE_ALL on a single-item
                 // timeline, ExoPlayer silently loops the single item internally and NEVER emits STATE_ENDED.
                 base.repeatMode = Player.REPEAT_MODE_OFF
@@ -700,7 +702,7 @@ class PlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             params: LibraryParams?,
         ): ListenableFuture<LibraryResult<MediaItem>> =
-            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "spotui"), params))
+            Futures.immediateFuture(LibraryResult.ofItem(folder(ROOT, "SOLO"), params))
 
         override fun onGetChildren(
             session: MediaLibrarySession,

@@ -1,5 +1,10 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.rounded.Devices
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.border
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -23,7 +28,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -55,6 +59,11 @@ import com.music.spotui.R
 import com.music.spotui.ui.utils.AudioDeviceHelper
 import com.music.spotui.ui.utils.AudioDeviceItem
 import com.music.spotui.ui.utils.AudioDeviceType
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,15 +94,18 @@ fun DevicesSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF121212),
-        contentColor = Color.White,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+        sheetMaxWidth = 560.dp,
+        containerColor = com.music.spotui.ui.theme.Surface2,
+        contentColor = TextPrimary,
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(horizontal = 20.dp, vertical = 4.dp)
         ) {
             // Header: Spotify-styled title + close icon
             Row(
@@ -101,39 +113,35 @@ fun DevicesSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_devices),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
-                        tint = Color(0xFFE8C24A),
+                        tint = Accent,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Connect to a device",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleLarge)
                 }
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = Color.LightGray,
+                    tint = TextSecondary,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onDismiss() }
+                        .clickable { onDismiss() }
+                        .padding(12.dp)
                 )
             }
 
-            HorizontalDivider(color = Color(0xFF282828), thickness = 1.dp)
-            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Bluetooth Permission Banner if needed (Android 12+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasBtPermission) {
@@ -142,30 +150,30 @@ fun DevicesSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF282828))
+                        .clip(SoloShape.sm)
+                        .background(Surface3)
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Grant permission to discover paired Bluetooth devices",
-                        color = Color.White,
-                        fontSize = 12.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFFE8C24A))
+                            .clip(SoloShape.pill)
+                            .background(com.music.spotui.ui.theme.AccentBrush)
                             .clickable {
                                 permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                             }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Text(
                             text = "Grant",
-                            color = Color.Black,
-                            fontSize = 12.sp,
+                            color = com.music.spotui.ui.theme.OnAccent,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -178,9 +186,8 @@ fun DevicesSheet(
             if (activeDevice != null) {
                 Text(
                     text = "CURRENT DEVICE",
-                    color = Color.Gray,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = TextTertiary,
+                    style = MaterialTheme.typography.labelSmall,
                     letterSpacing = 1.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
@@ -189,49 +196,48 @@ fun DevicesSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFE8C24A).copy(alpha = 0.15f))
+                        .clip(SoloShape.md)
+                        .background(com.music.spotui.ui.theme.Surface4)
+                        .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md)
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_devices),
+                        painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                         contentDescription = null,
-                        tint = Color(0xFFE8C24A),
+                        tint = Accent,
                         modifier = Modifier.size(22.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = activeDevice.name,
-                            color = Color(0xFFE8C24A),
-                            fontSize = 15.sp,
+                            color = Accent,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = "Listening on this device",
-                            color = Color(0xFFE8C24A).copy(alpha = 0.8f),
-                            fontSize = 12.sp
-                        )
+                            color = Accent.copy(alpha = 0.8f),
+                            style = MaterialTheme.typography.bodySmall)
                     }
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Active",
-                        tint = Color(0xFFE8C24A),
+                        tint = Accent,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // Available Devices Section Title
             Text(
                 text = "SELECT A DEVICE",
-                color = Color.Gray,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
+                color = TextTertiary,
+                style = MaterialTheme.typography.labelSmall,
                 letterSpacing = 1.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -255,16 +261,16 @@ fun DevicesSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFF282828), thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = com.music.spotui.ui.theme.Hairline, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Open System Audio Switcher / Bluetooth Settings Action Row
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(SoloShape.sm)
                     .clickable {
                         AudioDeviceHelper.openSystemAudioSwitcher(context)
                         onDismiss()
@@ -276,12 +282,12 @@ fun DevicesSheet(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF282828))
+                        .background(Surface3)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -289,19 +295,16 @@ fun DevicesSheet(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "System Audio Switcher",
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleSmall)
                     Text(
                         text = "Connect or pair Bluetooth devices in Android Settings",
-                        color = Color.Gray,
-                        fontSize = 11.sp
-                    )
+                        color = TextTertiary,
+                        style = MaterialTheme.typography.bodySmall)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -311,14 +314,15 @@ private fun DeviceItemRow(
     item: AudioDeviceItem,
     onClick: () -> Unit
 ) {
-    val textColor = if (item.isActive) Color(0xFFE8C24A) else Color.White
-    val iconColor = if (item.isActive) Color(0xFFE8C24A) else Color.LightGray
+    val textColor = if (item.isActive) Accent else TextPrimary
+    val iconColor = if (item.isActive) Accent else TextSecondary
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .heightIn(min = 48.dp)
+            .clip(SoloShape.sm)
             .clickable { onClick() }
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
@@ -342,7 +346,7 @@ private fun DeviceItemRow(
             }
             AudioDeviceType.BLUETOOTH, AudioDeviceType.OTHER -> {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_devices),
+                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Devices),
                     contentDescription = null,
                     tint = iconColor,
                     modifier = Modifier.size(22.dp)
@@ -356,7 +360,7 @@ private fun DeviceItemRow(
             Text(
                 text = item.name,
                 color = textColor,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (item.isActive) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -368,16 +372,15 @@ private fun DeviceItemRow(
             }
             Text(
                 text = subText,
-                color = if (item.isActive) Color(0xFFE8C24A).copy(alpha = 0.8f) else Color.Gray,
-                fontSize = 11.sp
-            )
+                color = if (item.isActive) Accent.copy(alpha = 0.8f) else TextTertiary,
+                style = MaterialTheme.typography.bodySmall)
         }
 
         if (item.isActive) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Active",
-                tint = Color(0xFFE8C24A),
+                tint = Accent,
                 modifier = Modifier.size(18.dp)
             )
         }

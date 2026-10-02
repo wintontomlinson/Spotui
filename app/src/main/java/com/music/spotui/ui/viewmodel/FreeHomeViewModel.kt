@@ -36,19 +36,24 @@ data class HomeRow(
  * artists / songs), so it updates according to what they actually play. Curated
  * evergreen sections follow (and are the only content on a fresh install).
  */
+/**
+ * Backs the Home tab: assembles the featured carousel and the personalised shelves (trending,
+ * recents, "Because you liked") from the repository and the taste profile.
+ */
 @HiltViewModel
 class FreeHomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     // Evergreen fallback sections, also shown when there is no history yet. Trending
-    // is not in here because it leads the screen as its own block. The list is
-    // rotated by a time bucket on each rebuild so Home surfaces different shelves
-    // over the day instead of always showing the same order.
+    // is deliberately NOT in here: Home already leads with its own dedicated "Trending
+    // now" block, so a second "Trending now" shelf here would read as a duplicated
+    // heading. The list is shown in this fixed, deterministic order so the shelves
+    // below "Your top artists" always appear with the same stable, sensible headings
+    // instead of reshuffling through the day.
     private val curated = listOf(
         "New releases" to "new songs this week",
         "Today's biggest hits" to "top hits this week",
-        "Trending now" to "trending music now",
         "Bollywood hits" to "latest bollywood songs",
         "Chill and Lo-Fi" to "lofi chill beats",
         "Workout energy" to "workout gym music",
@@ -56,12 +61,34 @@ class FreeHomeViewModel @Inject constructor(
         "Throwback classics" to "throwback hits playlist",
     )
 
-    /** Rotate the curated list by a slowly-changing offset so the order varies. */
-    private fun rotatedCurated(): List<Pair<String, String>> {
-        if (curated.isEmpty()) return curated
-        val bucket = (System.currentTimeMillis() / TRENDING_REFRESH_MS).toInt()
-        val off = ((bucket % curated.size) + curated.size) % curated.size
-        return curated.drop(off) + curated.take(off)
+    /** A search-friendly mood term for a [TasteProfile] cluster tag, or null. */
+    private fun clusterQueryTerm(cluster: String?): String? = when (cluster) {
+        "chill" -> "chill lofi"
+        "edm" -> "edm remix"
+        "acoustic" -> "acoustic"
+        "live" -> "live"
+        "slowed" -> "slowed reverb"
+        "hype" -> "hype workout"
+        "sad" -> "sad emotional"
+        "romance" -> "romantic love"
+        else -> null
+    }
+
+    /** Title + query for the mood/cluster shelf, chosen from the strongest cluster. */
+    private fun moodShelf(cluster: String?): Pair<String, String>? = when (cluster) {
+        "chill", "acoustic", "sad", "slowed" -> "More chill for you" to "chill relaxing songs"
+        "edm", "hype" -> "Turn it up" to "high energy party hype songs"
+        "romance" -> "In the mood for love" to "romantic love songs"
+        "live" -> "Live and loud" to "best live performances songs"
+        else -> null
+    }
+
+    /** Title + query for the time-contextual shelf, by the current time-of-day bucket. */
+    private fun timeShelf(bucket: Int): Pair<String, String> = when (bucket) {
+        0 -> "Late-night mix" to "late night chill songs"
+        1 -> "Morning picks" to "good morning fresh songs"
+        2 -> "Afternoon rotation" to "feel good afternoon songs"
+        else -> "Evening wind-down" to "evening relax songs"
     }
 
     /** Query behind the trending block that leads Home. */
@@ -89,6 +116,29 @@ class FreeHomeViewModel @Inject constructor(
     private val _trending = mutableStateOf<List<SongsModel>>(emptyList())
     val trending: State<List<SongsModel>> get() = _trending
 
+    /**
+     * "Mix for you": a daily 25-track mix from the user's strongest artists, ranked
+     * by [com.music.spotui.data.recommendation.TasteRanker]. Empty (card hidden)
+     * until there is listening history.
+     */
+    private val _mix = mutableStateOf<List<SongsModel>>(emptyList())
+    val mix: State<List<SongsModel>> get() = _mix
+    private var mixDay = -1L
+
+    /** Strongest artists (display name to an artwork from history) for the circle row. */
+    private val _topArtists = mutableStateOf<List<Pair<String, String>>>(emptyList())
+    val topArtists: State<List<Pair<String, String>>> get() = _topArtists
+
+    /**
+     * "Because you liked X": a shelf seeded from a top liked / high-affinity track, whose
+     * candidates are ranked through [com.music.spotui.data.recommendation.TasteRanker]. The
+     * title carries the seed track so the UI can show "Because you liked <title>". Empty
+     * (shelf hidden) until there is a liked track to seed from. Rebuilt once per day.
+     */
+    private val _becauseYouLiked = mutableStateOf<HomeRow?>(null)
+    val becauseYouLiked: State<HomeRow?> get() = _becauseYouLiked
+    private var becauseDay = -1L
+
     private val _trendingLoading = mutableStateOf(true)
     val trendingLoading: State<Boolean> get() = _trendingLoading
 
@@ -96,6 +146,10 @@ class FreeHomeViewModel @Inject constructor(
     // Timestamp of the newest history entry the current Home was built from, so we
     // can rebuild only when the user has actually played something new.
     private var builtFromHistoryTs = 0L
+
+    // Cap on personalized rows (More-like / Because-you-played / time / mood / fresh)
+    // so Home stays focused before the curated evergreen rows follow.
+    private val MAX_PERSONALIZED_ROWS = 7
 
     init {
         // Keep "Trending now" genuinely live: silently re-pull it every
@@ -184,20 +238,150 @@ class FreeHomeViewModel @Inject constructor(
                 )
             }
         fetchTrending()
+        buildTasteBlocks(history)
+        buildBecauseYouLiked(history)
         val sections = buildSections(history)
         _rows.value = sections.map { (title, query) -> HomeRow(title, query) }
         _rows.value.forEachIndexed { index, row -> fetchRow(index, row.query) }
     }
 
-    /** Loads the trending block that leads Home. */
+    /** Top-artist circles every rebuild; the mix once per day (and once history exists). */
+    private fun buildTasteBlocks(history: List<com.music.spotui.data.preferences.HistoryEntry>) {
+        val profile = com.music.spotui.data.recommendation.TasteProfile
+        val top = runCatching { profile.topArtists(context, 8) }.getOrDefault(emptyList())
+        _topArtists.value = top.map { name ->
+            val key = profile.artistKey(name)
+            name to (history.firstOrNull { profile.artistKey(it.singer) == key && it.image.isNotBlank() }?.image.orEmpty())
+        }
+        if (history.isEmpty()) {
+            _mix.value = emptyList()
+            return
+        }
+        val today = System.currentTimeMillis() / 86_400_000L
+        if (today == mixDay && _mix.value.isNotEmpty()) return
+        mixDay = today
+        viewModelScope.launch {
+            // Context-aware "Mix for you": seed from the artists the user plays in the
+            // current time bucket, biased toward their strongest mood/genre cluster, so
+            // a morning mix and a late-night mix differ. Falls back to global top, then
+            // to raw recent artists, so a thin profile still produces a mix.
+            val bucket = profile.currentHourBucket()
+            val cluster = runCatching { profile.strongestCluster(context) }.getOrNull()
+            val contextual = runCatching { profile.topArtists(context, 3, hourBucket = bucket) }
+                .getOrDefault(emptyList())
+            val seedArtists = contextual.ifEmpty { top.take(3) }.ifEmpty {
+                history.mapNotNull { it.singer.substringBefore(",").removeSuffix(" - Topic").trim().ifBlank { null } }
+                    .distinct().take(3)
+            }
+            val clusterTerm = clusterQueryTerm(cluster)
+            val queries = seedArtists.map { if (clusterTerm != null) "$it $clusterTerm songs" else "$it songs" }.toMutableList()
+            if (seedArtists.size < 3) seedArtists.forEach { queries += "songs like $it" }
+            val candidates = queries.flatMap { searchSongs(it, limit = 15) }
+            val ranked = withContext(Dispatchers.Default) {
+                runCatching {
+                    com.music.spotui.data.recommendation.TasteRanker.rank(
+                        context, candidates, seed = null, recent = history, limit = 25,
+                    )
+                }.getOrDefault(emptyList())
+            }
+            if (ranked.isNotEmpty()) _mix.value = ranked else mixDay = -1L
+        }
+    }
+
+    /**
+     * Builds the "Because you liked X" shelf: pick a seed from the user's liked songs
+     * (preferring the one whose artist has the strongest taste affinity), gather candidates
+     * from YouTube around that track/artist, and rank them through [TasteRanker] with the
+     * liked track as the seed so the running order reflects the on-device taste engine.
+     * Rebuilt at most once per day. Hidden when there is nothing liked to seed from.
+     */
+    private fun buildBecauseYouLiked(history: List<com.music.spotui.data.preferences.HistoryEntry>) {
+        val liked = runCatching { com.music.spotui.data.preferences.getLikedSongs(context) }
+            .getOrDefault(emptyList())
+            .filter { it.title.isNotBlank() }
+        if (liked.isEmpty()) {
+            _becauseYouLiked.value = null
+            return
+        }
+        val today = System.currentTimeMillis() / 86_400_000L
+        if (today == becauseDay && _becauseYouLiked.value != null) return
+        becauseDay = today
+
+        val profile = com.music.spotui.data.recommendation.TasteProfile
+        // Prefer the liked track whose artist the user leans toward most; the daily bucket
+        // breaks ties so the shelf rotates through the user's liked songs over time.
+        val affinity = runCatching { profile.artistAffinity(context) }.getOrDefault(emptyMap())
+        val seed = liked.maxByOrNull { song ->
+            val a = profile.artistKey(song.singer)
+            (affinity[a] ?: 0f).toDouble() + ((song.id.toLong() + today).hashCode().and(0xFF) / 2550.0)
+        } ?: return
+
+        viewModelScope.launch {
+            val artist = seed.singer.substringBefore(",").removeSuffix(" - Topic").trim()
+            val queries = listOfNotNull(
+                "${seed.title} $artist mix".trim(),
+                artist.ifBlank { null }?.let { "$it songs" },
+                "songs like ${seed.title}",
+            )
+            val candidates = queries.flatMap { searchSongs(it, limit = 15) }
+            val ranked = withContext(Dispatchers.Default) {
+                runCatching {
+                    com.music.spotui.data.recommendation.TasteRanker.rank(
+                        context, candidates, seed = seed, recent = history, limit = 20,
+                    )
+                }.getOrDefault(emptyList())
+            }
+            if (ranked.isNotEmpty()) {
+                _becauseYouLiked.value = HomeRow(
+                    title = "Because you liked ${seed.title}",
+                    query = "",
+                    tracks = ranked,
+                    loading = false,
+                )
+            } else {
+                becauseDay = -1L
+            }
+        }
+    }
+
+    /**
+     * Loads the trending block that leads Home.
+     *
+     * BEFORE: this rendered the raw YouTube.search("trending songs this week") global
+     * order verbatim, so every user saw the same list regardless of taste.
+     *
+     * AFTER: it pulls a larger candidate pool and routes it through
+     * [com.music.spotui.data.recommendation.TasteRanker.rank] (seed=null, recent=local
+     * listening history), so the order now reflects the user's genre/mood/artist
+     * affinity and time-of-day while TasteRanker's built-in dynamic exploration still
+     * surfaces genuinely fresh/novel content. It works login-free (local history) and
+     * with login, is on-device and lightweight, and never changes recordOutcome or the
+     * TasteProfile JSON (read-only use). If ranking yields nothing (e.g. empty profile
+     * plus everything excluded), it falls back to the raw trending order so the block is
+     * never blanked.
+     */
     private fun fetchTrending() {
         _trendingLoading.value = true
         lastTrendingTs = System.currentTimeMillis()
         viewModelScope.launch {
-            val songs = searchSongs(trendingQuery, limit = 8)
+            // Pull a wider pool than the 8 slots shown so TasteRanker has room to
+            // personalise the order and still spend an exploration slot on fresh content.
+            val candidates = searchSongs(trendingQuery, limit = 25)
+            if (candidates.isNotEmpty()) {
+                val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
+                val ranked = withContext(Dispatchers.Default) {
+                    runCatching {
+                        com.music.spotui.data.recommendation.TasteRanker.rank(
+                            context, candidates, seed = null, recent = history, limit = 8,
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                // Fall back to the raw trending order when ranking excludes everything,
+                // so the block always has content.
+                _trending.value = ranked.ifEmpty { candidates.take(8) }
+            }
             // Only replace the shown list when the pull actually returned something, so a
             // failed refresh never blanks out trending that was already on screen.
-            if (songs.isNotEmpty()) _trending.value = songs
             _trendingLoading.value = false
         }
     }
@@ -214,11 +398,20 @@ class FreeHomeViewModel @Inject constructor(
         val usedTitles = LinkedHashSet<String>()
 
         if (history.isNotEmpty()) {
-            // "More like <artist>" for the most recent distinct artists.
+            // "More like <artist>" for the recent artists the user likes most: ordered by
+            // taste affinity (recency breaks ties), and artists they keep skipping drop out.
+            val affinity = runCatching {
+                com.music.spotui.data.recommendation.TasteProfile.artistAffinity(context)
+            }.getOrDefault(emptyMap())
             val artists = history
                 .mapNotNull { it.singer.substringBefore(",").trim().ifBlank { null } }
                 .map { it.removeSuffix(" - Topic").trim() }
                 .distinct()
+                .take(12)
+                .map { it to (affinity[com.music.spotui.data.recommendation.TasteProfile.artistKey(it)] ?: 0f) }
+                .filter { it.second >= 0f }
+                .sortedByDescending { it.second }
+                .map { it.first }
                 .take(3)
             for (artist in artists) {
                 personalized += "More like $artist" to "$artist songs"
@@ -234,16 +427,70 @@ class FreeHomeViewModel @Inject constructor(
                     if (usedTitles.add(title)) personalized += title to q
                 }
             }
+
+            val profile = com.music.spotui.data.recommendation.TasteProfile
+            // Time-contextual shelf: "Morning picks" / "Late-night mix" etc. by bucket.
+            val (timeTitle, timeQuery) = timeShelf(profile.currentHourBucket())
+            if (usedTitles.add(timeTitle)) personalized += timeTitle to timeQuery
+
+            // Mood/cluster shelf from the user's strongest mood/genre cluster.
+            val cluster = runCatching { profile.strongestCluster(context) }.getOrNull()
+            moodShelf(cluster)?.let { (moodTitle, moodQuery) ->
+                if (usedTitles.add(moodTitle)) personalized += moodTitle to moodQuery
+            }
+
+            // "Fresh for you" discovery shelf seeded from genre-neighbour keywords of
+            // the top artist (exploration), so Home surfaces something new too.
+            val topArtist = runCatching { profile.topArtists(context, 1) }.getOrDefault(emptyList()).firstOrNull()
+            if (!topArtist.isNullOrBlank()) {
+                val clusterTerm = clusterQueryTerm(cluster)
+                val freshQuery = if (clusterTerm != null) "artists like $topArtist $clusterTerm" else "artists like $topArtist"
+                if (usedTitles.add("Fresh for you")) personalized += "Fresh for you" to freshQuery
+            }
         }
 
-        // Curated rows always follow (and are the whole list on first launch),
-        // rotated so the trending mix on Home changes through the day.
-        return personalized + rotatedCurated()
+        // Curated rows always follow (and are the whole list on first launch), in a
+        // fixed deterministic order so the shelves below "Your top artists" keep stable,
+        // sensible headings instead of reshuffling through the day. Cap the personalized
+        // rows so Home stays focused even with a rich profile.
+        return personalized.take(MAX_PERSONALIZED_ROWS) + curated
     }
 
+    /**
+     * Fills one Home shelf.
+     *
+     * BEFORE: this rendered the raw `searchSongs(query)` order verbatim, so the generic
+     * personalised shelves (More-like / time / mood / Fresh) and the curated evergreen rows
+     * were ordered by YouTube's global relevance, not the user's taste.
+     *
+     * AFTER: it pulls a slightly wider candidate pool and routes it through
+     * [com.music.spotui.data.recommendation.TasteRanker.rank] (seed=null, recent=local listening
+     * history) before showing it, so every Home shelf now reflects the on-device TasteProfile
+     * (genre/mood/artist affinity, time-of-day, recency) with the ranker's built-in exploration
+     * still surfacing fresh content. Mirrors the fetchTrending() fallback: when ranking returns
+     * nothing (e.g. empty profile plus everything excluded) it falls back to the raw search order
+     * so a shelf is never blanked. Works login-free (local history) and with login; read-only use
+     * of the profile, so recordOutcome and the TasteProfile JSON schema are untouched.
+     */
     private fun fetchRow(index: Int, query: String) {
         viewModelScope.launch {
-            val songs = searchSongs(query, limit = 12)
+            // A wider pool than the 12 slots shown gives the ranker room to reorder by taste
+            // and still spend an exploration slot on something new.
+            val candidates = searchSongs(query, limit = 24)
+            val songs = if (candidates.isNotEmpty()) {
+                val history = runCatching { getListeningHistory(context) }.getOrDefault(emptyList())
+                val ranked = withContext(Dispatchers.Default) {
+                    runCatching {
+                        com.music.spotui.data.recommendation.TasteRanker.rank(
+                            context, candidates, seed = null, recent = history, limit = 12,
+                        )
+                    }.getOrDefault(emptyList())
+                }
+                // Fall back to the raw search order when ranking excludes everything.
+                ranked.ifEmpty { candidates.take(12) }
+            } else {
+                candidates
+            }
             val current = _rows.value.toMutableList()
             if (index in current.indices) {
                 current[index] = current[index].copy(tracks = songs, loading = false)

@@ -1,6 +1,8 @@
 package com.music.spotui.ui.components
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -14,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,8 +42,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-
-private val SpotifyGreen = Color(0xFFE8C24A)
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.Surface3
 
 // Fixed thumb height, never changes during scroll
 private val THUMB_HEIGHT = 48.dp
@@ -54,7 +56,7 @@ private val THUMB_HEIGHT = 48.dp
 fun FastScrollbarForLazyList(
     state: LazyListState,
     modifier: Modifier = Modifier,
-    activeColor: Color = SpotifyGreen,
+    activeColor: Color = Accent,
     showBadge: Boolean = true,
 ) {
     val totalItems = state.layoutInfo.totalItemsCount
@@ -159,8 +161,8 @@ fun FastScrollbarForLazyList(
                 if (showBadge && isDragging) {
                     val currentTrackIndex = (state.firstVisibleItemIndex + 1).coerceAtMost(totalItems)
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF282828),
+                        shape = SoloShape.lg,
+                        color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -174,8 +176,8 @@ fun FastScrollbarForLazyList(
                     ) {
                         Text(
                             text = "$currentTrackIndex / $totalItems",
-                            color = Color.White,
-                            fontSize = 12.sp,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false,
@@ -193,7 +195,7 @@ fun FastScrollbarForLazyList(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(SoloShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }
@@ -208,7 +210,7 @@ fun FastScrollbarForLazyList(
 fun FastScrollbarForScrollState(
     state: ScrollState,
     modifier: Modifier = Modifier,
-    activeColor: Color = SpotifyGreen,
+    activeColor: Color = Accent,
     showBadge: Boolean = true,
 ) {
     if (state.maxValue <= 0) return
@@ -298,8 +300,8 @@ fun FastScrollbarForScrollState(
                 if (showBadge && isDragging) {
                     val percent = (scrollProgress * 100).roundToInt()
                     Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF282828),
+                        shape = SoloShape.lg,
+                        color = Surface3,
                         shadowElevation = 6.dp,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -313,8 +315,8 @@ fun FastScrollbarForScrollState(
                     ) {
                         Text(
                             text = "$percent%",
-                            color = Color.White,
-                            fontSize = 12.sp,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             softWrap = false,
@@ -332,7 +334,7 @@ fun FastScrollbarForScrollState(
                         .offset { IntOffset(0, thumbOffsetYPx.roundToInt()) }
                         .width(thumbWidth)
                         .height(THUMB_HEIGHT)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(SoloShape.xs)
                         .background(if (isDragging) activeColor else activeColor.copy(alpha = 0.8f))
                 )
             }

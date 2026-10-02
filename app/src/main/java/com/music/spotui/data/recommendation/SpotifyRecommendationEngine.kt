@@ -30,12 +30,20 @@ object SpotifyRecommendationEngine {
     private const val PROFILE_TTL_MS = 6L * 60 * 60 * 1000 // 6 hours
     private const val MAX_TRACKS_PER_ARTIST = 3
 
-    // Scoring weights
+    // Scoring weights (tunable named constants).
     private const val W_SOURCE = 0.25f
     private const val W_AFFINITY = 0.30f
     private const val W_GENRE = 0.20f
     private const val W_POPULARITY = 0.10f
     private const val W_RECENCY = 0.15f
+
+    // Exploration toggle: a mature profile trades some recency weight for more
+    // genre-neighbour discovery, so the mix widens as the profile grows. The final
+    // on-device re-rank (TasteRanker) applies the shared context/anti-repeat policy
+    // over this output at the Home/radio call sites.
+    private const val EXPLORE_GENRE_BOOST = 0.10f
+    private const val EXPLORE_RECENCY_CUT = 0.10f
+    private const val MATURE_PROFILE_ARTISTS = 25 // >= this many known artists == explore more
 
     @Volatile private var artistAffinityMap: Map<String, Float> = emptyMap()
     @Volatile private var artistGenreMap: Map<String, Set<String>> = emptyMap()
@@ -59,13 +67,17 @@ object SpotifyRecommendationEngine {
         val genreOverlap: Float,
         val popularitySimilarity: Float,
         val recencyBoost: Float,
+        val explore: Boolean = false,
     ) {
+        private val genreWeight: Float get() = if (explore) W_GENRE + EXPLORE_GENRE_BOOST else W_GENRE
+        private val recencyWeight: Float get() = if (explore) W_RECENCY - EXPLORE_RECENCY_CUT else W_RECENCY
+
         val finalScore: Float
             get() = (W_SOURCE * sourceScore) +
                 (W_AFFINITY * artistAffinity) +
-                (W_GENRE * genreOverlap) +
+                (genreWeight * genreOverlap) +
                 (W_POPULARITY * popularitySimilarity) +
-                (W_RECENCY * recencyBoost)
+                (recencyWeight * recencyBoost)
     }
 
     /** Builds/refreshes the user's taste profile from their Spotify top tracks/artists. */
@@ -131,13 +143,23 @@ object SpotifyRecommendationEngine {
         }
     }
 
-    /** Generate a personalized list of recommended tracks seeded by [seedTrack]. */
-    suspend fun getRecommendations(seedTrack: SpotifyTrack, limit: Int = 25): List<SpotifyTrack> =
+    /**
+     * Generate a personalized list of recommended tracks seeded by [seedTrack].
+     * When [explore] is null (the default) the mode is derived from profile maturity:
+     * a rich profile (many known artists) explores more, a small one stays close to
+     * recency. Output is intended to be re-ranked by [TasteRanker] at the call site.
+     */
+    suspend fun getRecommendations(
+        seedTrack: SpotifyTrack,
+        limit: Int = 25,
+        explore: Boolean? = null,
+    ): List<SpotifyTrack> =
         withContext(Dispatchers.IO) {
             if (!ensureProfileLoaded()) {
                 Log.w(TAG, "Profile unavailable")
                 return@withContext emptyList()
             }
+            val exploreMode = explore ?: (artistAffinityMap.size >= MATURE_PROFILE_ARTISTS)
 
             val candidates = mutableListOf<ScoredCandidate>()
             val seenIds = mutableSetOf(seedTrack.id)
@@ -153,7 +175,7 @@ object SpotifyRecommendationEngine {
                             synchronized(candidates) {
                                 for (track in tracks) {
                                     if (track.id.isNotEmpty() && seenIds.add(track.id)) {
-                                        candidates.add(buildCandidate(track, Bucket.SEED_ARTIST, seedPopularity, seedGenres))
+                                        candidates.add(buildCandidate(track, Bucket.SEED_ARTIST, seedPopularity, seedGenres, exploreMode))
                                     }
                                 }
                             }
@@ -167,7 +189,7 @@ object SpotifyRecommendationEngine {
                 Spotify.album(albumId).getOrNull()?.tracks?.items?.let { albumTracks ->
                     for (track in albumTracks) {
                         if (track.id.isNotEmpty() && seenIds.add(track.id)) {
-                            candidates.add(buildCandidate(track, Bucket.SAME_ALBUM, seedPopularity, seedGenres))
+                            candidates.add(buildCandidate(track, Bucket.SAME_ALBUM, seedPopularity, seedGenres, exploreMode))
                         }
                     }
                 }
@@ -181,7 +203,7 @@ object SpotifyRecommendationEngine {
                             synchronized(candidates) {
                                 for (track in tracks) {
                                     if (track.id.isNotEmpty() && seenIds.add(track.id)) {
-                                        candidates.add(buildCandidate(track, Bucket.GENRE_NEIGHBOR, seedPopularity, seedGenres))
+                                        candidates.add(buildCandidate(track, Bucket.GENRE_NEIGHBOR, seedPopularity, seedGenres, exploreMode))
                                     }
                                 }
                             }
@@ -193,7 +215,7 @@ object SpotifyRecommendationEngine {
             // Source 4: user's top-track pool
             for (track in topTrackPool) {
                 if (track.id.isNotEmpty() && seenIds.add(track.id)) {
-                    candidates.add(buildCandidate(track, Bucket.USER_TOP, seedPopularity, seedGenres))
+                    candidates.add(buildCandidate(track, Bucket.USER_TOP, seedPopularity, seedGenres, exploreMode))
                 }
             }
 
@@ -205,6 +227,7 @@ object SpotifyRecommendationEngine {
         bucket: Bucket,
         seedPopularity: Int,
         seedGenres: Set<String>,
+        explore: Boolean = false,
     ): ScoredCandidate {
         val trackArtistIds = track.artists.mapNotNull { it.id }
         val affinity = trackArtistIds.maxOfOrNull { artistAffinityMap[it] ?: 0f } ?: 0f
@@ -215,7 +238,7 @@ object SpotifyRecommendationEngine {
         val popDiff = abs((track.popularity ?: 50) - seedPopularity)
         val popSimilarity = 1.0f - (popDiff.toFloat() / 100f)
         val recency = if (trackArtistIds.any { it in shortTermArtistIds }) 1.0f else 0f
-        return ScoredCandidate(track, bucket, bucket.sourceScore, affinity, genreOverlap, popSimilarity, recency)
+        return ScoredCandidate(track, bucket, bucket.sourceScore, affinity, genreOverlap, popSimilarity, recency, explore)
     }
 
     /** Approximates related-artists by finding profile artists that share genres with the seed. */

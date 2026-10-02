@@ -1,89 +1,96 @@
 package com.music.spotui.ui.theme
 
+/**
+ * App-wide Compose theme entry point.
+ *
+ * Maps the [Color] tokens into a single, always-dark Material 3 colour scheme (dynamic colour is
+ * intentionally off) and wires in the SOLO typography, shapes and motion. Wrap the app content in
+ * this theme so every screen shares one palette and type scale.
+ */
+
 import android.app.Activity
-import android.graphics.Color.toArgb
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
 import androidx.core.view.WindowCompat
 
-// A single, deliberate dark scheme built around the amber accent, so every Material
-// component (buttons, switches, sliders, indicators) picks up the app's colour instead
-// of a stray purple or a wallpaper tint.
-private val DarkColorScheme = darkColorScheme(
+// One deliberate dark scheme, so every Material component (switches, sliders, sheets,
+// dialogs, menus) picks up the Graphite & Azure palette instead of a stray default or wallpaper tint.
+//
+// Built as a function (not a val) so it reads the LIVE accent tokens: when the FEAT-003 accent
+// picker retunes [AccentState], recomposing [SoloTheme] rebuilds the scheme and every Material
+// component recolours too. The graphite canvas/surface tokens are fixed, so only the accent moves.
+private fun soloColorScheme() = darkColorScheme(
     primary = Accent,
     onPrimary = OnAccent,
-    secondary = Accent,
-    onSecondary = OnAccent,
-    tertiary = AccentDark,
-    background = AppBackground,
-    onBackground = Color(0xFFF2F2F5),
-    surface = SurfaceElevated,
-    onSurface = Color(0xFFF2F2F5),
-    surfaceVariant = SurfaceCard,
-    onSurfaceVariant = Color(0xFFB6B6BE),
-    outline = Hairline,
+    primaryContainer = Elevated,
+    onPrimaryContainer = AccentSoft,
+    secondary = AccentSoft,
+    onSecondary = Canvas,
+    secondaryContainer = Surface4,
+    onSecondaryContainer = TextPrimary,
+    tertiary = AccentDeep,
+    onTertiary = OnAccent,
+    background = Canvas,
+    onBackground = TextPrimary,
+    surface = Surface2,
+    onSurface = TextPrimary,
+    surfaceVariant = Surface3,
+    onSurfaceVariant = TextSecondary,
+    surfaceTint = Color.Transparent,
+    inverseSurface = TextPrimary,
+    inverseOnSurface = Canvas,
+    inversePrimary = AccentDeep,
+    error = Danger,
+    onError = Canvas,
+    errorContainer = DangerSurface,
+    onErrorContainer = Color(0xFFFFDADA),
+    outline = Color(0xFF3A4049),
+    outlineVariant = Surface4,
+    scrim = Color.Black,
+    surfaceBright = Surface4,
+    surfaceDim = Canvas,
+    surfaceContainerLowest = Canvas,
+    surfaceContainerLow = Surface1,
+    surfaceContainer = Surface2,
+    surfaceContainerHigh = Surface3,
+    surfaceContainerHighest = Surface4,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40 ,
-    background = AppBackground,
-    /* Other default colors to override
-
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
-
+/** Solo is a single, always-dark experience; dynamic (wallpaper) colour stays off. */
 @Composable
-fun SpotuiTheme(
-    // The app is a single, always dark, amber themed experience by design.
-    darkTheme: Boolean = true,
-    // Dynamic color is intentionally OFF. Letting Android 12+ retint the UI from the
-    // user's wallpaper overrode the amber accent and the deliberate dark surfaces, so the
-    // premium look changed from phone to phone. The app owns its palette now.
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = DarkColorScheme
+fun SoloTheme(content: @Composable () -> Unit) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = Color.Transparent.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false // white icons for dark‑mode‑only app
+            // Light status bar icons on the dark UI.
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        // Reads AccentState through the Accent* getters, so an accent change recomposes the scheme.
+        colorScheme = soloColorScheme(),
         typography = Typography,
+        shapes = SoloShapes,
     ) {
-        // Bare Text() uses LocalTextStyle, which MaterialTheme does NOT derive
-        // from the typography, so provide Montserrat as the global default so
-        // every screen picks it up without touching each Text call.
-        androidx.compose.material3.ProvideTextStyle(
-            value = androidx.compose.material3.LocalTextStyle.current.copy(
-                fontFamily = Montserrat,
-                letterSpacing = (-0.2).sp,
-            ),
+        // Bare Text() reads LocalTextStyle, so Plus Jakarta Sans is the global default here.
+        // Provided directly (not merged over M3's bodyLarge) and without a fixed line height,
+        // so a Text that only sets a larger fontSize (lyrics, hero titles) gets line boxes
+        // that scale with it instead of overlapping when it wraps.
+        CompositionLocalProvider(
+            LocalContentColor provides TextPrimary,
+            LocalTextStyle provides Typography.bodyMedium.copy(lineHeight = TextUnit.Unspecified),
             content = content,
         )
     }

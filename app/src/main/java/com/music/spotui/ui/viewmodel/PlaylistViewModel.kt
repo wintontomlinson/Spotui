@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** Loads a playlist's tracks and metadata for the playlist detail screen. */
 @HiltViewModel
 class PlaylistViewModel @Inject constructor(
     private val repository: AppRepository,

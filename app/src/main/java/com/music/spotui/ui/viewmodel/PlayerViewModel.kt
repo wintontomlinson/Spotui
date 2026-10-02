@@ -25,6 +25,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
+/**
+ * Observes and exposes playback state (current song, progress, queue) for the player UI and the
+ * mini-player. It surfaces engine state to Compose; it does not resolve streams itself.
+ */
 class PlayerViewModel @Inject constructor(private val currentSongState: CurrentSongState, private val repository: AppRepository) : ViewModel(){
 
     val currentSongTitle: State<String> get() = currentSongState.title
@@ -113,15 +117,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         // ends — even from the background media service (no UI needed).
         val provider: suspend (List<SongsModel>) -> List<SongsModel> = provider@{ queueSongs ->
             if (!autoplayRadioEnabled) return@provider emptyList()
-            val seeds = queueSongs.takeLast(8)
-                .mapNotNull { it.spotifyTrackId.ifBlank { null } }
-                .distinct()
-            if (seeds.isNotEmpty()) {
-                runCatching { repository.provideRecommendations(seeds) }.getOrDefault(emptyList())
-                    .ifEmpty { fetchYoutubeRelated(queueSongs) }
-            } else {
-                fetchYoutubeRelated(queueSongs)
-            }
+            radioBatch(queueSongs)
         }
         radioProvider = provider
         SongPlayer.radioProvider = provider
@@ -138,7 +134,6 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     }
 
 
-    //val songsResponse = (songs.value as Response.Success).data
 
     // Resolve where we currently are in the queue. The stored index can be stale
     // (e.g. queue swapped out), so match by song id first and fall back to the index.
@@ -179,15 +174,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val existing = currentSongState.queue.value
-                val existingIds = existing.map { it.id }.toSet()
-                val seeds = existing.takeLast(8)
-                    .mapNotNull { it.spotifyTrackId.ifBlank { null } }
-                    .distinct()
-                val fresh = if (seeds.isNotEmpty()) {
-                    repository.provideRecommendations(seeds).filter { it.id !in existingIds }
-                } else {
-                    fetchYoutubeRelated(existing).filter { it.id !in existingIds }
-                }
+                val fresh = radioBatch(existing)
                 if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
             } finally {
                 radioLoading.set(false)
@@ -199,23 +186,12 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         if (!autoplayRadioEnabled) return
         // Start fetching well before the end so related tracks are ready in time.
         if (cur < queueSongs.size - radioPrefetchBuffer) return
-        val seeds = queueSongs.takeLast(8)
-            .mapNotNull { it.spotifyTrackId.ifBlank { null } }
-            .distinct()
         // Atomic check-and-set: only the first concurrent caller proceeds.
         if (!radioLoading.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val existing = currentSongState.queue.value
-                val existingIds = existing.map { it.id }.toSet()
-                val fresh = if (seeds.isNotEmpty()) {
-                    // Spotify-backed queue: use Spotify recommendations.
-                    repository.provideRecommendations(seeds).filter { it.id !in existingIds }
-                } else {
-                    // Login-free / YouTube queue: fetch related songs from YouTube,
-                    // seeded by what's playing (title + artist), so autoplay keeps going.
-                    fetchYoutubeRelated(queueSongs).filter { it.id !in existingIds }
-                }
+                val fresh = radioBatch(existing)
                 if (fresh.isNotEmpty()) currentSongState.updateQueue(existing + fresh)
             } finally {
                 radioLoading.set(false)
@@ -224,12 +200,59 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
     }
 
     /**
+     * One radio top-up for [existing]: Spotify recommendations when the queue has
+     * Spotify seeds (logged in), otherwise YouTube related tracks, then re-ranked
+     * against the on-device taste profile with the last queue item as the seed.
+     * Shared by the background provider, [ensureRadioQueue] and [maybeExtendRadio].
+     *
+     * Preference-based ordering: this is the single autoplay/radio top-up path for
+     * the whole app. Every automatically appended batch is ordered by
+     * [com.music.spotui.data.recommendation.TasteRanker.rank], which weighs the
+     * listener's genre/mood/artist affinity, likes, recency and diversity
+     * (anti-repeat) against the current seed. The raw-order ifEmpty fallback below
+     * guarantees the ranker never starves autoplay. Manual actions such as
+     * [playNext] and [addToQueue] intentionally bypass this ranking: a user who
+     * explicitly queues a track expects it in the exact position they chose.
+     */
+    private suspend fun radioBatch(existing: List<SongsModel>): List<SongsModel> {
+        val existingIds = existing.map { it.id }.toSet()
+        val existingUrls = existing.map { it.url }.toSet()
+        val seeds = existing.takeLast(8)
+            .mapNotNull { it.spotifyTrackId.ifBlank { null } }
+            .distinct()
+        val weights = HashMap<String, Float>()
+        val raw = if (seeds.isNotEmpty()) {
+            runCatching { repository.provideRecommendations(seeds) }.getOrDefault(emptyList())
+                .ifEmpty { fetchYoutubeRelated(existing, weights) }
+        } else {
+            fetchYoutubeRelated(existing, weights)
+        }
+        val fresh = raw.filter { it.id !in existingIds && it.url !in existingUrls }
+        if (fresh.isEmpty()) return emptyList()
+        val ctx = com.music.spotui.MyApplication.instance
+        val ranked = runCatching {
+            com.music.spotui.data.recommendation.TasteRanker.rank(
+                ctx,
+                candidates = fresh,
+                seed = existing.lastOrNull(),
+                recent = com.music.spotui.data.preferences.getListeningHistory(ctx),
+                sourceWeight = weights,
+                limit = 20,
+            )
+        }.getOrDefault(emptyList())
+        // Never let the ranker's filters starve autoplay: fall back to the raw order.
+        return ranked.ifEmpty { fresh.take(20) }
+    }
+
+    /**
      * Login-free autoplay "algorithm": builds a continuation queue from YouTube by
-     * searching for songs related to the recently played tracks (title + artist).
-     * Used when there is no Spotify seed (the whole point of the free experience).
+     * searching for songs related to the recently played tracks (title + artist)
+     * and the user's strongest artists. Each result's query bucket is written to
+     * [weights] so the ranker can favour the closest matches.
      */
     private suspend fun fetchYoutubeRelated(
         queueSongs: List<SongsModel>,
+        weights: MutableMap<String, Float> = HashMap(),
     ): List<SongsModel> {
         val playedIds = queueSongs.map { it.id }.toSet()
         val playedUrls = queueSongs.map { it.url }.toSet()
@@ -239,43 +262,36 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
         // never leaves the queue stuck at one track.
         val seedTracks = queueSongs.takeLast(2)
         val out = LinkedHashMap<String, SongsModel>()
-        val queries = LinkedHashSet<String>()
+        // Query → bucket weight (seed-title mix 1.0, seed artist 0.85, "songs like"
+        // 0.7, taste artist 0.6, trending 0.3). First bucket to add a query wins.
+        val queries = LinkedHashMap<String, Float>()
         for (seed in seedTracks) {
             val artist = seed.singer.substringBefore(",").trim()
             if (seed.title.isNotBlank()) {
-                queries += listOf(seed.title, artist, "mix").filter { it.isNotBlank() }.joinToString(" ")
+                queries.putIfAbsent(listOf(seed.title, artist, "mix").filter { it.isNotBlank() }.joinToString(" "), 1.0f)
             }
             if (artist.isNotBlank()) {
-                queries += "$artist songs"
-                queries += "songs like $artist"
+                queries.putIfAbsent("$artist songs", 0.85f)
+                queries.putIfAbsent("songs like $artist", 0.7f)
             }
         }
         // ── Interest-based seeds ──
-        // Mix in the user's most-played artists from listening history so the
-        // auto-queue reflects their actual taste, not only the track that's
-        // playing right now. This makes the continuation feel personalised.
+        // The user's strongest artists from the taste profile (completes, likes,
+        // recency; skipped artists drop out), so the continuation reflects taste and
+        // not only the track that's playing right now.
         runCatching {
-            val history = com.music.spotui.data.preferences.getListeningHistory(
-                com.music.spotui.MyApplication.instance,
-            )
-            history
-                .mapNotNull { it.singer.substringBefore(",").trim().ifBlank { null } }
-                .map { it.removeSuffix(" - Topic").trim() }
-                .groupingBy { it }
-                .eachCount()
-                .entries
-                .sortedByDescending { it.value }   // most-played artists first
-                .take(3)
-                .forEach { (topArtist, _) ->
-                    queries += "$topArtist top songs"
-                    queries += "songs like $topArtist"
+            com.music.spotui.data.recommendation.TasteProfile
+                .topArtists(com.music.spotui.MyApplication.instance, 3)
+                .forEach { topArtist ->
+                    queries.putIfAbsent("$topArtist top songs", 0.6f)
+                    queries.putIfAbsent("songs like $topArtist", 0.6f)
                 }
         }
         // Last-resort net so autoplay always has *something* to continue with.
-        queries += "popular trending songs 2026"
-        for (query in queries) {
-            // Stop once we have a healthy buffer of continuation tracks.
-            if (out.size >= 15) break
+        queries.putIfAbsent("popular trending songs 2026", 0.3f)
+        for ((query, weight) in queries) {
+            // Over-fetch so the ranker has room to pick a diverse order.
+            if (out.size >= 30) break
             val results = runCatching {
                 com.metrolist.innertube.YouTube
                     .search(query, com.metrolist.innertube.YouTube.SearchFilter.FILTER_SONG)
@@ -301,7 +317,7 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
                 )
                 // Skip anything already in the queue (by id or by videoId).
                 if (model.id !in playedIds && model.url !in playedUrls) {
-                    out.putIfAbsent(model.url, model)
+                    if (out.putIfAbsent(model.url, model) == null) weights[model.url] = weight
                 }
             }
         }

@@ -1,5 +1,18 @@
 package com.music.spotui.ui.screens
 
+/**
+ * Full-screen player (`PlayerScreen`).
+ *
+ * The expanded now-playing surface: artwork pager, transport controls, seek bar, queue/lyrics
+ * access and track actions. Blur effects use `RenderEffect` guarded to API 31+ with a tint
+ * fallback below. Observes playback state from the player ViewModel; it does not touch stream
+ * resolution or the playback engine.
+ */
+
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.MaterialTheme
+import com.music.spotui.ui.theme.SoloShape
+import com.music.spotui.ui.components.soloClickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -17,6 +30,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import kotlin.math.roundToInt
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.material.icons.rounded.Speed
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.basicMarquee
@@ -48,7 +70,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.lerp
 import kotlin.math.absoluteValue
@@ -138,12 +159,38 @@ import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.components.Snackbar
 import com.music.spotui.ui.navigation.Routes
 import com.music.spotui.ui.navigation.albumRoute
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.AppPalette
+import com.music.spotui.ui.theme.Canvas
+import com.music.spotui.ui.theme.Accent
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.blur
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Headphones
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import com.music.spotui.ui.theme.Surface4
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.AccentSoft
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.OnAccent
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.TextTertiary
+import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.Gold
 
 private val artistImageCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 private val artistIdCache = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -440,17 +487,30 @@ fun PlayerScreen(navController: NavController) {
         playerViewModel.formatDuration(SongPlayer.getCurrentPosition())
     }
 
-    Log.d("checkplayer", songTitle)
-
-    //playerViewModel.updateSongState(songCoverUri, songTitle, songSinger, songPlayingState)
-
 
     var dominentColor by remember {
-        mutableStateOf(Color(AppBackground.toArgb()))
+        mutableStateOf(com.music.spotui.ui.theme.Canvas)
     }
+    // The artwork tone eases between tracks instead of snapping.
+    val artTone by androidx.compose.animation.animateColorAsState(
+        targetValue = dominentColor,
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.emphasized(),
+        label = "artTone",
+    )
+    // Artwork breathes down slightly while paused and springs back on play.
+    val artScale by animateFloatAsState(
+        targetValue = if (songPlayingState) 1f else 0.92f,
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.spring(),
+        label = "artScale",
+    )
     var showDevicesSheet by remember { mutableStateOf(false) }
-    Palette().extractSecondColorFromCoverUrl(context = context, songCoverUri) { color ->
-        dominentColor = color
+    // Once per cover: this screen recomposes every 300 ms while playing.
+    LaunchedEffect(songCoverUri) {
+        if (songCoverUri.isNotBlank()) {
+            Palette().extractSecondColorFromCoverUrl(context = context, songCoverUri) { color ->
+                dominentColor = color
+            }
+        }
     }
 
     val songsResponse by playerViewModel.songs.collectAsState()
@@ -520,12 +580,12 @@ fun PlayerScreen(navController: NavController) {
             }
     }
 
-    // Warm the stream cache for the adjacent tracks so next/previous start instantly.
+    // The next two tracks are pre-resolved by CurrentSongState; here we only make the
+    // previous one ready (URL only) so a back-skip is instant too.
     LaunchedEffect(songId, queueSongs) {
         val idx = queueSongs.indexOfFirst { it.id == songId }
-        if (idx >= 0) {
-            queueSongs.getOrNull(idx + 1)?.let { SongPlayer.prefetch(it.url, context) }
-            queueSongs.getOrNull(idx - 1)?.let { SongPlayer.prefetch(it.url, context) }
+        if (idx > 0) {
+            queueSongs.getOrNull(idx - 1)?.let { SongPlayer.prefetch(it.url, context, preBuffer = false) }
         }
     }
 
@@ -589,21 +649,57 @@ fun PlayerScreen(navController: NavController) {
                 translationY = offsetY
                 alpha = (1f - (offsetY / screenHeight)).coerceIn(0f, 1f)
             }
+            .background(Canvas)
             .background(
-                // A richer three stop blend: the artwork's dominant colour at the top,
-                // eased through a darkened version of itself, into near black at the
-                // bottom, so the screen reads as one deep gradient rather than a hard
-                // colour to black cut.
+                // The artwork's tone crowns the screen and settles into the ink canvas.
                 Brush.verticalGradient(
-                    colors = listOf(
-                        dominentColor,
-                        lerp(dominentColor, Color.Black, 0.55f),
-                        Color(0xFF0A0A0C),
-                    ),
-                    startY = 0f,
+                    0f to artTone.copy(alpha = 0.55f),
+                    0.5f to lerp(artTone, Canvas, 0.78f),
+                    1f to Canvas,
                 )
             )
     ) {
+        // Android 12+ only: a heavily blurred copy of the artwork glows behind the
+        // controls. RenderEffect blur does not exist below API 31, where the tone
+        // gradient above is the whole background.
+        if (canvasUrl == null && songCoverUri.isNotBlank() &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S
+        ) {
+            GlideImage(
+                model = songCoverUri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.66f)
+                    // Guarded parallax/depth: the blurred backdrop drifts and eases its
+                    // scale with the dismiss drag so pulling the sheet feels dimensional.
+                    // Derived from the existing offsetY/playing state so it adds no new
+                    // recomposition trigger; API 31+ only (inside the RenderEffect guard).
+                    .graphicsLayer {
+                        val dragFraction = (offsetY / screenHeight).coerceIn(0f, 1f)
+                        translationY = -dragFraction * 48.dp.toPx()
+                        val base = if (songPlayingState) 1.06f else 1.02f
+                        val s = base + dragFraction * 0.06f
+                        scaleX = s
+                        scaleY = s
+                    }
+                    .blur(64.dp)
+                    .alpha(0.35f),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.40f to Color.Transparent,
+                            0.66f to Canvas.copy(alpha = 0.88f),
+                            1f to Canvas,
+                        )
+                    )
+            )
+        }
         if (canvasUrl != null) {
             // Spotify Canvas: the looping video fills the whole now-playing screen
             // edge-to-edge behind the controls (the "immersive" treatment), with a
@@ -651,7 +747,6 @@ fun PlayerScreen(navController: NavController) {
                         onQueueClick = { navController.navigate(Routes.Queue.route) },
                         onBackClick = { dismissPlayer() }
                     )
-                    //Spacer(modifier = Modifier.padding(16.dp))
                     // Swipe the artwork left/right to skip to the next/previous track. Using a
                     // HorizontalPager makes the artwork follow the finger and snap, syncing the
                     // change with the track (Spotify's now-playing gesture) instead of an abrupt
@@ -674,15 +769,18 @@ fun PlayerScreen(navController: NavController) {
                                 modifier = Modifier
                                     .sizeIn(maxWidth = 385.dp, maxHeight = 385.dp)
                                     .aspectRatio(1f)
-                                    .padding(16.dp)
+                                    .padding(27.dp)
+                                    .graphicsLayer { scaleX = artScale; scaleY = artScale }
+                                    // Soft violet glow + thin gold hairline for a premium edge.
                                     .shadow(
-                                        elevation = 24.dp,
-                                        shape = RoundedCornerShape(20.dp),
+                                        elevation = 34.dp,
+                                        shape = com.music.spotui.ui.theme.SoloShape.xl,
                                         clip = false,
-                                        ambientColor = Color.Black,
-                                        spotColor = Color.Black,
+                                        ambientColor = Accent,
+                                        spotColor = Accent,
                                     )
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .clip(com.music.spotui.ui.theme.SoloShape.xl)
+                                    .border(1.dp, Gold.copy(alpha = 0.45f), com.music.spotui.ui.theme.SoloShape.xl)
                                     .alpha(if (canvasUrl != null) 0f else 1f),
                                 model = songCoverUri,
                                 contentScale = ContentScale.Crop,
@@ -703,32 +801,40 @@ fun PlayerScreen(navController: NavController) {
                                     (artworkPagerState.currentPage - page) +
                                         artworkPagerState.currentPageOffsetFraction
                                     ).absoluteValue.coerceIn(0f, 1f)
-                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset)
+                                val scale = androidx.compose.ui.util.lerp(1f, 0.86f, pageOffset) *
+                                    (if (page == currentIndex) artScale else 1f)
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                 GlideImage(
                                     modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(16.dp)
+                                        .fillMaxSize(0.86f)
                                         .graphicsLayer {
                                             scaleX = scale
                                             scaleY = scale
                                         }
+                                        // Soft violet glow lifts the current artwork; a thin
+                                        // gold hairline gives it a crafted, premium edge.
                                         .shadow(
-                                            elevation = 24.dp,
-                                            shape = RoundedCornerShape(20.dp),
+                                            elevation = 34.dp,
+                                            shape = com.music.spotui.ui.theme.SoloShape.xl,
                                             clip = false,
-                                            ambientColor = Color.Black,
-                                            spotColor = Color.Black,
+                                            ambientColor = Accent,
+                                            spotColor = Accent,
                                         )
-                                        .clip(RoundedCornerShape(20.dp))
+                                        .clip(com.music.spotui.ui.theme.SoloShape.xl)
+                                        .border(
+                                            1.dp,
+                                            Gold.copy(alpha = if (page == currentIndex) 0.45f else 0f),
+                                            com.music.spotui.ui.theme.SoloShape.xl,
+                                        )
                                         .alpha(if (canvasUrl != null) 0f else 1f),
                                     model = queueSongs.getOrNull(page)?.coverUri ?: songCoverUri,
                                     contentScale = ContentScale.Crop,
-                                    contentDescription = ""
+                                    contentDescription = "Album artwork"
                                 )
+                                }
                             }
                         }
                     }
-                    //Spacer(modifier = Modifier.padding(30.dp))
 
                     Column(
                         modifier = Modifier
@@ -773,12 +879,16 @@ fun PlayerScreen(navController: NavController) {
                         // release.
                         var isDragging by remember { mutableStateOf(false) }
                         var dragValue by remember { mutableStateOf(0f) }
-                        val liveFraction = SongPlayer.getDuration().toFloat().let { dur ->
+                        val durForBar = SongPlayer.getDuration().toFloat()
+                        val liveFraction = durForBar.let { dur ->
                             if (dur > 0f) (SongPlayer.getCurrentPosition()
                                 .toFloat() / dur).coerceIn(0f, 1f) else 0f
                         }
+                        val bufferedFraction = if (durForBar > 0f)
+                            (SongPlayer.getBufferedPosition().toFloat() / durForBar).coerceIn(0f, 1f) else 0f
                         CustomSlider(
                             value = if (isDragging) dragValue else liveFraction,
+                            bufferedFraction = bufferedFraction,
                             onValueChange = { newValue ->
                                 isDragging = true
                                 dragValue = newValue
@@ -821,18 +931,26 @@ fun PlayerScreen(navController: NavController) {
                                     val dur = SongPlayer.getDuration()
                                     if (dur > 0) playerViewModel.formatDuration((dragValue * dur).toLong()) else "0:00"
                                 } else songProgressText,
-                                color = Color.Gray,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                color = TextTertiary,
+                                style = androidx.compose.material3.MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                             )
                             Text(
                                 text = songDurationText,
-                                color = Color.Gray,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                color = TextTertiary,
+                                style = androidx.compose.material3.MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
                             )
                         }
 
+
+                        // Next-up peek: the song queued after the current one. Tapping it
+                        // opens the full queue. Hidden when nothing follows.
+                        val nextUp = queueSongs.getOrNull(currentIndex + 1)
+                        if (nextUp != null) {
+                            NextUpPeek(
+                                song = nextUp,
+                                onClick = { navController.navigate(Routes.Queue.route) },
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
                         PlayerFull(
@@ -860,7 +978,6 @@ fun PlayerScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    //PlayerEndInfo(onOpenDevices = { showDevicesSheet = true })
                 }
             }
             item {
@@ -912,87 +1029,59 @@ fun PlayerTopBar(
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
-        Icon(
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    onBackClick()
-                },
-            painter = painterResource(id = R.drawable.ic_down),
-            tint = Color.White,
-            contentDescription = ""
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.Rounded.KeyboardArrowDown,
+            contentDescription = "Close player",
+            onClick = onBackClick,
+            filled = true,
+            iconSize = 26.dp,
         )
 
-        // Spotify shows the source context here (album/playlist), not a generic label.
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // The source context (album / playlist) the track is playing from.
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+        ) {
             Text(
                 text = "PLAYING FROM",
-                color = Color(0xFFE8C24A),
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
+                color = Accent,
+                style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.6.sp,
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = contextName.ifBlank { "Now Playing" },
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.widthIn(max = 200.dp),
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Lyrics is a primary action, so it gets its own always visible button
-            // instead of being buried at the bottom of the scrolling content.
-            if (onLyricsClick != null) {
-                Icon(
-                    imageVector = Icons.Default.Lyrics,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(22.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onLyricsClick() },
-                    contentDescription = "Lyrics"
-                )
-                Spacer(Modifier.width(18.dp))
-            }
-            // Up next gives direct access to the queue, which previously had no
-            // entry point from the now playing screen.
-            if (onQueueClick != null) {
-                Icon(
-                    imageVector = Icons.Default.QueueMusic,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(23.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onQueueClick() },
-                    contentDescription = "Up next"
-                )
-                Spacer(Modifier.width(18.dp))
-            }
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(23.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onMenuClick() },
-                contentDescription = ""
+        if (onLyricsClick != null) {
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.Rounded.Lyrics,
+                contentDescription = "Lyrics",
+                onClick = onLyricsClick,
             )
         }
+        if (onQueueClick != null) {
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.AutoMirrored.Rounded.QueueMusic,
+                contentDescription = "Up next",
+                onClick = onQueueClick,
+            )
+        }
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.Rounded.MoreVert,
+            contentDescription = "More options",
+            onClick = onMenuClick,
+        )
     }
 }
 
@@ -1035,62 +1124,62 @@ fun PlayerInfo(
         AlertDialog(
             onDismissRequest = { showStreamDetailDialog = false },
             title = {
-                Text("Stream Resolution Info", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Stream Resolution Info", color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
             },
             text = {
                 Column {
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text("Engine / Source:", color = Color(0xFFB3B3B3), fontSize = 13.sp, modifier = Modifier.width(115.dp))
-                        Text(if (source.isBlank()) "Standard" else source, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text("Engine / Source:", color = TextSecondary, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(115.dp))
+                        Text(if (source.isBlank()) "Standard" else source, color = TextPrimary, style = MaterialTheme.typography.labelLarge)
                     }
                     if (quality.isNotBlank()) {
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            Text("Audio Quality:", color = Color(0xFFB3B3B3), fontSize = 13.sp, modifier = Modifier.width(115.dp))
-                            Text(quality, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Audio Quality:", color = TextSecondary, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(115.dp))
+                            Text(quality, color = TextPrimary, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                     if (!resolveDetailNote.isNullOrBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text("Status Note:", color = Color(0xFFB3B3B3), fontSize = 12.sp)
+                        Text("Status Note:", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(4.dp))
                         Text(
                             resolveDetailNote,
-                            color = Color(0xFFFFB74D),
-                            fontSize = 12.sp,
+                            color = com.music.spotui.ui.theme.Warning,
+                            style = MaterialTheme.typography.bodySmall,
                             lineHeight = 16.sp,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x22FFB74D))
+                                .clip(SoloShape.sm)
+                                .background(com.music.spotui.ui.theme.Warning.copy(alpha = 0.13f))
                                 .padding(10.dp)
                         )
                     }
                     Spacer(Modifier.height(10.dp))
-                    Text("Resolution Trace Log:", color = Color(0xFFB3B3B3), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Resolution Trace Log:", color = TextSecondary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     SelectionContainer {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 220.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF0C0C10))
+                                .clip(SoloShape.sm)
+                                .background(Canvas)
                                 .padding(10.dp)
                                 .verticalScroll(rememberScrollState())
                         ) {
                             Column {
                                 val logs = com.music.spotui.di.SongPlayer.resolutionLogs.toList()
                                 if (logs.isEmpty()) {
-                                    Text("No live trace logs captured for current playback session.", color = Color.Gray, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                                    Text("No live trace logs captured for current playback session.", color = TextTertiary, style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                                 } else {
                                     logs.forEach { line ->
                                         val textColor = when {
-                                            line.contains("✓") -> Color(0xFF81C784)
-                                            line.contains("✗") -> Color(0xFFE57373)
-                                            line.contains("Fallback") || line.contains("Exhausted") -> Color(0xFFFFB74D)
-                                            else -> Color(0xFFD1D1D6)
+                                            line.contains("✓") -> com.music.spotui.ui.theme.Success
+                                            line.contains("✗") -> com.music.spotui.ui.theme.Danger
+                                            line.contains("Fallback") || line.contains("Exhausted") -> com.music.spotui.ui.theme.Warning
+                                            else -> TextSecondary
                                         }
-                                        Text(line, color = textColor, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, lineHeight = 15.sp)
+                                        Text(line, color = textColor, style = MaterialTheme.typography.bodySmall, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, lineHeight = 15.sp)
                                     }
                                 }
                             }
@@ -1101,22 +1190,22 @@ fun PlayerInfo(
             confirmButton = {
                 Row {
                     val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
-                    TextButton(onClick = {
+                    TextButton(onClick = { showStreamDetailDialog = false }) {
+                        Text("Close", color = TextPrimary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    com.music.spotui.ui.components.SoloPillButton(text = "Copy Logs", onClick = {
                         val logs = com.music.spotui.di.SongPlayer.resolutionLogs.toList()
                         val text = logs.joinToString("\n").ifBlank { "No logs available" }
                         clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(text))
                         Toast.makeText(context, "Resolution logs copied to clipboard", Toast.LENGTH_SHORT).show()
-                    }) {
-                        Text("Copy Logs", color = AppPalette)
-                    }
-                    TextButton(onClick = { showStreamDetailDialog = false }) {
-                        Text("Close", color = AppPalette)
-                    }
+                    })
                 }
             },
-            containerColor = Color(0xFF141418),
-            titleContentColor = Color.White,
-            textContentColor = Color.White,
+            containerColor = Surface2,
+            shape = SoloShape.xl,
+            titleContentColor = TextPrimary,
+            textContentColor = TextPrimary,
         )
     }
 
@@ -1125,7 +1214,7 @@ fun PlayerInfo(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(25.dp, 10.dp)
+            .padding(start = 24.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
     ) {
 
         if (snackbarVisible) {
@@ -1135,14 +1224,9 @@ fun PlayerInfo(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .width(270.dp)
+                    .weight(1f)
+                    .padding(end = 12.dp)
             ) {
-//                        GlideImage(
-//                            modifier = Modifier.size(60.dp),
-//                            model = albumSongs[song].coverUri,
-//                            contentScale = ContentScale.Crop,
-//                            contentDescription = ""
-//                        )
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isExplicit) {
@@ -1152,21 +1236,19 @@ fun PlayerInfo(
                         Text(
                             modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                             text = songTitle,
-                            color = Color.White,
-                            fontFamily = com.music.spotui.ui.theme.SpotifyMixTitle,
-                            fontSize = 23.sp,
+                            color = TextPrimary,
+                            // Sora Bold 24, left-aligned.
+                            style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = (-0.4).sp,
                             maxLines = 1,
                             softWrap = false,
                         )
                     }
-                    Spacer(Modifier.height(3.dp))
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = songSinger,
-                        color = Color(0xFFC4C4CC),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        color = TextSecondary,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                         modifier = if (onArtistClick != null) Modifier.clickable(
@@ -1182,19 +1264,23 @@ fun PlayerInfo(
                         // Source badge: green = real Spotify; other colors = not Spotify
                         // (Lossless via SpotiFLAC's Tidal/Qobuz/Amazon/Deezer mirrors, or YouTube).
                         val badgeColor = when {
-                            hasError -> Color(0xFFFF6B6B)
-                            isResolvingState -> Color(0xFF3DABFF)
-                            source == "Spotify" -> Color(0xFFE8C24A)
-                            source.startsWith("Lossless") -> Color(0xFFFFC862)
-                            source.startsWith("Deezer") || source == "Deezer" -> Color(0xFFA238FF)
-                            source == "Downloaded" -> Color(0xFF9C9C9C)
-                            else -> Color(0xFFFF6B6B)
+                            hasError -> com.music.spotui.ui.theme.Danger
+                            isResolvingState -> AccentSoft
+                            source == "Spotify" -> Accent
+                            source.startsWith("Lossless") -> AccentSoft
+                            source.startsWith("Deezer") || source == "Deezer" -> AccentSoft
+                            source == "Downloaded" -> TextSecondary
+                            else -> com.music.spotui.ui.theme.Danger
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .padding(top = 3.dp)
-                                .clickable { showStreamDetailDialog = true },
+                                .padding(top = 8.dp)
+                                .clip(SoloShape.pill)
+                                .background(Surface3)
+                                .border(1.dp, com.music.spotui.ui.theme.Hairline, SoloShape.pill)
+                                .clickable { showStreamDetailDialog = true }
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
                         ) {
                             Box(
                                 modifier = Modifier
@@ -1204,26 +1290,39 @@ fun PlayerInfo(
                             )
                             Text(
                                 text = when {
-                                    hasError -> resolveError!!
+                                    hasError -> resolveError.orEmpty()
                                     isResolvingState -> resolveStatus
                                     else -> {
                                         source + (if (quality.isNotBlank()) " • $quality" else "")
                                     }
                                 },
-                                color = badgeColor,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                color = if (hasError) badgeColor else TextPrimary,
+                                style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
                                 maxLines = 1,
-                                modifier = Modifier.padding(start = 5.dp),
+                                modifier = Modifier.padding(start = 6.dp),
                             )
                         }
                     }
                 }
             }
 
+            // The like glyph pops and its tint animates to the accent on toggle so the
+            // save registers tactilely.
+            val likeTint by androidx.compose.animation.animateColorAsState(
+                targetValue = if (isLiked.value) Accent else TextPrimary,
+                animationSpec = com.music.spotui.ui.theme.SoloMotion.standard(),
+                label = "playerLikeTint",
+            )
+            val likeScale by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = if (isLiked.value) com.music.spotui.ui.theme.SoloMotion.TOGGLE_POP_SCALE else 1f,
+                animationSpec = com.music.spotui.ui.theme.SoloMotion.toggleSpring(),
+                label = "playerLikeScale",
+            )
             Icon(
                 modifier = Modifier
-                    .size(26.dp)
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .graphicsLayer { scaleX = likeScale; scaleY = likeScale }
                     .combinedClickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -1259,18 +1358,11 @@ fun PlayerInfo(
                             )
                         },
                         onLongClick = { onShowSavedIn?.invoke() },
-                    ),
-                painter = if (isLiked.value) {
-                    painterResource(id = R.drawable.added)
-                } else {
-                    painterResource(id = R.drawable.ic_add)
-                },
-                tint = if (isLiked.value) {
-                    Color(AppPalette.toArgb())
-                } else {
-                    Color.White
-                },
-                contentDescription = ""
+                    )
+                    .padding(9.dp),
+                imageVector = if (isLiked.value) Icons.Rounded.CheckCircle else Icons.Rounded.AddCircleOutline,
+                tint = likeTint,
+                contentDescription = if (isLiked.value) "Saved to Liked Songs" else "Save to Liked Songs"
             )
         }
     }
@@ -1278,6 +1370,15 @@ fun PlayerInfo(
 
 }
 
+/**
+ * Solo seek bar: a 3dp Surface4 track with a faint gold buffered-ahead tint, the
+ * violet→cyan accent gradient on the played part, and a Gold scrubber thumb that scales
+ * up on drag (with a soft gold halo), inside a 48dp touch band. Exposes slider semantics
+ * so TalkBack can read and set the position.
+ *
+ * [bufferedFraction] is the stream's buffered-ahead position (0..1); it only tints the
+ * track and never affects seeking.
+ */
 @Composable
 fun CustomSlider(
     modifier: Modifier = Modifier,
@@ -1286,37 +1387,34 @@ fun CustomSlider(
     onValueChangeFinished: (() -> Unit)? = null,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
+    bufferedFraction: Float = 0f,
     colors: Any? = null, // kept for API compat; unused
 ) {
     var isDragging by remember { mutableStateOf(false) }
-
-    // Track height grows slightly while dragging (Spotify micro-animation)
-    val trackHeight by animateDpAsState(
-        targetValue = if (isDragging) 5.dp else 3.dp,
-        animationSpec = tween(durationMillis = 150),
-        label = "trackHeight"
+    val thumbDp by animateDpAsState(
+        targetValue = if (isDragging) 18.dp else 12.dp,
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.spring(),
+        label = "thumbSize",
     )
-    // Thumb alpha: invisible at rest, pops in when dragging
-    val thumbAlpha by animateFloatAsState(
-        targetValue = if (isDragging) 1f else 0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "thumbAlpha"
-    )
-
-    val fraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
-        .coerceIn(0f, 1f)
-
-    val density = LocalDensity.current
+    val span = (valueRange.endInclusive - valueRange.start).takeIf { it > 0f } ?: 1f
+    val fraction = ((value - valueRange.start) / span).coerceIn(0f, 1f)
 
     Box(
         modifier = modifier
-            .height(36.dp) // generous vertical touch target
+            .height(48.dp)
+            .semantics {
+                contentDescription = "Seek"
+                progressBarRangeInfo = androidx.compose.ui.semantics.ProgressBarRangeInfo(value, valueRange)
+                setProgress { target ->
+                    onValueChange(target.coerceIn(valueRange.start, valueRange.endInclusive))
+                    onValueChangeFinished?.invoke()
+                    true
+                }
+            }
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
-                    val newFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                    val mapped =
-                        valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                    onValueChange(mapped)
+                    val f = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                    onValueChange(valueRange.start + f * span)
                     onValueChangeFinished?.invoke()
                 }
             }
@@ -1333,77 +1431,116 @@ fun CustomSlider(
                     },
                     onHorizontalDrag = { change, _ ->
                         change.consume()
-                        val newFraction =
-                            (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
-                        val mapped =
-                            valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                        onValueChange(mapped)
+                        val f = (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        onValueChange(valueRange.start + f * span)
                     }
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        val trackHeightPx = with(density) { trackHeight.toPx() }
-        val thumbRadiusPx = with(density) { 6.dp.toPx() }
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(trackHeight)
-        ) {
-            val trackY = size.height / 2f
-            val thumbX = fraction * size.width
-
-            // Inactive (background) track
+        Canvas(modifier = Modifier.fillMaxWidth().height(20.dp)) {
+            val trackPx = 3.dp.toPx()
+            val y = size.height / 2f
+            val thumbR = thumbDp.toPx() / 2f
+            val x = (fraction * size.width).coerceIn(0f, size.width)
+            // Base (unbuffered) track.
             drawLine(
-                color = Color(0xFF535353),
-                start = Offset(0f, trackY),
-                end = Offset(size.width, trackY),
-                strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                color = com.music.spotui.ui.theme.Surface4,
+                start = Offset(0f, y),
+                end = Offset(size.width, y),
+                strokeWidth = trackPx,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
             )
-            // Active (played) track, YouTube Music red
-            drawLine(
-                color = Color(0xFFE8C24A),
-                start = Offset(0f, trackY),
-                end = Offset(thumbX, trackY),
-                strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
-            // Thumb dot, always visible (YT Music shows it), pops larger while dragging
-            run {
-                drawCircle(
-                    color = Color(0xFFE8C24A),
-                    radius = thumbRadiusPx * (0.6f + 0.4f * thumbAlpha),
-                    center = Offset(thumbX, trackY)
+            // Buffered-ahead tint: a faint gold wash showing how far the stream is ready.
+            val bufX = (bufferedFraction.coerceIn(0f, 1f) * size.width).coerceIn(0f, size.width)
+            if (bufX > x) {
+                drawLine(
+                    color = Gold.copy(alpha = 0.22f),
+                    start = Offset(x, y),
+                    end = Offset(bufX, y),
+                    strokeWidth = trackPx,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
                 )
             }
+            if (x > 0f) {
+                drawLine(
+                    brush = Brush.horizontalGradient(
+                        listOf(com.music.spotui.ui.theme.AccentSoft, Accent, com.music.spotui.ui.theme.AccentDeep),
+                        startX = 0f,
+                        endX = size.width,
+                    ),
+                    start = Offset(0f, y),
+                    end = Offset(x, y),
+                    strokeWidth = trackPx,
+                    cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                )
+            }
+            // Soft gold halo while dragging so the thumb reads as the premium scrubber.
+            if (isDragging) {
+                drawCircle(color = Gold.copy(alpha = 0.28f), radius = thumbR * 1.9f, center = Offset(x, y))
+            }
+            drawCircle(color = Gold, radius = thumbR, center = Offset(x, y))
         }
     }
 }
 
+
+/**
+ * "Next up" peek: a compact strip showing the song queued after the current one, with a
+ * small thumbnail, a gold-tinted "NEXT UP" label and a chevron. Tapping it opens the full
+ * queue. The caller hides it when there is no next item.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun PlayerEndInfo() {
+fun NextUpPeek(
+    song: SongsModel,
+    onClick: () -> Unit,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp)
+            .padding(horizontal = 22.dp)
+            .padding(top = 6.dp)
+            .clip(SoloShape.pill)
+            .background(Surface2.copy(alpha = 0.6f))
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.pill)
+            .soloClickable(ripple = true, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
     ) {
-        Icon(
+        GlideImage(
+            model = song.coverUri,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(22.dp),
-            painter = painterResource(id = R.drawable.ic_devices),
-            tint = Color.White,
-            contentDescription = ""
+                .size(36.dp)
+                .clip(SoloShape.sm),
         )
-        Icon(
+        Column(
             modifier = Modifier
-                .size(16.dp),
-            painter = painterResource(id = R.drawable.ic_share),
-            tint = Color.White,
-            contentDescription = ""
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
+            Text(
+                text = "NEXT UP",
+                color = Gold,
+                style = MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.4.sp,
+            )
+            Spacer(Modifier.height(1.dp))
+            Text(
+                text = song.title + (if (song.singer.isNotBlank()) " • ${song.singer}" else ""),
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+            contentDescription = "Open queue",
+            tint = TextSecondary,
+            modifier = Modifier.size(20.dp),
         )
     }
 }
@@ -1419,74 +1556,86 @@ fun PlayerFull(
     queueSongs: List<SongsModel>
 ) {
 
+    // A light tactile tick on skip so the transport feels premium under the thumb.
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(20.dp)
+            .padding(horizontal = 22.dp, vertical = 16.dp)
     ) {
-        Icon(
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .size(25.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(48.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
                     if (shuffle) {
                         playerViewModel.updateShuffleState(false)
                     } else {
                         playerViewModel.updateShuffleState(true)
                     }
 
+                }
+        ) {
+            Icon(
+                modifier = Modifier.size(24.dp),
+                tint = if (shuffle) {
+                    Accent
+                } else {
+                    TextPrimary
                 },
-            tint = if (shuffle) {
-                Color(0xFFE8C24A)
+                imageVector = Icons.Rounded.Shuffle,
+                contentDescription = if (shuffle) "Shuffle on" else "Shuffle off"
+            )
+            // 4dp accent dot marks an active mode (same as repeat).
+            if (shuffle) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Box(
+                    modifier = Modifier
+                        .size(4.dp)
+                        .background(Accent, shape = CircleShape)
+                )
             } else {
-                Color.White
-            },
-            painter = painterResource(id = R.drawable.ic_player_shuffle),
-            contentDescription = ""
-        )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+        }
         Icon(
             modifier = Modifier
-                .size(35.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(52.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     // The queue itself is already in shuffled order when shuffle
                     // is on (reordered once at toggle), never re-shuffle per tap.
                     playerViewModel.playPreviousSong(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
-                },
-            tint = Color.White,
-            painter = painterResource(id = R.drawable.ic_player_back),
-            contentDescription = ""
+                }
+                .padding(5.dp),
+            tint = TextPrimary,
+            imageVector = Icons.Rounded.SkipPrevious,
+            contentDescription = "Previous"
         )
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                // requiredSize forces an exact 68×68 square even if the parent Column
+                // requiredSize forces an exact 76×76 square even if the parent Column
                 // constrains height, .size() alone let it get squished into an ellipse.
-                .requiredSize(68.dp)
-                // A soft amber glow under the play button so it reads as the primary
-                // control, in the app's accent rather than a flat white disc.
+                .requiredSize(76.dp)
+                // A soft accent glow under the play disc so it reads as the primary control.
                 .shadow(
-                    elevation = 18.dp,
+                    elevation = 22.dp,
                     shape = CircleShape,
                     clip = false,
-                    ambientColor = Color(0xFFE8C24A),
-                    spotColor = Color(0xFFE8C24A),
+                    ambientColor = Accent,
+                    spotColor = Accent,
                 )
                 .clip(CircleShape)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color(0xFFFFC760), Color(0xFFE8C24A)),
-                    )
-                )
-                .clickable {
+                .background(com.music.spotui.ui.theme.AccentBrush)
+                .soloClickable(ripple = true) {
                     // Single source of truth: toggle based on the engine's real
                     // state so the button never gets stuck showing the wrong icon.
                     playerViewModel.togglePlayPause()
@@ -1499,48 +1648,55 @@ fun PlayerFull(
             if (playerViewModel.isResolving.value) {
                 androidx.compose.material3.CircularProgressIndicator(
                     modifier = Modifier.size(30.dp),
-                    color = Color.Black,
+                    color = OnAccent,
                     strokeWidth = 3.dp
                 )
             } else {
-                Icon(
-                    modifier = Modifier
-                        .size(30.dp),
-                    tint = Color.Black,
-                    painter = if (songPlayingState)
-                        painterResource(id = R.drawable.ic_playing)
-                    else
-                        painterResource(id = R.drawable.play_svgrepo_com),
-                    contentDescription = ""
-                )
+                androidx.compose.animation.AnimatedContent(
+                    targetState = songPlayingState,
+                    transitionSpec = {
+                        (androidx.compose.animation.fadeIn(com.music.spotui.ui.theme.SoloMotion.quick()) +
+                            androidx.compose.animation.scaleIn(com.music.spotui.ui.theme.SoloMotion.spring(), initialScale = 0.6f))
+                            .togetherWith(
+                                androidx.compose.animation.fadeOut(com.music.spotui.ui.theme.SoloMotion.quick()) +
+                                    androidx.compose.animation.scaleOut(com.music.spotui.ui.theme.SoloMotion.quick(), targetScale = 0.6f)
+                            )
+                    },
+                    label = "playPause",
+                ) { playing ->
+                    Icon(
+                        modifier = Modifier
+                            .size(38.dp),
+                        tint = OnAccent,
+                        imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                        contentDescription = if (playing) "Pause" else "Play"
+                    )
+                }
             }
         }
 
         Icon(
             modifier = Modifier
-                .size(35.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-
+                .size(52.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
+                    haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                     playerViewModel.playNextSongs(queueSongs, context)
                     isLiked.value =
                         isSongLiked(context, playerViewModel.currentSongId.value.toString())
-                },
-            tint = Color.White,
-            painter = painterResource(id = R.drawable.ic_player_skip),
-            contentDescription = ""
+                }
+                .padding(5.dp),
+            tint = TextPrimary,
+            imageVector = Icons.Rounded.SkipNext,
+            contentDescription = "Next"
         )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .size(width = 32.dp, height = 40.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
+                .size(48.dp)
+                .clip(CircleShape)
+                .soloClickable(ripple = true) {
                     val nextRepeat = when (repeat) {
                         RepeatMode.OFF -> RepeatMode.ALL
                         RepeatMode.ALL -> RepeatMode.ONE
@@ -1554,31 +1710,26 @@ fun PlayerFull(
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(24.dp),
                     tint = if (repeat != RepeatMode.OFF) {
-                        Color(0xFFE8C24A)
+                        Accent
                     } else {
-                        Color.White
+                        TextPrimary
                     },
-                    painter = painterResource(id = R.drawable.ic_repeat),
-                    contentDescription = "Repeat"
+                    imageVector = if (repeat == RepeatMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                    contentDescription = when (repeat) {
+                        RepeatMode.OFF -> "Repeat off"
+                        RepeatMode.ALL -> "Repeat all"
+                        RepeatMode.ONE -> "Repeat one"
+                    }
                 )
-                if (repeat == RepeatMode.ONE) {
-                    Text(
-                        text = "1",
-                        color = Color(0xFFE8C24A),
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.offset(y = (-1).dp)
-                    )
-                }
             }
             if (repeat != RepeatMode.OFF) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Box(
-modifier = Modifier
+                    modifier = Modifier
                         .size(4.dp)
-                        .background(Color(0xFFE8C24A), shape = CircleShape)
+                        .background(Accent, shape = CircleShape)
                 )
             } else {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -1587,38 +1738,7 @@ modifier = Modifier
     }
 }
 
-@Composable
-fun PlayerEndInfo(onOpenDevices: () -> Unit = {}) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Icon(
-            modifier = Modifier
-                .size(22.dp)
-                .clickable { onOpenDevices() },
-            painter = painterResource(id = R.drawable.ic_devices),
-            tint = Color.White,
-            contentDescription = "Devices"
-        )
-        Icon(
-            modifier = Modifier
-                .size(16.dp),
-            painter = painterResource(id = R.drawable.ic_share),
-            tint = Color.White,
-            contentDescription = ""
-        )
-    }
-}
 
-/** The current audio output route name for the Connect indicator (BT name if
- *  connected, else Headphones / This device). */
-private fun currentAudioRoute(context: Context): String {
-    return com.music.spotui.ui.utils.AudioDeviceHelper.getCurrentAudioRouteName(context)
-}
 
 @Composable
 fun PlayerConnectRow(
@@ -1651,29 +1771,31 @@ fun PlayerConnectRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 25.dp, vertical = 4.dp),
+            .padding(start = 22.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
     ) {
-        // Device / Spotify Connect indicator (green, like the official app).
+        // Current audio output, as a Surface3 chip that opens the device picker.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(SoloShape.pill)
+                .background(Surface3)
+                .border(1.dp, com.music.spotui.ui.theme.Hairline, SoloShape.pill)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                 ) { onOpenDevices() }
+                .padding(horizontal = 12.dp, vertical = 7.dp)
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_devices),
-                tint = Color(0xFFE8C24A),
-                modifier = Modifier.size(18.dp),
-                contentDescription = "Device",
+                imageVector = Icons.Rounded.Headphones,
+                tint = Accent,
+                modifier = Modifier.size(17.dp),
+                contentDescription = "Audio output",
             )
             Text(
                 text = routeName,
-                color = Color(0xFFE8C24A),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                color = Accent,
+                style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -1683,14 +1805,12 @@ fun PlayerConnectRow(
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_share),
-                tint = Color.White,
+                imageVector = Icons.Rounded.Share,
+                tint = TextPrimary,
                 modifier = Modifier
-                    .size(20.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable {
                         val link = currentTrack?.spotifyTrackId
                             ?.takeIf { it.isNotBlank() }
                             ?.let { "https://open.spotify.com/track/$it" }
@@ -1700,19 +1820,18 @@ fun PlayerConnectRow(
                             putExtra(Intent.EXTRA_TEXT, link)
                         }
                         context.startActivity(Intent.createChooser(send, "Share"))
-                    },
+                    }
+                    .padding(13.dp),
                 contentDescription = "Share",
             )
-            Spacer(modifier = Modifier.width(22.dp))
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.List,
-                tint = Color.White,
+                imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                tint = TextPrimary,
                 modifier = Modifier
-                    .size(23.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) { onOpenQueue() },
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable { onOpenQueue() }
+                    .padding(12.dp),
                 contentDescription = "Queue",
             )
         }
@@ -1804,8 +1923,10 @@ fun ArtistsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
-        dragHandle = null,
+        containerColor = Surface2,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier
@@ -1815,9 +1936,8 @@ fun ArtistsSheet(
         ) {
             Text(
                 text = "Artists",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             )
             artistNames.forEachIndexed { index, name ->
@@ -1856,12 +1976,12 @@ fun ArtistsSheet(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF333333)),
+                                .background(Surface3),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                tint = Color.Gray,
+                                tint = TextTertiary,
                                 modifier = Modifier.size(24.dp),
                                 contentDescription = name,
                             )
@@ -1870,8 +1990,8 @@ fun ArtistsSheet(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = name,
-                        color = Color.White,
-                        fontSize = 15.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
                             .weight(1f)
@@ -1885,15 +2005,16 @@ fun ArtistsSheet(
                     if (effectiveId.isNotBlank()) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
+                                .heightIn(min = 36.dp)
+                                .clip(SoloShape.pill)
                                 .border(
                                     1.dp,
-                                    if (following) Color.Transparent else Color.Gray,
-                                    RoundedCornerShape(20.dp),
+                                    if (following) Color.Transparent else TextTertiary,
+                                    SoloShape.pill,
                                 )
                                 .background(
-                                    if (following) Color(0xFFE8C24A) else Color.Transparent,
-                                    RoundedCornerShape(20.dp),
+                                    if (following) Accent else Color.Transparent,
+                                    SoloShape.pill,
                                 )
                                 .clickable {
                                     following = !following
@@ -1915,13 +2036,13 @@ fun ArtistsSheet(
                                         following
                                     )
                                 }
-                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = if (following) "Following" else "Follow",
-                                color = if (following) Color(0xFF191414) else Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                color = if (following) OnAccent else TextPrimary,
+                                style = MaterialTheme.typography.labelLarge,
                             )
                         }
                     }
@@ -1943,6 +2064,7 @@ fun PlayerOptionsSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSleep by remember { mutableStateOf(false) }
+    var showSpeed by remember { mutableStateOf(false) }
     var showSavedIn by remember { mutableStateOf(false) }
     var showAlternativeStream by remember { mutableStateOf(false) }
     var showYouTubeSearch by remember { mutableStateOf(false) }
@@ -2024,8 +2146,10 @@ fun PlayerOptionsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xFF1A1A1A),
-        dragHandle = null
+        containerColor = Surface2,
+        dragHandle = { com.music.spotui.ui.components.SoloDragHandle() },
+        shape = com.music.spotui.ui.theme.SoloShape.sheetTop,
+        scrimColor = com.music.spotui.ui.theme.Scrim,
     ) {
         Column(
             modifier = Modifier
@@ -2092,6 +2216,8 @@ fun PlayerOptionsSheet(
                     },
                     onOpenYouTubeSearch = { showYouTubeSearch = true },
                 )
+            } else if (showSpeed) {
+                PlaybackSpeedPanel(context = context, onBack = { showSpeed = false })
             } else if (!showSleep) {
                 // ── Now-playing header ──
                 Row(
@@ -2103,7 +2229,7 @@ fun PlayerOptionsSheet(
                     GlideImage(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(RoundedCornerShape(4.dp)),
+                            .clip(SoloShape.sm),
                         model = cover,
                         contentScale = ContentScale.Crop,
                         contentDescription = ""
@@ -2112,22 +2238,22 @@ fun PlayerOptionsSheet(
                     Column {
                         Text(
                             title,
-                            color = Color.White,
-                            fontSize = 15.sp,
+                            color = TextPrimary,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                         Text(
                             singer,
-                            color = Color.Gray,
-                            fontSize = 13.sp,
+                            color = TextTertiary,
+                            style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     }
                 }
-                androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                androidx.compose.material3.HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
 
                 PlayerMenuRow(
                     icon = Icons.Default.Share,
@@ -2144,10 +2270,8 @@ fun PlayerOptionsSheet(
                     onDismiss()
                 }
                 PlayerMenuRow(
-                    icon = if (downloaded) Icons.Default.CheckCircle else ImageVector.vectorResource(
-                        R.drawable.ic_download
-                    ),
-                    iconTint = if (downloaded) Color(AppPalette.toArgb()) else Color.White,
+                    icon = if (downloaded) Icons.Default.CheckCircle else androidx.compose.material.icons.Icons.Rounded.Download,
+                    iconTint = if (downloaded) Accent else TextPrimary,
                     label = when {
                         downloaded -> "Remove download"
                         downloadingNow -> "Downloading…"
@@ -2172,7 +2296,7 @@ fun PlayerOptionsSheet(
                 }
                 PlayerMenuRow(
                     icon = Icons.Default.PlayArrow,
-                    iconTint = if (currentAlternative != null) Color(AppPalette.toArgb()) else Color.White,
+                    iconTint = if (currentAlternative != null) Accent else TextPrimary,
                     label = if (currentAlternative == null) "Alternative stream" else "Alternative stream set",
                     enabled = currentSong != null,
                     trailingArrow = true,
@@ -2190,7 +2314,7 @@ fun PlayerOptionsSheet(
                 }
                 PlayerMenuRow(
                     icon = if (isLiked.value) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    iconTint = if (isLiked.value) Color(AppPalette.toArgb()) else Color.White,
+                    iconTint = if (isLiked.value) Accent else TextPrimary,
                     label = if (isLiked.value) "Remove from Liked Songs" else "Add to Liked Songs"
                 ) {
                     if (isLiked.value) {
@@ -2257,26 +2381,38 @@ fun PlayerOptionsSheet(
                     subtitle = if (minutesLeft > 0) "$minutesLeft min left" else null,
                     trailingArrow = true
                 ) { showSleep = true }
+                val speedNow = com.music.spotui.data.preferences.getPlaybackSpeed(context)
+                PlayerMenuRow(
+                    icon = androidx.compose.material.icons.Icons.Rounded.Speed,
+                    label = "Playback speed",
+                    subtitle = if (speedNow != 1f) "${formatSpeed(speedNow)}×" else null,
+                    trailingArrow = true,
+                ) { showSpeed = true }
+                PlayerMenuRow(
+                    icon = androidx.compose.material.icons.Icons.Rounded.GraphicEq,
+                    label = "Equalizer",
+                    trailingArrow = true,
+                ) {
+                    onDismiss()
+                    navController.navigate(com.music.spotui.ui.navigation.Routes.Equalizer.route)
+                }
             } else {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clickable { showSleep = false },
+                    com.music.spotui.ui.components.SoloIconButton(
+                        icon = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
+                        onClick = { showSleep = false },
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         "Sleep timer",
-                        color = Color.White,
-                        fontSize = 16.sp,
+                        color = TextPrimary,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
@@ -2285,14 +2421,14 @@ fun PlayerOptionsSheet(
                         val seconds = remainingSeconds % 60
                         Text(
                             text = String.format("%02d:%02d", minutes, seconds),
-                            color = Color(AppPalette.toArgb()),
-                            fontSize = 16.sp,
+                            color = Accent,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(end = 16.dp)
                         )
                     }
                 }
-                androidx.compose.material3.HorizontalDivider(color = Color(0xFF2A2A2A))
+                androidx.compose.material3.HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
                 val options = listOf(
                     "Off" to 0L,
                     "5 minutes" to 5L,
@@ -2312,6 +2448,93 @@ fun PlayerOptionsSheet(
     }
 }
 
+private fun formatSpeed(v: Float): String =
+    if (v == v.toInt().toFloat()) v.toInt().toString() else "%.2f".format(v).trimEnd('0').trimEnd('.')
+
+/** Speed chips, a pitch slider and Reset, shown inside the player options sheet. */
+@Composable
+private fun PlaybackSpeedPanel(context: Context, onBack: () -> Unit) {
+    var speed by remember { mutableStateOf(com.music.spotui.data.preferences.getPlaybackSpeed(context)) }
+    var pitch by remember { mutableStateOf(com.music.spotui.data.preferences.getPlaybackPitch(context)) }
+    fun apply() = SongPlayer.setPlaybackSpeedPitch(context, speed, pitch)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        com.music.spotui.ui.components.SoloIconButton(
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Back",
+            onClick = onBack,
+        )
+        Text(
+            "Playback speed",
+            color = TextPrimary,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "${formatSpeed(speed)}×",
+            color = Accent,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 16.dp),
+        )
+    }
+    androidx.compose.material3.HorizontalDivider(color = com.music.spotui.ui.theme.Hairline)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+    ) {
+        listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f).forEach { option ->
+            com.music.spotui.ui.components.SoloChip(
+                label = "${formatSpeed(option)}×",
+                selected = speed == option,
+                onClick = { speed = option; apply() },
+                modifier = Modifier.heightIn(min = 48.dp),
+            )
+        }
+    }
+    Text(
+        "Pitch  ${"%.2f".format(pitch)}",
+        color = TextSecondary,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(horizontal = 16.dp),
+    )
+    androidx.compose.material3.Slider(
+        value = pitch,
+        onValueChange = { pitch = (it * 20).roundToInt() / 20f },
+        onValueChangeFinished = { apply() },
+        valueRange = 0.5f..1.5f,
+        colors = androidx.compose.material3.SliderDefaults.colors(
+            thumbColor = Accent,
+            activeTrackColor = Accent,
+            inactiveTrackColor = com.music.spotui.ui.theme.Surface4,
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .semantics { contentDescription = "Pitch" },
+    )
+    Row(
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        com.music.spotui.ui.components.SoloPillButton(
+            text = "Reset",
+            primary = false,
+            onClick = { speed = 1f; pitch = 1f; apply() },
+        )
+    }
+}
+
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlternativeStreamEditor(
@@ -2327,23 +2550,19 @@ fun AlternativeStreamEditor(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable { onBack() },
-                contentDescription = null,
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Back",
+                onClick = onBack,
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(4.dp))
             Text(
                 "Alternative stream",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                style = MaterialTheme.typography.titleLarge,
             )
         }
         Spacer(Modifier.height(14.dp))
@@ -2355,8 +2574,8 @@ fun AlternativeStreamEditor(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF282828))
+                    .clip(SoloShape.sm)
+                    .background(Surface3)
                     .clickable {
                         val intent = Intent(
                             Intent.ACTION_VIEW,
@@ -2370,7 +2589,7 @@ fun AlternativeStreamEditor(
                     model = thumbnailUrl,
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(RoundedCornerShape(6.dp)),
+                        .clip(SoloShape.xs),
                     contentScale = ContentScale.Crop,
                     contentDescription = null,
                 )
@@ -2378,22 +2597,22 @@ fun AlternativeStreamEditor(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "YouTube alternative",
-                        color = Color(AppPalette.toArgb()),
-                        fontSize = 13.sp,
+                        color = Accent,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = videoId,
-                        color = Color(0xFFB3B3B3),
-                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                    tint = Color(0xFFB3B3B3),
+                    tint = TextSecondary,
                     modifier = Modifier.size(18.dp),
                     contentDescription = "Open on YouTube",
                 )
@@ -2401,15 +2620,15 @@ fun AlternativeStreamEditor(
         } else if (currentAlternative != null && currentAlternative.isLocal) {
             Text(
                 text = "Current: local file ${currentAlternative.label.ifBlank { currentAlternative.value }}",
-                color = Color(AppPalette.toArgb()),
-                fontSize = 13.sp,
+                color = Accent,
+                style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
             )
         } else {
             Text(
                 text = "No alternative stream set",
-                color = Color(0xFFB3B3B3),
-                fontSize = 13.sp,
+                color = TextSecondary,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -2418,21 +2637,29 @@ fun AlternativeStreamEditor(
             onValueChange = { youtubeText = it },
             enabled = enabled,
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 14.sp),
-            label = { Text("YouTube link or video ID", color = Color(0xFFB3B3B3)) },
-            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
+            label = { Text("YouTube link or video ID", color = TextSecondary) },
+            shape = SoloShape.md,
+            colors = soloFieldColors(),
+            modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(
-                enabled = enabled && youtubeText.isNotBlank(),
-                onClick = { onUseYouTube(youtubeText) }) {
+            if (enabled && youtubeText.isNotBlank()) {
+                com.music.spotui.ui.components.SoloPillButton(
+                    text = "Use YouTube",
+                    onClick = { onUseYouTube(youtubeText) },
+                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
+                )
+            } else {
                 Text(
                     "Use YouTube",
-                    color = if (enabled && youtubeText.isNotBlank()) AppPalette else Color.Gray
+                    color = TextTertiary,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 21.dp),
                 )
             }
         }
@@ -2455,7 +2682,7 @@ fun AlternativeStreamEditor(
             icon = Icons.Default.CheckCircle,
             label = "Clear alternative stream",
             enabled = enabled && currentAlternative != null,
-            iconTint = Color(0xFFE57373),
+            iconTint = com.music.spotui.ui.theme.Danger,
         ) {
             onClear()
         }
@@ -2485,23 +2712,19 @@ fun YouTubeSearchView(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(24.dp)
-                    .clickable { viewModel.stopPreview(); onBack() },
-                contentDescription = null,
+            com.music.spotui.ui.components.SoloIconButton(
+                icon = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Back",
+                onClick = { viewModel.stopPreview(); onBack() },
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(4.dp))
             Text(
                 "Search YouTube",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                style = MaterialTheme.typography.titleLarge,
             )
         }
         Spacer(Modifier.height(14.dp))
@@ -2510,9 +2733,11 @@ fun YouTubeSearchView(
             onValueChange = { viewModel.updateQuery(it) },
             enabled = enabled,
             singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 14.sp),
-            label = { Text("Search query", color = Color(0xFFB3B3B3)) },
-            modifier = Modifier.fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
+            label = { Text("Search query", color = TextSecondary) },
+            shape = SoloShape.md,
+            colors = soloFieldColors(),
+            modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
         )
         Spacer(Modifier.height(12.dp))
 
@@ -2525,7 +2750,7 @@ fun YouTubeSearchView(
                     contentAlignment = Alignment.Center,
                 ) {
                     androidx.compose.material3.CircularProgressIndicator(
-                        color = AppPalette,
+                        color = Accent,
                         modifier = Modifier.size(32.dp),
                     )
                 }
@@ -2539,8 +2764,8 @@ fun YouTubeSearchView(
                 if (errorText != null) {
                     Text(
                         text = errorText,
-                        color = Color(0xFFE57373),
-                        fontSize = 13.sp,
+                        color = com.music.spotui.ui.theme.Danger,
+                        style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
@@ -2549,8 +2774,8 @@ fun YouTubeSearchView(
             viewModel.searchResults.isEmpty() && viewModel.searchQuery.isNotBlank() -> {
                 Text(
                     text = "No results found",
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 13.sp,
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
@@ -2608,7 +2833,7 @@ private fun YouTubeSearchResultRow(
             model = song.thumbnail,
             modifier = Modifier
                 .size(44.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(SoloShape.sm),
             contentScale = ContentScale.Crop,
             contentDescription = null,
         )
@@ -2616,8 +2841,8 @@ private fun YouTubeSearchResultRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = song.title,
-                color = Color.White,
-                fontSize = 14.sp,
+                color = TextPrimary,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -2625,8 +2850,8 @@ private fun YouTubeSearchResultRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = song.artists.joinToString(", ") { it.name },
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 12.sp,
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
@@ -2634,8 +2859,8 @@ private fun YouTubeSearchResultRow(
                 if (durationText.isNotBlank()) {
                     Text(
                         text = " · $durationText",
-                        color = Color(0xFFB3B3B3),
-                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
@@ -2643,31 +2868,33 @@ private fun YouTubeSearchResultRow(
         Spacer(Modifier.width(4.dp))
         if (isResolving) {
             androidx.compose.material3.CircularProgressIndicator(
-                color = AppPalette,
+                color = Accent,
                 modifier = Modifier
-                    .size(28.dp)
-                    .padding(4.dp),
+                    .size(48.dp)
+                    .padding(13.dp),
                 strokeWidth = 2.dp,
             )
         } else {
             Icon(
                 imageVector = if (isPreviewing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                tint = if (isPreviewing) AppPalette else Color(0xFFB3B3B3),
+                tint = if (isPreviewing) Accent else TextSecondary,
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(48.dp)
+                    .clip(CircleShape)
                     .clickable(enabled = enabled) { onPreview() }
-                    .padding(4.dp),
+                    .padding(12.dp),
                 contentDescription = "Preview",
             )
         }
         Spacer(Modifier.width(2.dp))
         Icon(
             imageVector = Icons.Default.Check,
-            tint = Color(0xFFB3B3B3),
+            tint = TextSecondary,
             modifier = Modifier
-                .size(32.dp)
+                .size(48.dp)
+                .clip(CircleShape)
                 .clickable(enabled = enabled) { onSelect() }
-                .padding(4.dp),
+                .padding(12.dp),
             contentDescription = "Use this",
         )
     }
@@ -2678,7 +2905,7 @@ fun PlayerMenuRow(
     icon: ImageVector,
     label: String,
     subtitle: String? = null,
-    iconTint: Color = Color.White,
+    iconTint: Color = TextPrimary,
     enabled: Boolean = true,
     trailingArrow: Boolean = false,
     onClick: () -> Unit
@@ -2687,12 +2914,13 @@ fun PlayerMenuRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 52.dp)
             .clickable(enabled = enabled) { onClick() }
-            .padding(horizontal = 20.dp, vertical = 14.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Icon(
             imageVector = icon,
-            tint = if (enabled) iconTint else Color.Gray,
+            tint = if (enabled) iconTint else TextTertiary,
             modifier = Modifier.size(22.dp),
             contentDescription = null
         )
@@ -2700,16 +2928,16 @@ fun PlayerMenuRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                color = if (enabled) Color.White else Color.Gray,
-                fontSize = 15.sp,
+                color = if (enabled) TextPrimary else TextTertiary,
+                style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    color = Color.Gray,
-                    fontSize = 13.sp,
+                    color = TextTertiary,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
@@ -2718,7 +2946,7 @@ fun PlayerMenuRow(
         if (trailingArrow) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                tint = Color.Gray,
+                tint = TextTertiary,
                 modifier = Modifier.size(20.dp),
                 contentDescription = null
             )
@@ -2772,3 +3000,17 @@ private fun CanvasVideo(url: String, modifier: Modifier = Modifier, onError: (()
         },
     )
 }
+
+/** Outlined field colours for sheets: Surface3 fill, hairline edge, accent when focused. */
+@Composable
+private fun soloFieldColors() = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = Accent,
+    unfocusedBorderColor = com.music.spotui.ui.theme.Hairline,
+    focusedContainerColor = Surface3,
+    unfocusedContainerColor = Surface3,
+    disabledContainerColor = Surface3,
+    cursorColor = Accent,
+    focusedLabelColor = Accent,
+    focusedTextColor = TextPrimary,
+    unfocusedTextColor = TextPrimary,
+)

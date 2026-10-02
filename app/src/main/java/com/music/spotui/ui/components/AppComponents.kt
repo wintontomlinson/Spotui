@@ -1,5 +1,7 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.ui.draw.shadow
@@ -19,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -74,8 +75,7 @@ import com.music.spotui.data.preferences.removeLikedSongId
 import com.music.spotui.di.Palette
 import com.music.spotui.di.SongPlayer
 import com.music.spotui.ui.navigation.Routes
-import com.music.spotui.ui.theme.AppBackground
-import com.music.spotui.ui.theme.GridBackground
+import com.music.spotui.ui.theme.Canvas
 import com.music.spotui.ui.viewmodel.PlayerViewModel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SwipeToDismissBox
@@ -89,24 +89,54 @@ import androidx.compose.animation.core.spring
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.launch
+import com.music.spotui.ui.theme.Surface4
+import com.music.spotui.ui.theme.Accent
+import com.music.spotui.ui.theme.TextPrimary
+import com.music.spotui.ui.theme.OnAccent
+import com.music.spotui.ui.theme.TextSecondary
+import com.music.spotui.ui.theme.Surface3
+import com.music.spotui.ui.theme.Surface1
+import com.music.spotui.ui.theme.Surface2
+import com.music.spotui.ui.theme.Hairline
+import com.music.spotui.ui.theme.SoloShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.music.spotui.ui.theme.Shadow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import com.music.spotui.ui.theme.SoloMotion
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.ui.graphics.StrokeCap
 
+/**
+ * Shared loading state for album / artist / playlist / liked / show screens: a header
+ * skeleton (artwork + title lines) and track-row skeletons, instead of a bare spinner,
+ * so the layout is already in place when content arrives.
+ */
 @Composable
 fun Loader() {
-    Column(Modifier
-        .background(Color(AppBackground.toArgb())),
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(com.music.spotui.ui.theme.Canvas)
+            .statusBarsPadding()
+            .padding(top = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier
-                .size(45.dp),
-            // The app accent, not the old off brand purple, so every loading screen
-            // stays on palette.
-            color = Color(0xFFE8C24A),
-            strokeWidth = 3.dp,
-        )
+        Box(Modifier.size(200.dp).shimmer(SoloShape.lg))
+        Spacer(Modifier.height(18.dp))
+        Box(Modifier.fillMaxWidth(0.55f).height(18.dp).shimmer())
+        Spacer(Modifier.height(10.dp))
+        Box(Modifier.fillMaxWidth(0.35f).height(12.dp).shimmer())
+        Spacer(Modifier.height(18.dp))
+        SoloShimmerList(count = 6)
     }
-
 }
 
 @Composable
@@ -116,11 +146,11 @@ fun ExplicitBadge(
 ) {
     Text(
         text = "E",
-        color = Color(0xFFB3B3B3),
+        color = TextSecondary,
         fontSize = size,
         fontWeight = FontWeight.Bold,
         modifier = modifier
-            .background(Color(0xFF333333), RoundedCornerShape(3.dp))
+            .background(Surface3, SoloShape.xs)
             .padding(horizontal = 4.dp, vertical = 1.dp),
     )
 }
@@ -161,32 +191,33 @@ fun MiniPlayer(navController: NavHostController) {
         0f
     }
 
-    val currentRoute = navController.currentBackStackEntry?.destination?.route
-
-
-
-    LaunchedEffect(key1  = songPlayingState) {
-            while (songPlayingState) {
-                songProgress = SongPlayer.getDuration().toFloat().let { dur ->
-                    if (dur > 0f) (SongPlayer.getCurrentPosition().toFloat() / dur).coerceIn(0f, 1f) else 0f
-                }
-                delay(300L) // update every .00 second
-
-                if (songProgress > 0f && songProgress >= 1f && currentRoute != Routes.Player.route) {
-                    navController.navigate(Routes.Player.route)
-                    miniPlayerViewModel.setPlaying(false)
-                }
+    // Progress polling only. The end of a track is handled by the playback service
+    // (autoplay / radio / crossfade), so the mini player never pauses or navigates here.
+    LaunchedEffect(key1 = songPlayingState) {
+        while (songPlayingState) {
+            songProgress = SongPlayer.getDuration().toFloat().let { dur ->
+                if (dur > 0f) (SongPlayer.getCurrentPosition().toFloat() / dur).coerceIn(0f, 1f) else 0f
+            }
+            delay(300L)
         }
     }
 
     val context = LocalContext.current
 
-    var darkVibrantColor by remember {
-        mutableStateOf(Color(GridBackground.toArgb()))
+    var darkVibrantColor by remember { mutableStateOf(Surface1) }
+    LaunchedEffect(songCoverUri) {
+        if (songCoverUri.isNotBlank()) {
+            Palette().extractFirstColorFromImageUrl(context = context, songCoverUri) { color ->
+                darkVibrantColor = color
+            }
+        }
     }
-    Palette().extractFirstColorFromImageUrl(context = context, songCoverUri){ color ->
-        darkVibrantColor = color
-    }
+
+    val miniTone by androidx.compose.animation.animateColorAsState(
+        targetValue = darkVibrantColor,
+        animationSpec = com.music.spotui.ui.theme.SoloMotion.emphasized(),
+        label = "miniTone",
+    )
 
     var isLiked by remember {
         mutableStateOf(false)
@@ -213,44 +244,47 @@ fun MiniPlayer(navController: NavHostController) {
     Column(
         modifier = Modifier
 
-            .padding(13.dp, 0.dp)
+            .padding(horizontal = 8.dp)
             .graphicsLayer {
                 translationY = swipeOffsetY
                 alpha = (1f + swipeOffsetY / 150f).coerceIn(0f, 1f)
             }
-            // Premium mini player: a lifted pill with a soft shadow, a gradient drawn
-            // from the artwork's colour into a darker version of itself for depth, and a
-            // hairline edge so it separates cleanly from the content scrolling behind it.
+            // Surface2 card docked above the nav, with a faint artwork tint on the leading edge.
             .shadow(
-                elevation = 16.dp,
-                shape = RoundedCornerShape(16.dp),
+                elevation = 8.dp,
+                shape = SoloShape.md,
                 clip = false,
-                ambientColor = Color.Black,
-                spotColor = Color.Black,
+                ambientColor = Shadow,
+                spotColor = Shadow,
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(SoloShape.md)
             .background(
                 Brush.horizontalGradient(
                     colors = listOf(
-                        darkVibrantColor,
-                        androidx.compose.ui.graphics.lerp(darkVibrantColor, Color.Black, 0.45f),
+                        androidx.compose.ui.graphics.lerp(miniTone, Surface2, 0.72f),
+                        Surface2,
                     )
                 )
             )
-            .border(
-                width = 1.dp,
-                color = Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(16.dp),
-            )
-            .padding(8.dp, 2.dp)
+            .border(1.dp, Hairline, SoloShape.md)
 
     ) {
+        // 2dp accent progress along the top edge (tap or drag to seek).
+        CustomSlider(
+            value = songProgress,
+            onValueChange = { newValue ->
+                val dur = SongPlayer.getDuration()
+                if (dur > 0) SongPlayer.seekTo((newValue * dur).toLong())
+            },
+            valueRange = 0f..1f,
+            steps = 0,
+            modifier = Modifier.fillMaxWidth()
+        )
         Row(horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                //.background(Color.Green)
-                .padding(0.dp, 2.dp)
+                .padding(start = 8.dp, end = 4.dp, bottom = 6.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
@@ -396,7 +430,7 @@ fun MiniPlayer(navController: NavHostController) {
             Row(horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .width(260.dp)
+                    .weight(1f)
                     .clipToBounds()
                     .graphicsLayer {
                         translationX = swipeOffsetX
@@ -404,10 +438,9 @@ fun MiniPlayer(navController: NavHostController) {
             ) {
                 GlideImage(
                     modifier = Modifier
-                        .padding(0.dp, 0.dp, 10.dp, 0.dp)
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                    ,
+                        .padding(end = 12.dp)
+                        .size(44.dp)
+                        .clip(SoloShape.sm),
                     model = songCoverUri,
                     contentScale = ContentScale.Crop,
                     failure = placeholder(R.drawable.placeholder),
@@ -416,46 +449,68 @@ fun MiniPlayer(navController: NavHostController) {
                 )
                 Column(
                     modifier = Modifier
-                        .widthIn(Dp.Unspecified, 200.dp)
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isCurrentSongExplicit) {
                             ExplicitBadge()
                             Spacer(Modifier.width(4.dp))
                         }
-                        Text(text = songTitle, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis )
+                        // Pure-Compose now-playing equalizer glyph: dances while audio is
+                        // playing and freezes when paused. Driven by playback state only —
+                        // no Visualizer / audio-session tap, so playback and permissions
+                        // stay untouched.
+                        EqualizerGlyph(
+                            playing = songPlayingState,
+                            modifier = Modifier
+                                .padding(end = 6.dp)
+                                .size(width = 14.dp, height = 12.dp),
+                        )
+                        Text(text = songTitle, color = TextPrimary, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                     }
-                    Text(text = songSinger, color = Color.LightGray, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(1.dp))
+                    Text(text = songSinger, color = TextSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
             }
 
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.width(70.dp)
             ) {
 
                 // Plus = save; green check = already saved. A second tap opens the
                 // "Saved in" sheet (Liked Songs + playlists) instead of unliking.
+                // The glyph scale-pops and its tint animates to the accent on the
+                // transition so the like registers tactilely.
+                val likeTint by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isLiked) Accent else TextPrimary,
+                    animationSpec = SoloMotion.standard(),
+                    label = "likeTint",
+                )
+                val likeScale by animateFloatAsState(
+                    targetValue = if (isLiked) SoloMotion.TOGGLE_POP_SCALE else 1f,
+                    animationSpec = SoloMotion.toggleSpring(),
+                    label = "likeScale",
+                )
                 if (isLiked) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        tint = Color(0xFFE8C24A),
+                        imageVector = Icons.Rounded.CheckCircle,
+                        tint = likeTint,
                         modifier = Modifier
-                            .size(22.dp)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) { showSavedIn = true },
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .clickable { showSavedIn = true }
+                            .padding(12.dp)
+                            .graphicsLayer { scaleX = likeScale; scaleY = likeScale },
                         contentDescription = "Saved",
                     )
                 } else {
                     Icon(
                         modifier = Modifier
-                            .size(22.dp)
+                            .size(48.dp)
+                            .clip(CircleShape)
                             .combinedClickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
                                 onClick = {
                                     addLikedSongId(context, songId.toString())
                                     isLiked = true
@@ -465,10 +520,12 @@ fun MiniPlayer(navController: NavHostController) {
                                         context, currentTrack?.spotifyTrackId.orEmpty(), true)
                                 },
                                 onLongClick = { showSavedIn = true },
-                            ),
-                        painter = painterResource(id = R.drawable.ic_add),
-                        tint = Color.White,
-                        contentDescription = "Add",
+                            )
+                            .padding(12.dp)
+                            .graphicsLayer { scaleX = likeScale; scaleY = likeScale },
+                        imageVector = Icons.Rounded.AddCircleOutline,
+                        tint = likeTint,
+                        contentDescription = "Save to Liked Songs",
                     )
                 }
 
@@ -476,57 +533,104 @@ fun MiniPlayer(navController: NavHostController) {
                 // Only spin while LOCATING the stream (resolving); during plain
                 // buffering keep the tappable play/pause icon so the button always
                 // works and shows the right state.
-                Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                val playSource = remember { MutableInteractionSource() }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .soloPress(playSource)
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(com.music.spotui.ui.theme.AccentBrush)
+                        .clickable(
+                            interactionSource = playSource,
+                            indication = null
+                        ) {
+                            // Single source of truth: toggle from the engine's
+                            // real state so the mini-player icon never sticks.
+                            miniPlayerViewModel.togglePlayPause()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
                     if (miniPlayerViewModel.isResolving.value) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(28.dp),
-                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            color = OnAccent,
                             strokeWidth = 2.5.dp
                         )
                     } else {
-                        Icon(
-                            painter = if (songPlayingState)
-                                painterResource(id = R.drawable.ic_playing)
-                            else
-                                painterResource(id = R.drawable.play_svgrepo_com)
-                            ,
-                            contentDescription = "",
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    // Single source of truth: toggle from the engine's
-                                    // real state so the mini-player icon never sticks.
-                                    miniPlayerViewModel.togglePlayPause()
-                                }
-                        )
+                        androidx.compose.animation.Crossfade(
+                            targetState = songPlayingState,
+                            animationSpec = tween(SoloMotion.ICON_MS),
+                            label = "miniPlayPause",
+                        ) { playing ->
+                            Icon(
+                                imageVector = if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                contentDescription = if (playing) "Pause" else "Play",
+                                tint = OnAccent,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
 
 
         }
-
-
-        CustomSlider(
-            value = songProgress,
-            onValueChange = { newValue ->
-                val dur = SongPlayer.getDuration()
-                if (dur > 0) SongPlayer.seekTo((newValue * dur).toLong())
-            },
-            valueRange = 0f..1f,
-            steps = 0,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 
 
 
 }
 
+
+/**
+ * A small now-playing equalizer glyph: three accent bars whose heights breathe up and down
+ * on an infinite transition while [playing] is true, and freeze at a steady level when
+ * paused. This is a pure Compose animation driven only by the playback state — it does NOT
+ * read the audio session (no android.media.audiofx.Visualizer), so it needs no permission
+ * and never touches playback.
+ */
+@Composable
+fun EqualizerGlyph(
+    playing: Boolean,
+    modifier: Modifier = Modifier,
+    color: Color = Accent,
+    bars: Int = 3,
+) {
+    val transition = rememberInfiniteTransition(label = "equalizer")
+    // Each bar animates on its own period/phase so they never move in lockstep.
+    val periods = remember(bars) { List(bars) { 520 + it * 170 } }
+    val levels = periods.mapIndexed { index, period ->
+        transition.animateFloat(
+            initialValue = 0.35f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = period, easing = SoloMotion.Standard),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "equalizerBar$index",
+        )
+    }
+    // When paused, hold a calm static silhouette instead of animating.
+    val staticLevels = remember(bars) { List(bars) { 0.45f + (it % 2) * 0.3f } }
+
+    Canvas(modifier = modifier) {
+        val gap = size.width * 0.22f / (bars - 1).coerceAtLeast(1)
+        val barWidth = (size.width - gap * (bars - 1)) / bars
+        for (i in 0 until bars) {
+            val fraction = if (playing) levels[i].value else staticLevels[i]
+            val barHeight = size.height * fraction
+            val left = i * (barWidth + gap)
+            drawLine(
+                color = color,
+                start = Offset(left + barWidth / 2f, size.height),
+                end = Offset(left + barWidth / 2f, size.height - barHeight),
+                strokeWidth = barWidth,
+                cap = StrokeCap.Round,
+            )
+        }
+    }
+}
 
 @Composable
 fun CustomSlider(
@@ -543,7 +647,7 @@ fun CustomSlider(
 
     Box(
         modifier = modifier
-            .height(14.dp) // compact touch target
+            .height(10.dp) // compact touch target; the line sits on its top edge
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
                     val newFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
@@ -559,7 +663,7 @@ fun CustomSlider(
                     onValueChange(mapped)
                 }
             },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Canvas(modifier = Modifier.fillMaxWidth().height(2.dp)) {
             val trackHeightPx = with(density) { 2.dp.toPx() }
@@ -568,19 +672,19 @@ fun CustomSlider(
 
             // Inactive track
             drawLine(
-                color = Color(0xFF535353),
+                color = Surface4,
                 start = Offset(0f, trackY),
                 end = Offset(size.width, trackY),
                 strokeWidth = trackHeightPx,
                 cap = androidx.compose.ui.graphics.StrokeCap.Round
             )
-            // Active track
-            drawLine(
-                color = Color.White,
+            // Active track in the accent
+            if (thumbX > 0f) drawLine(
+                color = Accent,
                 start = Offset(0f, trackY),
                 end = Offset(thumbX, trackY),
                 strokeWidth = trackHeightPx,
-                cap = androidx.compose.ui.graphics.StrokeCap.Round
+                cap = androidx.compose.ui.graphics.StrokeCap.Butt
             )
         }
     }
@@ -593,14 +697,14 @@ fun Snackbar(showMessage : String) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color.White),
+            .clip(SoloShape.md)
+            .background(Surface3)
+            .border(1.dp, com.music.spotui.ui.theme.HairlineAccent, SoloShape.md),
         contentAlignment = Alignment.Center
     ){
         Text(
-            fontWeight = FontWeight.W500,
-            fontSize = 14.sp,
-            color = Color.Black,
+            style = MaterialTheme.typography.labelLarge,
+            color = TextPrimary,
             text = showMessage
         )
     }
@@ -639,14 +743,14 @@ fun SwipeToPlayNextWrapper(
                 contentAlignment = Alignment.CenterStart,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8C24A)) // accent
+                    .background(Accent) // accent
                     .padding(horizontal = 24.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_queue_add),
+                    painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.PlaylistAdd),
                     contentDescription = "Play next",
-                    // Dark content on the light amber accent keeps the contrast strong.
-                    tint = Color(0xFF241540),
+                    // Dark content on the Volt accent keeps the contrast strong.
+                    tint = OnAccent,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -673,20 +777,22 @@ fun AppSearchBar(
 ) {
     val internalFocusRequester = remember { FocusRequester() }
     val effectiveFocusRequester = focusRequester ?: internalFocusRequester
+    // Visual only: the field gains an accent edge and icon while focused.
+    var focused by remember { mutableStateOf(false) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF1C1C21))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(14.dp))
+            .clip(SoloShape.md)
+            .background(Surface3)
+            .border(1.dp, if (focused) Accent else Hairline, SoloShape.md)
             .height(height)
             .padding(horizontal = 14.dp)
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_search_big),
-            tint = Color(0xFFB3B3B3),
+            painter = androidx.compose.ui.graphics.vector.rememberVectorPainter(androidx.compose.material.icons.Icons.Rounded.Search),
+            tint = if (focused) Accent else TextSecondary,
             contentDescription = "Search",
             modifier = Modifier
                 .size(22.dp)
@@ -702,41 +808,33 @@ fun AppSearchBar(
             enabled = enabled,
             modifier = Modifier
                 .weight(1f)
-                .then(
-                    if (onFocusChange != null) {
-                        Modifier.onFocusChanged { onFocusChange(it.isFocused) }
-                    } else {
-                        Modifier
-                    }
-                )
+                .onFocusChanged {
+                    focused = it.isFocused
+                    onFocusChange?.invoke(it.isFocused)
+                }
                 .focusRequester(effectiveFocusRequester),
             value = query,
             onValueChange = onQueryChange,
-            textStyle = TextStyle.Default.copy(
-                fontSize = 15.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            ),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = TextPrimary),
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedPlaceholderColor = Color(0xFFB3B3B3),
-                unfocusedPlaceholderColor = Color(0xFFB3B3B3),
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
+                focusedPlaceholderColor = TextSecondary,
+                unfocusedPlaceholderColor = TextSecondary,
                 unfocusedContainerColor = Color.Transparent,
                 disabledContainerColor = Color.Transparent,
                 focusedContainerColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = Color(0xFFE8C24A)
+                cursorColor = Accent
             ),
             singleLine = true,
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = Color(0xFFB3B3B3),
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Start
                 )
             }
@@ -746,19 +844,18 @@ fun AppSearchBar(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear",
-                tint = Color(0xFFB3B3B3),
+                tint = TextSecondary,
                 modifier = Modifier
-                    .size(20.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .clickable {
                         if (onClear != null) {
                             onClear()
                         } else {
                             onQueryChange("")
                         }
                     }
+                    .padding(10.dp)
             )
         }
     }

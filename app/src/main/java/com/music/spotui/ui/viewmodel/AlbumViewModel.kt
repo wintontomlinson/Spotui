@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 
 @HiltViewModel
+/** Loads a single album's tracks and metadata for the album detail screen. */
 class AlbumViewModel @Inject constructor(private val repository: AppRepository, private val currentSongState: CurrentSongState) :  ViewModel() {
 
     val currentSongPlayingState: State<Boolean> get() = currentSongState.playingState

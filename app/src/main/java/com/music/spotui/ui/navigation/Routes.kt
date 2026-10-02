@@ -1,36 +1,31 @@
 package com.music.spotui.ui.navigation
 
-import androidx.annotation.DrawableRes
-import com.music.spotui.R
-
 sealed class Routes(
-    @param:DrawableRes val icon : Int = 0,
     val label : String,
     val route : String
 ) {
-    object Home : Routes(icon = R.drawable.ic_home_filled, label = "Home", route = "home")
+    object Home : Routes(label = "Home", route = "home")
     // Login-free YouTube search & play: works without any Spotify session.
-    object YtSearch : Routes(icon = R.drawable.ic_search_big, label = "Explore", route = "ytsearch")
-    object Library : Routes(icon = R.drawable.ic_library_big, label = "Library", route = "library")
-    object Album : Routes(0, "Album", "album")
-    object Player : Routes(0, "Player", "player")
-    object Artist : Routes(0, "Artist", "artist")
-    object ArtistReleases : Routes(0, "ArtistReleases", "artistreleases")
-    object Playlist : Routes(0, "Playlist", "playlist")
-    object Show : Routes(0, "Show", "show")
-    object Queue : Routes(0, "Queue", "queue")
-    object Liked : Routes(0, "Liked", "liked")
-    object Downloads : Routes(0, "Downloads", "downloads")
-    object Category : Routes(0, "Category", "category")
-    object Settings : Routes(0, "Settings", "settings")
-    object History : Routes(0, "History", "history")
-    object LocalFiles : Routes(0, "LocalFiles", "localfiles")
+    object YtSearch : Routes(label = "Explore", route = "ytsearch")
+    object Library : Routes(label = "Library", route = "library")
+    object Album : Routes("Album", "album")
+    object Player : Routes("Player", "player")
+    object Artist : Routes("Artist", "artist")
+    object ArtistReleases : Routes("ArtistReleases", "artistreleases")
+    object Playlist : Routes("Playlist", "playlist")
+    object Show : Routes("Show", "show")
+    object Queue : Routes("Queue", "queue")
+    object Liked : Routes("Liked", "liked")
+    object Downloads : Routes("Downloads", "downloads")
+    object Settings : Routes("Settings", "settings")
+    object History : Routes("History", "history")
+    object LocalFiles : Routes("LocalFiles", "localfiles")
+    object Equalizer : Routes("Equalizer", "equalizer")
+    // First-run onboarding (FEAT-003); shown once, gated by the hasOnboarded pref.
+    object Onboarding : Routes("Onboarding", "onboarding")
+    // Read-only listening stats derived from TasteProfile (FEAT-003).
+    object Stats : Routes("Stats", "stats")
 }
-
-
-/** Builds a Browse-category route carrying the search genre and a display title. */
-fun categoryRoute(genre: String, title: String): String =
-    "${Routes.Category.route}/${android.net.Uri.encode(genre)}?title=${android.net.Uri.encode(title)}"
 
 /** Builds a playlist route carrying the Spotify playlist id (and a display name). */
 fun playlistRoute(id: String, name: String = ""): String =
