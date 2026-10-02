@@ -449,3 +449,58 @@ fun SoloIconButton(
         Icon(icon, contentDescription = contentDescription, tint = tint, modifier = Modifier.size(iconSize))
     }
 }
+
+/**
+ * A small red notification dot (with a thin canvas ring so it reads cleanly over any surface),
+ * used to flag an unseen state such as an available update. Overlay it on the top-end corner of
+ * an icon or button via a wrapping Box with alignment.
+ */
+@Composable
+fun SoloBadgeDot(modifier: Modifier = Modifier, size: Dp = 9.dp) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(com.music.spotui.ui.theme.Canvas)
+            .padding(1.5.dp)
+            .clip(CircleShape)
+            .background(Danger),
+    )
+}
+
+/**
+ * [SoloIconButton] with an optional red notification dot in the top-end corner. When [showBadge]
+ * is true a [SoloBadgeDot] overlays the button so the user sees there is something to attend to
+ * (for example an available update) without changing the icon itself.
+ */
+@Composable
+fun SoloIconButtonBadged(
+    icon: ImageVector,
+    contentDescription: String?,
+    onClick: () -> Unit,
+    showBadge: Boolean,
+    modifier: Modifier = Modifier,
+    tint: Color = TextPrimary,
+    filled: Boolean = false,
+    size: Dp = 48.dp,
+    iconSize: Dp = 22.dp,
+) {
+    Box(modifier = modifier) {
+        SoloIconButton(
+            icon = icon,
+            contentDescription = contentDescription,
+            onClick = onClick,
+            tint = tint,
+            filled = filled,
+            size = size,
+            iconSize = iconSize,
+        )
+        if (showBadge) {
+            SoloBadgeDot(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 8.dp, end = 8.dp),
+            )
+        }
+    }
+}

@@ -484,9 +484,14 @@ fun SettingsScreen(navController: NavController) {
 
             Spacer(Modifier.height(12.dp))
             SectionTitle("Updates")
+            val updateReady = com.music.spotui.data.update.UpdateState.hasUpdate
             SettingsClickRow(
                 title = "Check for updates now",
-                subtitle = "Look for a newer version of SOLO",
+                subtitle = if (updateReady) {
+                    "Update available: SOLO ${com.music.spotui.data.update.UpdateState.available?.version}"
+                } else {
+                    "Look for a newer version of SOLO"
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Refresh,
@@ -496,16 +501,24 @@ fun SettingsScreen(navController: NavController) {
                     )
                 },
                 trailing = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = SettingsTextDim,
-                        modifier = Modifier.size(22.dp),
-                    )
+                    // A red dot when an update is waiting, otherwise the usual chevron.
+                    if (updateReady) {
+                        com.music.spotui.ui.components.SoloBadgeDot()
+                    } else {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = SettingsTextDim,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 },
                 onClick = {
+                    // If an update is already known, open the premium update dialog straight away
+                    // by re-publishing it; otherwise run a fresh check that publishes its result.
                     scope.launch {
-                        val info = com.music.spotui.data.update.UpdateChecker.check(context)
+                        val existing = com.music.spotui.data.update.UpdateState.available
+                        val info = existing ?: com.music.spotui.data.update.UpdateChecker.check(context)
                         if (info == null) {
                             android.widget.Toast.makeText(
                                 context,
@@ -513,11 +526,10 @@ fun SettingsScreen(navController: NavController) {
                                 android.widget.Toast.LENGTH_SHORT,
                             ).show()
                         } else {
-                            android.widget.Toast.makeText(
-                                context,
-                                "Update available: SOLO ${info.version}",
-                                android.widget.Toast.LENGTH_SHORT,
-                            ).show()
+                            // Make sure the shared state is set, then ask the global UpdatePrompt
+                            // to open (works even if it was dismissed earlier this run).
+                            com.music.spotui.data.update.UpdateState.set(info)
+                            com.music.spotui.data.update.UpdateState.requestShow()
                         }
                     }
                 },

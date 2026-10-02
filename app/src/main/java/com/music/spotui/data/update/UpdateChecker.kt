@@ -48,19 +48,29 @@ object UpdateChecker {
         .build()
 
     suspend fun check(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
+        val result = resolve(context)
+        // Publish into the shared app state so the red dot badge (Home, Settings) and the
+        // update dialog all react to the same single result.
+        UpdateState.set(result)
+        result
+    }
+
+    private fun resolve(context: Context): UpdateInfo? {
         val info = runCatching { fetchLatestRelease(context) }
             .onFailure { Log.d(TAG, "update check failed: ${it.message}") }
-            .getOrNull() ?: return@withContext null
-        if (!isNewer(info.version, BuildConfig.VERSION_NAME)) return@withContext null
+            .getOrNull() ?: return null
+        if (!isNewer(info.version, BuildConfig.VERSION_NAME)) return null
         val skipped = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_SKIP, null)
-        if (skipped == info.fingerprint) return@withContext null
-        info
+        if (skipped == info.fingerprint) return null
+        return info
     }
 
     fun skipRelease(context: Context, info: UpdateInfo) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putString(KEY_SKIP, info.fingerprint).apply()
+        // The user chose to dismiss this release, so clear the shared badge too.
+        UpdateState.clear()
     }
 
     private fun fetchLatestRelease(context: Context): UpdateInfo? {

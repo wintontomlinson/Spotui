@@ -74,13 +74,24 @@ private enum class UpdatePhase { IDLE, DOWNLOADING, READY, ERROR }
 fun UpdatePrompt() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var update by remember { mutableStateOf<UpdateChecker.UpdateInfo?>(null) }
 
+    // One silent check on launch publishes into the shared UpdateState, which also lights the
+    // red dot on Home and in Settings. The dialog then renders whatever UpdateState holds, so a
+    // manual "Check for updates" from Settings opens this same premium prompt too.
     LaunchedEffect(Unit) {
-        update = UpdateChecker.check(context)
+        UpdateChecker.check(context)
     }
 
-    val info = update ?: return
+    val info = com.music.spotui.data.update.UpdateState.available
+    // Local dismissal: "Later" hides the dialog without clearing the shared badge, so the red dot
+    // stays until the user installs or taps "Don't show again". A Settings > Updates tap bumps
+    // UpdateState.showRequest, which clears the local dismissal so the dialog re-opens on demand.
+    var dismissed by remember { mutableStateOf(false) }
+    val showRequest = com.music.spotui.data.update.UpdateState.showRequest
+    LaunchedEffect(showRequest) { if (showRequest > 0) dismissed = false }
+    LaunchedEffect(info?.fingerprint) { dismissed = false }
+    if (info == null || dismissed) return
+    fun dismissDialog() { dismissed = true }
 
     var phase by remember { mutableStateOf(UpdatePhase.IDLE) }
     var progress by remember { mutableStateOf(0f) }
@@ -96,7 +107,7 @@ fun UpdatePrompt() {
         downloadedApk?.let { apk ->
             if (UpdateChecker.canInstall(context)) {
                 UpdateChecker.installApk(context, apk)
-                update = null
+                com.music.spotui.data.update.UpdateState.clear()
             }
         }
     }
@@ -123,7 +134,7 @@ fun UpdatePrompt() {
                     phase = UpdatePhase.READY
                     if (UpdateChecker.canInstall(context)) {
                         UpdateChecker.installApk(context, result.apk)
-                        update = null
+                        com.music.spotui.data.update.UpdateState.clear()
                     } else {
                         // Ask the OS to let SOLO install, then resume in the launcher callback.
                         runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
@@ -142,7 +153,7 @@ fun UpdatePrompt() {
     }
 
     AlertDialog(
-        onDismissRequest = { if (phase != UpdatePhase.DOWNLOADING) update = null },
+        onDismissRequest = { if (phase != UpdatePhase.DOWNLOADING) dismissDialog() },
         // Platform default width keeps the prompt a compact product dialog rather than a
         // full-bleed sheet; the markdown block scrolls inside it.
         modifier = Modifier.width(360.dp),
@@ -153,27 +164,36 @@ fun UpdatePrompt() {
             // Premium header: the SOLO mark on an accent-tinted well beside the new version,
             // so the prompt reads as the app's own update rather than a generic system dialog.
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                // The SOLO mark on an accent gradient plate with a soft accent glow, so the
+                // prompt reads as a crafted, premium product surface, not a generic dialog.
                 Box(
                     contentAlignment = androidx.compose.ui.Alignment.Center,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(46.dp)
                         .clip(SoloShape.md)
-                        .background(Accent.copy(alpha = 0.14f)),
+                        .background(com.music.spotui.ui.theme.AccentBrush)
+                        .background(
+                            androidx.compose.ui.graphics.Brush.radialGradient(
+                                colors = listOf(Color.White.copy(alpha = 0.18f), Color.Transparent),
+                            ),
+                        ),
                 ) {
-                    com.music.spotui.ui.components.SoloMark(height = 24.dp)
+                    com.music.spotui.ui.components.SoloMark(height = 26.dp)
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(14.dp))
                 Column {
                     Text(
-                        "Update available",
+                        "UPDATE AVAILABLE",
                         color = Accent,
-                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
                     )
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(3.dp))
                     Text(
                         "SOLO ${info.version}",
                         color = TextPrimary,
                         style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }
@@ -263,7 +283,7 @@ fun UpdatePrompt() {
                     downloadedApk?.let { apk ->
                         if (UpdateChecker.canInstall(context)) {
                             UpdateChecker.installApk(context, apk)
-                            update = null
+                            com.music.spotui.data.update.UpdateState.clear()
                         } else {
                             runCatching { installPermissionLauncher.launch(UpdateChecker.unknownSourcesIntent(context)) }
                         }
@@ -277,11 +297,11 @@ fun UpdatePrompt() {
             if (phase != UpdatePhase.DOWNLOADING) {
                 TextButton(onClick = {
                     UpdateChecker.skipRelease(context, info)
-                    update = null
+                    dismissDialog()
                 }) {
                     Text("Don't show again", color = TextSecondary, style = androidx.compose.material3.MaterialTheme.typography.labelLarge)
                 }
-                SoloDialogDismiss(text = "Later", onClick = { update = null })
+                SoloDialogDismiss(text = "Later", onClick = { dismissDialog() })
             }
         },
     )
