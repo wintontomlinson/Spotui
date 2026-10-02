@@ -5,6 +5,34 @@ compared to the main Spotui repository.
 
 ---
 
+## 11.0.0 - SOLO
+
+* **Home layering fixed.** Every Home shelf now lays out its section header above its content with
+  clean spacing. Headers no longer sit on top of the carousels, chips, grids or artist rows, so
+  Featured, Browse moods, Made for you, Jump back in, Trending now and Your top artists each read
+  as a clear, headed shelf.
+* **Refined bottom navigation.** The navbar keeps its solid, opaque fill, hairline top edge and
+  soft top shadow, with crisper selected and unselected tints, a smooth selected-tab lift and the
+  mini player docked neatly above it.
+* **Compact, premium popups.** The song options, devices and saved-in sheets and the update dialog
+  now use tighter, consistent metrics and a constrained width, so they read as polished product
+  surfaces instead of oversized panels.
+* **Library rebuild.** Quick-access counts load off the main thread for a smoother open, the
+  quick-access tiles and list rows are tidier, and every destination (Liked, Recently played,
+  Downloads, Local files, playlists, albums and artists) resolves to a real screen.
+* **Settings rebuild with real options.** Grouped into Appearance, Playback, Updates, Storage and
+  About, with new wired controls: a Start screen preference, a DJ-style blend switch and a Check
+  for updates now action. Dead audio-provider code was removed.
+* **Preference-based autoplay queue.** Autoplay and radio top-ups route through a single taste
+  ranker that weighs genre, mood and artist affinity, likes, recency and anti-repeat diversity,
+  while manual Play next and Add to queue stay in the exact order you chose. The recordOutcome
+  signature and the TasteProfile schema are unchanged.
+* **Better Explore images.** Explore tiles render crisper curated photos and fall back to the
+  premium gradient mesh while loading or if an image is unavailable, so a tile is never a blank box.
+* **Premium copy pass.** User-facing text across Home, Explore, Library, Settings, About,
+  onboarding, the update dialog and toasts was tightened for a consistent, premium voice, with no
+  em-dash in any displayed string.
+
 ## 10.0.0 - SOLO
 
 * **Explore now shows real artwork.** The mood, genre and chart tiles on Explore previously drew

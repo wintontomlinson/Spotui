@@ -204,6 +204,15 @@ class PlayerViewModel @Inject constructor(private val currentSongState: CurrentS
      * Spotify seeds (logged in), otherwise YouTube related tracks, then re-ranked
      * against the on-device taste profile with the last queue item as the seed.
      * Shared by the background provider, [ensureRadioQueue] and [maybeExtendRadio].
+     *
+     * Preference-based ordering: this is the single autoplay/radio top-up path for
+     * the whole app. Every automatically appended batch is ordered by
+     * [com.music.spotui.data.recommendation.TasteRanker.rank], which weighs the
+     * listener's genre/mood/artist affinity, likes, recency and diversity
+     * (anti-repeat) against the current seed. The raw-order ifEmpty fallback below
+     * guarantees the ranker never starves autoplay. Manual actions such as
+     * [playNext] and [addToQueue] intentionally bypass this ranking: a user who
+     * explicitly queues a track expects it in the exact position they chose.
      */
     private suspend fun radioBatch(existing: List<SongsModel>): List<SongsModel> {
         val existingIds = existing.map { it.id }.toSet()
