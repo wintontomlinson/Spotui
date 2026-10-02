@@ -7,10 +7,10 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 ## Features
 
 - 🖼️ **Image-forward home**: a featured artwork carousel leads Home, with larger covers across richer shelves and bold mood/genre/chart tiles on Explore, so the whole app leans on real artwork and premium art accents.
-- ✨ **Premium motion**: tasteful screen transitions, animated play/pause and like, list enter animations, shimmer on load, and a live now-playing equalizer glyph on the mini player — all tuned to feel smooth, not flashy.
+- ✨ **Premium motion**: tasteful screen transitions, animated play/pause and like, list enter animations, shimmer on load, and a live now-playing equalizer glyph on the mini player, all tuned to feel smooth, not flashy.
 - ⚡ **Smoother, instant playback**: upcoming songs are resolved and pre-buffered with a deeper lookahead and a tuned buffer, so tracks start right away and keep playing through weak connections without stutter.
 - 🎧 **High-quality audio by default**: the best Opus/AAC stream, and FLAC for your local and downloaded files.
-- 🧠 **Personalised trending and recommendations**: an on-device taste engine (plays, skips, likes, recency, artist affinity) reads your listening context — time of day and session — so even the trending feed is reordered to your taste while still surfacing genuinely fresh discovery, with mood clustering, stronger diversity and no recent repeats.
+- 🧠 **Personalised trending and recommendations**: an on-device taste engine (plays, skips, likes, recency, artist affinity) reads your listening context (time of day and session) so even the trending feed is reordered to your taste while still surfacing genuinely fresh discovery, with mood clustering, stronger diversity and no recent repeats.
 - 🌅 **Mix for you**: a fresh daily mix, plus "Jump back in", a "Because you liked …" shelf, your top artists and new personalised shelves.
 - 🔗 **Share with artwork**: share a song as a cover-art card, with a text link fallback.
 - 🎵 **Free search and play**: find any song and play it, with no login.
@@ -19,15 +19,15 @@ A premium music player for Android, built with Jetpack Compose. Search and play 
 - 📀 **Spotify (optional)**: sign in to bring your playlists, liked songs, followed artists, history and recommendations.
 - 🔊 **Premium audio**: a tasteful "Premium" equalizer preset and retuned loudness normalization keep levels even and full, alongside gapless and crossfade mixing.
 - 🎛️ **Redesigned player**: large artwork with artwork-driven dynamic colour, an azure seek bar with a steel scrubber, animated controls with haptics, a "Next up" peek and quick lyrics access.
-- 🎨 **Accent picker**: choose the app's signature highlight — Azure, Teal, Indigo or Steel — and the whole UI recolours live while the graphite canvas stays constant.
+- 🎨 **Accent picker**: choose the app's signature highlight (Azure, Teal, Indigo or Steel) and the whole UI recolours live while the graphite canvas stays constant.
 - 👋 **First-run onboarding**: a short intro to free play and your accent choice, shown once on first launch.
-- 📊 **Listening recap**: a read-only summary built on-device from your taste model — top artists and tracks, total listens, estimated minutes and a day streak.
-- 🔄 **In-app updates**: the newest release APK is downloaded and installed from inside the app with a progress bar — no browser hand-off (Android still shows its own install confirmation).
+- 📊 **Listening recap**: a read-only summary built on-device from your taste model, with top artists and tracks, total listens, estimated minutes and a day streak.
+- 🔄 **In-app updates**: the newest release APK is downloaded and installed from inside the app with a progress bar, with no browser hand-off (Android still shows its own install confirmation).
 - ✨ **"Graphite & Azure" design**: a near-black graphite canvas with a layered steel-slate surface ramp and one restrained refined-azure accent, high-contrast off-white text and a sparse cool-steel highlight, set in Space Grotesk and Plus Jakarta Sans, with an artwork-tinted player, code-generated Explore mesh tiles and guarded frosted-glass chrome.
 
-The icon is the **Aperture S**: an original mark built from scratch — a single continuous stroke sweeps through two tangent arcs to form an upright S whose counters read as the open blades of a focused lens aperture, with a cool-steel focal dot at its centre. It carries the azure accent and reads clearly from the launcher down to the small notification icon.
+The icon is the **Aperture S**: an original mark built from scratch. A single continuous stroke sweeps through two tangent arcs to form an upright S whose counters read as the open blades of a focused lens aperture, with a cool-steel focal dot at its centre. It carries the azure accent and reads clearly from the launcher down to the small notification icon.
 
-See [CHANGELOG.md](CHANGELOG.md) for everything new in 8.0.0.
+See [CHANGELOG.md](CHANGELOG.md) for everything new in 11.0.0.
 
 ## Install
 
